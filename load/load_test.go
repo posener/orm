@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	personTypeString = "struct{Name string; Age int}"
+	personTypeString = "struct{Name string; Age int; unexported bool}"
 	pkgName          = "example"
 )
 

@@ -1,4 +1,4 @@
-package personorm
+package {{.PackageName}}
 
 import (
 	"database/sql"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/posener/orm/where"
 
-	"github.com/posener/orm/example"
+	"{{.Type.ImportPath}}"
 )
 
 type Query struct {
@@ -15,7 +15,7 @@ type Query struct {
 }
 
 func (q *Query) String() string {
-	return "SELECT " + q.Select.String() + " FROM person " + q.Where.String()
+	return "SELECT " + q.Select.String() + " FROM {{.Table}} " + q.Where.String()
 }
 
 func (q *Query) Exec(db *sql.DB) ([]example.Person, error) {
@@ -30,9 +30,9 @@ func (q *Query) Exec(db *sql.DB) ([]example.Person, error) {
 	defer rows.Close()
 
 	// extract rows to structures
-	var all []example.Person
+	var all []{{.Type.Name}}
 	for rows.Next() {
-		var i example.Person
+		var i {{.Type.Name}}
 		if err := rows.Scan(q.Select.scanArgs(&i)...); err != nil {
 			return nil, err
 		}

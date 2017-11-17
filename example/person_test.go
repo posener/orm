@@ -35,16 +35,27 @@ func TestPersonSelect(t *testing.T) {
 			want: []example.Person{p1, p2, p3},
 		},
 		{
-			q:    &porm.Query{Columns: &porm.SelectColumns{Name: true}},
+			q:    &porm.Query{Select: &porm.Select{Name: true}},
 			want: []example.Person{{Name: "moshe"}, {Name: "haim"}, {Name: "zvika"}},
 		},
 		{
-			q:    &porm.Query{Columns: &porm.SelectColumns{Age: true}},
+			q:    &porm.Query{Select: &porm.Select{Age: true}},
 			want: []example.Person{{Age: 1}, {Age: 2}, {Age: 3}},
 		},
 		{
-			q:    &porm.Query{Where: &porm.WhereOptions{Name: &where.String{Val: "moshe"}}},
+			q:    &porm.Query{Where: porm.WhereName(where.OpEqual, "moshe")},
 			want: []example.Person{p1},
+		},
+		{
+			q:    &porm.Query{Where: porm.WhereName(where.OpEqual, "moshe").Or(porm.WhereAge(where.OpEqual, 2))},
+			want: []example.Person{p1, p2},
+		},
+		{
+			q:    &porm.Query{Where: porm.WhereName(where.OpEqual, "moshe").And(porm.WhereAge(where.OpEqual, 1))},
+			want: []example.Person{p1},
+		},
+		{
+			q: &porm.Query{Where: porm.WhereName(where.OpEqual, "moshe").And(porm.WhereAge(where.OpEqual, 2))},
 		},
 	}
 

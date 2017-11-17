@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 
+	"github.com/posener/orm/gen"
 	"github.com/posener/orm/load"
 )
 
@@ -15,17 +16,24 @@ var (
 )
 
 func init() {
-	flag.StringVar(&options.pkg, "pkg", ".", "package of struct")
-	flag.StringVar(&options.name, "name", "", "struct name")
+	flag.StringVar(&options.pkg, "pkg", "./example", "package of struct")
+	flag.StringVar(&options.name, "name", "Person", "struct name")
+	flag.Parse()
 }
 
 func main() {
 	if options.name == "" {
-		log.Fatalf("Must give struct name")
+		log.Fatal("Must give struct name")
 	}
 	pkg, tp, err := load.Load(options.pkg, options.name)
-	if err != nil {
-		log.Fatal(err)
+	failOnErr(err, "load struct")
+
+	failOnErr(gen.Gen(pkg, tp, options.name), "generating")
+}
+
+func failOnErr(err error, msg string) {
+	if err == nil {
+		return
 	}
-	println(pkg, tp)
+	log.Fatal(msg + ": " + err.Error())
 }
