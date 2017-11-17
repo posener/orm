@@ -17,7 +17,12 @@ func TestPersonSelect(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	mustExec(db.Exec("CREATE TABLE person (name VARCHAR(255), age INT)"))
+
+	err = porm.Create(db)
+	if err != nil {
+		t.Fatalf("Failed creating table: %s", err)
+	}
+
 	mustExec(db.Exec("INSERT INTO person (name, age) VALUES ('moshe', 1)"))
 	mustExec(db.Exec("INSERT INTO person (name, age) VALUES ('haim', 2)"))
 	mustExec(db.Exec("INSERT INTO person (name, age) VALUES ('zvika', 3)"))
