@@ -43,19 +43,31 @@ func TestPersonSelect(t *testing.T) {
 			want: []example.Person{{Age: 1}, {Age: 2}, {Age: 3}},
 		},
 		{
-			q:    &porm.Query{Where: porm.WhereName(where.OpEqual, "moshe")},
+			q:    &porm.Query{Where: porm.WhereName(where.OpEq, "moshe")},
 			want: []example.Person{p1},
 		},
 		{
-			q:    &porm.Query{Where: porm.WhereName(where.OpEqual, "moshe").Or(porm.WhereAge(where.OpEqual, 2))},
+			q:    &porm.Query{Where: porm.WhereName(where.OpEq, "moshe").Or(porm.WhereAge(where.OpEq, 2))},
 			want: []example.Person{p1, p2},
 		},
 		{
-			q:    &porm.Query{Where: porm.WhereName(where.OpEqual, "moshe").And(porm.WhereAge(where.OpEqual, 1))},
+			q:    &porm.Query{Where: porm.WhereName(where.OpEq, "moshe").And(porm.WhereAge(where.OpEq, 1))},
 			want: []example.Person{p1},
 		},
 		{
-			q: &porm.Query{Where: porm.WhereName(where.OpEqual, "moshe").And(porm.WhereAge(where.OpEqual, 2))},
+			q: &porm.Query{Where: porm.WhereName(where.OpEq, "moshe").And(porm.WhereAge(where.OpEq, 2))},
+		},
+		{
+			q:    &porm.Query{Where: porm.WhereName(where.OpNe, "moshe")},
+			want: []example.Person{p2, p3},
+		},
+		{
+			q:    &porm.Query{Where: porm.WhereNameIn("moshe", "haim")},
+			want: []example.Person{p1, p2},
+		},
+		{
+			q:    &porm.Query{Where: porm.WhereAgeBetween(0, 2)},
+			want: []example.Person{p1, p2},
 		},
 	}
 

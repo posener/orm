@@ -1,6 +1,10 @@
 package where
 
-import "strings"
+import (
+	"fmt"
+	"log"
+	"strings"
+)
 
 type Options struct {
 	stmt []string
@@ -8,9 +12,35 @@ type Options struct {
 }
 
 func New(op Op, variable string, value interface{}) Options {
+	switch op {
+	case OpEq, OpNe, OpGt, OpGE, OpLt, OpLE, OpLike:
+	default:
+		log.Panicf("Operation %s is not defined for one value", op)
+	}
 	var o Options
-	o.stmt = append(o.stmt, variable+string(op)+"?")
+	o.stmt = append(o.stmt, fmt.Sprintf("%s %s ?", variable, op))
 	o.args = append(o.args, value)
+	return o
+}
+
+func NewMul(op Op, variable string, values ...interface{}) Options {
+	var o Options
+	switch op {
+	case OpBetween:
+		if len(values) != 2 {
+			log.Panicf("Operation %s accepts only 2 values, got %d values", op, len(values))
+		}
+		o.stmt = append(o.stmt, fmt.Sprintf("%s %s ? AND ?", variable, op))
+	case OpIn:
+		if len(values) > 0 {
+			qMark := strings.Repeat("?, ", len(values))
+			qMark = qMark[:len(qMark)-2] // remove last ", "
+			o.stmt = append(o.stmt, fmt.Sprintf("%s %s (%s)", variable, op, qMark))
+		}
+	default:
+		log.Panicf("Operation %s does not support multiple values", op)
+	}
+	o.args = append(o.args, values...)
 	return o
 }
 

@@ -3,5 +3,13 @@ package where
 type Op string
 
 const (
-	OpEqual = "="
+	OpEq      = "="
+	OpNe      = "<>"
+	OpGt      = ">"
+	OpGE      = ">="
+	OpLt      = "<"
+	OpLE      = "<="
+	OpBetween = "BETWEEN"
+	OpLike    = "LIKE"
+	OpIn      = "IN"
 )
