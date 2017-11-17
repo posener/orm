@@ -5,6 +5,7 @@ import (
 	"go/types"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -68,6 +69,7 @@ func Gen(pkg *types.Package, st *types.Struct, name string) error {
 		},
 		PackageName: packageName,
 	}
+	log.Printf("Template configuration: %+v", props)
 
 	for _, tpl := range tpls.Templates() {
 		err := writeTpl(tpl, props, dir)
@@ -75,8 +77,11 @@ func Gen(pkg *types.Package, st *types.Struct, name string) error {
 			return err
 		}
 	}
-
-	log.Println(props)
+	fmtOut, err := exec.Command("gofmt", "-s", "-w", dir).CombinedOutput()
+	if err != nil {
+		log.Printf("Failed formatting package: %s", err)
+	}
+	log.Printf("Format package output: %s", string(fmtOut))
 	return nil
 }
 
