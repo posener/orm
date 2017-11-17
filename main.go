@@ -16,8 +16,8 @@ var (
 )
 
 func init() {
-	flag.StringVar(&options.pkg, "pkg", "./example", "package of struct")
-	flag.StringVar(&options.name, "name", "Person", "struct name")
+	flag.StringVar(&options.pkg, "pkg", ".", "package of struct")
+	flag.StringVar(&options.name, "name", "", "struct name")
 	flag.Parse()
 }
 
@@ -27,7 +27,6 @@ func main() {
 	}
 	pkg, tp, err := load.Load(options.pkg, options.name)
 	failOnErr(err, "load struct")
-
 	failOnErr(gen.Gen(pkg, tp, options.name), "generating")
 }
 
