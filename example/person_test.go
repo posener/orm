@@ -58,6 +58,22 @@ func TestPersonSelect(t *testing.T) {
 			q: porm.NewQuery().Where(porm.WhereName(where.OpEq, "moshe").And(porm.WhereAge(where.OpEq, 2))),
 		},
 		{
+			q:    porm.NewQuery().Where(porm.WhereAge(where.OpGE, 2)),
+			want: []example.Person{p2, p3},
+		},
+		{
+			q:    porm.NewQuery().Where(porm.WhereAge(where.OpGt, 2)),
+			want: []example.Person{p3},
+		},
+		{
+			q:    porm.NewQuery().Where(porm.WhereAge(where.OpLE, 2)),
+			want: []example.Person{p1, p2},
+		},
+		{
+			q:    porm.NewQuery().Where(porm.WhereAge(where.OpLt, 2)),
+			want: []example.Person{p1},
+		},
+		{
 			q:    porm.NewQuery().Where(porm.WhereName(where.OpNe, "moshe")),
 			want: []example.Person{p2, p3},
 		},
