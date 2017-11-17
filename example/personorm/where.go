@@ -4,7 +4,6 @@ import (
 	"github.com/posener/orm/where"
 )
 
-
 func WhereName(op where.Op, val string) where.Options {
 	return where.New(op, "name", val)
 }
@@ -36,4 +35,3 @@ func WhereAgeIn(vals ...int) where.Options {
 func WhereAgeBetween(low, high int) where.Options {
 	return where.NewMul(where.OpBetween, "age", low, high)
 }
-

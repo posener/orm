@@ -27,46 +27,46 @@ func TestPersonSelect(t *testing.T) {
 	p3 := example.Person{Name: "zvika", Age: 3}
 
 	tests := []struct {
-		q    *porm.Query
+		q    porm.Query
 		want []example.Person
 	}{
 		{
-			q:    &porm.Query{},
+			q:    porm.NewQuery(),
 			want: []example.Person{p1, p2, p3},
 		},
 		{
-			q:    &porm.Query{Select: &porm.Select{Name: true}},
+			q:    porm.NewQuery().Select(porm.Select{Name: true}),
 			want: []example.Person{{Name: "moshe"}, {Name: "haim"}, {Name: "zvika"}},
 		},
 		{
-			q:    &porm.Query{Select: &porm.Select{Age: true}},
+			q:    porm.NewQuery().Select(porm.Select{Age: true}),
 			want: []example.Person{{Age: 1}, {Age: 2}, {Age: 3}},
 		},
 		{
-			q:    &porm.Query{Where: porm.WhereName(where.OpEq, "moshe")},
+			q:    porm.NewQuery().Where(porm.WhereName(where.OpEq, "moshe")),
 			want: []example.Person{p1},
 		},
 		{
-			q:    &porm.Query{Where: porm.WhereName(where.OpEq, "moshe").Or(porm.WhereAge(where.OpEq, 2))},
+			q:    porm.NewQuery().Where(porm.WhereName(where.OpEq, "moshe").Or(porm.WhereAge(where.OpEq, 2))),
 			want: []example.Person{p1, p2},
 		},
 		{
-			q:    &porm.Query{Where: porm.WhereName(where.OpEq, "moshe").And(porm.WhereAge(where.OpEq, 1))},
+			q:    porm.NewQuery().Where(porm.WhereName(where.OpEq, "moshe").And(porm.WhereAge(where.OpEq, 1))),
 			want: []example.Person{p1},
 		},
 		{
-			q: &porm.Query{Where: porm.WhereName(where.OpEq, "moshe").And(porm.WhereAge(where.OpEq, 2))},
+			q: porm.NewQuery().Where(porm.WhereName(where.OpEq, "moshe").And(porm.WhereAge(where.OpEq, 2))),
 		},
 		{
-			q:    &porm.Query{Where: porm.WhereName(where.OpNe, "moshe")},
+			q:    porm.NewQuery().Where(porm.WhereName(where.OpNe, "moshe")),
 			want: []example.Person{p2, p3},
 		},
 		{
-			q:    &porm.Query{Where: porm.WhereNameIn("moshe", "haim")},
+			q:    porm.NewQuery().Where(porm.WhereNameIn("moshe", "haim")),
 			want: []example.Person{p1, p2},
 		},
 		{
-			q:    &porm.Query{Where: porm.WhereAgeBetween(0, 2)},
+			q:    porm.NewQuery().Where(porm.WhereAgeBetween(0, 2)),
 			want: []example.Person{p1, p2},
 		},
 	}
@@ -117,7 +117,7 @@ func mustExec(result sql.Result, err error) sql.Result {
 //	Create = Statement{
 //		Template: template.Must(template.New("create").Parse("CREATE moshe ")),
 //	}
-//	Select = Statement{
+//	sel = Statement{
 //		Template: template.Must(template.New("select").Parse("SELECT {{.Columns}} {{.Where}} FROM {{.Table}}")),
 //	}
 //	Delete = Statement{

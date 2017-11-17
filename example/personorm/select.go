@@ -3,7 +3,7 @@ package personorm
 import (
 	"strings"
 
-    "github.com/posener/orm/example"
+	"github.com/posener/orm/example"
 )
 
 type Select struct {
@@ -12,18 +12,18 @@ type Select struct {
 }
 
 func (c *Select) String() string {
-    if c == nil {
-        return "*"
-    }
-    // collect all fields which their Select.FieldName is true
+	if c == nil {
+		return "*"
+	}
+	// collect all fields which their Select.FieldName is true
 	names := make([]string, 0, 2) // according to number of type fields
 	if c.Name {
-	    names = append(names, "name")
+		names = append(names, "name")
 	}
 	if c.Age {
-	    names = append(names, "age")
+		names = append(names, "age")
 	}
-	
+
 	return strings.Join(names, ", ")
 }
 
@@ -39,6 +39,6 @@ func (c *Select) scanArgs(p *example.Person) []interface{} {
 	if all || c.Age {
 		args = append(args, &p.Age)
 	}
-	
+
 	return args
 }
