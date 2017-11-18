@@ -23,9 +23,18 @@ func TestPersonSelect(t *testing.T) {
 		t.Fatalf("Failed creating table: %s", err)
 	}
 
-	mustExec(db.Exec("INSERT INTO person (name, age) VALUES ('moshe', 1)"))
-	mustExec(db.Exec("INSERT INTO person (name, age) VALUES ('haim', 2)"))
-	mustExec(db.Exec("INSERT INTO person (name, age) VALUES ('zvika', 3)"))
+	err = porm.NewInsert().Name("moshe").Age(1).Exec(db)
+	if err != nil {
+		t.Fatalf("Failed inserting: %s", err)
+	}
+	err = porm.NewInsert().Name("haim").Age(2).Exec(db)
+	if err != nil {
+		t.Fatalf("Failed inserting: %s", err)
+	}
+	err = porm.NewInsert().Person(&example.Person{Name: "zvika", Age: 3}).Exec(db)
+	if err != nil {
+		t.Fatalf("Failed inserting: %s", err)
+	}
 
 	p1 := example.Person{Name: "moshe", Age: 1}
 	p2 := example.Person{Name: "haim", Age: 2}

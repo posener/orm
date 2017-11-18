@@ -4,13 +4,17 @@ import (
 	"fmt"
 	"log"
 	"strings"
+
+	"github.com/posener/orm/tools"
 )
 
+// Options are options for SQL WHERE statement
 type Options struct {
 	stmt []string
 	args []interface{}
 }
 
+// New returns a new WHERE statement
 func New(op Op, variable string, value interface{}) Options {
 	switch op {
 	case OpEq, OpNe, OpGt, OpGE, OpLt, OpLE, OpLike:
@@ -23,6 +27,8 @@ func New(op Op, variable string, value interface{}) Options {
 	return o
 }
 
+// NewMul returns a new WHERE statement for SQL operations with more than one
+// value, such as 'IN' and 'BETWEEN'.
 func NewMul(op Op, variable string, values ...interface{}) Options {
 	var o Options
 	switch op {
@@ -33,9 +39,7 @@ func NewMul(op Op, variable string, values ...interface{}) Options {
 		o.stmt = append(o.stmt, fmt.Sprintf("%s %s ? AND ?", variable, op))
 	case OpIn:
 		if len(values) > 0 {
-			qMark := strings.Repeat("?, ", len(values))
-			qMark = qMark[:len(qMark)-2] // remove last ", "
-			o.stmt = append(o.stmt, fmt.Sprintf("%s %s (%s)", variable, op, qMark))
+			o.stmt = append(o.stmt, fmt.Sprintf("%s %s (%s)", variable, op, tools.QMarks(len(values))))
 		}
 	default:
 		log.Panicf("Operation %s does not support multiple values", op)
@@ -73,12 +77,4 @@ func binary(l Options, r Options, op string) Options {
 	l.stmt = append(l.stmt, ")")
 	l.args = append(l.args, r.args...)
 	return l
-}
-
-type String struct {
-	Val string
-}
-
-type Int struct {
-	Val int
 }

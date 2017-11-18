@@ -44,9 +44,9 @@ func (q *Query) Exec(db *sql.DB) ([]example.Person, error) {
 	defer rows.Close()
 
 	// extract rows to structures
-	var all []{{.Type.Name}}
+	var all []{{.Type.FullName}}
 	for rows.Next() {
-		var i {{.Type.Name}}
+		var i {{.Type.FullName}}
 		if err := rows.Scan(q.sel.scanArgs(&i)...); err != nil {
 			return nil, err
 		}

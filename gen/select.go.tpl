@@ -26,7 +26,7 @@ func (c *Select) String() string {
 }
 
 // ScanArgs are list of fields to be given to the sql Scan command
-func (c *Select) scanArgs(p *{{.Type.Name}}) []interface{} {
+func (c *Select) scanArgs(p *{{.Type.FullName}}) []interface{} {
 	all := c == nil
 
 	// add to args all the fields of p
