@@ -36,28 +36,24 @@ ORM semantics.
 Notice that all operations are typed, `Age` is `int`, `Name` is `string`, the `example.Person`
 is used in the arguments and in the return values.
 
-Create table:
-
 ```go
-err = personorm.Create(db)
-```
+import porm "package/personorm"
 
-Insert rows:
+func main() {
+    // Create table:
+    err = porm.Create().Exec(db)
 
-```go
-err = personorm.NewInsert().Name("John").Age(1).Exec(db)
-```
+    // Insert rows:
+    err = porm.Insert().Name("John").Age(1).Exec(db)
 
-Or with a struct:
+    // Or with a struct:
+    porm.Insert().Person(&example.Person{Name: "zvika", Age: 3}).Exec(db)
 
-```go
-personorm.NewInsert().Person(&example.Person{Name: "zvika", Age: 3}).Exec(db)
-```
-
-Select rows from the DB:
-
-```go
-q := personorm.NewQuery().Where(porm.WhereName(where.OpNe, "John")),
-ps, err := q.Exec(db) // returns []example.Person, typed return value.
-println(ps[0].Name) // Output: "John"
+    // Select rows from the DB:
+    q := porm.Query().
+        Select(porm.Select().Name()).
+        Where(porm.WhereName(porm.OpNe, "John"))
+    ps, err := q.Exec(db) // returns []example.Person, typed return value.
+    println(ps[0].Name) // Output: "John"
+}
 ```
