@@ -68,14 +68,15 @@ func collectFields(s *types.Struct) []Field {
 			continue
 		}
 		varType := v.Type().String()
-		sqlType := customSQLTypeFromTag(varType)
+		tags := ParseTags(s.Tag(i))
+		sqlType := tags.Type
 		if sqlType == "" {
 			sqlType = defaultSQLTypes[varType]
 		}
 		if sqlType == "" {
 			log.Fatalf("Unsupported field type: %s", varType)
 		}
-		s.Tag(i)
+		log.Printf("Field %s of type %s has SQL type %s", v.Name(), varType, sqlType)
 		f = append(f, Field{
 			Name:          v.Name(),
 			ColumnName:    strings.ToLower(v.Name()),
@@ -84,21 +85,4 @@ func collectFields(s *types.Struct) []Field {
 		})
 	}
 	return f
-}
-
-func customSQLTypeFromTag(tag string) string {
-	parts := strings.Fields(tag)
-	for _, part := range parts {
-		keyVal := strings.Split(part, ":")
-		if len(keyVal) != 2 {
-			continue
-		}
-		key := keyVal[0]
-		val := keyVal[1]
-		if key != tagSQLType {
-			continue
-		}
-		return strings.Trim(val, `"`)
-	}
-	return ""
 }
