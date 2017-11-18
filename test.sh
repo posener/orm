@@ -2,16 +2,16 @@
 
 set -e
 
-echo "Generating templates binaries"
+echo ">> Generating templates binaries"
 go generate ./gen/...
 
-echo "Installing"
+echo ">> Installing"
 go install
 
-echo "Generating Person ORM..."
+echo ">> Generating Person ORM..."
 go generate ./example/...
 
-echo "Running tests..."
+echo ">> Running tests..."
 echo "" > coverage.txt
 for d in $(go list ./... | grep -v vendor); do
     go test -v -race -coverprofile=profile.out -covermode=atomic $d
