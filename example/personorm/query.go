@@ -5,29 +5,8 @@ import (
 	"database/sql"
 	"log"
 
-	"github.com/posener/orm/where"
-
 	"github.com/posener/orm/example"
 )
-
-type Query struct {
-	sel   *Select
-	where where.Options
-}
-
-func NewQuery() Query {
-	return Query{}
-}
-
-func (q Query) Select(s Select) Query {
-	q.sel = &s
-	return q
-}
-
-func (q Query) Where(w where.Options) Query {
-	q.where = w
-	return q
-}
 
 func (q *Query) String() string {
 	return "SELECT " + q.sel.String() + " FROM person " + q.where.String()

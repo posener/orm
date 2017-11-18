@@ -8,7 +8,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm/example"
 	porm "github.com/posener/orm/example/personorm"
-	"github.com/posener/orm/where"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,46 +48,54 @@ func TestPersonSelect(t *testing.T) {
 			want: []example.Person{p1, p2, p3},
 		},
 		{
-			q:    porm.NewQuery().Select(porm.Select{Name: true}),
+			q:    porm.NewQuery().Select(porm.NewSelect().Name()),
 			want: []example.Person{{Name: "moshe"}, {Name: "haim"}, {Name: "zvika"}},
 		},
 		{
-			q:    porm.NewQuery().Select(porm.Select{Age: true}),
+			q:    porm.NewQuery().Select(porm.NewSelect().Age()),
 			want: []example.Person{{Age: 1}, {Age: 2}, {Age: 3}},
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereName(where.OpEq, "moshe")),
+			q:    porm.NewQuery().Select(porm.NewSelect().Age().Name()),
+			want: []example.Person{p1, p2, p3},
+		},
+		{
+			q:    porm.NewQuery().Select(porm.NewSelect().Name().Age()),
+			want: []example.Person{p1, p2, p3},
+		},
+		{
+			q:    porm.NewQuery().Where(porm.WhereName(porm.OpEq, "moshe")),
 			want: []example.Person{p1},
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereName(where.OpEq, "moshe").Or(porm.WhereAge(where.OpEq, 2))),
+			q:    porm.NewQuery().Where(porm.WhereName(porm.OpEq, "moshe").Or(porm.WhereAge(porm.OpEq, 2))),
 			want: []example.Person{p1, p2},
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereName(where.OpEq, "moshe").And(porm.WhereAge(where.OpEq, 1))),
+			q:    porm.NewQuery().Where(porm.WhereName(porm.OpEq, "moshe").And(porm.WhereAge(porm.OpEq, 1))),
 			want: []example.Person{p1},
 		},
 		{
-			q: porm.NewQuery().Where(porm.WhereName(where.OpEq, "moshe").And(porm.WhereAge(where.OpEq, 2))),
+			q: porm.NewQuery().Where(porm.WhereName(porm.OpEq, "moshe").And(porm.WhereAge(porm.OpEq, 2))),
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereAge(where.OpGE, 2)),
+			q:    porm.NewQuery().Where(porm.WhereAge(porm.OpGE, 2)),
 			want: []example.Person{p2, p3},
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereAge(where.OpGt, 2)),
+			q:    porm.NewQuery().Where(porm.WhereAge(porm.OpGt, 2)),
 			want: []example.Person{p3},
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereAge(where.OpLE, 2)),
+			q:    porm.NewQuery().Where(porm.WhereAge(porm.OpLE, 2)),
 			want: []example.Person{p1, p2},
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereAge(where.OpLt, 2)),
+			q:    porm.NewQuery().Where(porm.WhereAge(porm.OpLt, 2)),
 			want: []example.Person{p1},
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereName(where.OpNe, "moshe")),
+			q:    porm.NewQuery().Where(porm.WhereName(porm.OpNe, "moshe")),
 			want: []example.Person{p2, p3},
 		},
 		{

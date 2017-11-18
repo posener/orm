@@ -2,8 +2,14 @@
 
 set -e
 
+echo "Generating templates binaries"
+go generate ./gen/...
+
+echo "Installing"
+go install
+
 echo "Generating Person ORM..."
-go run main.go -pkg ./example -name Person
+go generate ./example/...
 
 echo "Running tests..."
 echo "" > coverage.txt
