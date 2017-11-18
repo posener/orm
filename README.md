@@ -7,7 +7,7 @@
 
 An attempt to build a *typed* ORM package in Go
 
-This is PROOF OF CONCEPT
+This is a PROOF OF CONCEPT
 
 Very very (very) limited implementations, and plenty of TODOs :-)
 
@@ -47,7 +47,7 @@ func main() {
     err = porm.Insert().Name("John").Age(1).Exec(db)
 
     // Or with a struct:
-    porm.Insert().Person(&example.Person{Name: "zvika", Age: 3}).Exec(db)
+    porm.Insert().Person(&example.Person{Name: "Doug", Age: 3}).Exec(db)
 
     // Select rows from the DB:
     q := porm.Query().

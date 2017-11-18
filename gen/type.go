@@ -52,6 +52,7 @@ func (t Type) Package() string {
 	return pkg
 }
 
+// Field is a struct that represents type's field
 type Field struct {
 	Name       string
 	ColumnName string

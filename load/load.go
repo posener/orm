@@ -10,7 +10,9 @@ import (
 	"golang.org/x/tools/go/loader"
 )
 
-func Load(pkg, name string) (*types.Package, *types.Struct, error) {
+// Load loads a struct with name 'structName' in a package 'pkg'
+// It returns descriptors for the package of the struct and the struct itself.
+func Load(pkg, structName string) (*types.Package, *types.Struct, error) {
 	l := loader.Config{
 		AllowErrors:         true,
 		TypeCheckFuncBodies: func(_ string) bool { return false },
@@ -27,7 +29,7 @@ func Load(pkg, name string) (*types.Package, *types.Struct, error) {
 	for pkgName, pkg := range p.Imported {
 		log.Printf("scanning package: %s", pkgName)
 		for _, s := range pkg.Scopes {
-			s := lookup(s.Parent(), name)
+			s := lookup(s.Parent(), structName)
 			if s != nil {
 				return pkg.Pkg, s, nil
 			}

@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// Options are options for SQL WHERE statement
+// Where are options for SQL WHERE statement
 type Where struct {
 	stmt []string
 	args []interface{}
@@ -54,6 +54,7 @@ func (w *Where) String() string {
 	return "WHERE " + strings.Join(w.stmt, " ")
 }
 
+// Args are the arguments for executing a SELECT query with a WHERE condition
 func (w *Where) Args() []interface{} {
 	if w == nil {
 		return nil
@@ -61,10 +62,12 @@ func (w *Where) Args() []interface{} {
 	return w.args
 }
 
+// Or applies an or condition between two where conditions
 func (w Where) Or(right Where) Where {
 	return binary(w, right, "OR")
 }
 
+// And applies an and condition between two where conditions
 func (w Where) And(right Where) Where {
 	return binary(w, right, "AND")
 }

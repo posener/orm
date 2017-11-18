@@ -1,5 +1,6 @@
 package tpls
 
+// Op is an SQL operation
 type Op string
 
 const (

@@ -8,6 +8,7 @@ type Tags struct {
 	Type string
 }
 
+// ParseTags parses tags from a struct tags into a Tags struct.
 func ParseTags(tag string) Tags {
 	var t Tags
 	if tag == "" {

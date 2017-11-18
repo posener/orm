@@ -6,6 +6,7 @@ import (
 	"log"
 )
 
+// TInsert is a struct to hold information for an INSERT statement
 type TInsert struct {
 	fmt.Stringer
 	cols   []string
@@ -17,7 +18,7 @@ func Insert() TInsert {
 	return TInsert{}
 }
 
-// Create creates a table for {{.Type.Name}}
+// Exec inserts the data to the given database
 func (i TInsert) Exec(db *sql.DB) error {
 	if len(i.cols) == 0 || len(i.values) == 0 {
 		return fmt.Errorf("nothing to insert")
