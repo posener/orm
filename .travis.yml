@@ -5,6 +5,7 @@ go:
 
 before_install:
   - go get -u -t ./...
+  - go get -u github.com/UnnoTed/fileb0x
 
 script:
   - ./test.sh
