@@ -40,70 +40,70 @@ func TestPersonSelect(t *testing.T) {
 	p3 := example.Person{Name: "zvika", Age: 3}
 
 	tests := []struct {
-		q    porm.Query
+		q    porm.TQuery
 		want []example.Person
 	}{
 		{
-			q:    porm.NewQuery(),
+			q:    porm.Query(),
 			want: []example.Person{p1, p2, p3},
 		},
 		{
-			q:    porm.NewQuery().Select(porm.NewSelect().Name()),
+			q:    porm.Query().Select(porm.Select().Name()),
 			want: []example.Person{{Name: "moshe"}, {Name: "haim"}, {Name: "zvika"}},
 		},
 		{
-			q:    porm.NewQuery().Select(porm.NewSelect().Age()),
+			q:    porm.Query().Select(porm.Select().Age()),
 			want: []example.Person{{Age: 1}, {Age: 2}, {Age: 3}},
 		},
 		{
-			q:    porm.NewQuery().Select(porm.NewSelect().Age().Name()),
+			q:    porm.Query().Select(porm.Select().Age().Name()),
 			want: []example.Person{p1, p2, p3},
 		},
 		{
-			q:    porm.NewQuery().Select(porm.NewSelect().Name().Age()),
+			q:    porm.Query().Select(porm.Select().Name().Age()),
 			want: []example.Person{p1, p2, p3},
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereName(porm.OpEq, "moshe")),
+			q:    porm.Query().Where(porm.WhereName(porm.OpEq, "moshe")),
 			want: []example.Person{p1},
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereName(porm.OpEq, "moshe").Or(porm.WhereAge(porm.OpEq, 2))),
+			q:    porm.Query().Where(porm.WhereName(porm.OpEq, "moshe").Or(porm.WhereAge(porm.OpEq, 2))),
 			want: []example.Person{p1, p2},
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereName(porm.OpEq, "moshe").And(porm.WhereAge(porm.OpEq, 1))),
+			q:    porm.Query().Where(porm.WhereName(porm.OpEq, "moshe").And(porm.WhereAge(porm.OpEq, 1))),
 			want: []example.Person{p1},
 		},
 		{
-			q: porm.NewQuery().Where(porm.WhereName(porm.OpEq, "moshe").And(porm.WhereAge(porm.OpEq, 2))),
+			q: porm.Query().Where(porm.WhereName(porm.OpEq, "moshe").And(porm.WhereAge(porm.OpEq, 2))),
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereAge(porm.OpGE, 2)),
+			q:    porm.Query().Where(porm.WhereAge(porm.OpGE, 2)),
 			want: []example.Person{p2, p3},
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereAge(porm.OpGt, 2)),
+			q:    porm.Query().Where(porm.WhereAge(porm.OpGt, 2)),
 			want: []example.Person{p3},
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereAge(porm.OpLE, 2)),
+			q:    porm.Query().Where(porm.WhereAge(porm.OpLE, 2)),
 			want: []example.Person{p1, p2},
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereAge(porm.OpLt, 2)),
+			q:    porm.Query().Where(porm.WhereAge(porm.OpLt, 2)),
 			want: []example.Person{p1},
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereName(porm.OpNe, "moshe")),
+			q:    porm.Query().Where(porm.WhereName(porm.OpNe, "moshe")),
 			want: []example.Person{p2, p3},
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereNameIn("moshe", "haim")),
+			q:    porm.Query().Where(porm.WhereNameIn("moshe", "haim")),
 			want: []example.Person{p1, p2},
 		},
 		{
-			q:    porm.NewQuery().Where(porm.WhereAgeBetween(0, 2)),
+			q:    porm.Query().Where(porm.WhereAgeBetween(0, 2)),
 			want: []example.Person{p1, p2},
 		},
 	}
@@ -118,46 +118,3 @@ func TestPersonSelect(t *testing.T) {
 		})
 	}
 }
-
-func mustExec(result sql.Result, err error) sql.Result {
-	if err != nil {
-		panic(err)
-	}
-	return result
-}
-
-// CREATE {{.Table}} {{.ColumnWithTypes}}
-// SELECT {{.Columns}} {{.Where}} FROM {{Table}}, where args
-// DELETE {{.Where}} FROM {{.Table}}, where args
-
-//type Statement struct {
-//	Template *template.Template
-//	Table string
-//}
-//
-//func (s *Statement) Write(w io.Writer) {
-//	s.Template.Execute(w, s)
-//}
-//
-//func (s *Statement) String() string {
-//	b := bytes.NewBuffer(nil)
-//	s.Write(b)
-//	return b.String()
-//}
-//
-//type CreateStatement struct {
-//	Statement
-//	ColumnTypes
-//}
-//
-//var (
-//	Create = Statement{
-//		Template: template.Must(template.New("create").Parse("CREATE moshe ")),
-//	}
-//	sel = Statement{
-//		Template: template.Must(template.New("select").Parse("SELECT {{.Columns}} {{.Where}} FROM {{.Table}}")),
-//	}
-//	Delete = Statement{
-//		Template: template.Must(template.New("delete").Parse("DELETE {{.Where}} FROM {{.Table}}")),
-//	}
-//)

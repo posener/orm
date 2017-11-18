@@ -4,13 +4,13 @@ import "{{.Type.ImportPath}}"
 
 {{ range $_, $f := .Type.Fields -}}
 // {{$f.Name}} Add {{$f.Name}} to the selected column of a query
-func (s Select) {{$f.Name}}() Select {
+func (s TSelect) {{$f.Name}}() TSelect {
     return append(s, "{{$f.ColumnName}}")
 }
 {{ end -}}
 
 // scanArgs are list of fields to be given to the sql Scan command
-func (s Select) scanArgs(p *{{.Type.FullName}}) []interface{} {
+func (s TSelect) scanArgs(p *{{.Type.FullName}}) []interface{} {
 	if len(s) == 0 {
         // add to args all the fields of p
         return []interface{}{

@@ -9,12 +9,12 @@ import (
 )
 
 // String returns the SQL query string
-func (q *Query) String() string {
+func (q *TQuery) String() string {
 	return "SELECT " + q.sel.String() + " FROM person " + q.where.String()
 }
 
 // Exec runs the Query on a given database.
-func (q *Query) Exec(db *sql.DB) ([]example.Person, error) {
+func (q *TQuery) Exec(db *sql.DB) ([]example.Person, error) {
 	// create select statement
 	stmt := q.String()
 	args := q.where.Args()
