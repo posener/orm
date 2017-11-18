@@ -1,0 +1,20 @@
+pkg: b0x
+dest: "./b0x"
+fmt: false
+tags: ""
+updater:
+  enabled: false
+compression:
+  compress: true
+  method: "BestCompression"
+  keep: false
+output: "ab0x.go"
+unexporTed: false
+spread: false
+debug: false
+custom:
+  - files:
+    - "tpls/*"
+    base: "tpls/"
+    prefix: ""
+    tags: ""
