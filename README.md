@@ -7,9 +7,9 @@
 
 An attempt to build a *typed* ORM package in Go
 
-This is WORK IN PROGRESS
+This is PROOF OF CONCEPT
 
-Very very limited implementations, and plenty of TODOs :-)
+Very very (very) limited implementations, and plenty of TODOs :-)
 
 ## Install:
 
