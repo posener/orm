@@ -17,20 +17,20 @@ func TestPersonSelect(t *testing.T) {
 		panic(err)
 	}
 
-	err = porm.Create(db)
+	err = porm.Create().Exec(db)
 	if err != nil {
 		t.Fatalf("Failed creating table: %s", err)
 	}
 
-	err = porm.NewInsert().Name("moshe").Age(1).Exec(db)
+	err = porm.Insert().Name("moshe").Age(1).Exec(db)
 	if err != nil {
 		t.Fatalf("Failed inserting: %s", err)
 	}
-	err = porm.NewInsert().Name("haim").Age(2).Exec(db)
+	err = porm.Insert().Name("haim").Age(2).Exec(db)
 	if err != nil {
 		t.Fatalf("Failed inserting: %s", err)
 	}
-	err = porm.NewInsert().Person(&example.Person{Name: "zvika", Age: 3}).Exec(db)
+	err = porm.Insert().Person(&example.Person{Name: "zvika", Age: 3}).Exec(db)
 	if err != nil {
 		t.Fatalf("Failed inserting: %s", err)
 	}

@@ -2,45 +2,35 @@
 package allorm
 
 import (
-	"database/sql"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/posener/orm/example"
 )
 
-func (i Insert) All(p *example.All) Insert {
+func (i TInsert) String() string {
+	return fmt.Sprintf(`INSERT INTO all (%s) VALUES (%s)`,
+		strings.Join(i.cols, ", "),
+		qMarks(len(i.values)),
+	)
+}
+
+func (i TInsert) All(p *example.All) TInsert {
 	var j = i
-	j = j.add("string", p.String)
+	j = j.add("text", p.Text)
 	j = j.add("int", p.Int)
 	j = j.add("bool", p.Bool)
 	return j
 }
 
-func (i Insert) String(value string) Insert {
-	return i.add("string", value)
+func (i TInsert) Text(value string) TInsert {
+	return i.add("text", value)
 }
 
-func (i Insert) Int(value int) Insert {
+func (i TInsert) Int(value int) TInsert {
 	return i.add("int", value)
 }
 
-func (i Insert) Bool(value bool) Insert {
+func (i TInsert) Bool(value bool) TInsert {
 	return i.add("bool", value)
-}
-
-// Create creates a table for All
-func (i Insert) Exec(db *sql.DB) error {
-	if len(i.cols) == 0 || len(i.values) == 0 {
-		return fmt.Errorf("nothing to insert")
-	}
-	stmt := fmt.Sprintf(`INSERT INTO all (%s) VALUES (%s)`,
-		strings.Join(i.cols, ", "),
-		qMarks(len(i.values)),
-	)
-
-	log.Printf("Insert: '%v' (%v)", stmt, i.values)
-	_, err := db.Exec(stmt, i.values...)
-	return err
 }

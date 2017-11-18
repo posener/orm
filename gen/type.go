@@ -76,7 +76,7 @@ func collectFields(s *types.Struct) []Field {
 		if sqlType == "" {
 			log.Fatalf("Unsupported field type: %s", varType)
 		}
-		log.Printf("Field %s of type %s has SQL type %s", v.Name(), varType, sqlType)
+		log.Printf("Field '%s' of type '%s' has SQL type '%s'", v.Name(), varType, sqlType)
 		f = append(f, Field{
 			Name:          v.Name(),
 			ColumnName:    strings.ToLower(v.Name()),

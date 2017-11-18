@@ -2,40 +2,30 @@
 package personorm
 
 import (
-	"database/sql"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/posener/orm/example"
 )
 
-func (i Insert) Person(p *example.Person) Insert {
+func (i TInsert) String() string {
+	return fmt.Sprintf(`INSERT INTO person (%s) VALUES (%s)`,
+		strings.Join(i.cols, ", "),
+		qMarks(len(i.values)),
+	)
+}
+
+func (i TInsert) Person(p *example.Person) TInsert {
 	var j = i
 	j = j.add("name", p.Name)
 	j = j.add("age", p.Age)
 	return j
 }
 
-func (i Insert) Name(value string) Insert {
+func (i TInsert) Name(value string) TInsert {
 	return i.add("name", value)
 }
 
-func (i Insert) Age(value int) Insert {
+func (i TInsert) Age(value int) TInsert {
 	return i.add("age", value)
-}
-
-// Create creates a table for Person
-func (i Insert) Exec(db *sql.DB) error {
-	if len(i.cols) == 0 || len(i.values) == 0 {
-		return fmt.Errorf("nothing to insert")
-	}
-	stmt := fmt.Sprintf(`INSERT INTO person (%s) VALUES (%s)`,
-		strings.Join(i.cols, ", "),
-		qMarks(len(i.values)),
-	)
-
-	log.Printf("Insert: '%v' (%v)", stmt, i.values)
-	_, err := db.Exec(stmt, i.values...)
-	return err
 }
