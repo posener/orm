@@ -188,9 +188,8 @@ func writePackageLine(w *bufio.Writer, pkgName string) error {
 }
 
 func format(dir string) {
-	fmtOut, err := exec.Command("gofmt", "-s", "-w", dir).CombinedOutput()
+	_, err := exec.Command("gofmt", "-s", "-w", dir).CombinedOutput()
 	if err != nil {
 		log.Printf("Failed formatting package: %s", err)
 	}
-	log.Printf("Format package output: %s", string(fmtOut))
 }
