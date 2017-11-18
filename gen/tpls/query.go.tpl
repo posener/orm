@@ -1,4 +1,4 @@
-package {{.PackageName}}
+package {{.Package}}
 
 import (
 	"database/sql"
@@ -7,11 +7,13 @@ import (
 	"{{.Type.ImportPath}}"
 )
 
+// String returns the SQL query string
 func (q *Query) String() string {
 	return "SELECT " + q.sel.String() + " FROM {{.Table}} " + q.where.String()
 }
 
-func (q *Query) Exec(db *sql.DB) ([]example.Person, error) {
+// Exec runs the Query on a given database.
+func (q *Query) Exec(db *sql.DB) ([]{{.Type.FullName}}, error) {
 	// create select statement
 	stmt := q.String()
 	args := q.where.Args()

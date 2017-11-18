@@ -1,4 +1,4 @@
-package personorm
+package {{.Package}}
 
 import (
 	"database/sql"

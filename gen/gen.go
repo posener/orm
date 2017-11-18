@@ -26,7 +26,7 @@ type TplProps struct {
 	// Table is the table name of the given struct
 	Table string
 	// The name	of the new created package
-	PackageName string
+	Package string
 	// Type describes the type of the given struct to generate code for
 	Type Type
 }
@@ -78,9 +78,9 @@ func Gen(pkg *types.Package, st *types.Struct, name string) error {
 	}
 
 	props := TplProps{
-		Table:       strings.ToLower(name),
-		Type:        NewType(name, pkg, st),
-		PackageName: ormPkgName,
+		Table:   strings.ToLower(name),
+		Type:    NewType(name, pkg, st),
+		Package: ormPkgName,
 	}
 	log.Printf("Template configuration: %+v", props)
 

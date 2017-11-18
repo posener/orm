@@ -3,14 +3,17 @@ package personorm
 
 import "github.com/posener/orm/example"
 
+// Name Add Name to the selected column of a query
 func (s Select) Name() Select {
 	return append(s, "name")
 }
+
+// Age Add Age to the selected column of a query
 func (s Select) Age() Select {
 	return append(s, "age")
 }
 
-// ScanArgs are list of fields to be given to the sql Scan command
+// scanArgs are list of fields to be given to the sql Scan command
 func (s Select) scanArgs(p *example.Person) []interface{} {
 	if len(s) == 0 {
 		// add to args all the fields of p
