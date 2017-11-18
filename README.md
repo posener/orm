@@ -26,14 +26,32 @@ orm -h
 The concept of this tool is to generate typed functions for a given Go struct.
 
 ## Example:
+
 Running the orm command on the `Person` struct in the `example` package, will create a `personorm` package, with
 ORM functions for the given struct.
 
-By doing so, and having a database engine, `db`, one could create a table in the database
-for the `Person` struct:
+By doing so, and having a database engine, `db`, one could do database operations with
+ORM semantics.
+
+Notice that all operations are typed, `Age` is `int`, `Name` is `string`, the `example.Person`
+is used in the arguments and in the return values.
+
+Create table:
 
 ```go
 err = personorm.Create(db)
+```
+
+Insert rows:
+
+```go
+err = personorm.NewInsert().Name("John").Age(1).Exec(db)
+```
+
+Or with a struct:
+
+```go
+personorm.NewInsert().Person(&example.Person{Name: "zvika", Age: 3}).Exec(db)
 ```
 
 Select rows from the DB:
@@ -41,4 +59,5 @@ Select rows from the DB:
 ```go
 q := personorm.NewQuery().Where(porm.WhereName(where.OpNe, "John")),
 ps, err := q.Exec(db) // returns []example.Person, typed return value.
+println(ps[0].Name) // Output: "John"
 ```
