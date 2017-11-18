@@ -4,8 +4,8 @@ package example
 
 // All is to test generation of variant fields and types
 type All struct {
-	Int        int    `sql:primary_key`
-	Text       string `sql:"type:VARCHAR(100)"`
+	Int        int    `sql:"primary key"`
+	Text       string `sql:"type:VARCHAR(100);not null"`
 	Bool       bool
 	unexported int
 }

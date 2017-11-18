@@ -38,6 +38,26 @@ func NewType(name string, pkg *types.Package, st *types.Struct) Type {
 	}
 }
 
+func (t Type) Table() string {
+	return strings.ToLower(t.Name)
+}
+
+// SQLCreateString returns the SQL CREATE statement for the type
+func (t Type) CreateString() string {
+	var args []string
+	var primaryKeys []string
+	for _, f := range t.Fields {
+		args = append(args, f.CreateString())
+		if f.SQL.PrimaryKey {
+			primaryKeys = append(primaryKeys, f.ColumnName)
+		}
+	}
+	if len(primaryKeys) > 0 {
+		args = append(args, fmt.Sprintf("PRIMARY KEY (%s)", strings.Join(primaryKeys, ",")))
+	}
+	return fmt.Sprintf("CREATE TABLE %s ( %s )", t.Table(), strings.Join(args, ", "))
+}
+
 // FullName is the full type of the imported type, as used in a go code
 // outside the defining package. For example: "example.Person"
 func (t Type) FullName() string {
@@ -59,6 +79,14 @@ type Field struct {
 	ColumnName string
 	// SQL is the SQL properties of the field
 	SQL Tags
+}
+
+func (f Field) CreateString() string {
+	s := fmt.Sprintf("%s %s", f.ColumnName, f.SQL.Type)
+	if f.SQL.NotNull {
+		s += " NOT NULL"
+	}
+	return s
 }
 
 func collectFields(s *types.Struct) []Field {

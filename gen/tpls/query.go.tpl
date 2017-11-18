@@ -9,7 +9,7 @@ import (
 
 // String returns the SQL query string
 func (q *TQuery) String() string {
-	return "SELECT " + q.sel.String() + " FROM {{.Table}} " + q.where.String()
+	return "SELECT " + q.sel.String() + " FROM {{.Type.Table}} " + q.where.String()
 }
 
 // Exec runs the Query on a given database.
