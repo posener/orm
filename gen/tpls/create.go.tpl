@@ -6,7 +6,9 @@ func (c TCreate) String() string {
     // Create statement has a line for each variable with it's name and it's type.
 	return `CREATE TABLE {{.Table}} (
 	{{- range $i, $f := .Type.Fields }}
-		{{$f.ColumnName}} {{$f.ColumnSQLType}}{{if lt (plus1 $i) $n}},{{end}}
+		{{$f.ColumnName}} {{$f.SQL.Type}}
+		{{- if $f.SQL.PrimaryKey }} PRIMARY KEY{{ end }}
+		{{- if lt (plus1 $i) $n }},{{ end }}
     {{- end }}
 	)`
 }

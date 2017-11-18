@@ -4,8 +4,8 @@ package allorm
 func (c TCreate) String() string {
 	// Create statement has a line for each variable with it's name and it's type.
 	return `CREATE TABLE all (
+		int INT PRIMARY KEY,
 		text VARCHAR(100),
-		int INT,
 		bool BOOLEAN
 	)`
 }

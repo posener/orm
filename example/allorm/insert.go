@@ -17,18 +17,18 @@ func (i TInsert) String() string {
 
 func (i TInsert) All(p *example.All) TInsert {
 	var j = i
-	j = j.add("text", p.Text)
 	j = j.add("int", p.Int)
+	j = j.add("text", p.Text)
 	j = j.add("bool", p.Bool)
 	return j
 }
 
-func (i TInsert) Text(value string) TInsert {
-	return i.add("text", value)
-}
-
 func (i TInsert) Int(value int) TInsert {
 	return i.add("int", value)
+}
+
+func (i TInsert) Text(value string) TInsert {
+	return i.add("text", value)
 }
 
 func (i TInsert) Bool(value bool) TInsert {

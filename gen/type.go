@@ -55,10 +55,10 @@ func (t Type) Package() string {
 // Field is a struct that represents type's field
 type Field struct {
 	Name       string
-	ColumnName string
 	Type       string
-	// ColumnSQLType is the SQL type of the field
-	ColumnSQLType string
+	ColumnName string
+	// SQL is the SQL properties of the field
+	SQL Tags
 }
 
 func collectFields(s *types.Struct) []Field {
@@ -70,19 +70,18 @@ func collectFields(s *types.Struct) []Field {
 		}
 		varType := v.Type().String()
 		tags := ParseTags(s.Tag(i))
-		sqlType := tags.Type
-		if sqlType == "" {
-			sqlType = defaultSQLTypes[varType]
+		if tags.Type == "" {
+			tags.Type = defaultSQLTypes[varType]
 		}
-		if sqlType == "" {
+		if tags.Type == "" {
 			log.Fatalf("Unsupported field type: %s", varType)
 		}
-		log.Printf("Field '%s' of type '%s' has SQL type '%s'", v.Name(), varType, sqlType)
+		log.Printf("Field '%s(%s)': '%+v'", v.Name(), varType, tags)
 		f = append(f, Field{
-			Name:          v.Name(),
-			ColumnName:    strings.ToLower(v.Name()),
-			Type:          varType,
-			ColumnSQLType: sqlType,
+			Name:       v.Name(),
+			Type:       varType,
+			ColumnName: strings.ToLower(v.Name()),
+			SQL:        tags,
 		})
 	}
 	return f

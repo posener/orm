@@ -4,8 +4,10 @@ import "strings"
 
 // Tags hold the SQL tags for a field in a struct
 type Tags struct {
-	// Type matches the 'sql.type' tag
+	// Type matches the 'sql.type' tag: the SQL type of the field
 	Type string
+	// PrimaryKey matches the 'sql.primary_key' tag: the field is the primary key of the struct
+	PrimaryKey bool
 }
 
 // ParseTags parses tags from a struct tags into a Tags struct.
@@ -21,6 +23,8 @@ func ParseTags(tag string) Tags {
 		switch key {
 		case "type":
 			t.Type = value
+		case "primary_key":
+			t.PrimaryKey = true
 		}
 	}
 

@@ -3,14 +3,14 @@ package allorm
 
 import "github.com/posener/orm/example"
 
-// Text Add Text to the selected column of a query
-func (s TSelect) Text() TSelect {
-	return append(s, "text")
-}
-
 // Int Add Int to the selected column of a query
 func (s TSelect) Int() TSelect {
 	return append(s, "int")
+}
+
+// Text Add Text to the selected column of a query
+func (s TSelect) Text() TSelect {
+	return append(s, "text")
 }
 
 // Bool Add Bool to the selected column of a query
@@ -23,8 +23,8 @@ func (s TSelect) scanArgs(p *example.All) []interface{} {
 	if len(s) == 0 {
 		// add to args all the fields of p
 		return []interface{}{
-			&p.Text,
 			&p.Int,
+			&p.Text,
 			&p.Bool,
 		}
 	}
@@ -35,11 +35,11 @@ func (s TSelect) scanArgs(p *example.All) []interface{} {
 		m[col] = i + 1
 	}
 	args := make([]interface{}, len(s))
-	if i := m["text"]; i != 0 {
-		args[i-1] = &p.Text
-	}
 	if i := m["int"]; i != 0 {
 		args[i-1] = &p.Int
+	}
+	if i := m["text"]; i != 0 {
+		args[i-1] = &p.Text
 	}
 	if i := m["bool"]; i != 0 {
 		args[i-1] = &p.Bool
