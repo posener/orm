@@ -5,25 +5,15 @@
 [![GoDoc](https://godoc.org/github.com/posener/orm?status.svg)](http://godoc.org/github.com/posener/orm)
 [![Go Report Card](https://goreportcard.com/badge/github.com/posener/orm)](https://goreportcard.com/report/github.com/posener/orm)
 
-An attempt to build a *typed* ORM package in Go
+An proof of concept for a Go **typed** ORM package.
 
-This is a PROOF OF CONCEPT
+> This is a PROOF OF CONCEPT
 
-Very very (very) limited implementations, and plenty of TODOs :-)
+> Very very (very) limited implementations, and plenty of TODOs :-)
 
-## Install:
-
-```bash
-go get -u github.com/posener/orm
-```
-
-## Usage
-
-```bash
-orm -h
-```
-
-The concept of this tool is to generate typed functions for a given Go struct.
+This repository gives a command line tool, called `orm`, for generating
+ORM code for a given struct. The generated code is typed and has no `interface{}`s arguments
+and return values as in other ORM Go libraries.
 
 ## Example:
 
@@ -37,9 +27,14 @@ Notice that all operations are typed, `Age` is `int`, `Name` is `string`, the `e
 is used in the arguments and in the return values.
 
 ```go
-import porm "package/personorm"
+import porm (
+	"database/sql"
+	"package/personorm"
+)
 
 func main() {
+    db, err := sql.Open(...)
+
     // Create table:
     err = porm.Create().Exec(db)
 
@@ -50,10 +45,38 @@ func main() {
     porm.Insert().Person(&example.Person{Name: "Doug", Age: 3}).Exec(db)
 
     // Select rows from the DB:
-    q := porm.Query().
+    ps, err := porm.Query().
         Select(porm.Select().Name()).
-        Where(porm.WhereName(porm.OpNe, "John"))
-    ps, err := q.Exec(db) // returns []example.Person, typed return value.
+        Where(porm.WhereName(porm.OpNe, "John")).
+        Exec(db) // returns []example.Person, typed return value.
+
     println(ps[0].Name) // Output: "John"
+}
+```
+
+## Command Line Tool
+
+### Install:
+
+```bash
+go get -u github.com/posener/orm
+```
+
+### Usage
+
+Run `orm -h` to get detailed usage information.
+
+Simple use case is to run `orm -pkg mypackage -name MyStruct`.
+
+#### go generate
+
+By adding the comment aside to the type deceleration, as shown below, one could run `go generate ./...`
+to generate the ORM files for `MyType`.
+
+```go
+//go:generate orm -name MyType
+
+type MyType struct {
+	...
 }
 ```
