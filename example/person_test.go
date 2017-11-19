@@ -9,6 +9,7 @@ import (
 	"github.com/posener/orm/example"
 	porm "github.com/posener/orm/example/personorm"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -124,38 +125,50 @@ func TestPersonSelect(t *testing.T) {
 
 func TestPersonCRUD(t *testing.T) {
 	db, err := sql.Open("sqlite3", ":memory:")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.Nil(t, err)
 	defer db.Close()
+
 	prepare(t, db)
 	ps, err := porm.Query().Exec(db)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.Nil(t, err)
 	assert.Equal(t, []example.Person{p1, p2, p3}, ps)
-	porm.Delete().Where(porm.WhereName(porm.OpEq, "moshe")).Exec(db)
+
+	// Test delete
+	delete := porm.Delete().Where(porm.WhereName(porm.OpEq, "moshe"))
+	err = delete.Exec(db)
+	require.Nil(t, err)
+	assertRowsAffected(t, 1, delete.Result)
 	ps, err = porm.Query().Exec(db)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(t, []example.Person{p2, p3}, ps)
 	ps, err = porm.Query().Where(porm.WhereName(porm.OpEq, "moshe")).Exec(db)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.Nil(t, err)
 	assert.Equal(t, []example.Person(nil), ps)
+
+	// Test Update
+	update := porm.Update().SetName("Jonney").Where(porm.WhereName(porm.OpEq, "zvika"))
+	err = update.Exec(db)
+	require.Nil(t, err)
+	assertRowsAffected(t, 1, update.Result)
+
+	ps, err = porm.Query().Where(porm.WhereName(porm.OpEq, "Jonney")).Exec(db)
+	require.Nil(t, err)
+	assert.Equal(t, []example.Person{{Name: "Jonney", Age: 3}}, ps)
 }
 
 func prepare(t *testing.T, db porm.SQLExecer) {
 	err := porm.Create().Exec(db)
-	if err != nil {
-		t.Fatalf("Failed creating table: %s", err)
-	}
+	require.Nil(t, err)
 	for _, p := range []example.Person{p1, p2, p3} {
 		err = porm.InsertPerson(&p).Exec(db)
-		if err != nil {
-			t.Fatalf("Failed inserting: %s", err)
-		}
+		require.Nil(t, err, "Failed inserting")
 	}
+}
+
+func assertRowsAffected(t *testing.T, wantRows int64, result sql.Result) {
+	gotRows, err := result.RowsAffected()
+	require.Nil(t, err)
+	assert.Equal(t, wantRows, gotRows)
 }
