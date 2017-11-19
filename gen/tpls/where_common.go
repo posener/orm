@@ -2,7 +2,6 @@ package tpls
 
 import (
 	"fmt"
-	"log"
 	"strings"
 )
 
@@ -14,35 +13,25 @@ type Where struct {
 
 // newWhere returns a new WHERE statement
 func newWhere(op Op, variable string, value interface{}) *Where {
-	switch op {
-	case OpEq, OpNe, OpGt, OpGE, OpLt, OpLE, OpLike:
-	default:
-		log.Panicf("Operation %s is not defined for one value", op)
-	}
 	var w Where
 	w.stmt = append(w.stmt, fmt.Sprintf("%s %s ?", variable, op))
 	w.args = append(w.args, value)
 	return &w
 }
 
-// newMulWhere returns a new WHERE statement for SQL operations with more than one
-// value, such as 'IN' and 'BETWEEN'.
-func newMulWhere(op Op, variable string, values ...interface{}) *Where {
+// newWhereIn returns a new 'WHERE variable IN (...)' statement
+func newWhereIn(variable string, values ...interface{}) *Where {
 	var w Where
-	switch op {
-	case OpBetween:
-		if len(values) != 2 {
-			log.Panicf("Operation %s accepts only 2 values, got %d values", op, len(values))
-		}
-		w.stmt = append(w.stmt, fmt.Sprintf("%s %s ? AND ?", variable, op))
-	case OpIn:
-		if len(values) > 0 {
-			w.stmt = append(w.stmt, fmt.Sprintf("%s %s (%s)", variable, op, qMarks(len(values))))
-		}
-	default:
-		log.Panicf("Operation %s does not support multiple values", op)
-	}
+	w.stmt = append(w.stmt, fmt.Sprintf("%s IN (%s)", variable, qMarks(len(values))))
 	w.args = append(w.args, values...)
+	return &w
+}
+
+// newWhereBetween returns a new 'WHERE variable BETWEEN low AND high' statement
+func newWhereBetween(variable string, low, high interface{}) *Where {
+	var w Where
+	w.stmt = append(w.stmt, fmt.Sprintf("%s BETWEEN ? AND ?", variable))
+	w.args = append(w.args, low, high)
 	return &w
 }
 

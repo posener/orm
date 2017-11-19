@@ -12,12 +12,12 @@ func WhereIntIn(vals ...int) *Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return newMulWhere(OpIn, "int", args...)
+	return newWhereIn("int", args...)
 }
 
 // WhereIntBetween adds a BETWEEN condition on Int to the WHERE statement
 func WhereIntBetween(low, high int) *Where {
-	return newMulWhere(OpBetween, "int", low, high)
+	return newWhereBetween("int", low, high)
 }
 
 // WhereText adds a condition on Text to the WHERE statement
@@ -31,12 +31,12 @@ func WhereTextIn(vals ...string) *Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return newMulWhere(OpIn, "text", args...)
+	return newWhereIn("text", args...)
 }
 
 // WhereTextBetween adds a BETWEEN condition on Text to the WHERE statement
 func WhereTextBetween(low, high string) *Where {
-	return newMulWhere(OpBetween, "text", low, high)
+	return newWhereBetween("text", low, high)
 }
 
 // WhereBool adds a condition on Bool to the WHERE statement
@@ -50,10 +50,10 @@ func WhereBoolIn(vals ...bool) *Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return newMulWhere(OpIn, "bool", args...)
+	return newWhereIn("bool", args...)
 }
 
 // WhereBoolBetween adds a BETWEEN condition on Bool to the WHERE statement
 func WhereBoolBetween(low, high bool) *Where {
-	return newMulWhere(OpBetween, "bool", low, high)
+	return newWhereBetween("bool", low, high)
 }

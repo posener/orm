@@ -34,6 +34,7 @@ import (
 
 func main() {
     db, err := sql.Open(...)
+    defer db.Close()
 
     // Create table:
     err = porm.Create().Exec(db)

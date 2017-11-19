@@ -12,12 +12,12 @@ func WhereNameIn(vals ...string) *Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return newMulWhere(OpIn, "name", args...)
+	return newWhereIn("name", args...)
 }
 
 // WhereNameBetween adds a BETWEEN condition on Name to the WHERE statement
 func WhereNameBetween(low, high string) *Where {
-	return newMulWhere(OpBetween, "name", low, high)
+	return newWhereBetween("name", low, high)
 }
 
 // WhereAge adds a condition on Age to the WHERE statement
@@ -31,10 +31,10 @@ func WhereAgeIn(vals ...int) *Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return newMulWhere(OpIn, "age", args...)
+	return newWhereIn("age", args...)
 }
 
 // WhereAgeBetween adds a BETWEEN condition on Age to the WHERE statement
 func WhereAgeBetween(low, high int) *Where {
-	return newMulWhere(OpBetween, "age", low, high)
+	return newWhereBetween("age", low, high)
 }
