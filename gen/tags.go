@@ -51,14 +51,19 @@ func getSqlField(tag string) string {
 
 func fields(s string) []string {
 	var (
-		fields []string
-		quoted = false
-		begin  = -1
+		fields  []string
+		quoted  = false
+		escaped = false
+		begin   = -1
 	)
 	for i := range s {
 		switch s[i] {
 		case '"':
-			quoted = !quoted
+			if !escaped {
+				quoted = !quoted
+			}
+		case '\\':
+			escaped = !escaped
 		case ' ':
 			// if quoted, do not split
 			if quoted {
@@ -69,6 +74,8 @@ func fields(s string) []string {
 				fields = append(fields, s[begin+1:i])
 			}
 			begin = i
+		default:
+			escaped = false // if the last character was not escaped, we are no longer escaped
 		}
 	}
 	if len(s) > begin+1 {
