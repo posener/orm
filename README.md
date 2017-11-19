@@ -52,6 +52,9 @@ func main() {
         Exec(db) // returns []example.Person, typed return value.
 
     println(ps[0].Age) // Output: 1
+    
+    // Delete
+    porm.Delete().Where(porm.WhereName(porm.Eq, "John")).Exec(db)
 }
 ```
 

@@ -11,33 +11,36 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var (
+	p1 = example.Person{Name: "moshe", Age: 1}
+	p2 = example.Person{Name: "haim", Age: 2}
+	p3 = example.Person{Name: "zvika", Age: 3}
+)
+
 func TestPersonSelect(t *testing.T) {
 	db, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {
 		panic(err)
 	}
+	defer db.Close()
 
 	err = porm.Create().Exec(db)
 	if err != nil {
 		t.Fatalf("Failed creating table: %s", err)
 	}
 
-	err = porm.Insert().SetName("moshe").SetAge(1).Exec(db)
+	err = porm.Insert().SetName(p1.Name).SetAge(p1.Age).Exec(db)
 	if err != nil {
 		t.Fatalf("Failed inserting: %s", err)
 	}
-	err = porm.Insert().SetName("haim").SetAge(2).Exec(db)
+	err = porm.Insert().SetName(p2.Name).SetAge(p2.Age).Exec(db)
 	if err != nil {
 		t.Fatalf("Failed inserting: %s", err)
 	}
-	err = porm.InsertPerson(&example.Person{Name: "zvika", Age: 3}).Exec(db)
+	err = porm.InsertPerson(&p3).Exec(db)
 	if err != nil {
 		t.Fatalf("Failed inserting: %s", err)
 	}
-
-	p1 := example.Person{Name: "moshe", Age: 1}
-	p2 := example.Person{Name: "haim", Age: 2}
-	p3 := example.Person{Name: "zvika", Age: 3}
 
 	tests := []struct {
 		q    *porm.Select
@@ -116,5 +119,43 @@ func TestPersonSelect(t *testing.T) {
 			}
 			assert.Equal(t, tt.want, p)
 		})
+	}
+}
+
+func TestPersonCRUD(t *testing.T) {
+	db, err := sql.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	prepare(t, db)
+	ps, err := porm.Query().Exec(db)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, []example.Person{p1, p2, p3}, ps)
+	porm.Delete().Where(porm.WhereName(porm.OpEq, "moshe")).Exec(db)
+	ps, err = porm.Query().Exec(db)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, []example.Person{p2, p3}, ps)
+	ps, err = porm.Query().Where(porm.WhereName(porm.OpEq, "moshe")).Exec(db)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, []example.Person(nil), ps)
+}
+
+func prepare(t *testing.T, db porm.SQLExecer) {
+	err := porm.Create().Exec(db)
+	if err != nil {
+		t.Fatalf("Failed creating table: %s", err)
+	}
+	for _, p := range []example.Person{p1, p2, p3} {
+		err = porm.InsertPerson(&p).Exec(db)
+		if err != nil {
+			t.Fatalf("Failed inserting: %s", err)
+		}
 	}
 }
