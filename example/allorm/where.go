@@ -2,12 +2,12 @@
 package allorm
 
 // WhereInt adds a condition on Int to the WHERE statement
-func WhereInt(op Op, val int) Where {
+func WhereInt(op Op, val int) *Where {
 	return newWhere(op, "int", val)
 }
 
 // WhereIntIn adds an IN condition on Int to the WHERE statement
-func WhereIntIn(vals ...int) Where {
+func WhereIntIn(vals ...int) *Where {
 	args := make([]interface{}, len(vals))
 	for i := range vals {
 		args[i] = vals[i]
@@ -16,17 +16,17 @@ func WhereIntIn(vals ...int) Where {
 }
 
 // WhereIntBetween adds a BETWEEN condition on Int to the WHERE statement
-func WhereIntBetween(low, high int) Where {
+func WhereIntBetween(low, high int) *Where {
 	return newMulWhere(OpBetween, "int", low, high)
 }
 
 // WhereText adds a condition on Text to the WHERE statement
-func WhereText(op Op, val string) Where {
+func WhereText(op Op, val string) *Where {
 	return newWhere(op, "text", val)
 }
 
 // WhereTextIn adds an IN condition on Text to the WHERE statement
-func WhereTextIn(vals ...string) Where {
+func WhereTextIn(vals ...string) *Where {
 	args := make([]interface{}, len(vals))
 	for i := range vals {
 		args[i] = vals[i]
@@ -35,17 +35,17 @@ func WhereTextIn(vals ...string) Where {
 }
 
 // WhereTextBetween adds a BETWEEN condition on Text to the WHERE statement
-func WhereTextBetween(low, high string) Where {
+func WhereTextBetween(low, high string) *Where {
 	return newMulWhere(OpBetween, "text", low, high)
 }
 
 // WhereBool adds a condition on Bool to the WHERE statement
-func WhereBool(op Op, val bool) Where {
+func WhereBool(op Op, val bool) *Where {
 	return newWhere(op, "bool", val)
 }
 
 // WhereBoolIn adds an IN condition on Bool to the WHERE statement
-func WhereBoolIn(vals ...bool) Where {
+func WhereBoolIn(vals ...bool) *Where {
 	args := make([]interface{}, len(vals))
 	for i := range vals {
 		args[i] = vals[i]
@@ -54,6 +54,6 @@ func WhereBoolIn(vals ...bool) Where {
 }
 
 // WhereBoolBetween adds a BETWEEN condition on Bool to the WHERE statement
-func WhereBoolBetween(low, high bool) Where {
+func WhereBoolBetween(low, high bool) *Where {
 	return newMulWhere(OpBetween, "bool", low, high)
 }

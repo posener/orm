@@ -8,24 +8,24 @@ import (
 	"github.com/posener/orm/example"
 )
 
-func (i TInsert) String() string {
+func (i *TInsert) String() string {
 	return fmt.Sprintf(`INSERT INTO person (%s) VALUES (%s)`,
 		strings.Join(i.cols, ", "),
 		qMarks(len(i.values)),
 	)
 }
 
-func (i TInsert) Person(p *example.Person) TInsert {
-	var j = i
-	j = j.add("name", p.Name)
-	j = j.add("age", p.Age)
-	return j
+func InsertPerson(p *example.Person) *TInsert {
+	var i TInsert
+	i.add("name", p.Name)
+	i.add("age", p.Age)
+	return &i
 }
 
-func (i TInsert) Name(value string) TInsert {
+func (i *TInsert) SetName(value string) *TInsert {
 	return i.add("name", value)
 }
 
-func (i TInsert) Age(value int) TInsert {
+func (i *TInsert) SetAge(value int) *TInsert {
 	return i.add("age", value)
 }

@@ -2,12 +2,12 @@
 package personorm
 
 // WhereName adds a condition on Name to the WHERE statement
-func WhereName(op Op, val string) Where {
+func WhereName(op Op, val string) *Where {
 	return newWhere(op, "name", val)
 }
 
 // WhereNameIn adds an IN condition on Name to the WHERE statement
-func WhereNameIn(vals ...string) Where {
+func WhereNameIn(vals ...string) *Where {
 	args := make([]interface{}, len(vals))
 	for i := range vals {
 		args[i] = vals[i]
@@ -16,17 +16,17 @@ func WhereNameIn(vals ...string) Where {
 }
 
 // WhereNameBetween adds a BETWEEN condition on Name to the WHERE statement
-func WhereNameBetween(low, high string) Where {
+func WhereNameBetween(low, high string) *Where {
 	return newMulWhere(OpBetween, "name", low, high)
 }
 
 // WhereAge adds a condition on Age to the WHERE statement
-func WhereAge(op Op, val int) Where {
+func WhereAge(op Op, val int) *Where {
 	return newWhere(op, "age", val)
 }
 
 // WhereAgeIn adds an IN condition on Age to the WHERE statement
-func WhereAgeIn(vals ...int) Where {
+func WhereAgeIn(vals ...int) *Where {
 	args := make([]interface{}, len(vals))
 	for i := range vals {
 		args[i] = vals[i]
@@ -35,6 +35,6 @@ func WhereAgeIn(vals ...int) Where {
 }
 
 // WhereAgeBetween adds a BETWEEN condition on Age to the WHERE statement
-func WhereAgeBetween(low, high int) Where {
+func WhereAgeBetween(low, high int) *Where {
 	return newMulWhere(OpBetween, "age", low, high)
 }

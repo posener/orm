@@ -22,15 +22,15 @@ func TestPersonSelect(t *testing.T) {
 		t.Fatalf("Failed creating table: %s", err)
 	}
 
-	err = porm.Insert().Name("moshe").Age(1).Exec(db)
+	err = porm.Insert().SetName("moshe").SetAge(1).Exec(db)
 	if err != nil {
 		t.Fatalf("Failed inserting: %s", err)
 	}
-	err = porm.Insert().Name("haim").Age(2).Exec(db)
+	err = porm.Insert().SetName("haim").SetAge(2).Exec(db)
 	if err != nil {
 		t.Fatalf("Failed inserting: %s", err)
 	}
-	err = porm.Insert().Person(&example.Person{Name: "zvika", Age: 3}).Exec(db)
+	err = porm.InsertPerson(&example.Person{Name: "zvika", Age: 3}).Exec(db)
 	if err != nil {
 		t.Fatalf("Failed inserting: %s", err)
 	}
@@ -40,7 +40,7 @@ func TestPersonSelect(t *testing.T) {
 	p3 := example.Person{Name: "zvika", Age: 3}
 
 	tests := []struct {
-		q    porm.TQuery
+		q    *porm.Select
 		want []example.Person
 	}{
 		{
@@ -48,19 +48,19 @@ func TestPersonSelect(t *testing.T) {
 			want: []example.Person{p1, p2, p3},
 		},
 		{
-			q:    porm.Query().Select(porm.Select().Name()),
+			q:    porm.Query().SelectName(),
 			want: []example.Person{{Name: "moshe"}, {Name: "haim"}, {Name: "zvika"}},
 		},
 		{
-			q:    porm.Query().Select(porm.Select().Age()),
+			q:    porm.Query().SelectAge(),
 			want: []example.Person{{Age: 1}, {Age: 2}, {Age: 3}},
 		},
 		{
-			q:    porm.Query().Select(porm.Select().Age().Name()),
+			q:    porm.Query().SelectAge().SelectName(),
 			want: []example.Person{p1, p2, p3},
 		},
 		{
-			q:    porm.Query().Select(porm.Select().Name().Age()),
+			q:    porm.Query().SelectName().SelectAge(),
 			want: []example.Person{p1, p2, p3},
 		},
 		{

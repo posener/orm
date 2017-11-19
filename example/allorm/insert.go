@@ -8,29 +8,29 @@ import (
 	"github.com/posener/orm/example"
 )
 
-func (i TInsert) String() string {
+func (i *TInsert) String() string {
 	return fmt.Sprintf(`INSERT INTO all (%s) VALUES (%s)`,
 		strings.Join(i.cols, ", "),
 		qMarks(len(i.values)),
 	)
 }
 
-func (i TInsert) All(p *example.All) TInsert {
-	var j = i
-	j = j.add("int", p.Int)
-	j = j.add("text", p.Text)
-	j = j.add("bool", p.Bool)
-	return j
+func InsertAll(p *example.All) *TInsert {
+	var i TInsert
+	i.add("int", p.Int)
+	i.add("text", p.Text)
+	i.add("bool", p.Bool)
+	return &i
 }
 
-func (i TInsert) Int(value int) TInsert {
+func (i *TInsert) SetInt(value int) *TInsert {
 	return i.add("int", value)
 }
 
-func (i TInsert) Text(value string) TInsert {
+func (i *TInsert) SetText(value string) *TInsert {
 	return i.add("text", value)
 }
 
-func (i TInsert) Bool(value bool) TInsert {
+func (i *TInsert) SetBool(value bool) *TInsert {
 	return i.add("bool", value)
 }

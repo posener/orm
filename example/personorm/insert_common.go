@@ -15,12 +15,12 @@ type TInsert struct {
 }
 
 // Insert returns a new INSERT statement
-func Insert() TInsert {
-	return TInsert{}
+func Insert() *TInsert {
+	return &TInsert{}
 }
 
 // Exec inserts the data to the given database
-func (i TInsert) Exec(db *sql.DB) error {
+func (i *TInsert) Exec(db *sql.DB) error {
 	if len(i.cols) == 0 || len(i.values) == 0 {
 		return fmt.Errorf("nothing to insert")
 	}
@@ -31,7 +31,7 @@ func (i TInsert) Exec(db *sql.DB) error {
 	return err
 }
 
-func (i TInsert) add(name string, value interface{}) TInsert {
+func (i *TInsert) add(name string, value interface{}) *TInsert {
 	i.cols = append(i.cols, name)
 	i.values = append(i.values, value)
 	return i

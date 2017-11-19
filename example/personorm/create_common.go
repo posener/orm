@@ -13,12 +13,12 @@ type TCreate struct {
 }
 
 // Create returns a struct for a CREATE statement
-func Create() TCreate {
-	return TCreate{}
+func Create() *TCreate {
+	return &TCreate{}
 }
 
 // Exec creates a table for the given struct
-func (c TCreate) Exec(db *sql.DB) error {
+func (c *TCreate) Exec(db *sql.DB) error {
 	stmt := c.String()
 	log.Printf("Create: '%v'", stmt)
 	_, err := db.Exec(stmt)

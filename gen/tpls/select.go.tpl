@@ -1,17 +1,52 @@
 package {{.Package}}
 
-import "{{.Type.ImportPath}}"
+import (
+	"database/sql"
+	"log"
+
+    "{{.Type.ImportPath}}"
+)
+
+// String returns the SQL query string
+func (s *Select) String() string {
+	return "SELECT " + s.selectString() + " FROM {{.Type.Table}} " + s.where.String()
+}
+
+// Exec runs the Query on a given database.
+func (s *Select) Exec(db *sql.DB) ([]{{.Type.FullName}}, error) {
+	// create select statement
+	stmt := s.String()
+	args := s.where.Args()
+	log.Printf("Query: '%v' %v", stmt, args)
+	rows, err := db.Query(stmt, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// extract rows to structures
+	var all []{{.Type.FullName}}
+	for rows.Next() {
+		var i {{.Type.FullName}}
+		if err := rows.Scan(s.scanArgs(&i)...); err != nil {
+			return nil, err
+		}
+		all = append(all, i)
+	}
+	return all, rows.Err()
+}
 
 {{ range $_, $f := .Type.Fields -}}
-// {{$f.Name}} Add {{$f.Name}} to the selected column of a query
-func (s TSelect) {{$f.Name}}() TSelect {
-    return append(s, "{{$f.ColumnName}}")
+// Select{{$f.Name}} Add {{$f.Name}} to the selected column of a query
+func (s *Select) Select{{$f.Name}}() *Select {
+    s.columns = append(s.columns, "{{$f.ColumnName}}")
+    return s
 }
 {{ end -}}
 
 // scanArgs are list of fields to be given to the sql Scan command
-func (s TSelect) scanArgs(p *{{.Type.FullName}}) []interface{} {
-	if len(s) == 0 {
+func (s *Select) scanArgs(p *{{.Type.FullName}}) []interface{} {
+	if len(s.columns) == 0 {
         // add to args all the fields of p
         return []interface{}{
             {{ range $_, $f := .Type.Fields -}}
@@ -19,13 +54,8 @@ func (s TSelect) scanArgs(p *{{.Type.FullName}}) []interface{} {
             {{ end }}
         }
 	}
-
-    // select was given, choose only some fields
-	m := make(map[string]int, len(s))
-    for i, col := range s {
-        m[col] = i + 1
-    }
-	args := make([]interface{}, len(s))
+	m := s.columnsMap()
+	args := make([]interface{}, len(s.columns))
 	{{ range $_, $f := .Type.Fields -}}
 	if i := m["{{$f.ColumnName}}"]; i != 0 {
 		args[i-1] = &p.{{$f.Name}}

@@ -27,9 +27,9 @@ Notice that all operations are typed, `Age` is `int`, `Name` is `string`, the `e
 is used in the arguments and in the return values.
 
 ```go
-import porm (
+import (
 	"database/sql"
-	"package/personorm"
+	porm "package/personorm"
 )
 
 func main() {
@@ -39,18 +39,18 @@ func main() {
     err = porm.Create().Exec(db)
 
     // Insert rows:
-    err = porm.Insert().Name("John").Age(1).Exec(db)
+    err = porm.Insert().SetName("John").SetAge(1).Exec(db)
 
     // Or with a struct:
-    porm.Insert().Person(&example.Person{Name: "Doug", Age: 3}).Exec(db)
+    porm.InsertPerson(&example.Person{Name: "Doug", Age: 3}).Exec(db)
 
     // Select rows from the DB:
     ps, err := porm.Query().
-        Select(porm.Select().Name()).
+    	SelectAge().
         Where(porm.WhereName(porm.OpNe, "John")).
         Exec(db) // returns []example.Person, typed return value.
 
-    println(ps[0].Name) // Output: "John"
+    println(ps[0].Age) // Output: 1
 }
 ```
 
