@@ -2,7 +2,6 @@
 package personorm
 
 import (
-	"database/sql"
 	"log"
 
 	"github.com/posener/orm/example"
@@ -14,7 +13,7 @@ func (s *Select) String() string {
 }
 
 // Exec runs the Query on a given database.
-func (s *Select) Exec(db *sql.DB) ([]example.Person, error) {
+func (s *Select) Exec(db SQLQuerier) ([]example.Person, error) {
 	// create select statement
 	stmt := s.String()
 	args := s.where.Args()

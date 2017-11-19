@@ -1,7 +1,6 @@
 package tpls
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 )
@@ -19,7 +18,7 @@ func Insert() *TInsert {
 }
 
 // Exec inserts the data to the given database
-func (i *TInsert) Exec(db *sql.DB) error {
+func (i *TInsert) Exec(db SQLExecer) error {
 	if len(i.cols) == 0 || len(i.values) == 0 {
 		return fmt.Errorf("nothing to insert")
 	}

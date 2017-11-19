@@ -1,7 +1,6 @@
 package {{.Package}}
 
 import (
-	"database/sql"
 	"log"
 
     "{{.Type.ImportPath}}"
@@ -13,7 +12,7 @@ func (s *Select) String() string {
 }
 
 // Exec runs the Query on a given database.
-func (s *Select) Exec(db *sql.DB) ([]{{.Type.FullName}}, error) {
+func (s *Select) Exec(db SQLQuerier) ([]{{.Type.FullName}}, error) {
 	// create select statement
 	stmt := s.String()
 	args := s.where.Args()

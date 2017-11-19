@@ -2,7 +2,6 @@
 package personorm
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 )
@@ -18,7 +17,7 @@ func Create() *TCreate {
 }
 
 // Exec creates a table for the given struct
-func (c *TCreate) Exec(db *sql.DB) error {
+func (c *TCreate) Exec(db SQLExecer) error {
 	stmt := c.String()
 	log.Printf("Create: '%v'", stmt)
 	_, err := db.Exec(stmt)
