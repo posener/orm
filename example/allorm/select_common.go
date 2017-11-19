@@ -12,11 +12,25 @@ func Query() *Select {
 type Select struct {
 	columns []string
 	where   *Where
+	page    Page
 }
 
 // Where applies where conditions on the query
-func (s *Select) Where(w *Where) *Select {
-	s.where = w
+func (s *Select) Where(where *Where) *Select {
+	s.where = where
+	return s
+}
+
+// Limit applies rows limit on the query response
+func (s *Select) Limit(limit int64) *Select {
+	s.page.limit = limit
+	return s
+}
+
+// Page applies rows offset and limit on the query response
+func (s *Select) Page(offset, limit int64) *Select {
+	s.page.offset = offset
+	s.page.limit = limit
 	return s
 }
 

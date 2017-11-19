@@ -110,6 +110,14 @@ func TestPersonSelect(t *testing.T) {
 			q:    porm.Query().Where(porm.WhereAgeBetween(0, 2)),
 			want: []example.Person{p1, p2},
 		},
+		{
+			q:    porm.Query().Limit(2),
+			want: []example.Person{p1, p2},
+		},
+		{
+			q:    porm.Query().Page(1, 1),
+			want: []example.Person{p2},
+		},
 	}
 
 	for _, tt := range tests {

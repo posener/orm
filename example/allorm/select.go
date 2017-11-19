@@ -3,13 +3,19 @@ package allorm
 
 import (
 	"log"
+	"strings"
 
 	"github.com/posener/orm/example"
 )
 
 // String returns the SQL query string
 func (s *Select) String() string {
-	return "SELECT " + s.selectString() + " FROM all " + s.where.String()
+	return strings.Join([]string{
+		"SELECT", s.selectString(), "FROM all",
+		s.where.String(),
+		s.page.String(),
+	}, " ")
+
 }
 
 // Exec runs the Query on a given database.
