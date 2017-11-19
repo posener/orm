@@ -1,6 +1,7 @@
 package tpls
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 )
@@ -14,6 +15,7 @@ func Delete() *TDelete {
 type TDelete struct {
 	fmt.Stringer
 	where *Where
+	sql.Result
 }
 
 // Where applies where conditions on the query
@@ -28,6 +30,7 @@ func (d *TDelete) Exec(db SQLExecer) error {
 	stmt := d.String()
 	args := d.where.Args()
 	log.Printf("Delete: '%v' %v", stmt, args)
-	_, err := db.Exec(stmt, args...)
+	result, err := db.Exec(stmt, args...)
+	d.Result = result
 	return err
 }

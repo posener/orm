@@ -2,6 +2,7 @@
 package personorm
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 )
@@ -9,6 +10,7 @@ import (
 // TCreate is a struct that holds data for the CREATE statement
 type TCreate struct {
 	fmt.Stringer
+	sql.Result
 }
 
 // Create returns a struct for a CREATE statement
@@ -20,6 +22,7 @@ func Create() *TCreate {
 func (c *TCreate) Exec(db SQLExecer) error {
 	stmt := c.String()
 	log.Printf("Create: '%v'", stmt)
-	_, err := db.Exec(stmt)
+	result, err := db.Exec(stmt)
+	c.Result = result
 	return err
 }

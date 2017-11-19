@@ -1,6 +1,7 @@
 package tpls
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 )
@@ -10,6 +11,7 @@ type TInsert struct {
 	fmt.Stringer
 	cols   []string
 	values []interface{}
+	sql.Result
 }
 
 // Insert returns a new INSERT statement
@@ -25,7 +27,8 @@ func (i *TInsert) Exec(db SQLExecer) error {
 
 	stmt := i.String()
 	log.Printf("Insert: '%v' (%v)", stmt, i.values)
-	_, err := db.Exec(stmt, i.values...)
+	result, err := db.Exec(stmt, i.values...)
+	i.Result = result
 	return err
 }
 
