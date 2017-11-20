@@ -15,12 +15,12 @@ func (i *TInsert) String() string {
 	)
 }
 
-func InsertAll(p *example.All) *TInsert {
-	var i TInsert
+func (o *ORM) InsertAll(p *example.All) *TInsert {
+	i := o.Insert()
 	i.add("int", p.Int)
 	i.add("string", p.String)
 	i.add("bool", p.Bool)
-	return &i
+	return i
 }
 
 func (i *TInsert) SetInt(value int) *TInsert {

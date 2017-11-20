@@ -9,25 +9,21 @@ import (
 
 // TInsert is a struct to hold information for an INSERT statement
 type TInsert struct {
+	db DB
 	fmt.Stringer
 	cols   []string
 	values []interface{}
 }
 
-// Insert returns a new INSERT statement
-func Insert() *TInsert {
-	return &TInsert{}
-}
-
 // Exec inserts the data to the given database
-func (i *TInsert) Exec(db SQLExecer) (sql.Result, error) {
+func (i *TInsert) Exec() (sql.Result, error) {
 	if len(i.cols) == 0 || len(i.values) == 0 {
 		return nil, fmt.Errorf("nothing to insert")
 	}
 
 	stmt := i.String()
 	log.Printf("Insert: '%v' (%v)", stmt, i.values)
-	return db.Exec(stmt, i.values...)
+	return i.db.Exec(stmt, i.values...)
 }
 
 func (i *TInsert) add(name string, value interface{}) *TInsert {

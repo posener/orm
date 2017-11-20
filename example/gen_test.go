@@ -8,8 +8,9 @@ import (
 )
 
 func TestCreate(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t,
 		`CREATE TABLE all ( int BIGINT PRIMARY KEY, string VARCHAR(100) NOT NULL, bool BOOLEAN )`,
-		allorm.Create().String(),
+		new(allorm.ORM).Create().String(),
 	)
 }

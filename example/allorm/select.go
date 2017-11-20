@@ -19,12 +19,12 @@ func (s *Select) String() string {
 }
 
 // Exec runs the Query on a given database.
-func (s *Select) Exec(db SQLQuerier) ([]example.All, error) {
+func (s *Select) Exec() ([]example.All, error) {
 	// create select statement
 	stmt := s.String()
 	args := s.where.Args()
 	log.Printf("Query: '%v' %v", stmt, args)
-	rows, err := db.Query(stmt, args...)
+	rows, err := s.db.Query(stmt, args...)
 	if err != nil {
 		return nil, err
 	}

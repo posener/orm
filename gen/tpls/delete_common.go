@@ -6,13 +6,9 @@ import (
 	"log"
 )
 
-// Delete returns an object for a DELETE statement
-func Delete() *TDelete {
-	return &TDelete{}
-}
-
 // Select is the struct that holds the SELECT data
 type TDelete struct {
+	db DB
 	fmt.Stringer
 	where *Where
 }
@@ -24,10 +20,10 @@ func (d *TDelete) Where(w *Where) *TDelete {
 }
 
 // Exec runs the delete statement on a given database.
-func (d *TDelete) Exec(db SQLExecer) (sql.Result, error) {
+func (d *TDelete) Exec() (sql.Result, error) {
 	// create select statement
 	stmt := d.String()
 	args := d.where.Args()
 	log.Printf("Delete: '%v' %v", stmt, args)
-	return db.Exec(stmt, args...)
+	return d.db.Exec(stmt, args...)
 }

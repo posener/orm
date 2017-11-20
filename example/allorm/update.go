@@ -14,12 +14,12 @@ func (u *TUpdate) String() string {
 	)
 }
 
-func UpdateAll(p *example.All) *TUpdate {
-	var u TUpdate
+func (o *ORM) UpdateAll(p *example.All) *TUpdate {
+	u := o.Update()
 	u.add("int", p.Int)
 	u.add("string", p.String)
 	u.add("bool", p.Bool)
-	return &u
+	return u
 }
 
 func (u *TUpdate) SetInt(value int) *TUpdate {

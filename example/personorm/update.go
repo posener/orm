@@ -14,11 +14,11 @@ func (u *TUpdate) String() string {
 	)
 }
 
-func UpdatePerson(p *example.Person) *TUpdate {
-	var u TUpdate
+func (o *ORM) UpdatePerson(p *example.Person) *TUpdate {
+	u := o.Update()
 	u.add("name", p.Name)
 	u.add("age", p.Age)
-	return &u
+	return u
 }
 
 func (u *TUpdate) SetName(value string) *TUpdate {

@@ -13,12 +13,12 @@ func (u *TUpdate) String() string {
 	)
 }
 
-func Update{{.Type.Name}}(p *{{.Type.FullName}}) *TUpdate {
-	var u TUpdate
+func (o *ORM) Update{{.Type.Name}}(p *{{.Type.FullName}}) *TUpdate {
+	u := o.Update()
 	{{- range $_, $f := .Type.Fields}}
 	u.add("{{$f.ColumnName}}", p.{{$f.Name}})
 	{{- end}}
-	return &u
+	return u
 }
 
 {{range $_, $f := .Type.Fields}}

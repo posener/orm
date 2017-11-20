@@ -3,13 +3,9 @@ package personorm
 
 import "strings"
 
-// Query returns an object to create a SELECT statement
-func Query() *Select {
-	return &Select{}
-}
-
 // Select is the struct that holds the SELECT data
 type Select struct {
+	db      DB
 	columns []string
 	where   *Where
 	page    Page

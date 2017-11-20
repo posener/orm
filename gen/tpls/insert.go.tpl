@@ -14,12 +14,12 @@ func (i *TInsert) String() string {
 	)
 }
 
-func Insert{{.Type.Name}}(p *{{.Type.FullName}}) *TInsert {
-	var i TInsert
+func (o *ORM) Insert{{.Type.Name}}(p *{{.Type.FullName}}) *TInsert {
+	i := o.Insert()
 	{{- range $_, $f := .Type.Fields}}
 	i.add("{{$f.ColumnName}}", p.{{$f.Name}})
 	{{- end}}
-	return &i
+	return i
 }
 
 {{range $_, $f := .Type.Fields}}

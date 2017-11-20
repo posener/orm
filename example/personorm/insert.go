@@ -15,11 +15,11 @@ func (i *TInsert) String() string {
 	)
 }
 
-func InsertPerson(p *example.Person) *TInsert {
-	var i TInsert
+func (o *ORM) InsertPerson(p *example.Person) *TInsert {
+	i := o.Insert()
 	i.add("name", p.Name)
 	i.add("age", p.Age)
-	return &i
+	return i
 }
 
 func (i *TInsert) SetName(value string) *TInsert {

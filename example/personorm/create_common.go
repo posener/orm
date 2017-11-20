@@ -9,20 +9,13 @@ import (
 
 // TCreate is a struct that holds data for the CREATE statement
 type TCreate struct {
+	db DB
 	fmt.Stringer
-	sql.Result
-}
-
-// Create returns a struct for a CREATE statement
-func Create() *TCreate {
-	return &TCreate{}
 }
 
 // Exec creates a table for the given struct
-func (c *TCreate) Exec(db SQLExecer) error {
+func (c *TCreate) Exec() (sql.Result, error) {
 	stmt := c.String()
 	log.Printf("Create: '%v'", stmt)
-	result, err := db.Exec(stmt)
-	c.Result = result
-	return err
+	return c.db.Exec(stmt)
 }
