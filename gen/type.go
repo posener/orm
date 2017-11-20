@@ -8,15 +8,6 @@ import (
 	"strings"
 )
 
-const tagSQLType = "sql"
-
-var defaultSQLTypes = map[string]string{
-	"string": "VARCHAR(255)",
-	"int":    "INT",
-	"bool":   "BOOLEAN",
-	"float":  "REAL",
-}
-
 // Type describes the type of the given struct to generate code for
 type Type struct {
 	// ImportPath is the import path of the package of the given struct.

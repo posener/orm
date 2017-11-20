@@ -4,6 +4,15 @@ import (
 	"github.com/posener/orm/tags"
 )
 
+const tagSQLType = "sql"
+
+var defaultSQLTypes = map[string]string{
+	"string": "VARCHAR(255)",
+	"int":    "INT",
+	"bool":   "BOOLEAN",
+	"float":  "REAL",
+}
+
 // Tags hold the SQL tags for a field in a struct
 type Tags struct {
 	// Type matches the 'sql.type' tag: the SQL type of the field
