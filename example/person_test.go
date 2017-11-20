@@ -30,18 +30,15 @@ func TestPersonSelect(t *testing.T) {
 		t.Fatalf("Failed creating table: %s", err)
 	}
 
-	err = porm.Insert().SetName(p1.Name).SetAge(p1.Age).Exec(db)
-	if err != nil {
-		t.Fatalf("Failed inserting: %s", err)
-	}
-	err = porm.Insert().SetName(p2.Name).SetAge(p2.Age).Exec(db)
-	if err != nil {
-		t.Fatalf("Failed inserting: %s", err)
-	}
-	err = porm.InsertPerson(&p3).Exec(db)
-	if err != nil {
-		t.Fatalf("Failed inserting: %s", err)
-	}
+	res, err := porm.Insert().SetName(p1.Name).SetAge(p1.Age).Exec(db)
+	require.Nil(t, err, "Failed inserting")
+	assertRowsAffected(t, 1, res)
+	res, err = porm.Insert().SetName(p2.Name).SetAge(p2.Age).Exec(db)
+	require.Nil(t, err, "Failed inserting")
+	assertRowsAffected(t, 1, res)
+	res, err = porm.InsertPerson(&p3).Exec(db)
+	require.Nil(t, err, "Failed inserting")
+	assertRowsAffected(t, 1, res)
 
 	tests := []struct {
 		q    *porm.Select
@@ -143,9 +140,9 @@ func TestPersonCRUD(t *testing.T) {
 
 	// Test delete
 	delete := porm.Delete().Where(porm.WhereName(porm.OpEq, "moshe"))
-	err = delete.Exec(db)
+	res, err := delete.Exec(db)
 	require.Nil(t, err)
-	assertRowsAffected(t, 1, delete.Result)
+	assertRowsAffected(t, 1, res)
 	ps, err = porm.Query().Exec(db)
 	if err != nil {
 		t.Fatal(err)
@@ -157,9 +154,9 @@ func TestPersonCRUD(t *testing.T) {
 
 	// Test Update
 	update := porm.Update().SetName("Jonney").Where(porm.WhereName(porm.OpEq, "zvika"))
-	err = update.Exec(db)
+	res, err = update.Exec(db)
 	require.Nil(t, err)
-	assertRowsAffected(t, 1, update.Result)
+	assertRowsAffected(t, 1, res)
 
 	ps, err = porm.Query().Where(porm.WhereName(porm.OpEq, "Jonney")).Exec(db)
 	require.Nil(t, err)
@@ -170,8 +167,9 @@ func prepare(t *testing.T, db porm.SQLExecer) {
 	err := porm.Create().Exec(db)
 	require.Nil(t, err)
 	for _, p := range []example.Person{p1, p2, p3} {
-		err = porm.InsertPerson(&p).Exec(db)
+		res, err := porm.InsertPerson(&p).Exec(db)
 		require.Nil(t, err, "Failed inserting")
+		assertRowsAffected(t, 1, res)
 	}
 }
 

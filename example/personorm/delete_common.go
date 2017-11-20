@@ -16,7 +16,6 @@ func Delete() *TDelete {
 type TDelete struct {
 	fmt.Stringer
 	where *Where
-	sql.Result
 }
 
 // Where applies where conditions on the query
@@ -26,12 +25,10 @@ func (d *TDelete) Where(w *Where) *TDelete {
 }
 
 // Exec runs the delete statement on a given database.
-func (d *TDelete) Exec(db SQLExecer) error {
+func (d *TDelete) Exec(db SQLExecer) (sql.Result, error) {
 	// create select statement
 	stmt := d.String()
 	args := d.where.Args()
 	log.Printf("Delete: '%v' %v", stmt, args)
-	result, err := db.Exec(stmt, args...)
-	d.Result = result
-	return err
+	return db.Exec(stmt, args...)
 }

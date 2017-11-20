@@ -11,7 +11,6 @@ type TInsert struct {
 	fmt.Stringer
 	cols   []string
 	values []interface{}
-	sql.Result
 }
 
 // Insert returns a new INSERT statement
@@ -20,16 +19,14 @@ func Insert() *TInsert {
 }
 
 // Exec inserts the data to the given database
-func (i *TInsert) Exec(db SQLExecer) error {
+func (i *TInsert) Exec(db SQLExecer) (sql.Result, error) {
 	if len(i.cols) == 0 || len(i.values) == 0 {
-		return fmt.Errorf("nothing to insert")
+		return nil, fmt.Errorf("nothing to insert")
 	}
 
 	stmt := i.String()
 	log.Printf("Insert: '%v' (%v)", stmt, i.values)
-	result, err := db.Exec(stmt, i.values...)
-	i.Result = result
-	return err
+	return db.Exec(stmt, i.values...)
 }
 
 func (i *TInsert) add(name string, value interface{}) *TInsert {

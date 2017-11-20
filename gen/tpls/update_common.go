@@ -11,7 +11,6 @@ import (
 type TUpdate struct {
 	TInsert
 	where Where
-	sql.Result
 }
 
 // Insert returns a new INSERT statement
@@ -25,16 +24,14 @@ func (u *TUpdate) Where(where *Where) *TUpdate {
 }
 
 // Exec inserts the data to the given database
-func (u *TUpdate) Exec(db SQLExecer) error {
+func (u *TUpdate) Exec(db SQLExecer) (sql.Result, error) {
 	if len(u.cols) == 0 || len(u.values) == 0 {
-		return fmt.Errorf("nothing to update")
+		return nil, fmt.Errorf("nothing to update")
 	}
 
 	stmt := u.String()
 	log.Printf("Update: '%v' (%v)", stmt, u.values)
-	result, err := db.Exec(stmt, append(u.values, u.where.args...)...)
-	u.Result = result
-	return err
+	return db.Exec(stmt, append(u.values, u.where.args...)...)
 }
 
 func (u *TUpdate) add(name string, value interface{}) *TUpdate {
