@@ -19,6 +19,7 @@ func (s *TSelect) String() string {
         "SELECT", s.columns.String(), "FROM {{.Type.Table}}",
         s.where.String(),
         s.groupBy.String(),
+        s.orderBy.String(),
         s.page.String(),
     }, " ")
 
@@ -77,6 +78,12 @@ func (s *TSelect) Count() ([]{{.Type.Name}}Count, error) {
 // Select{{$f.Name}} Add {{$f.Name}} to the selected column of a query
 func (s *TSelect) Select{{$f.Name}}() *TSelect {
     s.columns.add("{{$f.ColumnName}}")
+    return s
+}
+
+// OrderBy{{$f.Name}} set order to the query results according to column {{$f.ColumnName}}
+func (s *TSelect) OrderBy{{$f.Name}}(dir OrderDir) *TSelect {
+    s.orderBy.add("{{$f.ColumnName}}", dir)
     return s
 }
 

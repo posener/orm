@@ -20,6 +20,7 @@ func (s *TSelect) String() string {
 		"SELECT", s.columns.String(), "FROM person",
 		s.where.String(),
 		s.groupBy.String(),
+		s.orderBy.String(),
 		s.page.String(),
 	}, " ")
 
@@ -80,6 +81,12 @@ func (s *TSelect) SelectName() *TSelect {
 	return s
 }
 
+// OrderByName set order to the query results according to column name
+func (s *TSelect) OrderByName(dir OrderDir) *TSelect {
+	s.orderBy.add("name", dir)
+	return s
+}
+
 // GroupByName make the query group by column name
 func (s *TSelect) GroupByName() *TSelect {
 	s.groupBy.add("name")
@@ -89,6 +96,12 @@ func (s *TSelect) GroupByName() *TSelect {
 // SelectAge Add Age to the selected column of a query
 func (s *TSelect) SelectAge() *TSelect {
 	s.columns.add("age")
+	return s
+}
+
+// OrderByAge set order to the query results according to column age
+func (s *TSelect) OrderByAge(dir OrderDir) *TSelect {
+	s.orderBy.add("age", dir)
 	return s
 }
 

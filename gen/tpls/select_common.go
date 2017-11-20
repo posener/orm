@@ -7,6 +7,7 @@ type TSelect struct {
 	columns
 	where *Where
 	groupBy
+	orderBy
 	page Page
 }
 

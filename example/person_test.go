@@ -223,6 +223,14 @@ func TestCount(t *testing.T) {
 				{Person: example.Person{Age: 12}, Count: 5},
 			},
 		},
+		{
+			q: orm.Select().SelectAge().GroupByAge().Where(porm.WhereAgeIn(1, 3, 12)).OrderByAge(porm.Desc),
+			want: []porm.PersonCount{
+				{Person: example.Person{Age: 12}, Count: 5},
+				{Person: example.Person{Age: 3}, Count: 5},
+				{Person: example.Person{Age: 1}, Count: 5},
+			},
+		},
 	}
 
 	for _, tt := range tests {

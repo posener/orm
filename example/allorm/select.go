@@ -20,6 +20,7 @@ func (s *TSelect) String() string {
 		"SELECT", s.columns.String(), "FROM all",
 		s.where.String(),
 		s.groupBy.String(),
+		s.orderBy.String(),
 		s.page.String(),
 	}, " ")
 
@@ -80,6 +81,12 @@ func (s *TSelect) SelectInt() *TSelect {
 	return s
 }
 
+// OrderByInt set order to the query results according to column int
+func (s *TSelect) OrderByInt(dir OrderDir) *TSelect {
+	s.orderBy.add("int", dir)
+	return s
+}
+
 // GroupByInt make the query group by column int
 func (s *TSelect) GroupByInt() *TSelect {
 	s.groupBy.add("int")
@@ -92,6 +99,12 @@ func (s *TSelect) SelectString() *TSelect {
 	return s
 }
 
+// OrderByString set order to the query results according to column string
+func (s *TSelect) OrderByString(dir OrderDir) *TSelect {
+	s.orderBy.add("string", dir)
+	return s
+}
+
 // GroupByString make the query group by column string
 func (s *TSelect) GroupByString() *TSelect {
 	s.groupBy.add("string")
@@ -101,6 +114,12 @@ func (s *TSelect) GroupByString() *TSelect {
 // SelectBool Add Bool to the selected column of a query
 func (s *TSelect) SelectBool() *TSelect {
 	s.columns.add("bool")
+	return s
+}
+
+// OrderByBool set order to the query results according to column bool
+func (s *TSelect) OrderByBool(dir OrderDir) *TSelect {
+	s.orderBy.add("bool", dir)
 	return s
 }
 
