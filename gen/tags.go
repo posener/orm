@@ -1,7 +1,7 @@
 package gen
 
 import (
-	"strings"
+	"github.com/posener/orm/tags"
 )
 
 // Tags hold the SQL tags for a field in a struct
@@ -21,9 +21,8 @@ func ParseTags(tag string) Tags {
 		return t
 	}
 
-	sqlField := getSqlField(tag)
-	for _, part := range strings.Split(sqlField, ";") {
-		key, value := split(part)
+	tagsMap := tags.Parse(tag)
+	for key, value := range tagsMap[tagSQLType] {
 		switch key {
 		case "type":
 			t.Type = value
@@ -35,62 +34,4 @@ func ParseTags(tag string) Tags {
 	}
 
 	return t
-}
-
-func getSqlField(tag string) string {
-	parts := fields(tag)
-	for _, part := range parts {
-		key, val := split(part)
-		if key != tagSQLType {
-			continue
-		}
-		return strings.Trim(val, `"`)
-	}
-	return ""
-}
-
-func fields(s string) []string {
-	var (
-		fields  []string
-		quoted  = false
-		escaped = false
-		begin   = -1
-	)
-	for i := range s {
-		switch s[i] {
-		case '"':
-			if !escaped {
-				quoted = !quoted
-			}
-		case '\\':
-			escaped = !escaped
-		case ' ':
-			// if quoted, do not split
-			if quoted {
-				continue
-			}
-			// double space
-			if i > begin+1 {
-				fields = append(fields, s[begin+1:i])
-			}
-			begin = i
-		default:
-			escaped = false // if the last character was not escaped, we are no longer escaped
-		}
-	}
-	if len(s) > begin+1 {
-		fields = append(fields, s[begin+1:])
-	}
-	return fields
-}
-
-// split splits key:value to a (key, value)
-func split(joined string) (string, string) {
-	parts := strings.SplitN(joined, ":", 2)
-	key := parts[0]
-	value := ""
-	if len(parts) == 2 {
-		value = parts[1]
-	}
-	return key, value
 }
