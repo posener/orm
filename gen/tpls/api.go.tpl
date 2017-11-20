@@ -23,3 +23,8 @@ type Querier interface {
     Query() ([]{{.Type.FullName}}, error)
 }
 
+// Counter is the interface for a SELECT SQL statement for counting purposes
+type Counter interface {
+    fmt.Stringer
+    Count() ([]{{.Type.Name}}Count, error)
+}

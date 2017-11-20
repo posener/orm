@@ -7,6 +7,13 @@ import (
 	"github.com/posener/orm/example"
 )
 
+const colCount = "COUNT(*)"
+
+type PersonCount struct {
+	example.Person
+	Count int64
+}
+
 // String returns the SQL query string
 func (s *TSelect) String() string {
 	return strings.Join([]string{
@@ -17,7 +24,7 @@ func (s *TSelect) String() string {
 
 }
 
-// Exec runs the Query on a given database.
+// Query the database
 func (s *TSelect) Query() ([]example.Person, error) {
 	// create select statement
 	stmt := s.String()
@@ -32,29 +39,54 @@ func (s *TSelect) Query() ([]example.Person, error) {
 	// extract rows to structures
 	var all []example.Person
 	for rows.Next() {
-		var i example.Person
-		if err := rows.Scan(s.scanArgs(&i)...); err != nil {
+		var item PersonCount
+		if err := rows.Scan(s.scanArgs(&item)...); err != nil {
 			return nil, err
 		}
-		all = append(all, i)
+		all = append(all, item.Person)
+	}
+	return all, rows.Err()
+}
+
+// Count add a count column to the query
+func (s *TSelect) Count() ([]PersonCount, error) {
+	s.add(colCount)
+	// create select statement
+	stmt := s.String()
+	args := s.where.Args()
+	s.orm.log("Count: '%v' %v", stmt, args)
+	rows, err := s.orm.db.Query(stmt, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// extract rows to structures
+	var all []PersonCount
+	for rows.Next() {
+		var item PersonCount
+		if err := rows.Scan(s.scanArgs(&item)...); err != nil {
+			return nil, err
+		}
+		all = append(all, item)
 	}
 	return all, rows.Err()
 }
 
 // SelectName Add Name to the selected column of a query
 func (s *TSelect) SelectName() *TSelect {
-	s.columns = append(s.columns, "name")
+	s = s.add("name")
 	return s
 }
 
 // SelectAge Add Age to the selected column of a query
 func (s *TSelect) SelectAge() *TSelect {
-	s.columns = append(s.columns, "age")
+	s = s.add("age")
 	return s
 }
 
 // scanArgs are list of fields to be given to the sql Scan command
-func (s *TSelect) scanArgs(p *example.Person) []interface{} {
+func (s *TSelect) scanArgs(p *PersonCount) []interface{} {
 	if len(s.columns) == 0 {
 		// add to args all the fields of p
 		return []interface{}{
@@ -69,6 +101,9 @@ func (s *TSelect) scanArgs(p *example.Person) []interface{} {
 	}
 	if i := m["age"]; i != 0 {
 		args[i-1] = &p.Age
+	}
+	if i := m[colCount]; i != 0 {
+		args[i-1] = &p.Count
 	}
 	return args
 }

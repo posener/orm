@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"testing"
 
+	"fmt"
+
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm/example"
 	porm "github.com/posener/orm/example/personorm"
@@ -19,6 +21,7 @@ var (
 )
 
 func TestPersonSelect(t *testing.T) {
+	t.Parallel()
 	db, err := sql.Open("sqlite3", ":memory:")
 	require.Nil(t, err)
 	defer db.Close()
@@ -130,14 +133,23 @@ func TestPersonSelect(t *testing.T) {
 	}
 }
 
-func TestPersonCRUD(t *testing.T) {
+func TestSimpleCRUD(t *testing.T) {
+	t.Parallel()
 	db, err := sql.Open("sqlite3", ":memory:")
 	require.Nil(t, err)
 	defer db.Close()
 
 	orm := porm.New(db)
 
-	prepare(t, orm)
+	// perpare dataset
+	_, err = orm.Create().Exec()
+	require.Nil(t, err)
+	for _, p := range []example.Person{p1, p2, p3} {
+		res, err := orm.InsertPerson(&p).Exec()
+		require.Nil(t, err, "Failed inserting")
+		assertRowsAffected(t, 1, res)
+	}
+
 	ps, err := orm.Select().Query()
 	require.Nil(t, err)
 	assert.Equal(t, []example.Person{p1, p2, p3}, ps)
@@ -167,14 +179,54 @@ func TestPersonCRUD(t *testing.T) {
 	assert.Equal(t, []example.Person{{Name: "Jonney", Age: 3}}, ps)
 }
 
-func prepare(t *testing.T, orm porm.API) {
-	_, err := orm.Create().Exec()
+func TestCount(t *testing.T) {
+	t.Parallel()
+	db, err := sql.Open("sqlite3", ":memory:")
 	require.Nil(t, err)
-	for _, p := range []example.Person{p1, p2, p3} {
-		res, err := orm.InsertPerson(&p).Exec()
+	defer db.Close()
+
+	orm := porm.New(db)
+	if testing.Verbose() {
+		orm.Logger(t.Logf)
+	}
+
+	// perpare dataset
+	_, err = orm.Create().Exec()
+	require.Nil(t, err)
+	for i := 0; i < 100; i++ {
+		res, err := orm.InsertPerson(&example.Person{Name: fmt.Sprintf("Jim %d", i), Age: i}).Exec()
 		require.Nil(t, err, "Failed inserting")
 		assertRowsAffected(t, 1, res)
 	}
+
+	tests := []struct {
+		q    porm.Counter
+		want []porm.PersonCount
+	}{
+		{
+			q:    orm.Select(),
+			want: []porm.PersonCount{{Count: 100}},
+		},
+		{
+			q:    orm.Select().Where(porm.WhereAge(porm.OpLt, 50)),
+			want: []porm.PersonCount{{Count: 50}},
+		},
+		{
+			q:    orm.Select().SelectName().Where(porm.WhereAge(porm.OpLt, 50)),
+			want: []porm.PersonCount{{Person: example.Person{Name: "Jim 49"}, Count: 50}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.q.String(), func(t *testing.T) {
+			got, err := tt.q.Count()
+			if err != nil {
+				t.Error(err)
+			}
+			assert.Equal(t, tt.want, got)
+		})
+	}
+
 }
 
 func assertRowsAffected(t *testing.T, wantRows int64, result sql.Result) {

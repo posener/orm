@@ -23,3 +23,9 @@ type Querier interface {
 	fmt.Stringer
 	Query() ([]example.Person, error)
 }
+
+// Counter is the interface for a SELECT SQL statement for counting purposes
+type Counter interface {
+	fmt.Stringer
+	Count() ([]PersonCount, error)
+}

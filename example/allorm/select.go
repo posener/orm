@@ -7,6 +7,13 @@ import (
 	"github.com/posener/orm/example"
 )
 
+const colCount = "COUNT(*)"
+
+type AllCount struct {
+	example.All
+	Count int64
+}
+
 // String returns the SQL query string
 func (s *TSelect) String() string {
 	return strings.Join([]string{
@@ -17,7 +24,7 @@ func (s *TSelect) String() string {
 
 }
 
-// Exec runs the Query on a given database.
+// Query the database
 func (s *TSelect) Query() ([]example.All, error) {
 	// create select statement
 	stmt := s.String()
@@ -32,35 +39,60 @@ func (s *TSelect) Query() ([]example.All, error) {
 	// extract rows to structures
 	var all []example.All
 	for rows.Next() {
-		var i example.All
-		if err := rows.Scan(s.scanArgs(&i)...); err != nil {
+		var item AllCount
+		if err := rows.Scan(s.scanArgs(&item)...); err != nil {
 			return nil, err
 		}
-		all = append(all, i)
+		all = append(all, item.All)
+	}
+	return all, rows.Err()
+}
+
+// Count add a count column to the query
+func (s *TSelect) Count() ([]AllCount, error) {
+	s.add(colCount)
+	// create select statement
+	stmt := s.String()
+	args := s.where.Args()
+	s.orm.log("Count: '%v' %v", stmt, args)
+	rows, err := s.orm.db.Query(stmt, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// extract rows to structures
+	var all []AllCount
+	for rows.Next() {
+		var item AllCount
+		if err := rows.Scan(s.scanArgs(&item)...); err != nil {
+			return nil, err
+		}
+		all = append(all, item)
 	}
 	return all, rows.Err()
 }
 
 // SelectInt Add Int to the selected column of a query
 func (s *TSelect) SelectInt() *TSelect {
-	s.columns = append(s.columns, "int")
+	s = s.add("int")
 	return s
 }
 
 // SelectString Add String to the selected column of a query
 func (s *TSelect) SelectString() *TSelect {
-	s.columns = append(s.columns, "string")
+	s = s.add("string")
 	return s
 }
 
 // SelectBool Add Bool to the selected column of a query
 func (s *TSelect) SelectBool() *TSelect {
-	s.columns = append(s.columns, "bool")
+	s = s.add("bool")
 	return s
 }
 
 // scanArgs are list of fields to be given to the sql Scan command
-func (s *TSelect) scanArgs(p *example.All) []interface{} {
+func (s *TSelect) scanArgs(p *AllCount) []interface{} {
 	if len(s.columns) == 0 {
 		// add to args all the fields of p
 		return []interface{}{
@@ -79,6 +111,9 @@ func (s *TSelect) scanArgs(p *example.All) []interface{} {
 	}
 	if i := m["bool"]; i != 0 {
 		args[i-1] = &p.Bool
+	}
+	if i := m[colCount]; i != 0 {
+		args[i-1] = &p.Count
 	}
 	return args
 }

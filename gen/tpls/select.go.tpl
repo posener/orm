@@ -6,6 +6,13 @@ import (
     "{{.Type.ImportPath}}"
 )
 
+const colCount = "COUNT(*)"
+
+type {{.Type.Name}}Count struct {
+    {{.Type.FullName}}
+    Count int64
+}
+
 // String returns the SQL query string
 func (s *TSelect) String() string {
     return strings.Join([]string{
@@ -16,7 +23,7 @@ func (s *TSelect) String() string {
 
 }
 
-// Exec runs the Query on a given database.
+// Query the database
 func (s *TSelect) Query() ([]{{.Type.FullName}}, error) {
 	// create select statement
 	stmt := s.String()
@@ -31,11 +38,36 @@ func (s *TSelect) Query() ([]{{.Type.FullName}}, error) {
 	// extract rows to structures
 	var all []{{.Type.FullName}}
 	for rows.Next() {
-		var i {{.Type.FullName}}
-		if err := rows.Scan(s.scanArgs(&i)...); err != nil {
+		var item {{.Type.Name}}Count
+		if err := rows.Scan(s.scanArgs(&item)...); err != nil {
 			return nil, err
 		}
-		all = append(all, i)
+		all = append(all, item.{{.Type.Name}})
+	}
+	return all, rows.Err()
+}
+
+// Count add a count column to the query
+func (s *TSelect) Count() ([]{{.Type.Name}}Count, error) {
+    s.add(colCount)
+	// create select statement
+	stmt := s.String()
+	args := s.where.Args()
+	s.orm.log("Count: '%v' %v", stmt, args)
+	rows, err := s.orm.db.Query(stmt, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// extract rows to structures
+	var all []{{.Type.Name}}Count
+	for rows.Next() {
+		var item {{.Type.Name}}Count
+		if err := rows.Scan(s.scanArgs(&item)...); err != nil {
+			return nil, err
+		}
+		all = append(all, item)
 	}
 	return all, rows.Err()
 }
@@ -43,13 +75,13 @@ func (s *TSelect) Query() ([]{{.Type.FullName}}, error) {
 {{ range $_, $f := .Type.Fields -}}
 // Select{{$f.Name}} Add {{$f.Name}} to the selected column of a query
 func (s *TSelect) Select{{$f.Name}}() *TSelect {
-    s.columns = append(s.columns, "{{$f.ColumnName}}")
+    s = s.add("{{$f.ColumnName}}")
     return s
 }
 {{ end -}}
 
 // scanArgs are list of fields to be given to the sql Scan command
-func (s *TSelect) scanArgs(p *{{.Type.FullName}}) []interface{} {
+func (s *TSelect) scanArgs(p *{{.Type.Name}}Count) []interface{} {
 	if len(s.columns) == 0 {
         // add to args all the fields of p
         return []interface{}{
@@ -65,5 +97,8 @@ func (s *TSelect) scanArgs(p *{{.Type.FullName}}) []interface{} {
 		args[i-1] = &p.{{$f.Name}}
 	}
 	{{ end -}}
+	if i := m[colCount]; i != 0 {
+        args[i-1] = &p.Count
+    }
 	return args
 }
