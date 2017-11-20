@@ -1,7 +1,6 @@
 package {{.Package}}
 
 import (
-	"log"
 	"strings"
 
     "{{.Type.ImportPath}}"
@@ -22,8 +21,8 @@ func (s *TSelect) Query() ([]{{.Type.FullName}}, error) {
 	// create select statement
 	stmt := s.String()
 	args := s.where.Args()
-	log.Printf("Query: '%v' %v", stmt, args)
-	rows, err := s.db.Query(stmt, args...)
+	s.orm.log("Query: '%v' %v", stmt, args)
+	rows, err := s.orm.db.Query(stmt, args...)
 	if err != nil {
 		return nil, err
 	}

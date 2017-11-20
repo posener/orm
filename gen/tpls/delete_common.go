@@ -2,14 +2,12 @@ package tpls
 
 import (
 	"database/sql"
-	"fmt"
-	"log"
 )
 
 // Select is the struct that holds the SELECT data
 type TDelete struct {
-	db DB
-	fmt.Stringer
+	Execer
+	orm   *ORM
 	where *Where
 }
 
@@ -24,6 +22,6 @@ func (d *TDelete) Exec() (sql.Result, error) {
 	// create select statement
 	stmt := d.String()
 	args := d.where.Args()
-	log.Printf("Delete: '%v' %v", stmt, args)
-	return d.db.Exec(stmt, args...)
+	d.orm.log("Delete: '%v' %v", stmt, args)
+	return d.orm.db.Exec(stmt, args...)
 }

@@ -3,13 +3,12 @@ package tpls
 import (
 	"database/sql"
 	"fmt"
-	"log"
 )
 
 // TInsert is a struct to hold information for an INSERT statement
 type TInsert struct {
-	db DB
-	fmt.Stringer
+	Execer
+	orm    *ORM
 	cols   []string
 	values []interface{}
 }
@@ -21,8 +20,8 @@ func (i *TInsert) Exec() (sql.Result, error) {
 	}
 
 	stmt := i.String()
-	log.Printf("Insert: '%v' (%v)", stmt, i.values)
-	return i.db.Exec(stmt, i.values...)
+	i.orm.log("Insert: '%v' %v", stmt, i.values)
+	return i.orm.db.Exec(stmt, i.values...)
 }
 
 func (i *TInsert) add(name string, value interface{}) *TInsert {

@@ -25,6 +25,10 @@ func TestPersonSelect(t *testing.T) {
 
 	orm := porm.New(db)
 
+	if testing.Verbose() {
+		orm.Logger(t.Logf)
+	}
+
 	_, err = orm.Create().Exec()
 	require.Nil(t, err, "Failed creating table")
 

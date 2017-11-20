@@ -13,30 +13,36 @@ func New(db DB) *ORM {
 }
 
 type ORM struct {
-	db DB
+	db     DB
+	logger Logger
 }
 
 // Create returns a struct for a CREATE statement
 func (o *ORM) Create() *TCreate {
-	return &TCreate{db: o.db}
+	return &TCreate{orm: o}
 }
 
 // Select returns an object to create a SELECT statement
 func (o *ORM) Select() *TSelect {
-	return &TSelect{db: o.db}
+	return &TSelect{orm: o}
 }
 
 // Insert returns a new INSERT statement
 func (o *ORM) Insert() *TInsert {
-	return &TInsert{db: o.db}
+	return &TInsert{orm: o}
 }
 
 // Insert returns a new INSERT statement
 func (o *ORM) Update() *TUpdate {
-	return &TUpdate{TInsert: TInsert{db: o.db}}
+	return &TUpdate{TInsert: TInsert{orm: o}}
 }
 
 // Delete returns an object for a DELETE statement
 func (o *ORM) Delete() *TDelete {
-	return &TDelete{db: o.db}
+	return &TDelete{orm: o}
+}
+
+// Logger sets a logger to the ORM package
+func (o *ORM) Logger(logger Logger) {
+	o.logger = logger
 }

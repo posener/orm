@@ -3,7 +3,6 @@ package tpls
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"strings"
 )
 
@@ -25,8 +24,8 @@ func (u *TUpdate) Exec() (sql.Result, error) {
 	}
 
 	stmt := u.String()
-	log.Printf("Update: '%v' (%v)", stmt, u.values)
-	return u.db.Exec(stmt, append(u.values, u.where.args...)...)
+	u.orm.log("Update: '%v' %v", stmt, u.values)
+	return u.orm.db.Exec(stmt, append(u.values, u.where.args...)...)
 }
 
 // add adds a column and value to the UPDATE statement

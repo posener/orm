@@ -2,7 +2,6 @@
 package allorm
 
 import (
-	"log"
 	"strings"
 
 	"github.com/posener/orm/example"
@@ -23,8 +22,8 @@ func (s *TSelect) Query() ([]example.All, error) {
 	// create select statement
 	stmt := s.String()
 	args := s.where.Args()
-	log.Printf("Query: '%v' %v", stmt, args)
-	rows, err := s.db.Query(stmt, args...)
+	s.orm.log("Query: '%v' %v", stmt, args)
+	rows, err := s.orm.db.Query(stmt, args...)
 	if err != nil {
 		return nil, err
 	}

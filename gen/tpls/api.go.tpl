@@ -1,7 +1,6 @@
 package {{.Package}}
 
 import (
-	"database/sql"
 	"fmt"
 
     "{{.Type.ImportPath}}"
@@ -22,11 +21,5 @@ type API interface {
 type Querier interface {
     fmt.Stringer
     Query() ([]{{.Type.FullName}}, error)
-}
-
-// Execer is the interface for SQL update operations
-type Execer interface {
-    fmt.Stringer
-	Exec() (sql.Result, error)
 }
 
