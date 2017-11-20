@@ -14,6 +14,7 @@ func (i *TInsert) String() string {
 	)
 }
 
+// Insert{{.Type.Name}} creates an INSERT statement according to the given object
 func (o *ORM) Insert{{.Type.Name}}(p *{{.Type.FullName}}) *TInsert {
 	i := o.Insert()
 	{{- range $_, $f := .Type.Fields}}
@@ -23,6 +24,7 @@ func (o *ORM) Insert{{.Type.Name}}(p *{{.Type.FullName}}) *TInsert {
 }
 
 {{range $_, $f := .Type.Fields}}
+// Set{{$f.Name}} sets value for column {{$f.ColumnName}} in the INSERT statement
 func (i *TInsert) Set{{$f.Name}}(value {{$f.Type}}) *TInsert {
 	return i.add("{{$f.ColumnName}}", value)
 }

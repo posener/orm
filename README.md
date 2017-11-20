@@ -35,26 +35,28 @@ import (
 func main() {
     db, err := sql.Open(...)
     defer db.Close()
+    
+    orm = porm.New(db)
 
     // Create table:
-    err = porm.Create().Exec(db)
+    _, err = orm.Create().Exec()
 
     // Insert rows:
-    err = porm.Insert().SetName("John").SetAge(1).Exec(db)
+    _, err = orm.Insert().SetName("John").SetAge(1).Exec()
 
     // Or with a struct:
-    porm.InsertPerson(&example.Person{Name: "Doug", Age: 3}).Exec(db)
+    _, err = orm.InsertPerson(&example.Person{Name: "Doug", Age: 3}).Exec()
 
     // Select rows from the DB:
-    ps, err := porm.Query().
+    ps, err := orm.Select().
     	SelectAge().
         Where(porm.WhereName(porm.OpNe, "John")).
-        Exec(db) // returns []example.Person, typed return value.
+        Query() // returns []example.Person, typed return value.
 
     println(ps[0].Age) // Output: 1
     
     // Delete
-    porm.Delete().Where(porm.WhereName(porm.Eq, "John")).Exec(db)
+    _, err = orm.Delete().Where(porm.WhereName(porm.Eq, "John")).Exec()
 }
 ```
 

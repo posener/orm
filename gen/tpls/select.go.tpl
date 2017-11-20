@@ -8,7 +8,7 @@ import (
 )
 
 // String returns the SQL query string
-func (s *Select) String() string {
+func (s *TSelect) String() string {
     return strings.Join([]string{
         "SELECT", s.selectString(), "FROM {{.Type.Table}}",
         s.where.String(),
@@ -18,7 +18,7 @@ func (s *Select) String() string {
 }
 
 // Exec runs the Query on a given database.
-func (s *Select) Exec() ([]{{.Type.FullName}}, error) {
+func (s *TSelect) Query() ([]{{.Type.FullName}}, error) {
 	// create select statement
 	stmt := s.String()
 	args := s.where.Args()
@@ -43,14 +43,14 @@ func (s *Select) Exec() ([]{{.Type.FullName}}, error) {
 
 {{ range $_, $f := .Type.Fields -}}
 // Select{{$f.Name}} Add {{$f.Name}} to the selected column of a query
-func (s *Select) Select{{$f.Name}}() *Select {
+func (s *TSelect) Select{{$f.Name}}() *TSelect {
     s.columns = append(s.columns, "{{$f.ColumnName}}")
     return s
 }
 {{ end -}}
 
 // scanArgs are list of fields to be given to the sql Scan command
-func (s *Select) scanArgs(p *{{.Type.FullName}}) []interface{} {
+func (s *TSelect) scanArgs(p *{{.Type.FullName}}) []interface{} {
 	if len(s.columns) == 0 {
         // add to args all the fields of p
         return []interface{}{

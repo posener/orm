@@ -2,8 +2,8 @@ package tpls
 
 import "strings"
 
-// Select is the struct that holds the SELECT data
-type Select struct {
+// TSelect is the struct that holds the SELECT data
+type TSelect struct {
 	db      DB
 	columns []string
 	where   *Where
@@ -11,26 +11,26 @@ type Select struct {
 }
 
 // Where applies where conditions on the query
-func (s *Select) Where(where *Where) *Select {
+func (s *TSelect) Where(where *Where) *TSelect {
 	s.where = where
 	return s
 }
 
 // Limit applies rows limit on the query response
-func (s *Select) Limit(limit int64) *Select {
+func (s *TSelect) Limit(limit int64) *TSelect {
 	s.page.limit = limit
 	return s
 }
 
 // Page applies rows offset and limit on the query response
-func (s *Select) Page(offset, limit int64) *Select {
+func (s *TSelect) Page(offset, limit int64) *TSelect {
 	s.page.offset = offset
 	s.page.limit = limit
 	return s
 }
 
 // selectString returns the columns to select for the SELECT statement
-func (s *Select) selectString() string {
+func (s *TSelect) selectString() string {
 	if len(s.columns) == 0 {
 		return "*"
 	}
@@ -38,14 +38,14 @@ func (s *Select) selectString() string {
 }
 
 // add adds a column to the select statement
-func (s *Select) add(column string) *Select {
+func (s *TSelect) add(column string) *TSelect {
 	s.columns = append(s.columns, column)
 	return s
 }
 
 // columnsMap is a map the maps column name to it's (list index + 1)
 // if columnMap[column] == 0, the column does not exists in the select columns
-func (s *Select) columnsMap() map[string]int {
+func (s *TSelect) columnsMap() map[string]int {
 	m := make(map[string]int, len(s.columns))
 	for i, col := range s.columns {
 		m[col] = i + 1

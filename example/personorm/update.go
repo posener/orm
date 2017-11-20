@@ -14,6 +14,7 @@ func (u *TUpdate) String() string {
 	)
 }
 
+// InsertPerson creates an UPDATE statement according to the given object
 func (o *ORM) UpdatePerson(p *example.Person) *TUpdate {
 	u := o.Update()
 	u.add("name", p.Name)
@@ -21,10 +22,12 @@ func (o *ORM) UpdatePerson(p *example.Person) *TUpdate {
 	return u
 }
 
+// SetName sets value for column name in the UPDATE statement
 func (u *TUpdate) SetName(value string) *TUpdate {
 	return u.add("name", value)
 }
 
+// SetAge sets value for column age in the UPDATE statement
 func (u *TUpdate) SetAge(value int) *TUpdate {
 	return u.add("age", value)
 }

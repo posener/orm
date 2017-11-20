@@ -39,85 +39,85 @@ func TestPersonSelect(t *testing.T) {
 	assertRowsAffected(t, 1, res)
 
 	tests := []struct {
-		q    *porm.Select
+		q    porm.Querier
 		want []example.Person
 	}{
 		{
-			q:    orm.Query(),
+			q:    orm.Select(),
 			want: []example.Person{p1, p2, p3},
 		},
 		{
-			q:    orm.Query().SelectName(),
+			q:    orm.Select().SelectName(),
 			want: []example.Person{{Name: "moshe"}, {Name: "haim"}, {Name: "zvika"}},
 		},
 		{
-			q:    orm.Query().SelectAge(),
+			q:    orm.Select().SelectAge(),
 			want: []example.Person{{Age: 1}, {Age: 2}, {Age: 3}},
 		},
 		{
-			q:    orm.Query().SelectAge().SelectName(),
+			q:    orm.Select().SelectAge().SelectName(),
 			want: []example.Person{p1, p2, p3},
 		},
 		{
-			q:    orm.Query().SelectName().SelectAge(),
+			q:    orm.Select().SelectName().SelectAge(),
 			want: []example.Person{p1, p2, p3},
 		},
 		{
-			q:    orm.Query().Where(porm.WhereName(porm.OpEq, "moshe")),
+			q:    orm.Select().Where(porm.WhereName(porm.OpEq, "moshe")),
 			want: []example.Person{p1},
 		},
 		{
-			q:    orm.Query().Where(porm.WhereName(porm.OpEq, "moshe").Or(porm.WhereAge(porm.OpEq, 2))),
+			q:    orm.Select().Where(porm.WhereName(porm.OpEq, "moshe").Or(porm.WhereAge(porm.OpEq, 2))),
 			want: []example.Person{p1, p2},
 		},
 		{
-			q:    orm.Query().Where(porm.WhereName(porm.OpEq, "moshe").And(porm.WhereAge(porm.OpEq, 1))),
+			q:    orm.Select().Where(porm.WhereName(porm.OpEq, "moshe").And(porm.WhereAge(porm.OpEq, 1))),
 			want: []example.Person{p1},
 		},
 		{
-			q: orm.Query().Where(porm.WhereName(porm.OpEq, "moshe").And(porm.WhereAge(porm.OpEq, 2))),
+			q: orm.Select().Where(porm.WhereName(porm.OpEq, "moshe").And(porm.WhereAge(porm.OpEq, 2))),
 		},
 		{
-			q:    orm.Query().Where(porm.WhereAge(porm.OpGE, 2)),
+			q:    orm.Select().Where(porm.WhereAge(porm.OpGE, 2)),
 			want: []example.Person{p2, p3},
 		},
 		{
-			q:    orm.Query().Where(porm.WhereAge(porm.OpGt, 2)),
+			q:    orm.Select().Where(porm.WhereAge(porm.OpGt, 2)),
 			want: []example.Person{p3},
 		},
 		{
-			q:    orm.Query().Where(porm.WhereAge(porm.OpLE, 2)),
+			q:    orm.Select().Where(porm.WhereAge(porm.OpLE, 2)),
 			want: []example.Person{p1, p2},
 		},
 		{
-			q:    orm.Query().Where(porm.WhereAge(porm.OpLt, 2)),
+			q:    orm.Select().Where(porm.WhereAge(porm.OpLt, 2)),
 			want: []example.Person{p1},
 		},
 		{
-			q:    orm.Query().Where(porm.WhereName(porm.OpNe, "moshe")),
+			q:    orm.Select().Where(porm.WhereName(porm.OpNe, "moshe")),
 			want: []example.Person{p2, p3},
 		},
 		{
-			q:    orm.Query().Where(porm.WhereNameIn("moshe", "haim")),
+			q:    orm.Select().Where(porm.WhereNameIn("moshe", "haim")),
 			want: []example.Person{p1, p2},
 		},
 		{
-			q:    orm.Query().Where(porm.WhereAgeBetween(0, 2)),
+			q:    orm.Select().Where(porm.WhereAgeBetween(0, 2)),
 			want: []example.Person{p1, p2},
 		},
 		{
-			q:    orm.Query().Limit(2),
+			q:    orm.Select().Limit(2),
 			want: []example.Person{p1, p2},
 		},
 		{
-			q:    orm.Query().Page(1, 1),
+			q:    orm.Select().Page(1, 1),
 			want: []example.Person{p2},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.q.String(), func(t *testing.T) {
-			p, err := tt.q.Exec()
+			p, err := tt.q.Query()
 			if err != nil {
 				t.Error(err)
 			}
@@ -134,7 +134,7 @@ func TestPersonCRUD(t *testing.T) {
 	orm := porm.New(db)
 
 	prepare(t, orm)
-	ps, err := orm.Query().Exec()
+	ps, err := orm.Select().Query()
 	require.Nil(t, err)
 	assert.Equal(t, []example.Person{p1, p2, p3}, ps)
 
@@ -143,12 +143,12 @@ func TestPersonCRUD(t *testing.T) {
 	res, err := delete.Exec()
 	require.Nil(t, err)
 	assertRowsAffected(t, 1, res)
-	ps, err = orm.Query().Exec()
+	ps, err = orm.Select().Query()
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(t, []example.Person{p2, p3}, ps)
-	ps, err = orm.Query().Where(porm.WhereName(porm.OpEq, "moshe")).Exec()
+	ps, err = orm.Select().Where(porm.WhereName(porm.OpEq, "moshe")).Query()
 	require.Nil(t, err)
 	assert.Equal(t, []example.Person(nil), ps)
 
@@ -158,7 +158,7 @@ func TestPersonCRUD(t *testing.T) {
 	require.Nil(t, err)
 	assertRowsAffected(t, 1, res)
 
-	ps, err = orm.Query().Where(porm.WhereName(porm.OpEq, "Jonney")).Exec()
+	ps, err = orm.Select().Where(porm.WhereName(porm.OpEq, "Jonney")).Query()
 	require.Nil(t, err)
 	assert.Equal(t, []example.Person{{Name: "Jonney", Age: 3}}, ps)
 }

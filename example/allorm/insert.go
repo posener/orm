@@ -15,6 +15,7 @@ func (i *TInsert) String() string {
 	)
 }
 
+// InsertAll creates an INSERT statement according to the given object
 func (o *ORM) InsertAll(p *example.All) *TInsert {
 	i := o.Insert()
 	i.add("int", p.Int)
@@ -23,14 +24,17 @@ func (o *ORM) InsertAll(p *example.All) *TInsert {
 	return i
 }
 
+// SetInt sets value for column int in the INSERT statement
 func (i *TInsert) SetInt(value int) *TInsert {
 	return i.add("int", value)
 }
 
+// SetString sets value for column string in the INSERT statement
 func (i *TInsert) SetString(value string) *TInsert {
 	return i.add("string", value)
 }
 
+// SetBool sets value for column bool in the INSERT statement
 func (i *TInsert) SetBool(value bool) *TInsert {
 	return i.add("bool", value)
 }

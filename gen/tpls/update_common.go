@@ -29,6 +29,7 @@ func (u *TUpdate) Exec() (sql.Result, error) {
 	return u.db.Exec(stmt, append(u.values, u.where.args...)...)
 }
 
+// add adds a column and value to the UPDATE statement
 func (u *TUpdate) add(name string, value interface{}) *TUpdate {
 	u.TInsert.add(name, value)
 	return u

@@ -9,7 +9,7 @@ import (
 )
 
 // String returns the SQL query string
-func (s *Select) String() string {
+func (s *TSelect) String() string {
 	return strings.Join([]string{
 		"SELECT", s.selectString(), "FROM person",
 		s.where.String(),
@@ -19,7 +19,7 @@ func (s *Select) String() string {
 }
 
 // Exec runs the Query on a given database.
-func (s *Select) Exec() ([]example.Person, error) {
+func (s *TSelect) Query() ([]example.Person, error) {
 	// create select statement
 	stmt := s.String()
 	args := s.where.Args()
@@ -43,19 +43,19 @@ func (s *Select) Exec() ([]example.Person, error) {
 }
 
 // SelectName Add Name to the selected column of a query
-func (s *Select) SelectName() *Select {
+func (s *TSelect) SelectName() *TSelect {
 	s.columns = append(s.columns, "name")
 	return s
 }
 
 // SelectAge Add Age to the selected column of a query
-func (s *Select) SelectAge() *Select {
+func (s *TSelect) SelectAge() *TSelect {
 	s.columns = append(s.columns, "age")
 	return s
 }
 
 // scanArgs are list of fields to be given to the sql Scan command
-func (s *Select) scanArgs(p *example.Person) []interface{} {
+func (s *TSelect) scanArgs(p *example.Person) []interface{} {
 	if len(s.columns) == 0 {
 		// add to args all the fields of p
 		return []interface{}{

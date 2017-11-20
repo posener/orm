@@ -9,7 +9,7 @@ import (
 )
 
 // String returns the SQL query string
-func (s *Select) String() string {
+func (s *TSelect) String() string {
 	return strings.Join([]string{
 		"SELECT", s.selectString(), "FROM all",
 		s.where.String(),
@@ -19,7 +19,7 @@ func (s *Select) String() string {
 }
 
 // Exec runs the Query on a given database.
-func (s *Select) Exec() ([]example.All, error) {
+func (s *TSelect) Query() ([]example.All, error) {
 	// create select statement
 	stmt := s.String()
 	args := s.where.Args()
@@ -43,25 +43,25 @@ func (s *Select) Exec() ([]example.All, error) {
 }
 
 // SelectInt Add Int to the selected column of a query
-func (s *Select) SelectInt() *Select {
+func (s *TSelect) SelectInt() *TSelect {
 	s.columns = append(s.columns, "int")
 	return s
 }
 
 // SelectString Add String to the selected column of a query
-func (s *Select) SelectString() *Select {
+func (s *TSelect) SelectString() *TSelect {
 	s.columns = append(s.columns, "string")
 	return s
 }
 
 // SelectBool Add Bool to the selected column of a query
-func (s *Select) SelectBool() *Select {
+func (s *TSelect) SelectBool() *TSelect {
 	s.columns = append(s.columns, "bool")
 	return s
 }
 
 // scanArgs are list of fields to be given to the sql Scan command
-func (s *Select) scanArgs(p *example.All) []interface{} {
+func (s *TSelect) scanArgs(p *example.All) []interface{} {
 	if len(s.columns) == 0 {
 		// add to args all the fields of p
 		return []interface{}{

@@ -36,6 +36,7 @@ func newWhereBetween(variable string, low, high interface{}) *Where {
 	return &w
 }
 
+// String returns the WHERE SQL statement
 func (w *Where) String() string {
 	if w == nil || len(w.stmt) == 0 {
 		return ""

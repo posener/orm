@@ -13,6 +13,7 @@ func (u *TUpdate) String() string {
 	)
 }
 
+// Insert{{.Type.Name}} creates an UPDATE statement according to the given object
 func (o *ORM) Update{{.Type.Name}}(p *{{.Type.FullName}}) *TUpdate {
 	u := o.Update()
 	{{- range $_, $f := .Type.Fields}}
@@ -22,6 +23,7 @@ func (o *ORM) Update{{.Type.Name}}(p *{{.Type.FullName}}) *TUpdate {
 }
 
 {{range $_, $f := .Type.Fields}}
+// Set{{$f.Name}} sets value for column {{$f.ColumnName}} in the UPDATE statement
 func (u *TUpdate) Set{{$f.Name}}(value {{$f.Type}}) *TUpdate {
 	return u.add("{{$f.ColumnName}}", value)
 }

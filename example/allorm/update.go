@@ -14,6 +14,7 @@ func (u *TUpdate) String() string {
 	)
 }
 
+// InsertAll creates an UPDATE statement according to the given object
 func (o *ORM) UpdateAll(p *example.All) *TUpdate {
 	u := o.Update()
 	u.add("int", p.Int)
@@ -22,14 +23,17 @@ func (o *ORM) UpdateAll(p *example.All) *TUpdate {
 	return u
 }
 
+// SetInt sets value for column int in the UPDATE statement
 func (u *TUpdate) SetInt(value int) *TUpdate {
 	return u.add("int", value)
 }
 
+// SetString sets value for column string in the UPDATE statement
 func (u *TUpdate) SetString(value string) *TUpdate {
 	return u.add("string", value)
 }
 
+// SetBool sets value for column bool in the UPDATE statement
 func (u *TUpdate) SetBool(value bool) *TUpdate {
 	return u.add("bool", value)
 }
