@@ -86,3 +86,27 @@ type MyType struct {
 	...
 }
 ```
+
+## Benchmark
+
+Initial benchmark tests are available in [here](./example/bench_test.go).
+
+#### Compared packages:
+
+- [x] posener/orm (this package)
+- [x] jinzhu/gorm
+- [ ] Direct SQL commands
+
+#### Operations:
+
+- [x] INSERT
+
+### Results:
+
+```go
+goos: linux
+goarch: amd64
+pkg: github.com/posener/orm/example
+BenchmarkORM-4    	  100000	     20901 ns/op
+BenchmarkGORM-4   	   20000	     59856 ns/op
+```
