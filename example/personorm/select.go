@@ -17,8 +17,9 @@ type PersonCount struct {
 // String returns the SQL query string
 func (s *TSelect) String() string {
 	return strings.Join([]string{
-		"SELECT", s.selectString(), "FROM person",
+		"SELECT", s.columns.String(), "FROM person",
 		s.where.String(),
+		s.groupBy.String(),
 		s.page.String(),
 	}, " ")
 
@@ -50,7 +51,7 @@ func (s *TSelect) Query() ([]example.Person, error) {
 
 // Count add a count column to the query
 func (s *TSelect) Count() ([]PersonCount, error) {
-	s.add(colCount)
+	s.columns.add(colCount)
 	// create select statement
 	stmt := s.String()
 	args := s.where.Args()
@@ -75,13 +76,25 @@ func (s *TSelect) Count() ([]PersonCount, error) {
 
 // SelectName Add Name to the selected column of a query
 func (s *TSelect) SelectName() *TSelect {
-	s = s.add("name")
+	s.columns.add("name")
+	return s
+}
+
+// GroupByName make the query group by column name
+func (s *TSelect) GroupByName() *TSelect {
+	s.groupBy.add("name")
 	return s
 }
 
 // SelectAge Add Age to the selected column of a query
 func (s *TSelect) SelectAge() *TSelect {
-	s = s.add("age")
+	s.columns.add("age")
+	return s
+}
+
+// GroupByAge make the query group by column age
+func (s *TSelect) GroupByAge() *TSelect {
+	s.groupBy.add("age")
 	return s
 }
 
@@ -94,7 +107,7 @@ func (s *TSelect) scanArgs(p *PersonCount) []interface{} {
 			&p.Age,
 		}
 	}
-	m := s.columnsMap()
+	m := s.columns.indexMap()
 	args := make([]interface{}, len(s.columns))
 	if i := m["name"]; i != 0 {
 		args[i-1] = &p.Name

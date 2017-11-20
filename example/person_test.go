@@ -194,7 +194,7 @@ func TestCount(t *testing.T) {
 	_, err = orm.Create().Exec()
 	require.Nil(t, err)
 	for i := 0; i < 100; i++ {
-		res, err := orm.InsertPerson(&example.Person{Name: fmt.Sprintf("Jim %d", i), Age: i}).Exec()
+		res, err := orm.InsertPerson(&example.Person{Name: fmt.Sprintf("Jim %d", i), Age: i / 5}).Exec()
 		require.Nil(t, err, "Failed inserting")
 		assertRowsAffected(t, 1, res)
 	}
@@ -208,12 +208,20 @@ func TestCount(t *testing.T) {
 			want: []porm.PersonCount{{Count: 100}},
 		},
 		{
-			q:    orm.Select().Where(porm.WhereAge(porm.OpLt, 50)),
+			q:    orm.Select().Where(porm.WhereAge(porm.OpLt, 10)),
 			want: []porm.PersonCount{{Count: 50}},
 		},
 		{
-			q:    orm.Select().SelectName().Where(porm.WhereAge(porm.OpLt, 50)),
+			q:    orm.Select().SelectName().Where(porm.WhereAge(porm.OpLt, 10)),
 			want: []porm.PersonCount{{Person: example.Person{Name: "Jim 49"}, Count: 50}},
+		},
+		{
+			q: orm.Select().SelectAge().GroupByAge().Where(porm.WhereAgeIn(1, 3, 12)),
+			want: []porm.PersonCount{
+				{Person: example.Person{Age: 1}, Count: 5},
+				{Person: example.Person{Age: 3}, Count: 5},
+				{Person: example.Person{Age: 12}, Count: 5},
+			},
 		},
 	}
 

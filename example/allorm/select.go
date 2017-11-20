@@ -17,8 +17,9 @@ type AllCount struct {
 // String returns the SQL query string
 func (s *TSelect) String() string {
 	return strings.Join([]string{
-		"SELECT", s.selectString(), "FROM all",
+		"SELECT", s.columns.String(), "FROM all",
 		s.where.String(),
+		s.groupBy.String(),
 		s.page.String(),
 	}, " ")
 
@@ -50,7 +51,7 @@ func (s *TSelect) Query() ([]example.All, error) {
 
 // Count add a count column to the query
 func (s *TSelect) Count() ([]AllCount, error) {
-	s.add(colCount)
+	s.columns.add(colCount)
 	// create select statement
 	stmt := s.String()
 	args := s.where.Args()
@@ -75,19 +76,37 @@ func (s *TSelect) Count() ([]AllCount, error) {
 
 // SelectInt Add Int to the selected column of a query
 func (s *TSelect) SelectInt() *TSelect {
-	s = s.add("int")
+	s.columns.add("int")
+	return s
+}
+
+// GroupByInt make the query group by column int
+func (s *TSelect) GroupByInt() *TSelect {
+	s.groupBy.add("int")
 	return s
 }
 
 // SelectString Add String to the selected column of a query
 func (s *TSelect) SelectString() *TSelect {
-	s = s.add("string")
+	s.columns.add("string")
+	return s
+}
+
+// GroupByString make the query group by column string
+func (s *TSelect) GroupByString() *TSelect {
+	s.groupBy.add("string")
 	return s
 }
 
 // SelectBool Add Bool to the selected column of a query
 func (s *TSelect) SelectBool() *TSelect {
-	s = s.add("bool")
+	s.columns.add("bool")
+	return s
+}
+
+// GroupByBool make the query group by column bool
+func (s *TSelect) GroupByBool() *TSelect {
+	s.groupBy.add("bool")
 	return s
 }
 
@@ -101,7 +120,7 @@ func (s *TSelect) scanArgs(p *AllCount) []interface{} {
 			&p.Bool,
 		}
 	}
-	m := s.columnsMap()
+	m := s.columns.indexMap()
 	args := make([]interface{}, len(s.columns))
 	if i := m["int"]; i != 0 {
 		args[i-1] = &p.Int

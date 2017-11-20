@@ -16,8 +16,9 @@ type {{.Type.Name}}Count struct {
 // String returns the SQL query string
 func (s *TSelect) String() string {
     return strings.Join([]string{
-        "SELECT", s.selectString(), "FROM {{.Type.Table}}",
+        "SELECT", s.columns.String(), "FROM {{.Type.Table}}",
         s.where.String(),
+        s.groupBy.String(),
         s.page.String(),
     }, " ")
 
@@ -49,7 +50,7 @@ func (s *TSelect) Query() ([]{{.Type.FullName}}, error) {
 
 // Count add a count column to the query
 func (s *TSelect) Count() ([]{{.Type.Name}}Count, error) {
-    s.add(colCount)
+    s.columns.add(colCount)
 	// create select statement
 	stmt := s.String()
 	args := s.where.Args()
@@ -75,7 +76,13 @@ func (s *TSelect) Count() ([]{{.Type.Name}}Count, error) {
 {{ range $_, $f := .Type.Fields -}}
 // Select{{$f.Name}} Add {{$f.Name}} to the selected column of a query
 func (s *TSelect) Select{{$f.Name}}() *TSelect {
-    s = s.add("{{$f.ColumnName}}")
+    s.columns.add("{{$f.ColumnName}}")
+    return s
+}
+
+// GroupBy{{$f.Name}} make the query group by column {{$f.ColumnName}}
+func (s *TSelect) GroupBy{{$f.Name}}() *TSelect {
+    s.groupBy.add("{{$f.ColumnName}}")
     return s
 }
 {{ end -}}
@@ -90,7 +97,7 @@ func (s *TSelect) scanArgs(p *{{.Type.Name}}Count) []interface{} {
             {{ end }}
         }
 	}
-	m := s.columnsMap()
+	m := s.columns.indexMap()
 	args := make([]interface{}, len(s.columns))
 	{{ range $_, $f := .Type.Fields -}}
 	if i := m["{{$f.ColumnName}}"]; i != 0 {
