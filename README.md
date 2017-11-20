@@ -1,11 +1,10 @@
 # Go ORM
 
 [![Build Status](https://travis-ci.org/posener/orm.svg?branch=master)](https://travis-ci.org/posener/orm)
-[![codecov](https://codecov.io/gh/posener/orm/branch/master/graph/badge.svg)](https://codecov.io/gh/posener/orm)
 [![GoDoc](https://godoc.org/github.com/posener/orm?status.svg)](http://godoc.org/github.com/posener/orm)
 [![Go Report Card](https://goreportcard.com/badge/github.com/posener/orm)](https://goreportcard.com/report/github.com/posener/orm)
 
-An proof of concept for a Go **typed** ORM package.
+An attermpt to write a **typed** ORM for Go.
 
 > This is a PROOF OF CONCEPT
 
@@ -29,6 +28,8 @@ is used in the arguments and in the return values.
 ```go
 import (
 	"database/sql"
+	"log"
+	
 	porm "package/personorm"
 )
 
@@ -37,17 +38,20 @@ func main() {
     defer db.Close()
     
     orm = porm.New(db)
+    
+    // Set a logger to log SQL commands
+    orm.Logger(log.Printf)
 
     // Create table:
     _, err = orm.Create().Exec()
 
-    // Insert rows:
+    // Insert row with arguments:
     _, err = orm.Insert().SetName("John").SetAge(1).Exec()
 
-    // Or with a struct:
+    // Insert row with a struct:
     _, err = orm.InsertPerson(&example.Person{Name: "Doug", Age: 3}).Exec()
 
-    // Select rows from the DB:
+    // Select rows from the table:
     ps, err := orm.Select().
     	SelectAge().
         Where(porm.WhereName(porm.OpNe, "John")).
@@ -55,7 +59,7 @@ func main() {
 
     println(ps[0].Age) // Output: 1
     
-    // Delete
+    // Delete row
     _, err = orm.Delete().Where(porm.WhereName(porm.Eq, "John")).Exec()
 }
 ```
