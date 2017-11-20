@@ -17,7 +17,7 @@ func (u *TUpdate) String() string {
 func UpdateAll(p *example.All) *TUpdate {
 	var u TUpdate
 	u.add("int", p.Int)
-	u.add("text", p.Text)
+	u.add("string", p.String)
 	u.add("bool", p.Bool)
 	return &u
 }
@@ -26,8 +26,8 @@ func (u *TUpdate) SetInt(value int) *TUpdate {
 	return u.add("int", value)
 }
 
-func (u *TUpdate) SetText(value string) *TUpdate {
-	return u.add("text", value)
+func (u *TUpdate) SetString(value string) *TUpdate {
+	return u.add("string", value)
 }
 
 func (u *TUpdate) SetBool(value bool) *TUpdate {

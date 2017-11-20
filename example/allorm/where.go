@@ -20,23 +20,23 @@ func WhereIntBetween(low, high int) *Where {
 	return newWhereBetween("int", low, high)
 }
 
-// WhereText adds a condition on Text to the WHERE statement
-func WhereText(op Op, val string) *Where {
-	return newWhere(op, "text", val)
+// WhereString adds a condition on String to the WHERE statement
+func WhereString(op Op, val string) *Where {
+	return newWhere(op, "string", val)
 }
 
-// WhereTextIn adds an IN condition on Text to the WHERE statement
-func WhereTextIn(vals ...string) *Where {
+// WhereStringIn adds an IN condition on String to the WHERE statement
+func WhereStringIn(vals ...string) *Where {
 	args := make([]interface{}, len(vals))
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return newWhereIn("text", args...)
+	return newWhereIn("string", args...)
 }
 
-// WhereTextBetween adds a BETWEEN condition on Text to the WHERE statement
-func WhereTextBetween(low, high string) *Where {
-	return newWhereBetween("text", low, high)
+// WhereStringBetween adds a BETWEEN condition on String to the WHERE statement
+func WhereStringBetween(low, high string) *Where {
+	return newWhereBetween("string", low, high)
 }
 
 // WhereBool adds a condition on Bool to the WHERE statement

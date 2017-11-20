@@ -18,7 +18,7 @@ func (i *TInsert) String() string {
 func InsertAll(p *example.All) *TInsert {
 	var i TInsert
 	i.add("int", p.Int)
-	i.add("text", p.Text)
+	i.add("string", p.String)
 	i.add("bool", p.Bool)
 	return &i
 }
@@ -27,8 +27,8 @@ func (i *TInsert) SetInt(value int) *TInsert {
 	return i.add("int", value)
 }
 
-func (i *TInsert) SetText(value string) *TInsert {
-	return i.add("text", value)
+func (i *TInsert) SetString(value string) *TInsert {
+	return i.add("string", value)
 }
 
 func (i *TInsert) SetBool(value bool) *TInsert {

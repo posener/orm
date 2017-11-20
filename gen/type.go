@@ -35,16 +35,9 @@ func (t Type) Table() string {
 
 // SQLCreateString returns the SQL CREATE statement for the type
 func (t Type) CreateString() string {
-	var args []string
-	var primaryKeys []string
+	var args = make([]string, 0, len(t.Fields))
 	for _, f := range t.Fields {
 		args = append(args, f.CreateString())
-		if f.SQL.PrimaryKey {
-			primaryKeys = append(primaryKeys, f.ColumnName)
-		}
-	}
-	if len(primaryKeys) > 0 {
-		args = append(args, fmt.Sprintf("PRIMARY KEY (%s)", strings.Join(primaryKeys, ",")))
 	}
 	return fmt.Sprintf("CREATE TABLE %s ( %s )", t.Table(), strings.Join(args, ", "))
 }
@@ -73,11 +66,23 @@ type Field struct {
 }
 
 func (f Field) CreateString() string {
-	s := fmt.Sprintf("%s %s", f.ColumnName, f.SQL.Type)
+	parts := []string{f.ColumnName, f.SQL.Type}
 	if f.SQL.NotNull {
-		s += " NOT NULL"
+		parts = append(parts, "NOT NULL")
 	}
-	return s
+	if f.SQL.Default != "" {
+		parts = append(parts, "DEFAULT", f.SQL.Default)
+	}
+	if f.SQL.AutoIncrement {
+		parts = append(parts, "AUTO_INCREMENT")
+	}
+	if f.SQL.Unique {
+		parts = append(parts, "UNIQUE")
+	}
+	if f.SQL.PrimaryKey {
+		parts = append(parts, "PRIMARY KEY")
+	}
+	return strings.Join(parts, " ")
 }
 
 func collectFields(s *types.Struct) []Field {

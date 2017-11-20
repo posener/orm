@@ -48,9 +48,9 @@ func (s *Select) SelectInt() *Select {
 	return s
 }
 
-// SelectText Add Text to the selected column of a query
-func (s *Select) SelectText() *Select {
-	s.columns = append(s.columns, "text")
+// SelectString Add String to the selected column of a query
+func (s *Select) SelectString() *Select {
+	s.columns = append(s.columns, "string")
 	return s
 }
 
@@ -66,7 +66,7 @@ func (s *Select) scanArgs(p *example.All) []interface{} {
 		// add to args all the fields of p
 		return []interface{}{
 			&p.Int,
-			&p.Text,
+			&p.String,
 			&p.Bool,
 		}
 	}
@@ -75,8 +75,8 @@ func (s *Select) scanArgs(p *example.All) []interface{} {
 	if i := m["int"]; i != 0 {
 		args[i-1] = &p.Int
 	}
-	if i := m["text"]; i != 0 {
-		args[i-1] = &p.Text
+	if i := m["string"]; i != 0 {
+		args[i-1] = &p.String
 	}
 	if i := m["bool"]; i != 0 {
 		args[i-1] = &p.Bool
