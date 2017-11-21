@@ -8,8 +8,8 @@ import (
 type OrderDir string
 
 const (
-	Asc  OrderDir = "Asc"
-	Desc OrderDir = "Desc"
+	Asc  OrderDir = "ASC"
+	Desc OrderDir = "DESC"
 )
 
 type orderBy []string

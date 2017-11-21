@@ -1,5 +1,11 @@
 package {{.Package}}
 
+import (
+	{{ range $_, $f := .Type.Fields -}}
+	{{ if $f.ImportPath }}"{{$f.ImportPath}}"{{ end }}
+	{{- end }}
+)
+
 {{range $_, $f := .Type.Fields}}
 // Where{{$f.Name}} adds a condition on {{$f.Name}} to the WHERE statement
 func Where{{$f.Name}}(op Op, val {{$f.Type}}) *Where {

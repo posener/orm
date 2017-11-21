@@ -2,10 +2,13 @@ package gen
 
 import (
 	"fmt"
-	"go/types"
 	"log"
 	"path/filepath"
 	"strings"
+
+	"go/types"
+
+	"github.com/posener/orm/load"
 )
 
 // Type describes the type of the given struct to generate code for
@@ -21,10 +24,10 @@ type Type struct {
 }
 
 // NewType returns a new Type
-func NewType(name string, pkg *types.Package, st *types.Struct) Type {
+func NewType(st *load.Struct) Type {
 	return Type{
-		ImportPath: pkg.Path(),
-		Name:       name,
+		ImportPath: st.Pkg.Path(),
+		Name:       st.Name,
 		Fields:     collectFields(st),
 	}
 }
@@ -39,7 +42,7 @@ func (t Type) CreateString() string {
 	for _, f := range t.Fields {
 		args = append(args, f.CreateString())
 	}
-	return fmt.Sprintf("CREATE TABLE %s ( %s )", t.Table(), strings.Join(args, ", "))
+	return fmt.Sprintf("CREATE TABLE '%s' ( %s )", t.Table(), strings.Join(args, ", "))
 }
 
 // FullName is the full type of the imported type, as used in a go code
@@ -63,10 +66,12 @@ type Field struct {
 	ColumnName string
 	// SQL is the SQL properties of the field
 	SQL Tags
+	// ImportPath is a path to add to the import section for this type
+	ImportPath string
 }
 
 func (f Field) CreateString() string {
-	parts := []string{f.ColumnName, f.SQL.Type}
+	parts := []string{fmt.Sprintf("'%s'", f.ColumnName), f.SQL.Type}
 	if f.SQL.NotNull {
 		parts = append(parts, "NOT NULL")
 	}
@@ -85,28 +90,42 @@ func (f Field) CreateString() string {
 	return strings.Join(parts, " ")
 }
 
-func collectFields(s *types.Struct) []Field {
-	var f []Field
-	for i := 0; i < s.NumFields(); i++ {
-		v := s.Field(i)
-		if !v.Exported() {
+func collectFields(st *load.Struct) []Field {
+	var fields []Field
+	for i := 0; i < st.Struct.NumFields(); i++ {
+		field := st.Struct.Field(i)
+		if !field.Exported() {
 			continue
 		}
-		varType := v.Type().String()
-		tags := ParseTags(s.Tag(i))
+		fieldType := field.Type().String()
+		tags := ParseTags(st.Struct.Tag(i))
 		if tags.Type == "" {
-			tags.Type = defaultSQLTypes[varType]
+			tags.Type = defaultSQLTypes[fieldType]
 		}
 		if tags.Type == "" {
-			log.Fatalf("Unsupported field type: %s", varType)
+			log.Fatalf("Unsupported field type: %s", fieldType)
 		}
-		log.Printf("Field '%s(%s)': '%+v'", v.Name(), varType, tags)
-		f = append(f, Field{
-			Name:       v.Name(),
-			Type:       varType,
-			ColumnName: strings.ToLower(v.Name()),
+
+		log.Printf("Field '%s(%s)': '%+field'", field.Name(), fieldType, tags)
+		fields = append(fields, Field{
+			Name:       field.Name(),
+			Type:       fieldType,
+			ColumnName: strings.ToLower(field.Name()),
 			SQL:        tags,
+			ImportPath: fieldImportPath(fieldType, st.PkgMap),
 		})
 	}
-	return f
+	return fields
+}
+
+func fieldImportPath(typeName string, pkgMap map[string]*types.Package) string {
+	i := strings.IndexRune(typeName, '.')
+	if i == -1 {
+		return ""
+	}
+	pkg := pkgMap[typeName[:i]]
+	if pkg == nil {
+		return ""
+	}
+	return pkg.Path()
 }

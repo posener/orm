@@ -14,7 +14,7 @@ type Where struct {
 // newWhere returns a new WHERE statement
 func newWhere(op Op, variable string, value interface{}) *Where {
 	var w Where
-	w.stmt = append(w.stmt, fmt.Sprintf("%s %s ?", variable, op))
+	w.stmt = append(w.stmt, fmt.Sprintf("`%s` %s ?", variable, op))
 	w.args = append(w.args, value)
 	return &w
 }
@@ -22,7 +22,7 @@ func newWhere(op Op, variable string, value interface{}) *Where {
 // newWhereIn returns a new 'WHERE variable IN (...)' statement
 func newWhereIn(variable string, values ...interface{}) *Where {
 	var w Where
-	w.stmt = append(w.stmt, fmt.Sprintf("%s IN (%s)", variable, qMarks(len(values))))
+	w.stmt = append(w.stmt, fmt.Sprintf("`%s` IN (%s)", variable, qMarks(len(values))))
 	w.args = append(w.args, values...)
 	return &w
 }
@@ -30,7 +30,7 @@ func newWhereIn(variable string, values ...interface{}) *Where {
 // newWhereBetween returns a new 'WHERE variable BETWEEN low AND high' statement
 func newWhereBetween(variable string, low, high interface{}) *Where {
 	var w Where
-	w.stmt = append(w.stmt, fmt.Sprintf("%s BETWEEN ? AND ?", variable))
+	w.stmt = append(w.stmt, fmt.Sprintf("`%s` BETWEEN ? AND ?", variable))
 	w.args = append(w.args, low, high)
 	return &w
 }

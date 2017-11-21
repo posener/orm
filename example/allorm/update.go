@@ -3,12 +3,13 @@ package allorm
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/posener/orm/example"
 )
 
 func (u *TUpdate) String() string {
-	return fmt.Sprintf(`UPDATE all SET %s %s`,
+	return fmt.Sprintf(`UPDATE 'all' SET %s %s`,
 		u.assignmentList(),
 		u.where.String(),
 	)
@@ -20,6 +21,8 @@ func (o *ORM) UpdateAll(p *example.All) *TUpdate {
 	u.add("int", p.Int)
 	u.add("string", p.String)
 	u.add("bool", p.Bool)
+	u.add("time", p.Time)
+	u.add("select", p.Select)
 	return u
 }
 
@@ -36,4 +39,14 @@ func (u *TUpdate) SetString(value string) *TUpdate {
 // SetBool sets value for column bool in the UPDATE statement
 func (u *TUpdate) SetBool(value bool) *TUpdate {
 	return u.add("bool", value)
+}
+
+// SetTime sets value for column time in the UPDATE statement
+func (u *TUpdate) SetTime(value time.Time) *TUpdate {
+	return u.add("time", value)
+}
+
+// SetSelect sets value for column select in the UPDATE statement
+func (u *TUpdate) SetSelect(value int) *TUpdate {
+	return u.add("select", value)
 }

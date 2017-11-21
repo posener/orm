@@ -8,6 +8,8 @@ import (
 // TInsert is a struct to hold information for an INSERT statement
 type TInsert struct {
 	Execer
+	Argser
+	fmt.Stringer
 	orm    *ORM
 	cols   []string
 	values []interface{}
@@ -20,8 +22,14 @@ func (i *TInsert) Exec() (sql.Result, error) {
 	}
 
 	stmt := i.String()
-	i.orm.log("Insert: '%v' %v", stmt, i.values)
-	return i.orm.db.Exec(stmt, i.values...)
+	args := i.Args()
+	i.orm.log("Insert: '%v' %v", stmt, args)
+	return i.orm.db.Exec(stmt, args...)
+}
+
+// Args returns a list of arguments for the INSERT statement
+func (i *TInsert) Args() []interface{} {
+	return i.values
 }
 
 func (i *TInsert) add(name string, value interface{}) *TInsert {

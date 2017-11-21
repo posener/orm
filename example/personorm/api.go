@@ -16,6 +16,8 @@ type API interface {
 	Delete() *TDelete
 	InsertPerson(*example.Person) *TInsert
 	UpdatePerson(*example.Person) *TUpdate
+
+	Logger(Logger)
 }
 
 // Querier is the interface for a SELECT SQL statement

@@ -2,12 +2,15 @@ package {{.Package}}
 
 import (
     "fmt"
+	{{ range $_, $f := .Type.Fields -}}
+	{{ if $f.ImportPath }}"{{$f.ImportPath}}"{{ end }}
+	{{- end }}
 
     "{{.Type.ImportPath}}"
 )
 
 func (u *TUpdate) String() string {
-	return fmt.Sprintf(`UPDATE {{.Type.Table}} SET %s %s`,
+	return fmt.Sprintf(`UPDATE '{{.Type.Table}}' SET %s %s`,
 	    u.assignmentList(),
 	    u.where.String(),
 	)

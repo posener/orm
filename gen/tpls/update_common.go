@@ -24,8 +24,9 @@ func (u *TUpdate) Exec() (sql.Result, error) {
 	}
 
 	stmt := u.String()
-	u.orm.log("Update: '%v' %v", stmt, u.values)
-	return u.orm.db.Exec(stmt, append(u.values, u.where.args...)...)
+	args := append(u.TInsert.Args(), u.where.Args()...)
+	u.orm.log("Update: '%v' %v", stmt, args)
+	return u.orm.db.Exec(stmt, args...)
 }
 
 // add adds a column and value to the UPDATE statement
@@ -37,7 +38,7 @@ func (u *TUpdate) add(name string, value interface{}) *TUpdate {
 func (u *TUpdate) assignmentList() string {
 	assignments := make([]string, 0, len(u.cols))
 	for _, col := range u.cols {
-		assignments = append(assignments, fmt.Sprintf("%s = ?", col))
+		assignments = append(assignments, fmt.Sprintf("'%s' = ?", col))
 	}
 	return strings.Join(assignments, ", ")
 }

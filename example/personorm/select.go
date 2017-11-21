@@ -17,7 +17,7 @@ type PersonCount struct {
 // String returns the SQL query string
 func (s *TSelect) String() string {
 	return strings.Join([]string{
-		"SELECT", s.columns.String(), "FROM person",
+		"SELECT", s.columns.String(), "FROM 'person'",
 		s.where.String(),
 		s.groupBy.String(),
 		s.orderBy.String(),
@@ -30,7 +30,7 @@ func (s *TSelect) String() string {
 func (s *TSelect) Query() ([]example.Person, error) {
 	// create select statement
 	stmt := s.String()
-	args := s.where.Args()
+	args := s.Args()
 	s.orm.log("Query: '%v' %v", stmt, args)
 	rows, err := s.orm.db.Query(stmt, args...)
 	if err != nil {
@@ -77,37 +77,37 @@ func (s *TSelect) Count() ([]PersonCount, error) {
 
 // SelectName Add Name to the selected column of a query
 func (s *TSelect) SelectName() *TSelect {
-	s.columns.add("name")
+	s.columns.add("`name`")
 	return s
 }
 
 // OrderByName set order to the query results according to column name
 func (s *TSelect) OrderByName(dir OrderDir) *TSelect {
-	s.orderBy.add("name", dir)
+	s.orderBy.add("`name`", dir)
 	return s
 }
 
 // GroupByName make the query group by column name
 func (s *TSelect) GroupByName() *TSelect {
-	s.groupBy.add("name")
+	s.groupBy.add("`name`")
 	return s
 }
 
 // SelectAge Add Age to the selected column of a query
 func (s *TSelect) SelectAge() *TSelect {
-	s.columns.add("age")
+	s.columns.add("`age`")
 	return s
 }
 
 // OrderByAge set order to the query results according to column age
 func (s *TSelect) OrderByAge(dir OrderDir) *TSelect {
-	s.orderBy.add("age", dir)
+	s.orderBy.add("`age`", dir)
 	return s
 }
 
 // GroupByAge make the query group by column age
 func (s *TSelect) GroupByAge() *TSelect {
-	s.groupBy.add("age")
+	s.groupBy.add("`age`")
 	return s
 }
 
@@ -122,10 +122,10 @@ func (s *TSelect) scanArgs(p *PersonCount) []interface{} {
 	}
 	m := s.columns.indexMap()
 	args := make([]interface{}, len(s.columns))
-	if i := m["name"]; i != 0 {
+	if i := m["`name`"]; i != 0 {
 		args[i-1] = &p.Name
 	}
-	if i := m["age"]; i != 0 {
+	if i := m["`age`"]; i != 0 {
 		args[i-1] = &p.Age
 	}
 	if i := m[colCount]; i != 0 {

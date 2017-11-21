@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"go/types"
 	"log"
 	"os"
 	"os/exec"
@@ -13,6 +12,7 @@ import (
 	"text/template"
 
 	"github.com/posener/orm/gen/b0x"
+	"github.com/posener/orm/load"
 )
 
 //go:generate fileb0x b0x.yml
@@ -56,18 +56,16 @@ func init() {
 }
 
 // Gen generates all the ORM files for a given struct in a given package.
-// pkg is the package of the struct
 // st is the type descriptor of the struct
-// name is the name of the type of the struct
-func Gen(pkg *types.Package, st *types.Struct, name string) error {
+func Gen(st *load.Struct) error {
 	// get the package ormDir on disk
-	pkgDir, err := packagePath(pkg.Path())
+	pkgDir, err := packagePath(st.Pkg.Path())
 	if err != nil {
 		return err
 	}
 
 	// the new created package name is the name of the struct with "orm" suffix
-	ormPkgName := strings.ToLower(name + suffix)
+	ormPkgName := strings.ToLower(st.Name + suffix)
 
 	// the files will be generated in a sub package
 	ormDir := filepath.Join(pkgDir, ormPkgName)
@@ -77,7 +75,7 @@ func Gen(pkg *types.Package, st *types.Struct, name string) error {
 	}
 
 	props := TemplateArgs{
-		Type:    NewType(name, pkg, st),
+		Type:    NewType(st),
 		Package: ormPkgName,
 	}
 	log.Printf("Template configuration: %+v", props)

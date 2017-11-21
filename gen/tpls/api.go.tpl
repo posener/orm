@@ -15,6 +15,8 @@ type API interface {
     Delete() *TDelete
     Insert{{.Type.Name}}(*{{.Type.FullName}}) *TInsert
     Update{{.Type.Name}}(*{{.Type.FullName}}) *TUpdate
+
+    Logger(Logger)
 }
 
 // Querier is the interface for a SELECT SQL statement

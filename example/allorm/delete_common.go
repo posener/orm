@@ -3,11 +3,13 @@ package allorm
 
 import (
 	"database/sql"
+	"fmt"
 )
 
 // Select is the struct that holds the SELECT data
 type TDelete struct {
 	Execer
+	fmt.Stringer
 	orm   *ORM
 	where *Where
 }

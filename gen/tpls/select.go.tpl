@@ -16,7 +16,7 @@ type {{.Type.Name}}Count struct {
 // String returns the SQL query string
 func (s *TSelect) String() string {
     return strings.Join([]string{
-        "SELECT", s.columns.String(), "FROM {{.Type.Table}}",
+        "SELECT", s.columns.String(), "FROM '{{.Type.Table}}'",
         s.where.String(),
         s.groupBy.String(),
         s.orderBy.String(),
@@ -29,7 +29,7 @@ func (s *TSelect) String() string {
 func (s *TSelect) Query() ([]{{.Type.FullName}}, error) {
 	// create select statement
 	stmt := s.String()
-	args := s.where.Args()
+	args := s.Args()
 	s.orm.log("Query: '%v' %v", stmt, args)
 	rows, err := s.orm.db.Query(stmt, args...)
 	if err != nil {
@@ -77,19 +77,19 @@ func (s *TSelect) Count() ([]{{.Type.Name}}Count, error) {
 {{ range $_, $f := .Type.Fields -}}
 // Select{{$f.Name}} Add {{$f.Name}} to the selected column of a query
 func (s *TSelect) Select{{$f.Name}}() *TSelect {
-    s.columns.add("{{$f.ColumnName}}")
+    s.columns.add("`{{$f.ColumnName}}`")
     return s
 }
 
 // OrderBy{{$f.Name}} set order to the query results according to column {{$f.ColumnName}}
 func (s *TSelect) OrderBy{{$f.Name}}(dir OrderDir) *TSelect {
-    s.orderBy.add("{{$f.ColumnName}}", dir)
+    s.orderBy.add("`{{$f.ColumnName}}`", dir)
     return s
 }
 
 // GroupBy{{$f.Name}} make the query group by column {{$f.ColumnName}}
 func (s *TSelect) GroupBy{{$f.Name}}() *TSelect {
-    s.groupBy.add("{{$f.ColumnName}}")
+    s.groupBy.add("`{{$f.ColumnName}}`")
     return s
 }
 {{ end -}}
@@ -107,7 +107,7 @@ func (s *TSelect) scanArgs(p *{{.Type.Name}}Count) []interface{} {
 	m := s.columns.indexMap()
 	args := make([]interface{}, len(s.columns))
 	{{ range $_, $f := .Type.Fields -}}
-	if i := m["{{$f.ColumnName}}"]; i != 0 {
+	if i := m["`{{$f.ColumnName}}`"]; i != 0 {
 		args[i-1] = &p.{{$f.Name}}
 	}
 	{{ end -}}

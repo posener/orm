@@ -1,5 +1,7 @@
 package example
 
+import "time"
+
 //go:generate orm -name All
 
 // All is to test generation of variant fields and types
@@ -8,4 +10,9 @@ type All struct {
 	String     string `sql:"type:VARCHAR(100);not null"`
 	Bool       bool
 	unexported int
+
+	Time time.Time
+
+	// test a case where field is a reserved name
+	Select int
 }
