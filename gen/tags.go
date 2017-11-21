@@ -15,6 +15,8 @@ var defaultSQLTypes = map[string]string{
 	"float32": "FLOAT",
 	"float64": "DOUBLE",
 	"bool":    "BOOLEAN",
+
+	"time.Time": "TIMESTAMP",
 }
 
 // Tags hold the SQL tags for a field in a struct

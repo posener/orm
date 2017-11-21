@@ -46,10 +46,10 @@ func TestLoad(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("%s.%s", tt.pkg, tt.name), func(t *testing.T) {
-			pkg, strct, err := Load(tt.pkg, tt.name)
+			st, err := Load(tt.pkg, tt.name)
 			if assert.Equal(t, tt.wantErr, err != nil) && !tt.wantErr {
-				assert.Equal(t, tt.wantStruct, strct.String())
-				assert.Equal(t, tt.wantPkg, pkg.Name())
+				assert.Equal(t, tt.wantStruct, st.Struct.String())
+				assert.Equal(t, tt.wantPkg, st.Pkg.Name())
 			}
 		})
 	}

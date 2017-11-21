@@ -2,10 +2,11 @@ package gen
 
 import (
 	"fmt"
-	"go/types"
 	"log"
 	"path/filepath"
 	"strings"
+
+	"github.com/posener/orm/load"
 )
 
 // Type describes the type of the given struct to generate code for
@@ -21,10 +22,10 @@ type Type struct {
 }
 
 // NewType returns a new Type
-func NewType(name string, pkg *types.Package, st *types.Struct) Type {
+func NewType(st *load.Struct) Type {
 	return Type{
-		ImportPath: pkg.Path(),
-		Name:       name,
+		ImportPath: st.Pkg.Path(),
+		Name:       st.Name,
 		Fields:     collectFields(st),
 	}
 }
@@ -85,15 +86,15 @@ func (f Field) CreateString() string {
 	return strings.Join(parts, " ")
 }
 
-func collectFields(s *types.Struct) []Field {
+func collectFields(st *load.Struct) []Field {
 	var f []Field
-	for i := 0; i < s.NumFields(); i++ {
-		v := s.Field(i)
+	for i := 0; i < st.Struct.NumFields(); i++ {
+		v := st.Struct.Field(i)
 		if !v.Exported() {
 			continue
 		}
 		varType := v.Type().String()
-		tags := ParseTags(s.Tag(i))
+		tags := ParseTags(st.Struct.Tag(i))
 		if tags.Type == "" {
 			tags.Type = defaultSQLTypes[varType]
 		}
