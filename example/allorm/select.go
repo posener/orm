@@ -17,7 +17,7 @@ type AllCount struct {
 // String returns the SQL query string
 func (s *TSelect) String() string {
 	return strings.Join([]string{
-		"SELECT", s.columns.String(), "FROM all",
+		"SELECT", s.columns.String(), "FROM 'all'",
 		s.where.String(),
 		s.groupBy.String(),
 		s.orderBy.String(),

@@ -16,7 +16,7 @@ type {{.Type.Name}}Count struct {
 // String returns the SQL query string
 func (s *TSelect) String() string {
     return strings.Join([]string{
-        "SELECT", s.columns.String(), "FROM {{.Type.Table}}",
+        "SELECT", s.columns.String(), "FROM '{{.Type.Table}}'",
         s.where.String(),
         s.groupBy.String(),
         s.orderBy.String(),

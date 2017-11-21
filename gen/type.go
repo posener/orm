@@ -42,7 +42,7 @@ func (t Type) CreateString() string {
 	for _, f := range t.Fields {
 		args = append(args, f.CreateString())
 	}
-	return fmt.Sprintf("CREATE TABLE %s ( %s )", t.Table(), strings.Join(args, ", "))
+	return fmt.Sprintf("CREATE TABLE '%s' ( %s )", t.Table(), strings.Join(args, ", "))
 }
 
 // FullName is the full type of the imported type, as used in a go code
@@ -71,7 +71,7 @@ type Field struct {
 }
 
 func (f Field) CreateString() string {
-	parts := []string{f.ColumnName, f.SQL.Type}
+	parts := []string{fmt.Sprintf("'%s'", f.ColumnName), f.SQL.Type}
 	if f.SQL.NotNull {
 		parts = append(parts, "NOT NULL")
 	}

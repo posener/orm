@@ -3,5 +3,5 @@ package personorm
 
 // String returns the SQL DELETE statement string
 func (s *TDelete) String() string {
-	return "DELETE FROM person " + s.where.String()
+	return "DELETE FROM 'person' " + s.where.String()
 }

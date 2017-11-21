@@ -9,7 +9,7 @@ import (
 )
 
 func (i *TInsert) String() string {
-	return fmt.Sprintf(`INSERT INTO person (%s) VALUES (%s)`,
+	return fmt.Sprintf(`INSERT INTO 'person' (%s) VALUES (%s)`,
 		strings.Join(i.cols, ", "),
 		qMarks(len(i.values)),
 	)

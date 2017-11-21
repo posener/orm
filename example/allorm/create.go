@@ -3,5 +3,5 @@ package allorm
 
 func (c *TCreate) String() string {
 	// Create statement has a line for each variable with it's name and it's type.
-	return `CREATE TABLE all ( int BIGINT PRIMARY KEY, string VARCHAR(100) NOT NULL, bool BOOLEAN, time TIMESTAMP )`
+	return `CREATE TABLE 'all' ( 'int' BIGINT PRIMARY KEY, 'string' VARCHAR(100) NOT NULL, 'bool' BOOLEAN, 'time' TIMESTAMP )`
 }

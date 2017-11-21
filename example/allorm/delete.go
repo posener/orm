@@ -3,5 +3,5 @@ package allorm
 
 // String returns the SQL DELETE statement string
 func (s *TDelete) String() string {
-	return "DELETE FROM all " + s.where.String()
+	return "DELETE FROM 'all' " + s.where.String()
 }

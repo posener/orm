@@ -11,7 +11,7 @@ import (
 )
 
 func (i *TInsert) String() string {
-	return fmt.Sprintf(`INSERT INTO {{.Type.Table}} (%s) VALUES (%s)`,
+	return fmt.Sprintf(`INSERT INTO '{{.Type.Table}}' (%s) VALUES (%s)`,
 		strings.Join(i.cols, ", "),
 		qMarks(len(i.values)),
 	)

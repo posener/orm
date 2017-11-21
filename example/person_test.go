@@ -141,7 +141,7 @@ func TestSimpleCRUD(t *testing.T) {
 
 	orm := porm.New(db)
 
-	// perpare dataset
+	// prepare dataset
 	_, err = orm.Create().Exec()
 	require.Nil(t, err)
 	for _, p := range []example.Person{p1, p2, p3} {

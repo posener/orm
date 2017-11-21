@@ -17,7 +17,7 @@ type PersonCount struct {
 // String returns the SQL query string
 func (s *TSelect) String() string {
 	return strings.Join([]string{
-		"SELECT", s.columns.String(), "FROM person",
+		"SELECT", s.columns.String(), "FROM 'person'",
 		s.where.String(),
 		s.groupBy.String(),
 		s.orderBy.String(),

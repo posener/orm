@@ -8,7 +8,7 @@ import (
 )
 
 func (u *TUpdate) String() string {
-	return fmt.Sprintf(`UPDATE person SET %s %s`,
+	return fmt.Sprintf(`UPDATE 'person' SET %s %s`,
 		u.assignmentList(),
 		u.where.String(),
 	)
