@@ -80,3 +80,22 @@ func WhereTimeIn(vals ...time.Time) *Where {
 func WhereTimeBetween(low, high time.Time) *Where {
 	return newWhereBetween("time", low, high)
 }
+
+// WhereSelect adds a condition on Select to the WHERE statement
+func WhereSelect(op Op, val int) *Where {
+	return newWhere(op, "select", val)
+}
+
+// WhereSelectIn adds an IN condition on Select to the WHERE statement
+func WhereSelectIn(vals ...int) *Where {
+	args := make([]interface{}, len(vals))
+	for i := range vals {
+		args[i] = vals[i]
+	}
+	return newWhereIn("select", args...)
+}
+
+// WhereSelectBetween adds a BETWEEN condition on Select to the WHERE statement
+func WhereSelectBetween(low, high int) *Where {
+	return newWhereBetween("select", low, high)
+}

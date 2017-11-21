@@ -30,7 +30,7 @@ func (s *TSelect) String() string {
 func (s *TSelect) Query() ([]example.All, error) {
 	// create select statement
 	stmt := s.String()
-	args := s.where.Args()
+	args := s.Args()
 	s.orm.log("Query: '%v' %v", stmt, args)
 	rows, err := s.orm.db.Query(stmt, args...)
 	if err != nil {
@@ -77,73 +77,91 @@ func (s *TSelect) Count() ([]AllCount, error) {
 
 // SelectInt Add Int to the selected column of a query
 func (s *TSelect) SelectInt() *TSelect {
-	s.columns.add("int")
+	s.columns.add("`int`")
 	return s
 }
 
 // OrderByInt set order to the query results according to column int
 func (s *TSelect) OrderByInt(dir OrderDir) *TSelect {
-	s.orderBy.add("int", dir)
+	s.orderBy.add("`int`", dir)
 	return s
 }
 
 // GroupByInt make the query group by column int
 func (s *TSelect) GroupByInt() *TSelect {
-	s.groupBy.add("int")
+	s.groupBy.add("`int`")
 	return s
 }
 
 // SelectString Add String to the selected column of a query
 func (s *TSelect) SelectString() *TSelect {
-	s.columns.add("string")
+	s.columns.add("`string`")
 	return s
 }
 
 // OrderByString set order to the query results according to column string
 func (s *TSelect) OrderByString(dir OrderDir) *TSelect {
-	s.orderBy.add("string", dir)
+	s.orderBy.add("`string`", dir)
 	return s
 }
 
 // GroupByString make the query group by column string
 func (s *TSelect) GroupByString() *TSelect {
-	s.groupBy.add("string")
+	s.groupBy.add("`string`")
 	return s
 }
 
 // SelectBool Add Bool to the selected column of a query
 func (s *TSelect) SelectBool() *TSelect {
-	s.columns.add("bool")
+	s.columns.add("`bool`")
 	return s
 }
 
 // OrderByBool set order to the query results according to column bool
 func (s *TSelect) OrderByBool(dir OrderDir) *TSelect {
-	s.orderBy.add("bool", dir)
+	s.orderBy.add("`bool`", dir)
 	return s
 }
 
 // GroupByBool make the query group by column bool
 func (s *TSelect) GroupByBool() *TSelect {
-	s.groupBy.add("bool")
+	s.groupBy.add("`bool`")
 	return s
 }
 
 // SelectTime Add Time to the selected column of a query
 func (s *TSelect) SelectTime() *TSelect {
-	s.columns.add("time")
+	s.columns.add("`time`")
 	return s
 }
 
 // OrderByTime set order to the query results according to column time
 func (s *TSelect) OrderByTime(dir OrderDir) *TSelect {
-	s.orderBy.add("time", dir)
+	s.orderBy.add("`time`", dir)
 	return s
 }
 
 // GroupByTime make the query group by column time
 func (s *TSelect) GroupByTime() *TSelect {
-	s.groupBy.add("time")
+	s.groupBy.add("`time`")
+	return s
+}
+
+// SelectSelect Add Select to the selected column of a query
+func (s *TSelect) SelectSelect() *TSelect {
+	s.columns.add("`select`")
+	return s
+}
+
+// OrderBySelect set order to the query results according to column select
+func (s *TSelect) OrderBySelect(dir OrderDir) *TSelect {
+	s.orderBy.add("`select`", dir)
+	return s
+}
+
+// GroupBySelect make the query group by column select
+func (s *TSelect) GroupBySelect() *TSelect {
+	s.groupBy.add("`select`")
 	return s
 }
 
@@ -156,21 +174,25 @@ func (s *TSelect) scanArgs(p *AllCount) []interface{} {
 			&p.String,
 			&p.Bool,
 			&p.Time,
+			&p.Select,
 		}
 	}
 	m := s.columns.indexMap()
 	args := make([]interface{}, len(s.columns))
-	if i := m["int"]; i != 0 {
+	if i := m["`int`"]; i != 0 {
 		args[i-1] = &p.Int
 	}
-	if i := m["string"]; i != 0 {
+	if i := m["`string`"]; i != 0 {
 		args[i-1] = &p.String
 	}
-	if i := m["bool"]; i != 0 {
+	if i := m["`bool`"]; i != 0 {
 		args[i-1] = &p.Bool
 	}
-	if i := m["time"]; i != 0 {
+	if i := m["`time`"]; i != 0 {
 		args[i-1] = &p.Time
+	}
+	if i := m["`select`"]; i != 0 {
+		args[i-1] = &p.Select
 	}
 	if i := m[colCount]; i != 0 {
 		args[i-1] = &p.Count

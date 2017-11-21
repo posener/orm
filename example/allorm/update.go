@@ -22,6 +22,7 @@ func (o *ORM) UpdateAll(p *example.All) *TUpdate {
 	u.add("string", p.String)
 	u.add("bool", p.Bool)
 	u.add("time", p.Time)
+	u.add("select", p.Select)
 	return u
 }
 
@@ -43,4 +44,9 @@ func (u *TUpdate) SetBool(value bool) *TUpdate {
 // SetTime sets value for column time in the UPDATE statement
 func (u *TUpdate) SetTime(value time.Time) *TUpdate {
 	return u.add("time", value)
+}
+
+// SetSelect sets value for column select in the UPDATE statement
+func (u *TUpdate) SetSelect(value int) *TUpdate {
+	return u.add("select", value)
 }

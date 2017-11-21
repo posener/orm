@@ -12,4 +12,7 @@ type All struct {
 	unexported int
 
 	Time time.Time
+
+	// test a case where field is a reserved name
+	Select int
 }

@@ -3,11 +3,13 @@ package personorm
 
 import (
 	"database/sql"
+	"fmt"
 )
 
 // TCreate is a struct that holds data for the CREATE statement
 type TCreate struct {
 	Execer
+	fmt.Stringer
 	orm *ORM
 }
 
