@@ -4,6 +4,7 @@ package allorm
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/posener/orm/example"
 )
@@ -21,6 +22,7 @@ func (o *ORM) InsertAll(p *example.All) *TInsert {
 	i.add("int", p.Int)
 	i.add("string", p.String)
 	i.add("bool", p.Bool)
+	i.add("time", p.Time)
 	return i
 }
 
@@ -37,4 +39,9 @@ func (i *TInsert) SetString(value string) *TInsert {
 // SetBool sets value for column bool in the INSERT statement
 func (i *TInsert) SetBool(value bool) *TInsert {
 	return i.add("bool", value)
+}
+
+// SetTime sets value for column time in the INSERT statement
+func (i *TInsert) SetTime(value time.Time) *TInsert {
+	return i.add("time", value)
 }

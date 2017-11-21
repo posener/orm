@@ -3,6 +3,7 @@ package allorm
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/posener/orm/example"
 )
@@ -20,6 +21,7 @@ func (o *ORM) UpdateAll(p *example.All) *TUpdate {
 	u.add("int", p.Int)
 	u.add("string", p.String)
 	u.add("bool", p.Bool)
+	u.add("time", p.Time)
 	return u
 }
 
@@ -36,4 +38,9 @@ func (u *TUpdate) SetString(value string) *TUpdate {
 // SetBool sets value for column bool in the UPDATE statement
 func (u *TUpdate) SetBool(value bool) *TUpdate {
 	return u.add("bool", value)
+}
+
+// SetTime sets value for column time in the UPDATE statement
+func (u *TUpdate) SetTime(value time.Time) *TUpdate {
+	return u.add("time", value)
 }

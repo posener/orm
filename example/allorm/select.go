@@ -129,6 +129,24 @@ func (s *TSelect) GroupByBool() *TSelect {
 	return s
 }
 
+// SelectTime Add Time to the selected column of a query
+func (s *TSelect) SelectTime() *TSelect {
+	s.columns.add("time")
+	return s
+}
+
+// OrderByTime set order to the query results according to column time
+func (s *TSelect) OrderByTime(dir OrderDir) *TSelect {
+	s.orderBy.add("time", dir)
+	return s
+}
+
+// GroupByTime make the query group by column time
+func (s *TSelect) GroupByTime() *TSelect {
+	s.groupBy.add("time")
+	return s
+}
+
 // scanArgs are list of fields to be given to the sql Scan command
 func (s *TSelect) scanArgs(p *AllCount) []interface{} {
 	if len(s.columns) == 0 {
@@ -137,6 +155,7 @@ func (s *TSelect) scanArgs(p *AllCount) []interface{} {
 			&p.Int,
 			&p.String,
 			&p.Bool,
+			&p.Time,
 		}
 	}
 	m := s.columns.indexMap()
@@ -149,6 +168,9 @@ func (s *TSelect) scanArgs(p *AllCount) []interface{} {
 	}
 	if i := m["bool"]; i != 0 {
 		args[i-1] = &p.Bool
+	}
+	if i := m["time"]; i != 0 {
+		args[i-1] = &p.Time
 	}
 	if i := m[colCount]; i != 0 {
 		args[i-1] = &p.Count

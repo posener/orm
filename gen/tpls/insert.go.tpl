@@ -3,6 +3,9 @@ package {{.Package}}
 import (
     "fmt"
     "strings"
+	{{ range $_, $f := .Type.Fields -}}
+	{{ if $f.ImportPath }}"{{$f.ImportPath}}"{{ end }}
+	{{- end }}
 
     "{{.Type.ImportPath}}"
 )
@@ -17,9 +20,9 @@ func (i *TInsert) String() string {
 // Insert{{.Type.Name}} creates an INSERT statement according to the given object
 func (o *ORM) Insert{{.Type.Name}}(p *{{.Type.FullName}}) *TInsert {
 	i := o.Insert()
-	{{- range $_, $f := .Type.Fields}}
+	{{- range $_, $f := .Type.Fields }}
 	i.add("{{$f.ColumnName}}", p.{{$f.Name}})
-	{{- end}}
+	{{- end }}
 	return i
 }
 

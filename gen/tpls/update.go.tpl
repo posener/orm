@@ -2,6 +2,9 @@ package {{.Package}}
 
 import (
     "fmt"
+	{{ range $_, $f := .Type.Fields -}}
+	{{ if $f.ImportPath }}"{{$f.ImportPath}}"{{ end }}
+	{{- end }}
 
     "{{.Type.ImportPath}}"
 )
