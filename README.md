@@ -118,3 +118,21 @@ BenchmarkRaw-4    	 1000000	     18283 ns/op
 PASS
 ok  	github.com/posener/orm	53.333s
 ```
+
+# Documentation
+
+## Model definition
+
+In the model, it is possible to annotate a field with Go tags.
+`orm` will consider the `sql` keyword in the tag of any field.
+
+### Supported Tags
+
+The supported tags are shown in [ParseTags](./gen/tags.go) function.
+
+- `type`: Type of SQL column.
+- `primary_key`/`primary key`: Is the field a primary key. (can be given to multiple fields in the same struct)
+- `not null`/`not_null`: Field is not allowed to be null.
+- `auto_increment`/`auto increment`: Apply auto increment for this column.
+- `unique`: Each row in this column must be unique.
+- `default`: Give a default value for this field.
