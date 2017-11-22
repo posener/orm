@@ -99,7 +99,7 @@ Initial benchmark tests are available in [here](./example/bench_test.go).
 
 - [x] posener/orm (this package)
 - [x] jinzhu/gorm
-- [ ] Direct SQL commands
+- [x] Direct SQL commands
 
 #### Operations:
 
@@ -107,10 +107,14 @@ Initial benchmark tests are available in [here](./example/bench_test.go).
 
 ### Results:
 
-```go
+```bash
+$ go test -bench . -benchtime 10s
 goos: linux
 goarch: amd64
-pkg: github.com/posener/orm/example
-BenchmarkORM-4    	  100000	     20901 ns/op
-BenchmarkGORM-4   	   20000	     59856 ns/op
+pkg: github.com/posener/orm
+BenchmarkORM-4    	 1000000	     21229 ns/op
+BenchmarkGORM-4   	  200000	     63628 ns/op
+BenchmarkRaw-4    	 1000000	     18283 ns/op
+PASS
+ok  	github.com/posener/orm	53.333s
 ```

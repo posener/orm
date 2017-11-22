@@ -1,4 +1,4 @@
-package example_test
+package main_test
 
 import (
 	"database/sql"
@@ -44,6 +44,22 @@ func BenchmarkGORM(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		err = db.Create(&example.Person{Name: "xxx", Age: i}).Error
+		assert.Nil(b, err)
+	}
+}
+
+// BenchmarkRaw tests raw SQL commands
+func BenchmarkRaw(b *testing.B) {
+	db, err := sql.Open("sqlite3", ":memory:")
+	require.Nil(b, err)
+	defer db.Close()
+
+	_, err = db.Exec(`CREATE TABLE 'person' ( 'name' VARCHAR (255), 'age' INTEGER )`)
+	require.Nil(b, err)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err = db.Exec(`INSERT INTO 'person' ('name', 'age') VALUES (?, ?)`, "xxx", i)
 		assert.Nil(b, err)
 	}
 }
