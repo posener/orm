@@ -8,7 +8,7 @@ const tagSQLType = "sql"
 
 var defaultSQLTypes = map[string]string{
 	"string":  "VARCHAR(255)",
-	"int":     "BIGINT",
+	"int":     "INT",
 	"int32":   "INT",
 	"int64":   "BIGINT",
 	"float":   "DOUBLE",
