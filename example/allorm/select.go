@@ -136,6 +136,24 @@ func (s *TSelect) GroupByBool() *TSelect {
 	return s
 }
 
+// SelectAuto Add Auto to the selected column of a query
+func (s *TSelect) SelectAuto() *TSelect {
+	s.columns.add("`auto`")
+	return s
+}
+
+// OrderByAuto set order to the query results according to column auto
+func (s *TSelect) OrderByAuto(dir OrderDir) *TSelect {
+	s.orderBy.add("`auto`", dir)
+	return s
+}
+
+// GroupByAuto make the query group by column auto
+func (s *TSelect) GroupByAuto() *TSelect {
+	s.groupBy.add("`auto`")
+	return s
+}
+
 // SelectTime Add Time to the selected column of a query
 func (s *TSelect) SelectTime() *TSelect {
 	s.columns.add("`time`")
@@ -199,16 +217,23 @@ func (s *TSelect) scan(vals []driver.Value) (*AllCount, error) {
 			row.Bool = bool(val)
 		}
 		if vals[3] != nil {
-			val, ok := vals[3].(time.Time)
+			val, ok := vals[3].(int64)
 			if !ok {
-				return nil, fmt.Errorf("converting Time column 3 with value %v to time.Time", vals[3])
+				return nil, fmt.Errorf("converting Auto column 3 with value %v to int", vals[3])
+			}
+			row.Auto = int(val)
+		}
+		if vals[4] != nil {
+			val, ok := vals[4].(time.Time)
+			if !ok {
+				return nil, fmt.Errorf("converting Time column 4 with value %v to time.Time", vals[4])
 			}
 			row.Time = time.Time(val)
 		}
-		if vals[4] != nil {
-			val, ok := vals[4].(int64)
+		if vals[5] != nil {
+			val, ok := vals[5].(int64)
 			if !ok {
-				return nil, fmt.Errorf("converting Select column 4 with value %v to int", vals[4])
+				return nil, fmt.Errorf("converting Select column 5 with value %v to int", vals[5])
 			}
 			row.Select = int(val)
 		}
@@ -235,6 +260,13 @@ func (s *TSelect) scan(vals []driver.Value) (*AllCount, error) {
 			return nil, fmt.Errorf("converting Bool: column %d with value %v to bool", i, vals[i])
 		}
 		row.Bool = bool(val)
+	}
+	if i := m["`auto`"] - 1; i != -1 {
+		val, ok := vals[i].(int64)
+		if !ok {
+			return nil, fmt.Errorf("converting Auto: column %d with value %v to int", i, vals[i])
+		}
+		row.Auto = int(val)
 	}
 	if i := m["`time`"] - 1; i != -1 {
 		val, ok := vals[i].(time.Time)

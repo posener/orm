@@ -62,6 +62,25 @@ func WhereBoolBetween(low, high bool) *Where {
 	return newWhereBetween("bool", low, high)
 }
 
+// WhereAuto adds a condition on Auto to the WHERE statement
+func WhereAuto(op Op, val int) *Where {
+	return newWhere(op, "auto", val)
+}
+
+// WhereAutoIn adds an IN condition on Auto to the WHERE statement
+func WhereAutoIn(vals ...int) *Where {
+	args := make([]interface{}, len(vals))
+	for i := range vals {
+		args[i] = vals[i]
+	}
+	return newWhereIn("auto", args...)
+}
+
+// WhereAutoBetween adds a BETWEEN condition on Auto to the WHERE statement
+func WhereAutoBetween(low, high int) *Where {
+	return newWhereBetween("auto", low, high)
+}
+
 // WhereTime adds a condition on Time to the WHERE statement
 func WhereTime(op Op, val time.Time) *Where {
 	return newWhere(op, "time", val)

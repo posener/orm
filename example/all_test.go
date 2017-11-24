@@ -14,7 +14,7 @@ import (
 func TestCreate(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t,
-		`CREATE TABLE 'all' ( 'int' INT PRIMARY KEY, 'string' VARCHAR(100) NOT NULL, 'bool' BOOLEAN, 'time' TIMESTAMP, 'select' INT )`,
+		`CREATE TABLE 'all' ( 'int' INT PRIMARY KEY, 'string' VARCHAR(100) NOT NULL, 'bool' BOOLEAN, 'auto' INT AUTO_INCREMENT, 'time' TIMESTAMP, 'select' INT )`,
 		new(aorm.ORM).Create().String(),
 	)
 }
@@ -25,7 +25,7 @@ func TestTime(t *testing.T) {
 
 	tm := time.Now().Round(time.Millisecond).UTC()
 
-	res, err := orm.InsertAll(&example.All{Time: tm}).Exec()
+	res, err := orm.Insert().SetTime(tm).SetString("not null").Exec()
 	require.Nil(t, err)
 	affected, err := res.RowsAffected()
 	require.Nil(t, err)
@@ -38,13 +38,18 @@ func TestTime(t *testing.T) {
 	assert.Equal(t, tm, alls[0].Time)
 }
 
-func TestFieldReservedName(t *testing.T) {
+// TestNotNull tests that given inserting an empty not null field causes an error
+func TestNotNull(t *testing.T) {
 	t.Parallel()
 	orm := prepare(t)
 
-	if testing.Verbose() {
-		orm.Logger(t.Logf)
-	}
+	_, err := orm.Insert().SetInt(1).Exec()
+	require.NotNil(t, err)
+}
+
+func TestFieldReservedName(t *testing.T) {
+	t.Parallel()
+	orm := prepare(t)
 
 	res, err := orm.InsertAll(&example.All{Select: 42}).Exec()
 	require.Nil(t, err)
@@ -82,10 +87,15 @@ func TestFieldReservedName(t *testing.T) {
 }
 
 func prepare(t *testing.T) aorm.API {
+	t.Helper()
 	db, err := sql.Open("sqlite3", ":memory:")
 	require.Nil(t, err)
 	orm := aorm.New(db)
+	if testing.Verbose() {
+		orm.Logger(t.Logf)
+	}
 	_, err = orm.Create().Exec()
 	require.Nil(t, err)
+
 	return orm
 }
