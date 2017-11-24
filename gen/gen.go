@@ -90,8 +90,18 @@ func Gen(st *load.Struct) error {
 	if err = copyFixedFiles(ormDir, ormPkgName); err != nil {
 		return fmt.Errorf("copy fixed files: %s", err)
 	}
+	writeDotGitAttributes(ormDir)
 	format(ormDir)
 	return nil
+}
+
+func writeDotGitAttributes(dir string) {
+	f, err := os.Create(filepath.Join(dir, ".gitattributes"))
+	if err != nil {
+		log.Printf("Failed create .gitattributes file")
+	}
+	defer f.Close()
+	f.WriteString("* linguist-generated=true\n")
 }
 
 func copyFixedFiles(dir, pkgName string) error {
