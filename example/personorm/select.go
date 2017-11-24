@@ -11,6 +11,41 @@ import (
 
 const colCount = "COUNT(*)"
 
+// TSelect is the struct that holds the SELECT data
+type TSelect struct {
+	Querier
+	Argser
+	orm     *ORM
+	columns columns
+	where   *Where
+	groupBy
+	orderBy
+	page Page
+}
+
+func (s *TSelect) Args() []interface{} {
+	return s.where.Args()
+}
+
+// Where applies where conditions on the query
+func (s *TSelect) Where(where *Where) *TSelect {
+	s.where = where
+	return s
+}
+
+// Limit applies rows limit on the query response
+func (s *TSelect) Limit(limit int64) *TSelect {
+	s.page.limit = limit
+	return s
+}
+
+// Page applies rows offset and limit on the query response
+func (s *TSelect) Page(offset, limit int64) *TSelect {
+	s.page.offset = offset
+	s.page.limit = limit
+	return s
+}
+
 type PersonCount struct {
 	example.Person
 	Count int64
@@ -56,7 +91,7 @@ func (s *TSelect) Query() ([]example.Person, error) {
 
 // Count add a count column to the query
 func (s *TSelect) Count() ([]PersonCount, error) {
-	s.columns.add(colCount)
+	s.columns.count = true
 	// create select statement
 	stmt := s.String()
 	args := s.where.Args()
@@ -83,7 +118,7 @@ func (s *TSelect) Count() ([]PersonCount, error) {
 
 // SelectName Add Name to the selected column of a query
 func (s *TSelect) SelectName() *TSelect {
-	s.columns.add("`name`")
+	s.columns.SelectName = true
 	return s
 }
 
@@ -101,7 +136,7 @@ func (s *TSelect) GroupByName() *TSelect {
 
 // SelectAge Add Age to the selected column of a query
 func (s *TSelect) SelectAge() *TSelect {
-	s.columns.add("`age`")
+	s.columns.SelectAge = true
 	return s
 }
 
@@ -119,41 +154,32 @@ func (s *TSelect) GroupByAge() *TSelect {
 
 // scanArgs are list of fields to be given to the sql Scan command
 func (s *TSelect) scan(vals []driver.Value) (*PersonCount, error) {
-	var row PersonCount
-	if len(s.columns) == 0 {
-		// add to args all the fields of row
-		if vals[0] != nil {
-			val, ok := vals[0].([]byte)
+	var (
+		row PersonCount
+		all = s.columns.selectAll()
+		i   = 0
+	)
+	if all || s.columns.SelectName {
+		if vals[i] != nil {
+			val, ok := vals[i].([]byte)
 			if !ok {
-				return nil, fmt.Errorf("converting Name column 0 with value %v to string", vals[0])
+				return nil, fmt.Errorf("converting Name: column %d with value %v to string", i, vals[i])
 			}
 			row.Name = string(val)
 		}
-		if vals[1] != nil {
-			val, ok := vals[1].(int64)
+		i++
+	}
+	if all || s.columns.SelectAge {
+		if vals[i] != nil {
+			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf("converting Age column 1 with value %v to int", vals[1])
+				return nil, fmt.Errorf("converting Age: column %d with value %v to int", i, vals[i])
 			}
 			row.Age = int(val)
 		}
-
+		i++
 	}
-	m := s.columns.indexMap()
-	if i := m["`name`"] - 1; i != -1 {
-		val, ok := vals[i].([]byte)
-		if !ok {
-			return nil, fmt.Errorf("converting Name: column %d with value %v to string", i, vals[i])
-		}
-		row.Name = string(val)
-	}
-	if i := m["`age`"] - 1; i != -1 {
-		val, ok := vals[i].(int64)
-		if !ok {
-			return nil, fmt.Errorf("converting Age: column %d with value %v to int", i, vals[i])
-		}
-		row.Age = int(val)
-	}
-	if i := m[colCount] - 1; i != -1 {
+	if s.columns.count {
 		var ok bool
 		row.Count, ok = vals[i].(int64)
 		if !ok {

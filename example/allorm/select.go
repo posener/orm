@@ -12,6 +12,41 @@ import (
 
 const colCount = "COUNT(*)"
 
+// TSelect is the struct that holds the SELECT data
+type TSelect struct {
+	Querier
+	Argser
+	orm     *ORM
+	columns columns
+	where   *Where
+	groupBy
+	orderBy
+	page Page
+}
+
+func (s *TSelect) Args() []interface{} {
+	return s.where.Args()
+}
+
+// Where applies where conditions on the query
+func (s *TSelect) Where(where *Where) *TSelect {
+	s.where = where
+	return s
+}
+
+// Limit applies rows limit on the query response
+func (s *TSelect) Limit(limit int64) *TSelect {
+	s.page.limit = limit
+	return s
+}
+
+// Page applies rows offset and limit on the query response
+func (s *TSelect) Page(offset, limit int64) *TSelect {
+	s.page.offset = offset
+	s.page.limit = limit
+	return s
+}
+
 type AllCount struct {
 	example.All
 	Count int64
@@ -57,7 +92,7 @@ func (s *TSelect) Query() ([]example.All, error) {
 
 // Count add a count column to the query
 func (s *TSelect) Count() ([]AllCount, error) {
-	s.columns.add(colCount)
+	s.columns.count = true
 	// create select statement
 	stmt := s.String()
 	args := s.where.Args()
@@ -84,7 +119,7 @@ func (s *TSelect) Count() ([]AllCount, error) {
 
 // SelectInt Add Int to the selected column of a query
 func (s *TSelect) SelectInt() *TSelect {
-	s.columns.add("`int`")
+	s.columns.SelectInt = true
 	return s
 }
 
@@ -102,7 +137,7 @@ func (s *TSelect) GroupByInt() *TSelect {
 
 // SelectString Add String to the selected column of a query
 func (s *TSelect) SelectString() *TSelect {
-	s.columns.add("`string`")
+	s.columns.SelectString = true
 	return s
 }
 
@@ -120,7 +155,7 @@ func (s *TSelect) GroupByString() *TSelect {
 
 // SelectBool Add Bool to the selected column of a query
 func (s *TSelect) SelectBool() *TSelect {
-	s.columns.add("`bool`")
+	s.columns.SelectBool = true
 	return s
 }
 
@@ -138,7 +173,7 @@ func (s *TSelect) GroupByBool() *TSelect {
 
 // SelectAuto Add Auto to the selected column of a query
 func (s *TSelect) SelectAuto() *TSelect {
-	s.columns.add("`auto`")
+	s.columns.SelectAuto = true
 	return s
 }
 
@@ -156,7 +191,7 @@ func (s *TSelect) GroupByAuto() *TSelect {
 
 // SelectTime Add Time to the selected column of a query
 func (s *TSelect) SelectTime() *TSelect {
-	s.columns.add("`time`")
+	s.columns.SelectTime = true
 	return s
 }
 
@@ -174,7 +209,7 @@ func (s *TSelect) GroupByTime() *TSelect {
 
 // SelectSelect Add Select to the selected column of a query
 func (s *TSelect) SelectSelect() *TSelect {
-	s.columns.add("`select`")
+	s.columns.SelectSelect = true
 	return s
 }
 
@@ -192,97 +227,72 @@ func (s *TSelect) GroupBySelect() *TSelect {
 
 // scanArgs are list of fields to be given to the sql Scan command
 func (s *TSelect) scan(vals []driver.Value) (*AllCount, error) {
-	var row AllCount
-	if len(s.columns) == 0 {
-		// add to args all the fields of row
-		if vals[0] != nil {
-			val, ok := vals[0].(int64)
+	var (
+		row AllCount
+		all = s.columns.selectAll()
+		i   = 0
+	)
+	if all || s.columns.SelectInt {
+		if vals[i] != nil {
+			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf("converting Int column 0 with value %v to int", vals[0])
+				return nil, fmt.Errorf("converting Int: column %d with value %v to int", i, vals[i])
 			}
 			row.Int = int(val)
 		}
-		if vals[1] != nil {
-			val, ok := vals[1].([]byte)
+		i++
+	}
+	if all || s.columns.SelectString {
+		if vals[i] != nil {
+			val, ok := vals[i].([]byte)
 			if !ok {
-				return nil, fmt.Errorf("converting String column 1 with value %v to string", vals[1])
+				return nil, fmt.Errorf("converting String: column %d with value %v to string", i, vals[i])
 			}
 			row.String = string(val)
 		}
-		if vals[2] != nil {
-			val, ok := vals[2].(bool)
+		i++
+	}
+	if all || s.columns.SelectBool {
+		if vals[i] != nil {
+			val, ok := vals[i].(bool)
 			if !ok {
-				return nil, fmt.Errorf("converting Bool column 2 with value %v to bool", vals[2])
+				return nil, fmt.Errorf("converting Bool: column %d with value %v to bool", i, vals[i])
 			}
 			row.Bool = bool(val)
 		}
-		if vals[3] != nil {
-			val, ok := vals[3].(int64)
+		i++
+	}
+	if all || s.columns.SelectAuto {
+		if vals[i] != nil {
+			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf("converting Auto column 3 with value %v to int", vals[3])
+				return nil, fmt.Errorf("converting Auto: column %d with value %v to int", i, vals[i])
 			}
 			row.Auto = int(val)
 		}
-		if vals[4] != nil {
-			val, ok := vals[4].(time.Time)
+		i++
+	}
+	if all || s.columns.SelectTime {
+		if vals[i] != nil {
+			val, ok := vals[i].(time.Time)
 			if !ok {
-				return nil, fmt.Errorf("converting Time column 4 with value %v to time.Time", vals[4])
+				return nil, fmt.Errorf("converting Time: column %d with value %v to time.Time", i, vals[i])
 			}
 			row.Time = time.Time(val)
 		}
-		if vals[5] != nil {
-			val, ok := vals[5].(int64)
+		i++
+	}
+	if all || s.columns.SelectSelect {
+		if vals[i] != nil {
+			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf("converting Select column 5 with value %v to int", vals[5])
+				return nil, fmt.Errorf("converting Select: column %d with value %v to int", i, vals[i])
 			}
 			row.Select = int(val)
 		}
-
+		i++
 	}
-	m := s.columns.indexMap()
-	if i := m["`int`"] - 1; i != -1 {
-		val, ok := vals[i].(int64)
-		if !ok {
-			return nil, fmt.Errorf("converting Int: column %d with value %v to int", i, vals[i])
-		}
-		row.Int = int(val)
-	}
-	if i := m["`string`"] - 1; i != -1 {
-		val, ok := vals[i].([]byte)
-		if !ok {
-			return nil, fmt.Errorf("converting String: column %d with value %v to string", i, vals[i])
-		}
-		row.String = string(val)
-	}
-	if i := m["`bool`"] - 1; i != -1 {
-		val, ok := vals[i].(bool)
-		if !ok {
-			return nil, fmt.Errorf("converting Bool: column %d with value %v to bool", i, vals[i])
-		}
-		row.Bool = bool(val)
-	}
-	if i := m["`auto`"] - 1; i != -1 {
-		val, ok := vals[i].(int64)
-		if !ok {
-			return nil, fmt.Errorf("converting Auto: column %d with value %v to int", i, vals[i])
-		}
-		row.Auto = int(val)
-	}
-	if i := m["`time`"] - 1; i != -1 {
-		val, ok := vals[i].(time.Time)
-		if !ok {
-			return nil, fmt.Errorf("converting Time: column %d with value %v to time.Time", i, vals[i])
-		}
-		row.Time = time.Time(val)
-	}
-	if i := m["`select`"] - 1; i != -1 {
-		val, ok := vals[i].(int64)
-		if !ok {
-			return nil, fmt.Errorf("converting Select: column %d with value %v to int", i, vals[i])
-		}
-		row.Select = int(val)
-	}
-	if i := m[colCount] - 1; i != -1 {
+	if s.columns.count {
 		var ok bool
 		row.Count, ok = vals[i].(int64)
 		if !ok {

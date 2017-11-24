@@ -1,6 +1,8 @@
 package gen
 
 import (
+	"fmt"
+	"go/types"
 	"strings"
 
 	"github.com/posener/orm/tags"
@@ -31,6 +33,7 @@ func defaultSQLTypes(tp string) string {
 
 // SQL hold the SQL tags for a field in a struct
 type SQL struct {
+	Column string
 	// Type matches the 'sql.type' tag: the SQL type of the field
 	Type          string
 	PrimaryKey    bool
@@ -39,6 +42,21 @@ type SQL struct {
 	Unique        bool
 	// Default value of column
 	Default string
+}
+
+func newSQL(name string, st *types.Struct, fieldIndex int) (*SQL, error) {
+	var sql = new(SQL)
+	sql.Column = strings.ToLower(name)
+	sql.parseTags(st.Tag(fieldIndex))
+	field := st.Field(fieldIndex)
+	fieldType := field.Type().String()
+	if sql.Type == "" {
+		sql.Type = defaultSQLTypes(fieldType)
+	}
+	if sql.Type == "" {
+		return nil, fmt.Errorf("unsupported field type: %s", fieldType)
+	}
+	return sql, nil
 }
 
 // ConvertType is the type of the field when returned by sql/driver from database
@@ -61,32 +79,29 @@ func (s *SQL) ConvertType() string {
 	}
 }
 
-// ParseTags parses tags from a struct tags into a SQL struct.
-func ParseTags(tag string) SQL {
-	var t SQL
+// parseTags parses tags from a struct tags into a SQL struct.
+func (s *SQL) parseTags(tag string) {
 	if tag == "" {
-		return t
+		return
 	}
 
 	tagsMap := tags.Parse(tag)
 	for key, value := range tagsMap[tagSQLType] {
 		switch key {
 		case "type":
-			t.Type = value
+			s.Type = value
 		case "primary_key", "primary key":
-			t.PrimaryKey = true
+			s.PrimaryKey = true
 		case "not null", "not_null":
-			t.NotNull = true
+			s.NotNull = true
 		case "auto_increment", "auto increment":
-			t.AutoIncrement = true
+			s.AutoIncrement = true
 		case "unique":
-			t.Unique = true
+			s.Unique = true
 		case "default":
-			t.Default = value
+			s.Default = value
 		}
 	}
-
-	return t
 }
 
 // typeFamily returns the family of the SQL type.
