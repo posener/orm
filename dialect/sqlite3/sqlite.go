@@ -3,49 +3,80 @@ package sqlite3
 import (
 	"bytes"
 	"fmt"
-	"strings"
 
-	"github.com/posener/orm/def"
-	"github.com/posener/orm/dialect/api"
+	"github.com/posener/orm"
+	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect/sqltypes"
 )
 
-func New(tp def.Type) api.Dialect {
+func New(tp common.Type) orm.Dialect {
 	return &sqlite3{tp: tp}
 }
 
 type sqlite3 struct {
-	tp def.Type
+	tp common.Type
 }
 
-func Insert(tabler api.Tabler, assignments []api.Assignment) string {
-	return fmt.Sprintf(`INSERT INTO '%s' (%s) VALUES (%s)`,
-		tabler.Table(),
-		assignColumns(assignments),
-		qMarks(len(assignments)),
+// Insert returns an SQL INSERT statement and arguments
+func Insert(i *orm.Insert) (string, []interface{}) {
+	stmt := fmt.Sprintf(`INSERT INTO '%s' (%s) VALUES (%s)`,
+		i.Table,
+		assignColumns(i.Assignments),
+		common.QMarks(len(i.Assignments)),
 	)
+
+	var args []interface{}
+	if i.Assignments != nil {
+		args = append(args, i.Assignments.Args()...)
+	}
+
+	return stmt, args
 }
 
-// Select returns SQL SELECT string
-func Select(tabler api.Tabler, columner api.Columner, wherer api.Wherer, g []api.Group, o []api.Order, pager api.Pager) string {
-	return fmt.Sprintf("SELECT %s FROM '%s' %s %s %s %s",
-		columns(columner),
-		tabler.Table(),
-		where(wherer),
-		groups(g),
-		orders(o),
-		page(pager),
+// Select returns an SQL SELECT statement and arguments
+func Select(s *orm.Select) (string, []interface{}) {
+	stmt := fmt.Sprintf("SELECT %s FROM '%s' %s %s %s %s",
+		columns(s.Columns),
+		s.Table,
+		whereStatement(s.Where),
+		groups(s.Groups),
+		orders(s.Orders),
+		page(s.Page),
 	)
+
+	var args []interface{}
+	if s.Where != nil {
+		args = append(args, s.Where.Args()...)
+	}
+
+	return stmt, args
 }
 
-// Delete returns SQL DELETE query string
-func Delete(tabler api.Tabler, wherer api.Wherer) string {
-	return fmt.Sprintf("DELETE FROM '%s' %s", tabler.Table(), where(wherer))
+// Delete returns an SQL DELETE statement and arguments
+func Delete(d *orm.Delete) (string, []interface{}) {
+	stmt := fmt.Sprintf("DELETE FROM '%s' %s", d.Table, whereStatement(d.Where))
+
+	var args []interface{}
+	if d.Where != nil {
+		args = append(args, d.Where.Args()...)
+	}
+
+	return stmt, args
 }
 
-// Update returns SQL UPDATE query string
-func Update(tabler api.Tabler, assignments []api.Assignment, wherer api.Wherer) string {
-	return fmt.Sprintf(`UPDATE '%s' SET %s %s`, tabler.Table(), assignSets(assignments), where(wherer))
+// Update returns an SQL UPDATE statement and arguments
+func Update(u *orm.Update) (string, []interface{}) {
+	stmt := fmt.Sprintf(`UPDATE '%s' SET %s %s`, u.Table, assignSets(u.Assignments), whereStatement(u.Where))
+
+	var args []interface{}
+	if u.Assignments != nil {
+		args = append(args, u.Assignments.Args()...)
+	}
+	if u.Where != nil {
+		args = append(args, u.Where.Args()...)
+	}
+
+	return stmt, args
 }
 
 func defaultSQLTypes(tp string) sqltypes.Type {
@@ -71,14 +102,14 @@ func (s *sqlite3) Name() string {
 	return "sqlite3"
 }
 
-func sqlType(f *def.Field) sqltypes.Type {
+func sqlType(f *common.Field) sqltypes.Type {
 	if f.SQL.CustomType != "" {
 		return f.SQL.CustomType
 	}
 	return defaultSQLTypes(f.Type)
 }
 
-func columns(c api.Columner) string {
+func columns(c orm.Columner) string {
 	if c == nil {
 		return "*"
 	}
@@ -99,18 +130,18 @@ func columns(c api.Columner) string {
 	return s[:len(s)-2]
 }
 
-func where(c api.Wherer) string {
+func whereStatement(c orm.StatementArger) string {
 	if c == nil {
 		return ""
 	}
-	where := c.Where()
+	where := c.Statement()
 	if len(where) == 0 {
 		return ""
 	}
 	return "WHERE " + where
 }
 
-func groups(groups []api.Group) string {
+func groups(groups []orm.Group) string {
 	if len(groups) == 0 {
 		return ""
 	}
@@ -123,7 +154,7 @@ func groups(groups []api.Group) string {
 	return s[:len(s)-2]
 }
 
-func orders(orders []api.Order) string {
+func orders(orders []orm.Order) string {
 	if len(orders) == 0 {
 		return ""
 	}
@@ -137,22 +168,18 @@ func orders(orders []api.Order) string {
 	return s[:len(s)-2]
 }
 
-func page(p api.Pager) string {
-	if p == nil {
+func page(p orm.Page) string {
+	if p.Limit == 0 { // why would someone ask for a page of zero size?
 		return ""
 	}
-	limit, offset := p.Page()
-	if limit == 0 && offset == 0 {
-		return ""
-	}
-	stmt := fmt.Sprintf("LIMIT %d", limit)
-	if offset != 0 {
-		stmt += fmt.Sprintf(" OFFSET %d", offset)
+	stmt := fmt.Sprintf("LIMIT %d", p.Limit)
+	if p.Offset != 0 {
+		stmt += fmt.Sprintf(" OFFSET %d", p.Offset)
 	}
 	return stmt
 }
 
-func assignColumns(a []api.Assignment) string {
+func assignColumns(a orm.Assignments) string {
 	if len(a) == 0 {
 		return ""
 	}
@@ -165,7 +192,7 @@ func assignColumns(a []api.Assignment) string {
 	return s[:len(s)-2]
 }
 
-func assignSets(a []api.Assignment) string {
+func assignSets(a orm.Assignments) string {
 	if len(a) == 0 {
 		return ""
 	}
@@ -176,13 +203,4 @@ func assignSets(a []api.Assignment) string {
 
 	s := b.String()
 	return s[:len(s)-2]
-}
-
-func qMarks(n int) string {
-	if n == 0 {
-		return ""
-	}
-	qMark := strings.Repeat("?, ", n)
-	qMark = qMark[:len(qMark)-2] // remove last ", "
-	return qMark
 }

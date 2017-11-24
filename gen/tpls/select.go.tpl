@@ -6,63 +6,45 @@ import (
 	{{ range $_, $f := .Type.Fields -}}
 	{{ if $f.ImportPath }}"{{$f.ImportPath}}"{{ end }}
 	{{- end }}
-	"github.com/posener/orm/dialect/{{.Dialect.Name}}"
+	"github.com/posener/orm"
 
     "{{.Type.ImportPath}}"
 )
-
-// TSelect is the struct that holds the SELECT data
-type TSelect struct {
-	Querier
-	Argser
-	orm *ORM
-	columns columns
-	where *Where
-	groupBy
-	orderBy
-	page Page
-}
-
-func (s *TSelect) Args() []interface{} {
-	return s.where.Args()
-}
-
-// Where applies where conditions on the query
-func (s *TSelect) Where(where *Where) *TSelect {
-	s.where = where
-	return s
-}
-
-// Limit applies rows limit on the query response
-func (s *TSelect) Limit(limit int64) *TSelect {
-	s.page.limit = limit
-	return s
-}
-
-// Page applies rows offset and limit on the query response
-func (s *TSelect) Page(offset, limit int64) *TSelect {
-	s.page.offset = offset
-	s.page.limit = limit
-	return s
-}
 
 type {{.Type.Name}}Count struct {
     {{.Type.FullName}}
     Count int64
 }
 
-// String returns the SQL SELECT statement
-func (s *TSelect) String() string {
-    return {{.Dialect.Name}}.Select(s.orm, &s.columns, s.where, s.groupBy, s.orderBy, &s.page)
+// Select is the struct that holds the SELECT data
+type Select struct {
+	orm.Select
+	orm *ORM
+	columns
+}
+
+// Where applies where conditions on the query
+func (s *Select) Where(where orm.Where) *Select {
+	s.Select.Where = where
+	return s
+}
+
+// Limit applies rows limit on the query response
+func (s *Select) Limit(limit int64) *Select {
+	s.Select.Page.Limit = limit
+	return s
+}
+
+// Page applies rows offset and limit on the query response
+func (s *Select) Page(offset, limit int64) *Select {
+	s.Select.Page.Offset = offset
+	s.Select.Page.Limit = limit
+	return s
 }
 
 // Query the database
-func (s *TSelect) Query() ([]{{.Type.FullName}}, error) {
-	// create select statement
-	stmt := s.String()
-	args := s.Args()
-	s.orm.log("Query: '%v' %v", stmt, args)
-	rows, err := s.orm.db.Query(stmt, args...)
+func (s *Select) Query() ([]{{.Type.FullName}}, error) {
+    rows, err := s.query()
 	if err != nil {
 		return nil, err
 	}
@@ -81,13 +63,9 @@ func (s *TSelect) Query() ([]{{.Type.FullName}}, error) {
 }
 
 // Count add a count column to the query
-func (s *TSelect) Count() ([]{{.Type.Name}}Count, error) {
+func (s *Select) Count() ([]{{.Type.Name}}Count, error) {
     s.columns.count = true
-	// create select statement
-	stmt := s.String()
-	args := s.where.Args()
-	s.orm.log("Count: '%v' %v", stmt, args)
-	rows, err := s.orm.db.Query(stmt, args...)
+    rows, err := s.query()
 	if err != nil {
 		return nil, err
 	}
@@ -106,27 +84,27 @@ func (s *TSelect) Count() ([]{{.Type.Name}}Count, error) {
 }
 
 {{ range $_, $f := .Type.Fields -}}
-// Select{{$f.Name}} Add {{$f.Name}} to the selected column of a query
-func (s *TSelect) Select{{$f.Name}}() *TSelect {
+// Select{{$f.Name}} adds {{$f.Name}} to the selected column of a query
+func (s *Select) Select{{$f.Name}}() *Select {
     s.columns.Select{{$f.Name}} = true
     return s
 }
 
 // OrderBy{{$f.Name}} set order to the query results according to column {{$f.SQL.Column}}
-func (s *TSelect) OrderBy{{$f.Name}}(dir OrderDir) *TSelect {
-    s.orderBy.add("{{$f.SQL.Column}}", dir)
+func (s *Select) OrderBy{{$f.Name}}(dir orm.OrderDir) *Select {
+    s.Orders.Add("{{$f.SQL.Column}}", dir)
     return s
 }
 
 // GroupBy{{$f.Name}} make the query group by column {{$f.SQL.Column}}
-func (s *TSelect) GroupBy{{$f.Name}}() *TSelect {
-    s.groupBy.add("{{$f.SQL.Column}}")
+func (s *Select) GroupBy{{$f.Name}}() *Select {
+    s.Groups.Add("{{$f.SQL.Column}}")
     return s
 }
 {{ end -}}
 
 // scanArgs are list of fields to be given to the sql Scan command
-func (s *TSelect) scan(vals []driver.Value) (*{{.Type.Name}}Count, error) {
+func (s *Select) scan(vals []driver.Value) (*{{.Type.Name}}Count, error) {
     var (
         row {{.Type.Name}}Count
         all = s.columns.selectAll()

@@ -1,5 +1,5 @@
 package {{.Package}}
 
-func (c *TCreate) String() string {
+func (c *Create) String() string {
 	return `{{.Dialect.Create}}`
 }

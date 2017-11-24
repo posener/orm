@@ -2,33 +2,29 @@
 package allsqlite3
 
 import (
-	"fmt"
-
 	"github.com/posener/orm/example"
 )
 
 // API is the interface of the ORM object
 type API interface {
 	Close() error
-	Create() *TCreate
-	Select() *TSelect
-	Insert() *TInsert
-	Update() *TUpdate
-	Delete() *TDelete
-	InsertAll(*example.All) *TInsert
-	UpdateAll(*example.All) *TUpdate
+	Create() *Create
+	Select() *Select
+	Insert() *Insert
+	Update() *Update
+	Delete() *Delete
+	InsertAll(*example.All) *Insert
+	UpdateAll(*example.All) *Update
 
 	Logger(Logger)
 }
 
 // Querier is the interface for a SELECT SQL statement
 type Querier interface {
-	fmt.Stringer
 	Query() ([]example.All, error)
 }
 
 // Counter is the interface for a SELECT SQL statement for counting purposes
 type Counter interface {
-	fmt.Stringer
 	Count() ([]AllCount, error)
 }

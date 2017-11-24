@@ -3,12 +3,13 @@ package dialect
 import (
 	"fmt"
 
-	"github.com/posener/orm/def"
-	"github.com/posener/orm/dialect/api"
+	"github.com/posener/orm"
+	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect/sqlite3"
 )
 
-func New(name string, tp def.Type) (api.Dialect, error) {
+// New returns a new Dialect if one is implemented
+func New(name string, tp common.Type) (orm.Dialect, error) {
 	switch name {
 	case "sqlite3", "sqlite":
 		return sqlite3.New(tp), nil

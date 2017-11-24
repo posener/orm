@@ -1,4 +1,4 @@
-package main_test
+package orm_test
 
 import (
 	"database/sql"

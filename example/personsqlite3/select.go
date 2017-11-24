@@ -5,63 +5,45 @@ import (
 	"database/sql/driver"
 	"fmt"
 
-	"github.com/posener/orm/dialect/sqlite3"
+	"github.com/posener/orm"
 
 	"github.com/posener/orm/example"
 )
-
-// TSelect is the struct that holds the SELECT data
-type TSelect struct {
-	Querier
-	Argser
-	orm     *ORM
-	columns columns
-	where   *Where
-	groupBy
-	orderBy
-	page Page
-}
-
-func (s *TSelect) Args() []interface{} {
-	return s.where.Args()
-}
-
-// Where applies where conditions on the query
-func (s *TSelect) Where(where *Where) *TSelect {
-	s.where = where
-	return s
-}
-
-// Limit applies rows limit on the query response
-func (s *TSelect) Limit(limit int64) *TSelect {
-	s.page.limit = limit
-	return s
-}
-
-// Page applies rows offset and limit on the query response
-func (s *TSelect) Page(offset, limit int64) *TSelect {
-	s.page.offset = offset
-	s.page.limit = limit
-	return s
-}
 
 type PersonCount struct {
 	example.Person
 	Count int64
 }
 
-// String returns the SQL SELECT statement
-func (s *TSelect) String() string {
-	return sqlite3.Select(s.orm, &s.columns, s.where, s.groupBy, s.orderBy, &s.page)
+// Select is the struct that holds the SELECT data
+type Select struct {
+	orm.Select
+	orm *ORM
+	columns
+}
+
+// Where applies where conditions on the query
+func (s *Select) Where(where orm.Where) *Select {
+	s.Select.Where = where
+	return s
+}
+
+// Limit applies rows limit on the query response
+func (s *Select) Limit(limit int64) *Select {
+	s.Select.Page.Limit = limit
+	return s
+}
+
+// Page applies rows offset and limit on the query response
+func (s *Select) Page(offset, limit int64) *Select {
+	s.Select.Page.Offset = offset
+	s.Select.Page.Limit = limit
+	return s
 }
 
 // Query the database
-func (s *TSelect) Query() ([]example.Person, error) {
-	// create select statement
-	stmt := s.String()
-	args := s.Args()
-	s.orm.log("Query: '%v' %v", stmt, args)
-	rows, err := s.orm.db.Query(stmt, args...)
+func (s *Select) Query() ([]example.Person, error) {
+	rows, err := s.query()
 	if err != nil {
 		return nil, err
 	}
@@ -80,13 +62,9 @@ func (s *TSelect) Query() ([]example.Person, error) {
 }
 
 // Count add a count column to the query
-func (s *TSelect) Count() ([]PersonCount, error) {
+func (s *Select) Count() ([]PersonCount, error) {
 	s.columns.count = true
-	// create select statement
-	stmt := s.String()
-	args := s.where.Args()
-	s.orm.log("Count: '%v' %v", stmt, args)
-	rows, err := s.orm.db.Query(stmt, args...)
+	rows, err := s.query()
 	if err != nil {
 		return nil, err
 	}
@@ -104,44 +82,44 @@ func (s *TSelect) Count() ([]PersonCount, error) {
 	return all, rows.Err()
 }
 
-// SelectName Add Name to the selected column of a query
-func (s *TSelect) SelectName() *TSelect {
+// SelectName adds Name to the selected column of a query
+func (s *Select) SelectName() *Select {
 	s.columns.SelectName = true
 	return s
 }
 
 // OrderByName set order to the query results according to column name
-func (s *TSelect) OrderByName(dir OrderDir) *TSelect {
-	s.orderBy.add("name", dir)
+func (s *Select) OrderByName(dir orm.OrderDir) *Select {
+	s.Orders.Add("name", dir)
 	return s
 }
 
 // GroupByName make the query group by column name
-func (s *TSelect) GroupByName() *TSelect {
-	s.groupBy.add("name")
+func (s *Select) GroupByName() *Select {
+	s.Groups.Add("name")
 	return s
 }
 
-// SelectAge Add Age to the selected column of a query
-func (s *TSelect) SelectAge() *TSelect {
+// SelectAge adds Age to the selected column of a query
+func (s *Select) SelectAge() *Select {
 	s.columns.SelectAge = true
 	return s
 }
 
 // OrderByAge set order to the query results according to column age
-func (s *TSelect) OrderByAge(dir OrderDir) *TSelect {
-	s.orderBy.add("age", dir)
+func (s *Select) OrderByAge(dir orm.OrderDir) *Select {
+	s.Orders.Add("age", dir)
 	return s
 }
 
 // GroupByAge make the query group by column age
-func (s *TSelect) GroupByAge() *TSelect {
-	s.groupBy.add("age")
+func (s *Select) GroupByAge() *Select {
+	s.Groups.Add("age")
 	return s
 }
 
 // scanArgs are list of fields to be given to the sql Scan command
-func (s *TSelect) scan(vals []driver.Value) (*PersonCount, error) {
+func (s *Select) scan(vals []driver.Value) (*PersonCount, error) {
 	var (
 		row PersonCount
 		all = s.columns.selectAll()

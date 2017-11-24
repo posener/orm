@@ -5,98 +5,108 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/posener/orm/dialect/api"
+	"github.com/posener/orm"
 	"github.com/stretchr/testify/assert"
 )
+
+const table = "name"
 
 func TestSelect(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		columner columner
-		wherer   wherer
-		groups   []api.Group
-		orders   []api.Order
-		pager    pager
-		want     string
+		sel      orm.Select
+		wantStmt string
+		wantArgs []interface{}
 	}{
 		{
-			want: "SELECT * FROM 'name'",
+			wantStmt: "SELECT * FROM 'name'",
 		},
 		{
-			columner: columner{},
-			want:     "SELECT * FROM 'name'",
+			sel:      orm.Select{Columns: &columner{}},
+			wantStmt: "SELECT * FROM 'name'",
 		},
 		{
-			columner: columner{},
-			pager:    pager{},
-			want:     "SELECT * FROM 'name'",
+			sel:      orm.Select{Columns: &columner{}, Page: orm.Page{}},
+			wantStmt: "SELECT * FROM 'name'",
 		},
 		{
-			columner: columner{count: true},
-			want:     "SELECT COUNT(*) FROM 'name'",
+			sel:      orm.Select{Columns: &columner{count: true}},
+			wantStmt: "SELECT COUNT(*) FROM 'name'",
 		},
 		{
-			columner: columner{columns: []string{"a", "b", "c"}, count: true},
-			want:     "SELECT `a`, `b`, `c`, COUNT(*) FROM 'name'",
+			sel:      orm.Select{Columns: &columner{columns: []string{"a", "b", "c"}, count: true}},
+			wantStmt: "SELECT `a`, `b`, `c`, COUNT(*) FROM 'name'",
 		},
 		{
-			columner: columner{columns: []string{"a", "b", "c"}},
-			want:     "SELECT `a`, `b`, `c` FROM 'name'",
+			sel:      orm.Select{Columns: &columner{columns: []string{"a", "b", "c"}}},
+			wantStmt: "SELECT `a`, `b`, `c` FROM 'name'",
 		},
 		{
-			pager: pager{},
-			want:  "SELECT * FROM 'name'",
+			sel:      orm.Select{Page: orm.Page{}},
+			wantStmt: "SELECT * FROM 'name'",
 		},
 		{
-			pager: pager{limit: 1},
-			want:  "SELECT * FROM 'name' LIMIT 1",
+			sel:      orm.Select{Page: orm.Page{Limit: 1}},
+			wantStmt: "SELECT * FROM 'name' LIMIT 1",
 		},
 		{
-			pager: pager{limit: 1, offset: 2},
-			want:  "SELECT * FROM 'name' LIMIT 1 OFFSET 2",
+			sel:      orm.Select{Page: orm.Page{Limit: 1, Offset: 2}},
+			wantStmt: "SELECT * FROM 'name' LIMIT 1 OFFSET 2",
 		},
 		{
-			pager: pager{offset: 1},
-			want:  "SELECT * FROM 'name' LIMIT 0 OFFSET 1",
+			sel:      orm.Select{Page: orm.Page{Offset: 1}},
+			wantStmt: "SELECT * FROM 'name'",
 		},
 		{
-			columner: columner{columns: []string{"a", "b", "c"}, count: true},
-			pager:    pager{limit: 1, offset: 2},
-			want:     "SELECT `a`, `b`, `c`, COUNT(*) FROM 'name' LIMIT 1 OFFSET 2",
-		},
-		{
-			groups: []api.Group{{Column: "a"}, {Column: "b"}},
-			want:   "SELECT * FROM 'name' GROUP BY `a`, `b`",
-		},
-		{
-			orders: []api.Order{
-				{Column: "c", Dir: "ASC"},
-				{Column: "d", Dir: "DESC"},
+			sel: orm.Select{
+				Columns: &columner{columns: []string{"a", "b", "c"}, count: true},
+				Page:    orm.Page{Limit: 1, Offset: 2},
 			},
-			want: "SELECT * FROM 'name' ORDER BY `c` ASC, `d` DESC",
+			wantStmt: "SELECT `a`, `b`, `c`, COUNT(*) FROM 'name' LIMIT 1 OFFSET 2",
 		},
 		{
-			wherer: wherer("`k` > 0"),
-			want:   "SELECT * FROM 'name' WHERE `k` > 0",
-		},
-		{
-			columner: columner{columns: []string{"a", "b", "c"}, count: true},
-			wherer:   wherer("`k` > 0"),
-			groups:   []api.Group{{Column: "a"}, {Column: "b"}},
-			orders: []api.Order{
-				{Column: "c", Dir: "ASC"},
-				{Column: "d", Dir: "DESC"},
+			sel: orm.Select{
+				Groups: orm.Groups{{Column: "a"}, {Column: "b"}},
 			},
-			pager: pager{limit: 1, offset: 2},
-			want:  "SELECT `a`, `b`, `c`, COUNT(*) FROM 'name' WHERE `k` > 0 GROUP BY `a`, `b` ORDER BY `c` ASC, `d` DESC LIMIT 1 OFFSET 2",
+			wantStmt: "SELECT * FROM 'name' GROUP BY `a`, `b`",
+		},
+		{
+			sel: orm.Select{
+				Orders: orm.Orders{
+					{Column: "c", Dir: "ASC"},
+					{Column: "d", Dir: "DESC"},
+				},
+			},
+			wantStmt: "SELECT * FROM 'name' ORDER BY `c` ASC, `d` DESC",
+		},
+		{
+			sel:      orm.Select{Where: orm.NewWhere(orm.OpEq, "k", 3)},
+			wantStmt: "SELECT * FROM 'name' WHERE `k` = ?",
+			wantArgs: []interface{}{3},
+		},
+		{
+			sel: orm.Select{
+				Columns: &columner{columns: []string{"a", "b", "c"}, count: true},
+				Where:   orm.NewWhere(orm.OpGt, "k", 3),
+				Groups:  orm.Groups{{Column: "a"}, {Column: "b"}},
+				Orders: orm.Orders{
+					{Column: "c", Dir: "ASC"},
+					{Column: "d", Dir: "DESC"},
+				},
+				Page: orm.Page{Limit: 1, Offset: 2},
+			},
+			wantStmt: "SELECT `a`, `b`, `c`, COUNT(*) FROM 'name' WHERE `k` > ? GROUP BY `a`, `b` ORDER BY `c` ASC, `d` DESC LIMIT 1 OFFSET 2",
+			wantArgs: []interface{}{3},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.want, func(t *testing.T) {
-			got := Select(tabler{}, &tt.columner, &tt.wherer, tt.groups, tt.orders, &tt.pager)
-			assert.Equal(t, tt.want, reduceSpaces(got), " ")
+		t.Run(tt.wantStmt, func(t *testing.T) {
+			tt.sel.Table = table
+			stmt, args := Select(&tt.sel)
+			assert.Equal(t, tt.wantStmt, reduceSpaces(stmt), " ")
+			assert.Equal(t, tt.wantArgs, args)
 		})
 	}
 }
@@ -105,26 +115,31 @@ func TestInsert(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		assign []api.Assignment
-		want   string
+		assign   orm.Assignments
+		wantStmt string
+		wantArgs []interface{}
 	}{
 		{
-			want: "INSERT INTO 'name' () VALUES ()",
+			wantStmt: "INSERT INTO 'name' () VALUES ()",
+			wantArgs: []interface{}(nil),
 		},
 		{
-			assign: []api.Assignment{{Column: "c1", Value: 1}},
-			want:   "INSERT INTO 'name' (`c1`) VALUES (?)",
+			assign:   orm.Assignments{{Column: "c1", Value: 1}},
+			wantStmt: "INSERT INTO 'name' (`c1`) VALUES (?)",
+			wantArgs: []interface{}{1},
 		},
 		{
-			assign: []api.Assignment{{Column: "c1", Value: 1}, {Column: "c2", Value: ""}},
-			want:   "INSERT INTO 'name' (`c1`, `c2`) VALUES (?, ?)",
+			assign:   orm.Assignments{{Column: "c1", Value: 1}, {Column: "c2", Value: ""}},
+			wantStmt: "INSERT INTO 'name' (`c1`, `c2`) VALUES (?, ?)",
+			wantArgs: []interface{}{1, ""},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.want, func(t *testing.T) {
-			got := Insert(tabler{}, tt.assign)
-			assert.Equal(t, tt.want, reduceSpaces(got), " ")
+		t.Run(tt.wantStmt, func(t *testing.T) {
+			stmt, args := Insert(&orm.Insert{Table: table, Assignments: tt.assign})
+			assert.Equal(t, tt.wantStmt, reduceSpaces(stmt), " ")
+			assert.Equal(t, tt.wantArgs, args, " ")
 		})
 	}
 }
@@ -133,32 +148,38 @@ func TestUpdate(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		assign []api.Assignment
-		wherer wherer
-		want   string
+		assign   orm.Assignments
+		where    orm.Where
+		wantStmt string
+		wantArgs []interface{}
 	}{
 		{
-			want: "UPDATE 'name' SET",
+			wantStmt: "UPDATE 'name' SET",
+			wantArgs: []interface{}(nil),
 		},
 		{
-			assign: []api.Assignment{{Column: "c1", Value: 1}},
-			want:   "UPDATE 'name' SET `c1` = ?",
+			assign:   orm.Assignments{{Column: "c1", Value: 1}},
+			wantStmt: "UPDATE 'name' SET `c1` = ?",
+			wantArgs: []interface{}{1},
 		},
 		{
-			assign: []api.Assignment{{Column: "c1", Value: 1}, {Column: "c2", Value: ""}},
-			want:   "UPDATE 'name' SET `c1` = ?, `c2` = ?",
+			assign:   orm.Assignments{{Column: "c1", Value: 1}, {Column: "c2", Value: ""}},
+			wantStmt: "UPDATE 'name' SET `c1` = ?, `c2` = ?",
+			wantArgs: []interface{}{1, ""},
 		},
 		{
-			assign: []api.Assignment{{Column: "c1", Value: 1}, {Column: "c2", Value: ""}},
-			wherer: wherer("`k` > 3"),
-			want:   "UPDATE 'name' SET `c1` = ?, `c2` = ? WHERE `k` > 3",
+			assign:   orm.Assignments{{Column: "c1", Value: 1}, {Column: "c2", Value: ""}},
+			where:    orm.NewWhere(orm.OpGt, "k", 3),
+			wantStmt: "UPDATE 'name' SET `c1` = ?, `c2` = ? WHERE `k` > ?",
+			wantArgs: []interface{}{1, "", 3},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.want, func(t *testing.T) {
-			got := Update(tabler{}, tt.assign, &tt.wherer)
-			assert.Equal(t, tt.want, reduceSpaces(got), " ")
+		t.Run(tt.wantStmt, func(t *testing.T) {
+			stmt, args := Update(&orm.Update{Table: table, Assignments: tt.assign, Where: tt.where})
+			assert.Equal(t, tt.wantStmt, reduceSpaces(stmt), " ")
+			assert.Equal(t, tt.wantArgs, args)
 		})
 	}
 }
@@ -167,22 +188,26 @@ func TestDelete(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		wherer wherer
-		want   string
+		where    orm.Where
+		wantStmt string
+		wantArgs []interface{}
 	}{
 		{
-			want: "DELETE FROM 'name'",
+			wantStmt: "DELETE FROM 'name'",
+			wantArgs: []interface{}(nil),
 		},
 		{
-			wherer: wherer("`k` > 3"),
-			want:   "DELETE FROM 'name' WHERE `k` > 3",
+			where:    orm.NewWhere(orm.OpGt, "k", 3),
+			wantStmt: "DELETE FROM 'name' WHERE `k` > ?",
+			wantArgs: []interface{}{3},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.want, func(t *testing.T) {
-			got := Delete(tabler{}, &tt.wherer)
-			assert.Equal(t, tt.want, reduceSpaces(got), " ")
+		t.Run(tt.wantStmt, func(t *testing.T) {
+			stmt, args := Delete(&orm.Delete{Table: table, Where: tt.where})
+			assert.Equal(t, tt.wantStmt, reduceSpaces(stmt), " ")
+			assert.Equal(t, tt.wantArgs, args)
 		})
 	}
 }
@@ -203,24 +228,4 @@ func (c *columner) Columns() []string {
 
 func (c *columner) Count() bool {
 	return c.count
-}
-
-type wherer string
-
-func (w *wherer) Where() string {
-	return string(*w)
-}
-
-type pager struct {
-	limit, offset int64
-}
-
-func (p *pager) Page() (int64, int64) {
-	return p.limit, p.offset
-}
-
-type tabler struct{}
-
-func (tabler) Table() string {
-	return "name"
 }

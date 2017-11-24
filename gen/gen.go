@@ -11,9 +11,9 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/posener/orm/def"
+	"github.com/posener/orm"
+	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect"
-	"github.com/posener/orm/dialect/api"
 	"github.com/posener/orm/gen/b0x"
 	"github.com/posener/orm/load"
 )
@@ -28,8 +28,8 @@ type TemplateArgs struct {
 	// The name	of the new created package
 	Package string
 	// CustomType describes the type of the given struct to generate code for
-	Type    def.Type
-	Dialect api.Dialect
+	Type    common.Type
+	Dialect orm.Dialect
 }
 
 var templates = template.New("").Funcs(template.FuncMap{
@@ -66,7 +66,7 @@ func Gen(st *load.Struct, dialectName string) error {
 		return err
 	}
 
-	tp := def.NewType(st)
+	tp := common.NewType(st)
 	dialect, err := dialect.New(dialectName, tp)
 	if err != nil {
 		return err

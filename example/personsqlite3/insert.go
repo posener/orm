@@ -2,29 +2,25 @@
 package personsqlite3
 
 import (
-	"github.com/posener/orm/dialect/sqlite3"
-
 	"github.com/posener/orm/example"
 )
 
-func (i *TInsert) String() string {
-	return sqlite3.Insert(i.orm, i.assign)
-}
-
 // InsertPerson creates an INSERT statement according to the given object
-func (o *ORM) InsertPerson(p *example.Person) *TInsert {
+func (o *ORM) InsertPerson(p *example.Person) *Insert {
 	i := o.Insert()
-	i.add("name", p.Name)
-	i.add("age", p.Age)
+	i.Assignments.Add("name", p.Name)
+	i.Assignments.Add("age", p.Age)
 	return i
 }
 
 // SetName sets value for column name in the INSERT statement
-func (i *TInsert) SetName(value string) *TInsert {
-	return i.add("name", value)
+func (i *Insert) SetName(value string) *Insert {
+	i.Assignments.Add("name", value)
+	return i
 }
 
 // SetAge sets value for column age in the INSERT statement
-func (i *TInsert) SetAge(value int) *TInsert {
-	return i.add("age", value)
+func (i *Insert) SetAge(value int) *Insert {
+	i.Assignments.Add("age", value)
+	return i
 }

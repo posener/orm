@@ -2,33 +2,29 @@
 package personsqlite3
 
 import (
-	"fmt"
-
 	"github.com/posener/orm/example"
 )
 
 // API is the interface of the ORM object
 type API interface {
 	Close() error
-	Create() *TCreate
-	Select() *TSelect
-	Insert() *TInsert
-	Update() *TUpdate
-	Delete() *TDelete
-	InsertPerson(*example.Person) *TInsert
-	UpdatePerson(*example.Person) *TUpdate
+	Create() *Create
+	Select() *Select
+	Insert() *Insert
+	Update() *Update
+	Delete() *Delete
+	InsertPerson(*example.Person) *Insert
+	UpdatePerson(*example.Person) *Update
 
 	Logger(Logger)
 }
 
 // Querier is the interface for a SELECT SQL statement
 type Querier interface {
-	fmt.Stringer
 	Query() ([]example.Person, error)
 }
 
 // Counter is the interface for a SELECT SQL statement for counting purposes
 type Counter interface {
-	fmt.Stringer
 	Count() ([]PersonCount, error)
 }

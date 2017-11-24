@@ -2,48 +2,48 @@
 package allsqlite3
 
 import (
-	"github.com/posener/orm/dialect/sqlite3"
 	"time"
 
 	"github.com/posener/orm/example"
 )
 
-func (i *TInsert) String() string {
-	return sqlite3.Insert(i.orm, i.assign)
-}
-
 // InsertAll creates an INSERT statement according to the given object
-func (o *ORM) InsertAll(p *example.All) *TInsert {
+func (o *ORM) InsertAll(p *example.All) *Insert {
 	i := o.Insert()
-	i.add("int", p.Int)
-	i.add("string", p.String)
-	i.add("bool", p.Bool)
-	i.add("time", p.Time)
-	i.add("select", p.Select)
+	i.Assignments.Add("int", p.Int)
+	i.Assignments.Add("string", p.String)
+	i.Assignments.Add("bool", p.Bool)
+	i.Assignments.Add("time", p.Time)
+	i.Assignments.Add("select", p.Select)
 	return i
 }
 
 // SetInt sets value for column int in the INSERT statement
-func (i *TInsert) SetInt(value int) *TInsert {
-	return i.add("int", value)
+func (i *Insert) SetInt(value int) *Insert {
+	i.Assignments.Add("int", value)
+	return i
 }
 
 // SetString sets value for column string in the INSERT statement
-func (i *TInsert) SetString(value string) *TInsert {
-	return i.add("string", value)
+func (i *Insert) SetString(value string) *Insert {
+	i.Assignments.Add("string", value)
+	return i
 }
 
 // SetBool sets value for column bool in the INSERT statement
-func (i *TInsert) SetBool(value bool) *TInsert {
-	return i.add("bool", value)
+func (i *Insert) SetBool(value bool) *Insert {
+	i.Assignments.Add("bool", value)
+	return i
 }
 
 // SetTime sets value for column time in the INSERT statement
-func (i *TInsert) SetTime(value time.Time) *TInsert {
-	return i.add("time", value)
+func (i *Insert) SetTime(value time.Time) *Insert {
+	i.Assignments.Add("time", value)
+	return i
 }
 
 // SetSelect sets value for column select in the INSERT statement
-func (i *TInsert) SetSelect(value int) *TInsert {
-	return i.add("select", value)
+func (i *Insert) SetSelect(value int) *Insert {
+	i.Assignments.Add("select", value)
+	return i
 }

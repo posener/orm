@@ -2,48 +2,48 @@
 package allsqlite3
 
 import (
-	"github.com/posener/orm/dialect/sqlite3"
 	"time"
 
 	"github.com/posener/orm/example"
 )
 
-func (u *TUpdate) String() string {
-	return sqlite3.Update(u.orm, u.assign, u.where)
-}
-
 // InsertAll creates an UPDATE statement according to the given object
-func (o *ORM) UpdateAll(p *example.All) *TUpdate {
+func (o *ORM) UpdateAll(p *example.All) *Update {
 	u := o.Update()
-	u.add("int", p.Int)
-	u.add("string", p.String)
-	u.add("bool", p.Bool)
-	u.add("time", p.Time)
-	u.add("select", p.Select)
+	u.Assignments.Add("int", p.Int)
+	u.Assignments.Add("string", p.String)
+	u.Assignments.Add("bool", p.Bool)
+	u.Assignments.Add("time", p.Time)
+	u.Assignments.Add("select", p.Select)
 	return u
 }
 
 // SetInt sets value for column int in the UPDATE statement
-func (u *TUpdate) SetInt(value int) *TUpdate {
-	return u.add("int", value)
+func (u *Update) SetInt(value int) *Update {
+	u.Assignments.Add("int", value)
+	return u
 }
 
 // SetString sets value for column string in the UPDATE statement
-func (u *TUpdate) SetString(value string) *TUpdate {
-	return u.add("string", value)
+func (u *Update) SetString(value string) *Update {
+	u.Assignments.Add("string", value)
+	return u
 }
 
 // SetBool sets value for column bool in the UPDATE statement
-func (u *TUpdate) SetBool(value bool) *TUpdate {
-	return u.add("bool", value)
+func (u *Update) SetBool(value bool) *Update {
+	u.Assignments.Add("bool", value)
+	return u
 }
 
 // SetTime sets value for column time in the UPDATE statement
-func (u *TUpdate) SetTime(value time.Time) *TUpdate {
-	return u.add("time", value)
+func (u *Update) SetTime(value time.Time) *Update {
+	u.Assignments.Add("time", value)
+	return u
 }
 
 // SetSelect sets value for column select in the UPDATE statement
-func (u *TUpdate) SetSelect(value int) *TUpdate {
-	return u.add("select", value)
+func (u *Update) SetSelect(value int) *Update {
+	u.Assignments.Add("select", value)
+	return u
 }

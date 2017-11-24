@@ -4,64 +4,46 @@ package allsqlite3
 import (
 	"database/sql/driver"
 	"fmt"
-	"github.com/posener/orm/dialect/sqlite3"
+	"github.com/posener/orm"
 	"time"
 
 	"github.com/posener/orm/example"
 )
-
-// TSelect is the struct that holds the SELECT data
-type TSelect struct {
-	Querier
-	Argser
-	orm     *ORM
-	columns columns
-	where   *Where
-	groupBy
-	orderBy
-	page Page
-}
-
-func (s *TSelect) Args() []interface{} {
-	return s.where.Args()
-}
-
-// Where applies where conditions on the query
-func (s *TSelect) Where(where *Where) *TSelect {
-	s.where = where
-	return s
-}
-
-// Limit applies rows limit on the query response
-func (s *TSelect) Limit(limit int64) *TSelect {
-	s.page.limit = limit
-	return s
-}
-
-// Page applies rows offset and limit on the query response
-func (s *TSelect) Page(offset, limit int64) *TSelect {
-	s.page.offset = offset
-	s.page.limit = limit
-	return s
-}
 
 type AllCount struct {
 	example.All
 	Count int64
 }
 
-// String returns the SQL SELECT statement
-func (s *TSelect) String() string {
-	return sqlite3.Select(s.orm, &s.columns, s.where, s.groupBy, s.orderBy, &s.page)
+// Select is the struct that holds the SELECT data
+type Select struct {
+	orm.Select
+	orm *ORM
+	columns
+}
+
+// Where applies where conditions on the query
+func (s *Select) Where(where orm.Where) *Select {
+	s.Select.Where = where
+	return s
+}
+
+// Limit applies rows limit on the query response
+func (s *Select) Limit(limit int64) *Select {
+	s.Select.Page.Limit = limit
+	return s
+}
+
+// Page applies rows offset and limit on the query response
+func (s *Select) Page(offset, limit int64) *Select {
+	s.Select.Page.Offset = offset
+	s.Select.Page.Limit = limit
+	return s
 }
 
 // Query the database
-func (s *TSelect) Query() ([]example.All, error) {
-	// create select statement
-	stmt := s.String()
-	args := s.Args()
-	s.orm.log("Query: '%v' %v", stmt, args)
-	rows, err := s.orm.db.Query(stmt, args...)
+func (s *Select) Query() ([]example.All, error) {
+	rows, err := s.query()
 	if err != nil {
 		return nil, err
 	}
@@ -80,13 +62,9 @@ func (s *TSelect) Query() ([]example.All, error) {
 }
 
 // Count add a count column to the query
-func (s *TSelect) Count() ([]AllCount, error) {
+func (s *Select) Count() ([]AllCount, error) {
 	s.columns.count = true
-	// create select statement
-	stmt := s.String()
-	args := s.where.Args()
-	s.orm.log("Count: '%v' %v", stmt, args)
-	rows, err := s.orm.db.Query(stmt, args...)
+	rows, err := s.query()
 	if err != nil {
 		return nil, err
 	}
@@ -104,98 +82,98 @@ func (s *TSelect) Count() ([]AllCount, error) {
 	return all, rows.Err()
 }
 
-// SelectInt Add Int to the selected column of a query
-func (s *TSelect) SelectInt() *TSelect {
+// SelectInt adds Int to the selected column of a query
+func (s *Select) SelectInt() *Select {
 	s.columns.SelectInt = true
 	return s
 }
 
 // OrderByInt set order to the query results according to column int
-func (s *TSelect) OrderByInt(dir OrderDir) *TSelect {
-	s.orderBy.add("int", dir)
+func (s *Select) OrderByInt(dir orm.OrderDir) *Select {
+	s.Orders.Add("int", dir)
 	return s
 }
 
 // GroupByInt make the query group by column int
-func (s *TSelect) GroupByInt() *TSelect {
-	s.groupBy.add("int")
+func (s *Select) GroupByInt() *Select {
+	s.Groups.Add("int")
 	return s
 }
 
-// SelectString Add String to the selected column of a query
-func (s *TSelect) SelectString() *TSelect {
+// SelectString adds String to the selected column of a query
+func (s *Select) SelectString() *Select {
 	s.columns.SelectString = true
 	return s
 }
 
 // OrderByString set order to the query results according to column string
-func (s *TSelect) OrderByString(dir OrderDir) *TSelect {
-	s.orderBy.add("string", dir)
+func (s *Select) OrderByString(dir orm.OrderDir) *Select {
+	s.Orders.Add("string", dir)
 	return s
 }
 
 // GroupByString make the query group by column string
-func (s *TSelect) GroupByString() *TSelect {
-	s.groupBy.add("string")
+func (s *Select) GroupByString() *Select {
+	s.Groups.Add("string")
 	return s
 }
 
-// SelectBool Add Bool to the selected column of a query
-func (s *TSelect) SelectBool() *TSelect {
+// SelectBool adds Bool to the selected column of a query
+func (s *Select) SelectBool() *Select {
 	s.columns.SelectBool = true
 	return s
 }
 
 // OrderByBool set order to the query results according to column bool
-func (s *TSelect) OrderByBool(dir OrderDir) *TSelect {
-	s.orderBy.add("bool", dir)
+func (s *Select) OrderByBool(dir orm.OrderDir) *Select {
+	s.Orders.Add("bool", dir)
 	return s
 }
 
 // GroupByBool make the query group by column bool
-func (s *TSelect) GroupByBool() *TSelect {
-	s.groupBy.add("bool")
+func (s *Select) GroupByBool() *Select {
+	s.Groups.Add("bool")
 	return s
 }
 
-// SelectTime Add Time to the selected column of a query
-func (s *TSelect) SelectTime() *TSelect {
+// SelectTime adds Time to the selected column of a query
+func (s *Select) SelectTime() *Select {
 	s.columns.SelectTime = true
 	return s
 }
 
 // OrderByTime set order to the query results according to column time
-func (s *TSelect) OrderByTime(dir OrderDir) *TSelect {
-	s.orderBy.add("time", dir)
+func (s *Select) OrderByTime(dir orm.OrderDir) *Select {
+	s.Orders.Add("time", dir)
 	return s
 }
 
 // GroupByTime make the query group by column time
-func (s *TSelect) GroupByTime() *TSelect {
-	s.groupBy.add("time")
+func (s *Select) GroupByTime() *Select {
+	s.Groups.Add("time")
 	return s
 }
 
-// SelectSelect Add Select to the selected column of a query
-func (s *TSelect) SelectSelect() *TSelect {
+// SelectSelect adds Select to the selected column of a query
+func (s *Select) SelectSelect() *Select {
 	s.columns.SelectSelect = true
 	return s
 }
 
 // OrderBySelect set order to the query results according to column select
-func (s *TSelect) OrderBySelect(dir OrderDir) *TSelect {
-	s.orderBy.add("select", dir)
+func (s *Select) OrderBySelect(dir orm.OrderDir) *Select {
+	s.Orders.Add("select", dir)
 	return s
 }
 
 // GroupBySelect make the query group by column select
-func (s *TSelect) GroupBySelect() *TSelect {
-	s.groupBy.add("select")
+func (s *Select) GroupBySelect() *Select {
+	s.Groups.Add("select")
 	return s
 }
 
 // scanArgs are list of fields to be given to the sql Scan command
-func (s *TSelect) scan(vals []driver.Value) (*AllCount, error) {
+func (s *Select) scan(vals []driver.Value) (*AllCount, error) {
 	var (
 		row AllCount
 		all = s.columns.selectAll()

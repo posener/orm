@@ -3,99 +3,101 @@ package allsqlite3
 
 import (
 	"time"
+
+	"github.com/posener/orm"
 )
 
 // WhereInt adds a condition on Int to the WHERE statement
-func WhereInt(op Op, val int) *Where {
-	return newWhere(op, "int", val)
+func WhereInt(op orm.Op, val int) orm.Where {
+	return orm.NewWhere(op, "int", val)
 }
 
 // WhereIntIn adds an IN condition on Int to the WHERE statement
-func WhereIntIn(vals ...int) *Where {
+func WhereIntIn(vals ...int) orm.Where {
 	args := make([]interface{}, len(vals))
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return newWhereIn("int", args...)
+	return orm.NewWhereIn("int", args...)
 }
 
 // WhereIntBetween adds a BETWEEN condition on Int to the WHERE statement
-func WhereIntBetween(low, high int) *Where {
-	return newWhereBetween("int", low, high)
+func WhereIntBetween(low, high int) orm.Where {
+	return orm.NewWhereBetween("int", low, high)
 }
 
 // WhereString adds a condition on String to the WHERE statement
-func WhereString(op Op, val string) *Where {
-	return newWhere(op, "string", val)
+func WhereString(op orm.Op, val string) orm.Where {
+	return orm.NewWhere(op, "string", val)
 }
 
 // WhereStringIn adds an IN condition on String to the WHERE statement
-func WhereStringIn(vals ...string) *Where {
+func WhereStringIn(vals ...string) orm.Where {
 	args := make([]interface{}, len(vals))
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return newWhereIn("string", args...)
+	return orm.NewWhereIn("string", args...)
 }
 
 // WhereStringBetween adds a BETWEEN condition on String to the WHERE statement
-func WhereStringBetween(low, high string) *Where {
-	return newWhereBetween("string", low, high)
+func WhereStringBetween(low, high string) orm.Where {
+	return orm.NewWhereBetween("string", low, high)
 }
 
 // WhereBool adds a condition on Bool to the WHERE statement
-func WhereBool(op Op, val bool) *Where {
-	return newWhere(op, "bool", val)
+func WhereBool(op orm.Op, val bool) orm.Where {
+	return orm.NewWhere(op, "bool", val)
 }
 
 // WhereBoolIn adds an IN condition on Bool to the WHERE statement
-func WhereBoolIn(vals ...bool) *Where {
+func WhereBoolIn(vals ...bool) orm.Where {
 	args := make([]interface{}, len(vals))
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return newWhereIn("bool", args...)
+	return orm.NewWhereIn("bool", args...)
 }
 
 // WhereBoolBetween adds a BETWEEN condition on Bool to the WHERE statement
-func WhereBoolBetween(low, high bool) *Where {
-	return newWhereBetween("bool", low, high)
+func WhereBoolBetween(low, high bool) orm.Where {
+	return orm.NewWhereBetween("bool", low, high)
 }
 
 // WhereTime adds a condition on Time to the WHERE statement
-func WhereTime(op Op, val time.Time) *Where {
-	return newWhere(op, "time", val)
+func WhereTime(op orm.Op, val time.Time) orm.Where {
+	return orm.NewWhere(op, "time", val)
 }
 
 // WhereTimeIn adds an IN condition on Time to the WHERE statement
-func WhereTimeIn(vals ...time.Time) *Where {
+func WhereTimeIn(vals ...time.Time) orm.Where {
 	args := make([]interface{}, len(vals))
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return newWhereIn("time", args...)
+	return orm.NewWhereIn("time", args...)
 }
 
 // WhereTimeBetween adds a BETWEEN condition on Time to the WHERE statement
-func WhereTimeBetween(low, high time.Time) *Where {
-	return newWhereBetween("time", low, high)
+func WhereTimeBetween(low, high time.Time) orm.Where {
+	return orm.NewWhereBetween("time", low, high)
 }
 
 // WhereSelect adds a condition on Select to the WHERE statement
-func WhereSelect(op Op, val int) *Where {
-	return newWhere(op, "select", val)
+func WhereSelect(op orm.Op, val int) orm.Where {
+	return orm.NewWhere(op, "select", val)
 }
 
 // WhereSelectIn adds an IN condition on Select to the WHERE statement
-func WhereSelectIn(vals ...int) *Where {
+func WhereSelectIn(vals ...int) orm.Where {
 	args := make([]interface{}, len(vals))
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return newWhereIn("select", args...)
+	return orm.NewWhereIn("select", args...)
 }
 
 // WhereSelectBetween adds a BETWEEN condition on Select to the WHERE statement
-func WhereSelectBetween(low, high int) *Where {
-	return newWhereBetween("select", low, high)
+func WhereSelectBetween(low, high int) orm.Where {
+	return orm.NewWhereBetween("select", low, high)
 }

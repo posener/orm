@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/posener/orm/def"
+	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect/sqltypes"
 )
 
@@ -20,7 +20,7 @@ func (s *sqlite3) fieldsCreateString() string {
 	return strings.Join(fieldsStmt, ", ")
 }
 
-func fieldCreateString(f *def.Field) string {
+func fieldCreateString(f *common.Field) string {
 	stmt := []string{fmt.Sprintf("'%s' %s", f.SQL.Column, sqlType(f))}
 	if f.SQL.NotNull {
 		stmt = append(stmt, "NOT NULL")
