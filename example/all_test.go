@@ -38,6 +38,30 @@ func TestTime(t *testing.T) {
 	assert.Equal(t, tm, alls[0].Time)
 }
 
+func TestAutoIncrement(t *testing.T) {
+	t.Parallel()
+	orm := prepare(t)
+
+	res, err := orm.Insert().SetString("1").Exec()
+	require.Nil(t, err)
+	affected, err := res.RowsAffected()
+	require.Nil(t, err)
+	require.Equal(t, int64(1), affected)
+
+	res, err = orm.Insert().SetString("2").Exec()
+	require.Nil(t, err)
+	affected, err = res.RowsAffected()
+	require.Nil(t, err)
+	require.Equal(t, int64(1), affected)
+
+	alls, err := orm.Select().OrderByAuto(aorm.Asc).Query()
+	require.Nil(t, err)
+	require.Equal(t, 2, len(alls))
+
+	assert.Equal(t, 1, alls[0].Auto)
+	assert.Equal(t, 2, alls[1].Auto)
+}
+
 // TestNotNull tests that given inserting an empty not null field causes an error
 func TestNotNull(t *testing.T) {
 	t.Parallel()

@@ -64,6 +64,10 @@ func (s *SQL) ConvertType() string {
 	switch s.typeFamily() {
 	case "INT", "BIGINT", "INTEGER":
 		return "int64"
+	case "SMALLINT":
+		return "int32"
+	case "TINYINT":
+		return "byte"
 	case "VARCHAR":
 		return "[]byte"
 	case "BOOLEAN":
@@ -94,7 +98,7 @@ func (s *SQL) parseTags(tag string) {
 			s.PrimaryKey = true
 		case "not null", "not_null":
 			s.NotNull = true
-		case "auto_increment", "auto increment":
+		case "auto_increment", "auto increment", "autoincrement":
 			s.AutoIncrement = true
 		case "unique":
 			s.Unique = true
