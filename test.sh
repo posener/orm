@@ -8,7 +8,7 @@ go generate ./gen/...
 echo ">> Installing"
 go install
 
-echo ">> Generating Person ORM..."
+echo ">> Generating ORMs..."
 go generate ./example/...
 
 echo ">> Running tests..."

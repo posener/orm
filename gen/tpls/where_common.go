@@ -36,11 +36,11 @@ func newWhereBetween(variable string, low, high interface{}) *Where {
 }
 
 // String returns the WHERE SQL statement
-func (w *Where) String() string {
+func (w *Where) Where() string {
 	if w == nil || len(w.stmt) == 0 {
 		return ""
 	}
-	return "WHERE " + strings.Join(w.stmt, " ")
+	return strings.Join(w.stmt, " ")
 }
 
 // Args are the arguments for executing a SELECT query with a WHERE condition

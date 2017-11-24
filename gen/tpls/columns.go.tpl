@@ -8,20 +8,18 @@ type columns struct {
 }
 
 // String is the SQL representation of columns
-func (c columns) String() string {
-	var s string
+func (c *columns) Columns() []string {
+	var cols []string
     {{ range $i, $f := .Type.Fields -}}
     if c.Select{{$f.Name}} {
-        s += "`{{$f.SQL.Column}}`, "
+        cols = append(cols, "{{$f.SQL.Column}}")
     }
     {{ end }}
-    if c.count {
-        s += "COUNT(*), "
-    }
-	if len(s) == 0 { // no specific column was selected
-		return "*"
-	}
-	return s[:len(s)-2]
+	return cols
+}
+
+func (c *columns) Count() bool {
+    return c.count
 }
 
 // selectAll returns true if no column was specifically selected

@@ -1,8 +1,7 @@
 package tpls
 
 import (
-	"fmt"
-	"strings"
+	"github.com/posener/orm/dialect/api"
 )
 
 type OrderDir string
@@ -12,17 +11,9 @@ const (
 	Desc OrderDir = "DESC"
 )
 
-type orderBy []string
-
-// String is the SQL representation of GROUP BY
-func (g orderBy) String() string {
-	if len(g) == 0 {
-		return ""
-	}
-	return "ORDER BY " + strings.Join(g, ", ")
-}
+type orderBy []api.Order
 
 // Add adds a column to the grouping
 func (g *orderBy) add(column string, dir OrderDir) {
-	*g = append(*g, fmt.Sprintf("%s %s", column, dir))
+	*g = append(*g, api.Order{Column: column, Dir: string(dir)})
 }

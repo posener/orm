@@ -16,8 +16,8 @@ and return values as in other ORM Go libraries.
 
 ## Example:
 
-Running the orm command on the `Person` struct in the `example` package, will create a `personorm` package, with
-ORM functions for the given struct.
+Running the orm command on the `Person` struct in the `example` package with `sqlite3` dialect, 
+will create a `personsqlite3` package, with ORM functions for the given struct.
 
 By doing so, and having a database engine, `db`, one could do database operations with
 ORM semantics.
@@ -34,7 +34,7 @@ import (
 )
 
 func main() {
-    db, err := porm.Open(driver, source)
+    db, err := porm.Open(source)
     defer db.Close()
     
     
@@ -75,7 +75,7 @@ go get -u github.com/posener/orm
 
 Run `orm -h` to get detailed usage information.
 
-Simple use case is to run `orm -pkg mypackage -name MyStruct`.
+Simple use case is to run `orm -pkg mypackage -name MyStruct -dialect sqlite3`.
 
 #### go generate
 
@@ -83,7 +83,7 @@ By adding the comment aside to the type deceleration, as shown below, one could 
 to generate the ORM files for `MyType`.
 
 ```go
-//go:generate orm -name MyType
+//go:generate orm -name MyType -dialect sqlite3
 
 type MyType struct {
 	...
@@ -103,6 +103,8 @@ Initial benchmark tests are available in [here](./example/bench_test.go).
 #### Operations:
 
 - [x] INSERT
+- [X] SELECT
+- [X] SELECT with big structs
 
 ### Results:
 

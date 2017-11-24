@@ -8,7 +8,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm/example"
-	porm "github.com/posener/orm/example/personorm"
+	porm "github.com/posener/orm/example/personsqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -228,7 +228,7 @@ func assertRowsAffected(t *testing.T, wantRows int64, result sql.Result) {
 
 func preparePerson(t *testing.T) porm.API {
 	t.Helper()
-	orm, err := porm.Open("sqlite3", ":memory:")
+	orm, err := porm.Open(":memory:")
 	require.Nil(t, err)
 	if testing.Verbose() {
 		orm.Logger(t.Logf)

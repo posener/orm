@@ -1,20 +1,15 @@
 package tpls
 
-import "database/sql"
+import (
+	"database/sql"
 
-func Open(driverName, dataSourceName string) (*ORM, error) {
-	db, err := sql.Open(driverName, dataSourceName)
-	if err != nil {
-		return nil, err
-	}
-	return &ORM{
-		db: db,
-	}, nil
-}
+	"github.com/posener/orm/dialect/api"
+)
 
 type ORM struct {
-	db     *sql.DB
-	logger Logger
+	dialect api.Dialect
+	db      *sql.DB
+	logger  Logger
 }
 
 func (o *ORM) Close() error {

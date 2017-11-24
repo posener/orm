@@ -1,19 +1,16 @@
 package {{.Package}}
 
 import (
-    "fmt"
 	{{ range $_, $f := .Type.Fields -}}
 	{{ if $f.ImportPath }}"{{$f.ImportPath}}"{{ end }}
 	{{- end }}
+	"github.com/posener/orm/dialect/{{.Dialect.Name}}"
 
     "{{.Type.ImportPath}}"
 )
 
 func (u *TUpdate) String() string {
-	return fmt.Sprintf(`UPDATE '{{.Type.Table}}' SET %s %s`,
-	    u.assignmentList(),
-	    u.where.String(),
-	)
+    return {{.Dialect.Name}}.Update(u.orm, u.assign, u.where)
 }
 
 // Insert{{.Type.Name}} creates an UPDATE statement according to the given object

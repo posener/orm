@@ -5,18 +5,10 @@ import (
 	"time"
 
 	"github.com/posener/orm/example"
-	aorm "github.com/posener/orm/example/allorm"
+	aorm "github.com/posener/orm/example/allsqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestCreate(t *testing.T) {
-	t.Parallel()
-	assert.Equal(t,
-		`CREATE TABLE 'all' ( 'int' INT PRIMARY KEY, 'string' VARCHAR(100) NOT NULL, 'bool' BOOLEAN, 'auto' INT AUTO_INCREMENT, 'time' TIMESTAMP, 'select' INT )`,
-		new(aorm.ORM).Create().String(),
-	)
-}
 
 func TestTime(t *testing.T) {
 	t.Parallel()
@@ -53,12 +45,12 @@ func TestAutoIncrement(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, int64(1), affected)
 
-	alls, err := orm.Select().OrderByAuto(aorm.Asc).Query()
+	alls, err := orm.Select().OrderByInt(aorm.Asc).Query()
 	require.Nil(t, err)
 	require.Equal(t, 2, len(alls))
 
-	assert.Equal(t, 1, alls[0].Auto)
-	assert.Equal(t, 2, alls[1].Auto)
+	assert.Equal(t, 1, alls[0].Int)
+	assert.Equal(t, 2, alls[1].Int)
 }
 
 // TestNotNull tests that given inserting an empty not null field causes an error
@@ -111,7 +103,7 @@ func TestFieldReservedName(t *testing.T) {
 
 func prepareAll(t *testing.T) aorm.API {
 	t.Helper()
-	orm, err := aorm.Open("sqlite3", ":memory:")
+	orm, err := aorm.Open(":memory:")
 	require.Nil(t, err)
 	if testing.Verbose() {
 		orm.Logger(t.Logf)
