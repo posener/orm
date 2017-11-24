@@ -8,22 +8,18 @@ import (
 	"unsafe"
 )
 
-// Rows is an alias to sql.Rows, since we need to have access to lastcols in
-// scanning the results of a query, to improve the conversion performance
-type Rows struct {
-	*sql.Rows
-}
+var tp = reflect.TypeOf([]driver.Value{})
 
 // Values is a hack to the sql.Rows struct
 // since the rows struct does not expose it's lastcols values, or a way to give
 // a custom scanner to the Scan method.
 // See issue https://github.com/golang/go/issues/22544
-func (r *Rows) Values() []driver.Value {
+func rowValues(r sql.Rows) []driver.Value {
 	// some ugly hack to access lastcols field
-	rs := reflect.ValueOf(*r)
-	rs2 := reflect.New(rs.Type()).Elem()
-	rs2.Set(rs)
-	rf := rs2.FieldByName("lastcols")
-	rf = reflect.NewAt(rf.Type(), unsafe.Pointer(rf.UnsafeAddr())).Elem()
+	rs := reflect.ValueOf(&r).Elem()
+	rf := rs.FieldByName("lastcols")
+
+	// overcome panic reflect.Value.Interface: cannot return value obtained from unexported field or method
+	rf = reflect.NewAt(tp, unsafe.Pointer(rf.UnsafeAddr())).Elem()
 	return rf.Interface().([]driver.Value)
 }

@@ -70,18 +70,16 @@ func (s *TSelect) Query() ([]example.All, error) {
 	stmt := s.String()
 	args := s.Args()
 	s.orm.log("Query: '%v' %v", stmt, args)
-	dbRows, err := s.orm.db.Query(stmt, args...)
+	rows, err := s.orm.db.Query(stmt, args...)
 	if err != nil {
 		return nil, err
 	}
-	defer dbRows.Close()
-
-	rows := Rows{Rows: dbRows} // this is a hack to access lastcols field
+	defer rows.Close()
 
 	// extract rows to structures
 	var all []example.All
 	for rows.Next() {
-		item, err := s.scan(rows.Values())
+		item, err := s.scan(rowValues(*rows))
 		if err != nil {
 			return nil, err
 		}
@@ -97,18 +95,16 @@ func (s *TSelect) Count() ([]AllCount, error) {
 	stmt := s.String()
 	args := s.where.Args()
 	s.orm.log("Count: '%v' %v", stmt, args)
-	dbRows, err := s.orm.db.Query(stmt, args...)
+	rows, err := s.orm.db.Query(stmt, args...)
 	if err != nil {
 		return nil, err
 	}
-	defer dbRows.Close()
-
-	rows := Rows{Rows: dbRows} // this is a hack to access lastcols field
+	defer rows.Close()
 
 	// extract rows to structures
 	var all []AllCount
 	for rows.Next() {
-		item, err := s.scan(rows.Values())
+		item, err := s.scan(rowValues(*rows))
 		if err != nil {
 			return nil, err
 		}

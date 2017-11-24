@@ -112,15 +112,14 @@ $ go test -bench . -benchtime 10s
 goos: linux
 goarch: amd64
 pkg: github.com/posener/orm
-BenchmarkORMInsert-4    	 1000000	     21922 ns/op
-BenchmarkGORMInsert-4   	  200000	     65093 ns/op
-BenchmarkRawInsert-4    	 1000000	     18867 ns/op
-BenchmarkORMQuery-4     	    3000	   4397105 ns/op
-BenchmarkGORMQuery-4    	    2000	   8566640 ns/op
-BenchmarkRawQuery-4     	    5000	   2783026 ns/op
+BenchmarkORMInsert-4    	 1000000	     22579 ns/op
+BenchmarkGORMInsert-4   	  200000	     68195 ns/op
+BenchmarkRawInsert-4    	 1000000	     19306 ns/op
+BenchmarkORMQuery-4     	    5000	   2878266 ns/op
+BenchmarkGORMQuery-4    	    2000	   9141819 ns/op
+BenchmarkRawQuery-4     	    5000	   2672683 ns/op
 PASS
-ok  	github.com/posener/orm	101.162s
-
+ok  	github.com/posener/orm	104.597s
 ```
 
 # Documentation
