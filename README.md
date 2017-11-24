@@ -68,7 +68,7 @@ func main() {
 ### Install:
 
 ```bash
-go get -u github.com/posener/orm
+go get -u github.com/posener/orm/cmd/orm
 ```
 
 ### Usage
