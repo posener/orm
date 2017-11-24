@@ -11,6 +11,8 @@ type All struct {
 	Bool       bool
 	unexported int
 
+	Auto int `sql:"auto increment"`
+
 	Time time.Time
 
 	// test a case where field is a reserved name

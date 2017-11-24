@@ -21,14 +21,14 @@ func (i *TInsert) String() string {
 func (o *ORM) Insert{{.Type.Name}}(p *{{.Type.FullName}}) *TInsert {
 	i := o.Insert()
 	{{- range $_, $f := .Type.Fields }}
-	i.add("`{{$f.ColumnName}}`", p.{{$f.Name}})
+	i.add("`{{$f.SQL.Column}}`", p.{{$f.Name}})
 	{{- end }}
 	return i
 }
 
 {{range $_, $f := .Type.Fields}}
-// Set{{$f.Name}} sets value for column {{$f.ColumnName}} in the INSERT statement
+// Set{{$f.Name}} sets value for column {{$f.SQL.Column}} in the INSERT statement
 func (i *TInsert) Set{{$f.Name}}(value {{$f.Type}}) *TInsert {
-	return i.add("`{{$f.ColumnName}}`", value)
+	return i.add("`{{$f.SQL.Column}}`", value)
 }
 {{end}}

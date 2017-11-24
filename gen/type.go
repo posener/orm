@@ -61,17 +61,15 @@ func (t Type) Package() string {
 
 // Field is a struct that represents type's field
 type Field struct {
-	Name       string
-	Type       string
-	ColumnName string
-	// SQL is the SQL properties of the field
-	SQL Tags
+	Name string
+	Type string
+	SQL  SQL
 	// ImportPath is a path to add to the import section for this type
 	ImportPath string
 }
 
 func (f Field) CreateString() string {
-	parts := []string{fmt.Sprintf("'%s'", f.ColumnName), f.SQL.Type}
+	parts := []string{fmt.Sprintf("'%s'", f.SQL.Column), f.SQL.Type}
 	if f.SQL.NotNull {
 		parts = append(parts, "NOT NULL")
 	}
@@ -98,20 +96,16 @@ func collectFields(st *load.Struct) []Field {
 			continue
 		}
 		fieldType := field.Type().String()
-		tags := ParseTags(st.Struct.Tag(i))
-		if tags.Type == "" {
-			tags.Type = defaultSQLTypes[fieldType]
-		}
-		if tags.Type == "" {
-			log.Fatalf("Unsupported field type: %s", fieldType)
+		sql, err := newSQL(field.Name(), st.Struct, i)
+		if err != nil {
+			log.Fatalf("Creating SQL properties for type field %s: %s", st.Name, err)
 		}
 
-		log.Printf("Field '%s(%s)': '%+field'", field.Name(), fieldType, tags)
+		log.Printf("Field '%s(%s)': '%+field'", field.Name(), fieldType, sql)
 		fields = append(fields, Field{
 			Name:       field.Name(),
 			Type:       fieldType,
-			ColumnName: strings.ToLower(field.Name()),
-			SQL:        tags,
+			SQL:        *sql,
 			ImportPath: fieldImportPath(fieldType, st.PkgMap),
 		})
 	}
