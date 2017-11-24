@@ -34,25 +34,24 @@ import (
 )
 
 func main() {
-    db, err := sql.Open(...)
+    db, err := porm.Open(driver, source)
     defer db.Close()
     
-    orm = porm.New(db)
     
     // Set a logger to log SQL commands
-    orm.Logger(log.Printf)
+    db.Logger(log.Printf)
 
     // Create table:
-    _, err = orm.Create().Exec()
+    _, err = db.Create().Exec()
 
     // Insert row with arguments:
-    _, err = orm.Insert().SetName("John").SetAge(1).Exec()
+    _, err = db.Insert().SetName("John").SetAge(1).Exec()
 
     // Insert row with a struct:
-    _, err = orm.InsertPerson(&example.Person{Name: "Doug", Age: 3}).Exec()
+    _, err = db.InsertPerson(&example.Person{Name: "Doug", Age: 3}).Exec()
 
     // Select rows from the table:
-    ps, err := orm.Select().
+    ps, err := db.Select().
     	SelectAge().
         Where(porm.WhereName(porm.OpNe, "John")).
         Query() // returns []example.Person, typed return value.
@@ -60,7 +59,7 @@ func main() {
     println(ps[0].Age) // Output: 1
     
     // Delete row
-    _, err = orm.Delete().Where(porm.WhereName(porm.Eq, "John")).Exec()
+    _, err = db.Delete().Where(porm.WhereName(porm.Eq, "John")).Exec()
 }
 ```
 

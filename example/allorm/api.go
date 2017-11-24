@@ -9,6 +9,7 @@ import (
 
 // API is the interface of the ORM object
 type API interface {
+	Close() error
 	Create() *TCreate
 	Select() *TSelect
 	Insert() *TInsert

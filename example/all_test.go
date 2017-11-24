@@ -1,7 +1,6 @@
 package example_test
 
 import (
-	"database/sql"
 	"testing"
 	"time"
 
@@ -21,7 +20,7 @@ func TestCreate(t *testing.T) {
 
 func TestTime(t *testing.T) {
 	t.Parallel()
-	orm := prepare(t)
+	orm := prepareAll(t)
 
 	tm := time.Now().Round(time.Millisecond).UTC()
 
@@ -40,7 +39,7 @@ func TestTime(t *testing.T) {
 
 func TestAutoIncrement(t *testing.T) {
 	t.Parallel()
-	orm := prepare(t)
+	orm := prepareAll(t)
 
 	res, err := orm.Insert().SetString("1").Exec()
 	require.Nil(t, err)
@@ -65,7 +64,7 @@ func TestAutoIncrement(t *testing.T) {
 // TestNotNull tests that given inserting an empty not null field causes an error
 func TestNotNull(t *testing.T) {
 	t.Parallel()
-	orm := prepare(t)
+	orm := prepareAll(t)
 
 	_, err := orm.Insert().SetInt(1).Exec()
 	require.NotNil(t, err)
@@ -73,7 +72,7 @@ func TestNotNull(t *testing.T) {
 
 func TestFieldReservedName(t *testing.T) {
 	t.Parallel()
-	orm := prepare(t)
+	orm := prepareAll(t)
 
 	res, err := orm.InsertAll(&example.All{Select: 42}).Exec()
 	require.Nil(t, err)
@@ -110,11 +109,10 @@ func TestFieldReservedName(t *testing.T) {
 	require.Equal(t, 0, len(alls))
 }
 
-func prepare(t *testing.T) aorm.API {
+func prepareAll(t *testing.T) aorm.API {
 	t.Helper()
-	db, err := sql.Open("sqlite3", ":memory:")
+	orm, err := aorm.Open("sqlite3", ":memory:")
 	require.Nil(t, err)
-	orm := aorm.New(db)
 	if testing.Verbose() {
 		orm.Logger(t.Logf)
 	}

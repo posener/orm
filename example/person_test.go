@@ -3,9 +3,8 @@ package example_test
 
 import (
 	"database/sql"
-	"testing"
-
 	"fmt"
+	"testing"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm/example"
@@ -22,18 +21,8 @@ var (
 
 func TestPersonSelect(t *testing.T) {
 	t.Parallel()
-	db, err := sql.Open("sqlite3", ":memory:")
-	require.Nil(t, err)
-	defer db.Close()
-
-	orm := porm.New(db)
-
-	if testing.Verbose() {
-		orm.Logger(t.Logf)
-	}
-
-	_, err = orm.Create().Exec()
-	require.Nil(t, err, "Failed creating table")
+	orm := preparePerson(t)
+	defer orm.Close()
 
 	res, err := orm.Insert().SetName(p1.Name).SetAge(p1.Age).Exec()
 	require.Nil(t, err, "Failed inserting")
@@ -135,15 +124,10 @@ func TestPersonSelect(t *testing.T) {
 
 func TestSimpleCRUD(t *testing.T) {
 	t.Parallel()
-	db, err := sql.Open("sqlite3", ":memory:")
-	require.Nil(t, err)
-	defer db.Close()
+	orm := preparePerson(t)
+	defer orm.Close()
 
-	orm := porm.New(db)
-
-	// prepare dataset
-	_, err = orm.Create().Exec()
-	require.Nil(t, err)
+	// prepareAll dataset
 	for _, p := range []example.Person{p1, p2, p3} {
 		res, err := orm.InsertPerson(&p).Exec()
 		require.Nil(t, err, "Failed inserting")
@@ -181,18 +165,9 @@ func TestSimpleCRUD(t *testing.T) {
 
 func TestCount(t *testing.T) {
 	t.Parallel()
-	db, err := sql.Open("sqlite3", ":memory:")
-	require.Nil(t, err)
-	defer db.Close()
+	orm := preparePerson(t)
+	defer orm.Close()
 
-	orm := porm.New(db)
-	if testing.Verbose() {
-		orm.Logger(t.Logf)
-	}
-
-	// perpare dataset
-	_, err = orm.Create().Exec()
-	require.Nil(t, err)
 	for i := 0; i < 100; i++ {
 		res, err := orm.InsertPerson(&example.Person{Name: fmt.Sprintf("Jim %d", i), Age: i / 5}).Exec()
 		require.Nil(t, err, "Failed inserting")
@@ -249,4 +224,17 @@ func assertRowsAffected(t *testing.T, wantRows int64, result sql.Result) {
 	gotRows, err := result.RowsAffected()
 	require.Nil(t, err)
 	assert.Equal(t, wantRows, gotRows)
+}
+
+func preparePerson(t *testing.T) porm.API {
+	t.Helper()
+	orm, err := porm.Open("sqlite3", ":memory:")
+	require.Nil(t, err)
+	if testing.Verbose() {
+		orm.Logger(t.Logf)
+	}
+	_, err = orm.Create().Exec()
+	require.Nil(t, err)
+
+	return orm
 }

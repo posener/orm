@@ -2,18 +2,23 @@ package tpls
 
 import "database/sql"
 
-type DB interface {
-	Exec(query string, args ...interface{}) (sql.Result, error)
-	Query(query string, args ...interface{}) (*sql.Rows, error)
-}
-
-func New(db DB) *ORM {
-	return &ORM{db: db}
+func Open(driverName, dataSourceName string) (*ORM, error) {
+	db, err := sql.Open(driverName, dataSourceName)
+	if err != nil {
+		return nil, err
+	}
+	return &ORM{
+		db: db,
+	}, nil
 }
 
 type ORM struct {
-	db     DB
+	db     *sql.DB
 	logger Logger
+}
+
+func (o *ORM) Close() error {
+	return o.db.Close()
 }
 
 // Create returns a struct for a CREATE statement
