@@ -2,7 +2,10 @@
 package allorm
 
 import (
+	"database/sql/driver"
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/posener/orm/example"
 )
@@ -32,17 +35,19 @@ func (s *TSelect) Query() ([]example.All, error) {
 	stmt := s.String()
 	args := s.Args()
 	s.orm.log("Query: '%v' %v", stmt, args)
-	rows, err := s.orm.db.Query(stmt, args...)
+	dbRows, err := s.orm.db.Query(stmt, args...)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer dbRows.Close()
+
+	rows := Rows{Rows: dbRows} // this is a hack to access lastcols field
 
 	// extract rows to structures
 	var all []example.All
 	for rows.Next() {
-		var item AllCount
-		if err := rows.Scan(s.scanArgs(&item)...); err != nil {
+		item, err := s.scan(rows.Values())
+		if err != nil {
 			return nil, err
 		}
 		all = append(all, item.All)
@@ -57,20 +62,22 @@ func (s *TSelect) Count() ([]AllCount, error) {
 	stmt := s.String()
 	args := s.where.Args()
 	s.orm.log("Count: '%v' %v", stmt, args)
-	rows, err := s.orm.db.Query(stmt, args...)
+	dbRows, err := s.orm.db.Query(stmt, args...)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer dbRows.Close()
+
+	rows := Rows{Rows: dbRows} // this is a hack to access lastcols field
 
 	// extract rows to structures
 	var all []AllCount
 	for rows.Next() {
-		var item AllCount
-		if err := rows.Scan(s.scanArgs(&item)...); err != nil {
+		item, err := s.scan(rows.Values())
+		if err != nil {
 			return nil, err
 		}
-		all = append(all, item)
+		all = append(all, *item)
 	}
 	return all, rows.Err()
 }
@@ -166,36 +173,89 @@ func (s *TSelect) GroupBySelect() *TSelect {
 }
 
 // scanArgs are list of fields to be given to the sql Scan command
-func (s *TSelect) scanArgs(p *AllCount) []interface{} {
+func (s *TSelect) scan(vals []driver.Value) (*AllCount, error) {
+	var row AllCount
 	if len(s.columns) == 0 {
-		// add to args all the fields of p
-		return []interface{}{
-			&p.Int,
-			&p.String,
-			&p.Bool,
-			&p.Time,
-			&p.Select,
+		// add to args all the fields of row
+		if vals[0] != nil {
+			val, ok := vals[0].(int64)
+			if !ok {
+				return nil, fmt.Errorf("converting Int column 0 with value %v to int", vals[0])
+			}
+			row.Int = int(val)
 		}
+		if vals[1] != nil {
+			val, ok := vals[1].([]byte)
+			if !ok {
+				return nil, fmt.Errorf("converting String column 1 with value %v to string", vals[1])
+			}
+			row.String = string(val)
+		}
+		if vals[2] != nil {
+			val, ok := vals[2].(bool)
+			if !ok {
+				return nil, fmt.Errorf("converting Bool column 2 with value %v to bool", vals[2])
+			}
+			row.Bool = bool(val)
+		}
+		if vals[3] != nil {
+			val, ok := vals[3].(time.Time)
+			if !ok {
+				return nil, fmt.Errorf("converting Time column 3 with value %v to time.Time", vals[3])
+			}
+			row.Time = time.Time(val)
+		}
+		if vals[4] != nil {
+			val, ok := vals[4].(int64)
+			if !ok {
+				return nil, fmt.Errorf("converting Select column 4 with value %v to int", vals[4])
+			}
+			row.Select = int(val)
+		}
+
 	}
 	m := s.columns.indexMap()
-	args := make([]interface{}, len(s.columns))
-	if i := m["`int`"]; i != 0 {
-		args[i-1] = &p.Int
+	if i := m["`int`"] - 1; i != -1 {
+		val, ok := vals[i].(int64)
+		if !ok {
+			return nil, fmt.Errorf("converting Int: column %d with value %v to int", i, vals[i])
+		}
+		row.Int = int(val)
 	}
-	if i := m["`string`"]; i != 0 {
-		args[i-1] = &p.String
+	if i := m["`string`"] - 1; i != -1 {
+		val, ok := vals[i].([]byte)
+		if !ok {
+			return nil, fmt.Errorf("converting String: column %d with value %v to string", i, vals[i])
+		}
+		row.String = string(val)
 	}
-	if i := m["`bool`"]; i != 0 {
-		args[i-1] = &p.Bool
+	if i := m["`bool`"] - 1; i != -1 {
+		val, ok := vals[i].(bool)
+		if !ok {
+			return nil, fmt.Errorf("converting Bool: column %d with value %v to bool", i, vals[i])
+		}
+		row.Bool = bool(val)
 	}
-	if i := m["`time`"]; i != 0 {
-		args[i-1] = &p.Time
+	if i := m["`time`"] - 1; i != -1 {
+		val, ok := vals[i].(time.Time)
+		if !ok {
+			return nil, fmt.Errorf("converting Time: column %d with value %v to time.Time", i, vals[i])
+		}
+		row.Time = time.Time(val)
 	}
-	if i := m["`select`"]; i != 0 {
-		args[i-1] = &p.Select
+	if i := m["`select`"] - 1; i != -1 {
+		val, ok := vals[i].(int64)
+		if !ok {
+			return nil, fmt.Errorf("converting Select: column %d with value %v to int", i, vals[i])
+		}
+		row.Select = int(val)
 	}
-	if i := m[colCount]; i != 0 {
-		args[i-1] = &p.Count
+	if i := m[colCount] - 1; i != -1 {
+		var ok bool
+		row.Count, ok = vals[i].(int64)
+		if !ok {
+			return nil, fmt.Errorf("converting COUNT(*): column %d with value %v to int64", i, vals[i])
+		}
 	}
-	return args
+	return &row, nil
 }

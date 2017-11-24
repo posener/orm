@@ -2,6 +2,8 @@
 package personorm
 
 import (
+	"database/sql/driver"
+	"fmt"
 	"strings"
 
 	"github.com/posener/orm/example"
@@ -32,17 +34,19 @@ func (s *TSelect) Query() ([]example.Person, error) {
 	stmt := s.String()
 	args := s.Args()
 	s.orm.log("Query: '%v' %v", stmt, args)
-	rows, err := s.orm.db.Query(stmt, args...)
+	dbRows, err := s.orm.db.Query(stmt, args...)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer dbRows.Close()
+
+	rows := Rows{Rows: dbRows} // this is a hack to access lastcols field
 
 	// extract rows to structures
 	var all []example.Person
 	for rows.Next() {
-		var item PersonCount
-		if err := rows.Scan(s.scanArgs(&item)...); err != nil {
+		item, err := s.scan(rows.Values())
+		if err != nil {
 			return nil, err
 		}
 		all = append(all, item.Person)
@@ -57,20 +61,22 @@ func (s *TSelect) Count() ([]PersonCount, error) {
 	stmt := s.String()
 	args := s.where.Args()
 	s.orm.log("Count: '%v' %v", stmt, args)
-	rows, err := s.orm.db.Query(stmt, args...)
+	dbRows, err := s.orm.db.Query(stmt, args...)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer dbRows.Close()
+
+	rows := Rows{Rows: dbRows} // this is a hack to access lastcols field
 
 	// extract rows to structures
 	var all []PersonCount
 	for rows.Next() {
-		var item PersonCount
-		if err := rows.Scan(s.scanArgs(&item)...); err != nil {
+		item, err := s.scan(rows.Values())
+		if err != nil {
 			return nil, err
 		}
-		all = append(all, item)
+		all = append(all, *item)
 	}
 	return all, rows.Err()
 }
@@ -112,24 +118,47 @@ func (s *TSelect) GroupByAge() *TSelect {
 }
 
 // scanArgs are list of fields to be given to the sql Scan command
-func (s *TSelect) scanArgs(p *PersonCount) []interface{} {
+func (s *TSelect) scan(vals []driver.Value) (*PersonCount, error) {
+	var row PersonCount
 	if len(s.columns) == 0 {
-		// add to args all the fields of p
-		return []interface{}{
-			&p.Name,
-			&p.Age,
+		// add to args all the fields of row
+		if vals[0] != nil {
+			val, ok := vals[0].([]byte)
+			if !ok {
+				return nil, fmt.Errorf("converting Name column 0 with value %v to string", vals[0])
+			}
+			row.Name = string(val)
 		}
+		if vals[1] != nil {
+			val, ok := vals[1].(int64)
+			if !ok {
+				return nil, fmt.Errorf("converting Age column 1 with value %v to int", vals[1])
+			}
+			row.Age = int(val)
+		}
+
 	}
 	m := s.columns.indexMap()
-	args := make([]interface{}, len(s.columns))
-	if i := m["`name`"]; i != 0 {
-		args[i-1] = &p.Name
+	if i := m["`name`"] - 1; i != -1 {
+		val, ok := vals[i].([]byte)
+		if !ok {
+			return nil, fmt.Errorf("converting Name: column %d with value %v to string", i, vals[i])
+		}
+		row.Name = string(val)
 	}
-	if i := m["`age`"]; i != 0 {
-		args[i-1] = &p.Age
+	if i := m["`age`"] - 1; i != -1 {
+		val, ok := vals[i].(int64)
+		if !ok {
+			return nil, fmt.Errorf("converting Age: column %d with value %v to int", i, vals[i])
+		}
+		row.Age = int(val)
 	}
-	if i := m[colCount]; i != 0 {
-		args[i-1] = &p.Count
+	if i := m[colCount] - 1; i != -1 {
+		var ok bool
+		row.Count, ok = vals[i].(int64)
+		if !ok {
+			return nil, fmt.Errorf("converting COUNT(*): column %d with value %v to int64", i, vals[i])
+		}
 	}
-	return args
+	return &row, nil
 }

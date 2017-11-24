@@ -1,29 +1,38 @@
 package gen
 
 import (
+	"strings"
+
 	"github.com/posener/orm/tags"
 )
 
 const tagSQLType = "sql"
 
-var defaultSQLTypes = map[string]string{
-	"string":  "VARCHAR(255)",
-	"int":     "INT",
-	"int32":   "INT",
-	"int64":   "BIGINT",
-	"float":   "DOUBLE",
-	"float32": "FLOAT",
-	"float64": "DOUBLE",
-	"bool":    "BOOLEAN",
-
-	"time.Time": "TIMESTAMP",
+func defaultSQLTypes(tp string) string {
+	switch tp {
+	case "string":
+		return "VARCHAR(255)"
+	case "int", "int32":
+		return "INT"
+	case "int64":
+		return "BIGINT"
+	case "float", "float32":
+		return "FLOAT"
+	case "float64":
+		return "DOUBLE"
+	case "bool":
+		return "BOOLEAN"
+	case "time.Time":
+		return "TIMESTAMP"
+	default:
+		return ""
+	}
 }
 
-// Tags hold the SQL tags for a field in a struct
-type Tags struct {
+// SQL hold the SQL tags for a field in a struct
+type SQL struct {
 	// Type matches the 'sql.type' tag: the SQL type of the field
-	Type string
-
+	Type          string
 	PrimaryKey    bool
 	NotNull       bool
 	AutoIncrement bool
@@ -32,9 +41,29 @@ type Tags struct {
 	Default string
 }
 
-// ParseTags parses tags from a struct tags into a Tags struct.
-func ParseTags(tag string) Tags {
-	var t Tags
+// ConvertType is the type of the field when returned by sql/driver from database
+func (s *SQL) ConvertType() string {
+	switch s.typeFamily() {
+	case "INT", "BIGINT", "INTEGER":
+		return "int64"
+	case "VARCHAR":
+		return "[]byte"
+	case "BOOLEAN":
+		return "bool"
+	case "DOUBLE":
+		return "float64"
+	case "FLOAT":
+		return "float32"
+	case "TIMESTAMP":
+		return "time.Time"
+	default:
+		return "interface{}"
+	}
+}
+
+// ParseTags parses tags from a struct tags into a SQL struct.
+func ParseTags(tag string) SQL {
+	var t SQL
 	if tag == "" {
 		return t
 	}
@@ -58,4 +87,14 @@ func ParseTags(tag string) Tags {
 	}
 
 	return t
+}
+
+// typeFamily returns the family of the SQL type.
+// for example, VARCHAR(255) will return only VARCHAR
+func (s *SQL) typeFamily() string {
+	prefixEnds := strings.Index(s.Type, "(")
+	if prefixEnds == -1 {
+		prefixEnds = len(s.Type)
+	}
+	return s.Type[:prefixEnds]
 }

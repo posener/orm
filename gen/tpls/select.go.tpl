@@ -2,6 +2,11 @@ package {{.Package}}
 
 import (
 	"strings"
+	"database/sql/driver"
+	"fmt"
+	{{ range $_, $f := .Type.Fields -}}
+	{{ if $f.ImportPath }}"{{$f.ImportPath}}"{{ end }}
+	{{- end }}
 
     "{{.Type.ImportPath}}"
 )
@@ -31,17 +36,19 @@ func (s *TSelect) Query() ([]{{.Type.FullName}}, error) {
 	stmt := s.String()
 	args := s.Args()
 	s.orm.log("Query: '%v' %v", stmt, args)
-	rows, err := s.orm.db.Query(stmt, args...)
+	dbRows, err := s.orm.db.Query(stmt, args...)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer dbRows.Close()
+
+	rows := Rows{Rows: dbRows} // this is a hack to access lastcols field
 
 	// extract rows to structures
 	var all []{{.Type.FullName}}
 	for rows.Next() {
-		var item {{.Type.Name}}Count
-		if err := rows.Scan(s.scanArgs(&item)...); err != nil {
+		item, err := s.scan(rows.Values())
+        if err != nil {
 			return nil, err
 		}
 		all = append(all, item.{{.Type.Name}})
@@ -56,20 +63,22 @@ func (s *TSelect) Count() ([]{{.Type.Name}}Count, error) {
 	stmt := s.String()
 	args := s.where.Args()
 	s.orm.log("Count: '%v' %v", stmt, args)
-	rows, err := s.orm.db.Query(stmt, args...)
+	dbRows, err := s.orm.db.Query(stmt, args...)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer dbRows.Close()
+
+	rows := Rows{Rows: dbRows} // this is a hack to access lastcols field
 
 	// extract rows to structures
 	var all []{{.Type.Name}}Count
 	for rows.Next() {
-		var item {{.Type.Name}}Count
-		if err := rows.Scan(s.scanArgs(&item)...); err != nil {
+		item, err := s.scan(rows.Values())
+        if err != nil {
 			return nil, err
 		}
-		all = append(all, item)
+		all = append(all, *item)
 	}
 	return all, rows.Err()
 }
@@ -95,24 +104,36 @@ func (s *TSelect) GroupBy{{$f.Name}}() *TSelect {
 {{ end -}}
 
 // scanArgs are list of fields to be given to the sql Scan command
-func (s *TSelect) scanArgs(p *{{.Type.Name}}Count) []interface{} {
+func (s *TSelect) scan(vals []driver.Value) (*{{.Type.Name}}Count, error) {
+    var row {{.Type.Name}}Count
 	if len(s.columns) == 0 {
-        // add to args all the fields of p
-        return []interface{}{
-            {{ range $_, $f := .Type.Fields -}}
-            &p.{{$f.Name}},
-            {{ end }}
+        // add to args all the fields of row
+        {{ range $i, $f := .Type.Fields -}}
+        if vals[{{$i}}] != nil {
+            val, ok := vals[{{$i}}].({{$f.SQL.ConvertType}})
+            if !ok {
+                return nil, fmt.Errorf("converting {{$f.Name}} column {{$i}} with value %v to {{$f.Type}}", vals[{{$i}}])
+            }
+            row.{{$f.Name}} = {{$f.Type}}(val)
         }
+        {{ end }}
 	}
 	m := s.columns.indexMap()
-	args := make([]interface{}, len(s.columns))
 	{{ range $_, $f := .Type.Fields -}}
-	if i := m["`{{$f.ColumnName}}`"]; i != 0 {
-		args[i-1] = &p.{{$f.Name}}
+	if i := m["`{{$f.ColumnName}}`"]-1; i != -1 {
+	    val, ok := vals[i].({{$f.SQL.ConvertType}})
+        if !ok {
+            return nil, fmt.Errorf("converting {{$f.Name}}: column %d with value %v to {{$f.Type}}", i, vals[i])
+        }
+        row.{{$f.Name}} = {{$f.Type}}(val)
 	}
 	{{ end -}}
-	if i := m[colCount]; i != 0 {
-        args[i-1] = &p.Count
+	if i := m[colCount]-1; i != -1 {
+        var ok bool
+        row.Count, ok = vals[i].(int64)
+        if !ok {
+            return nil, fmt.Errorf("converting COUNT(*): column %d with value %v to int64", i, vals[i])
+        }
     }
-	return args
+	return &row, nil
 }

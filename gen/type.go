@@ -65,7 +65,7 @@ type Field struct {
 	Type       string
 	ColumnName string
 	// SQL is the SQL properties of the field
-	SQL Tags
+	SQL SQL
 	// ImportPath is a path to add to the import section for this type
 	ImportPath string
 }
@@ -100,7 +100,7 @@ func collectFields(st *load.Struct) []Field {
 		fieldType := field.Type().String()
 		tags := ParseTags(st.Struct.Tag(i))
 		if tags.Type == "" {
-			tags.Type = defaultSQLTypes[fieldType]
+			tags.Type = defaultSQLTypes(fieldType)
 		}
 		if tags.Type == "" {
 			log.Fatalf("Unsupported field type: %s", fieldType)
