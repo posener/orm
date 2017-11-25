@@ -1,10 +1,10 @@
 package sqlite3
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/posener/orm/common"
+	"github.com/posener/orm/dialect/format"
 	"github.com/posener/orm/dialect/sqltypes"
 )
 
@@ -61,7 +61,7 @@ func (sqlite3) sqlType(f *common.Field) sqltypes.Type {
 // Insert returns an SQL CREATE statement and arguments
 func Create(c *common.Create) (string, []interface{}) {
 	stmt := fmt.Sprintf(`CREATE TABLE %s '%s' ( %s )`,
-		ifNotExists(c.IfNotExists),
+		format.IfNotExists(c.IfNotExists),
 		c.Table,
 		c.ColumnsStatement,
 	)
@@ -73,7 +73,7 @@ func Create(c *common.Create) (string, []interface{}) {
 func Insert(i *common.Insert) (string, []interface{}) {
 	stmt := fmt.Sprintf(`INSERT INTO '%s' (%s) VALUES (%s)`,
 		i.Table,
-		assignColumns(i.Assignments),
+		format.AssignColumns(i.Assignments),
 		common.QMarks(len(i.Assignments)),
 	)
 
@@ -88,12 +88,12 @@ func Insert(i *common.Insert) (string, []interface{}) {
 // Select returns an SQL SELECT statement and arguments
 func Select(s *common.Select) (string, []interface{}) {
 	stmt := fmt.Sprintf("SELECT %s FROM '%s' %s %s %s %s",
-		columns(s.Columns),
+		format.Columns(s.Columns),
 		s.Table,
-		whereStatement(s.Where),
-		groups(s.Groups),
-		orders(s.Orders),
-		page(s.Page),
+		format.Where(s.Where),
+		format.GroupBy(s.Groups),
+		format.OrderBy(s.Orders),
+		format.Page(s.Page),
 	)
 
 	var args []interface{}
@@ -106,7 +106,10 @@ func Select(s *common.Select) (string, []interface{}) {
 
 // Delete returns an SQL DELETE statement and arguments
 func Delete(d *common.Delete) (string, []interface{}) {
-	stmt := fmt.Sprintf("DELETE FROM '%s' %s", d.Table, whereStatement(d.Where))
+	stmt := fmt.Sprintf("DELETE FROM '%s' %s",
+		d.Table,
+		format.Where(d.Where),
+	)
 
 	var args []interface{}
 	if d.Where != nil {
@@ -118,7 +121,11 @@ func Delete(d *common.Delete) (string, []interface{}) {
 
 // Update returns an SQL UPDATE statement and arguments
 func Update(u *common.Update) (string, []interface{}) {
-	stmt := fmt.Sprintf(`UPDATE '%s' SET %s %s`, u.Table, assignSets(u.Assignments), whereStatement(u.Where))
+	stmt := fmt.Sprintf(`UPDATE '%s' SET %s %s`,
+		u.Table,
+		format.AssignSets(u.Assignments),
+		format.Where(u.Where),
+	)
 
 	var args []interface{}
 	if u.Assignments != nil {
@@ -129,107 +136,4 @@ func Update(u *common.Update) (string, []interface{}) {
 	}
 
 	return stmt, args
-}
-
-func columns(c common.Columner) string {
-	if c == nil {
-		return "*"
-	}
-	cols := c.Columns()
-	if len(cols) == 0 && !c.Count() {
-		return "*"
-	}
-	b := bytes.NewBuffer(nil)
-	for i := range cols {
-		b.WriteString("`" + cols[i] + "`, ")
-	}
-
-	if c.Count() {
-		b.WriteString("COUNT(*), ")
-	}
-
-	s := b.String()
-	return s[:len(s)-2]
-}
-
-func whereStatement(c common.StatementArger) string {
-	if c == nil {
-		return ""
-	}
-	where := c.Statement()
-	if len(where) == 0 {
-		return ""
-	}
-	return "WHERE " + where
-}
-
-func groups(groups []common.Group) string {
-	if len(groups) == 0 {
-		return ""
-	}
-	b := bytes.NewBufferString("GROUP BY ")
-	for i := range groups {
-		b.WriteString(fmt.Sprintf("`%s`, ", groups[i].Column))
-	}
-
-	s := b.String()
-	return s[:len(s)-2]
-}
-
-func orders(orders []common.Order) string {
-	if len(orders) == 0 {
-		return ""
-	}
-
-	b := bytes.NewBufferString("ORDER BY ")
-	for i := range orders {
-		b.WriteString(fmt.Sprintf("`%s` %s, ", orders[i].Column, orders[i].Dir))
-	}
-
-	s := b.String()
-	return s[:len(s)-2]
-}
-
-func page(p common.Page) string {
-	if p.Limit == 0 { // why would someone ask for a page of zero size?
-		return ""
-	}
-	stmt := fmt.Sprintf("LIMIT %d", p.Limit)
-	if p.Offset != 0 {
-		stmt += fmt.Sprintf(" OFFSET %d", p.Offset)
-	}
-	return stmt
-}
-
-func assignColumns(a common.Assignments) string {
-	if len(a) == 0 {
-		return ""
-	}
-	b := bytes.NewBuffer(nil)
-	for i := range a {
-		b.WriteString("`" + a[i].Column + "`, ")
-	}
-
-	s := b.String()
-	return s[:len(s)-2]
-}
-
-func assignSets(a common.Assignments) string {
-	if len(a) == 0 {
-		return ""
-	}
-	b := bytes.NewBuffer(nil)
-	for i := range a {
-		b.WriteString("`" + a[i].Column + "` = ?, ")
-	}
-
-	s := b.String()
-	return s[:len(s)-2]
-}
-
-func ifNotExists(ifNotExists bool) interface{} {
-	if ifNotExists {
-		return "IF NOT EXISTS"
-	}
-	return ""
 }
