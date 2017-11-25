@@ -74,6 +74,7 @@ func TestTypes(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, 1, len(alls))
 
+	a.Auto = 1 // auto-increment field is set to 1
 	assert.Equal(t, a, alls[0])
 }
 

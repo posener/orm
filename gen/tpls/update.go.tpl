@@ -11,16 +11,20 @@ import (
 // Insert{{.Type.Name}} creates an UPDATE statement according to the given object
 func (o *orm) Update{{.Type.Name}}(p *{{.Type.FullName}}) *Update {
 	u := o.Update()
-	{{- range $_, $f := .Type.Fields}}
+	{{- range $_, $f := .Type.Fields }}
+    {{- if not $f.SQL.Auto }}
 	u.internal.Assignments.Add("{{$f.SQL.Column}}", p.{{$f.Name}})
-	{{- end}}
+	{{- end -}}
+	{{- end }}
 	return u
 }
 
-{{range $_, $f := .Type.Fields}}
+{{- range $_, $f := .Type.Fields }}
+{{ if not $f.SQL.Auto -}}
 // Set{{$f.Name}} sets value for column {{$f.SQL.Column}} in the UPDATE statement
 func (u *Update) Set{{$f.Name}}(value {{$f.Type}}) *Update {
 	u.internal.Assignments.Add("{{$f.SQL.Column}}", value)
 	return u
 }
-{{end}}
+{{ end -}}
+{{ end -}}

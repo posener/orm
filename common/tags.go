@@ -21,6 +21,11 @@ type SQL struct {
 	Default       string // Default value of column
 }
 
+// Auto returns whether the column should be set
+func (s *SQL) Auto() bool {
+	return s.PrimaryKey || s.AutoIncrement
+}
+
 func newSQL(name string, st *types.Struct, fieldIndex int) (*SQL, error) {
 	var sql = new(SQL)
 	sql.Column = strings.ToLower(name)

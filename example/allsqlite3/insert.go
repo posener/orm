@@ -10,7 +10,6 @@ import (
 // InsertAll creates an INSERT statement according to the given object
 func (o *orm) InsertAll(p *example.All) *Insert {
 	i := o.Insert()
-	i.internal.Assignments.Add("auto", p.Auto)
 	i.internal.Assignments.Add("notnil", p.NotNil)
 	i.internal.Assignments.Add("int", p.Int)
 	i.internal.Assignments.Add("int8", p.Int8)
@@ -45,12 +44,6 @@ func (o *orm) InsertAll(p *example.All) *Insert {
 	i.internal.Assignments.Add("pbytes", p.PBytes)
 	i.internal.Assignments.Add("pbool", p.PBool)
 	i.internal.Assignments.Add("select", p.Select)
-	return i
-}
-
-// SetAuto sets value for column auto in the INSERT statement
-func (i *Insert) SetAuto(value int) *Insert {
-	i.internal.Assignments.Add("auto", value)
 	return i
 }
 

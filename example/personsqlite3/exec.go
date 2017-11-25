@@ -12,14 +12,14 @@ import (
 // Exec creates a table for the given struct
 func (c *Create) Exec(ctx context.Context) (sql.Result, error) {
 	stmt, args := sqlite3.Create(&c.internal)
-	c.orm.log(`Create: "%v" %v`, stmt, args)
+	c.orm.log("Create: '%v' %v", stmt, args)
 	return c.orm.db.ExecContext(ctx, stmt, args...)
 }
 
 // query is used by the Select.Query and Select.Limit functions
 func (s *Select) query(ctx context.Context) (*sql.Rows, error) {
 	stmt, args := sqlite3.Select(&s.internal)
-	s.orm.log(`Query: "%v" %v`, stmt, args)
+	s.orm.log("Query: '%v' %v", stmt, args)
 	return s.orm.db.QueryContext(ctx, stmt, args...)
 }
 
@@ -29,7 +29,7 @@ func (i *Insert) Exec(ctx context.Context) (sql.Result, error) {
 		return nil, fmt.Errorf("nothing to insert")
 	}
 	stmt, args := sqlite3.Insert(&i.internal)
-	i.orm.log(`Insert: "%v" %v`, stmt, args)
+	i.orm.log("Insert: '%v' %v", stmt, args)
 	return i.orm.db.ExecContext(ctx, stmt, args...)
 }
 
@@ -39,13 +39,13 @@ func (u *Update) Exec(ctx context.Context) (sql.Result, error) {
 		return nil, fmt.Errorf("nothing to update")
 	}
 	stmt, args := sqlite3.Update(&u.internal)
-	u.orm.log(`Update: "%v" %v`, stmt, args)
+	u.orm.log("Update: '%v' %v", stmt, args)
 	return u.orm.db.ExecContext(ctx, stmt, args...)
 }
 
 // Exec runs the delete statement on a given database.
 func (d *Delete) Exec(ctx context.Context) (sql.Result, error) {
 	stmt, args := sqlite3.Delete(&d.internal)
-	d.orm.log(`Delete: "%v" %v`, stmt, args)
+	d.orm.log("Delete: '%v' %v", stmt, args)
 	return d.orm.db.ExecContext(ctx, stmt, args...)
 }
