@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/posener/orm"
+	"github.com/posener/orm/row"
 
 	"github.com/posener/orm/example"
 )
@@ -52,7 +53,7 @@ func (s *Select) Query() ([]example.Person, error) {
 	// extract rows to structures
 	var all []example.Person
 	for rows.Next() {
-		item, err := s.scan(rowValues(*rows))
+		item, err := s.scan(row.Values(*rows))
 		if err != nil {
 			return nil, err
 		}
@@ -73,7 +74,7 @@ func (s *Select) Count() ([]PersonCount, error) {
 	// extract rows to structures
 	var all []PersonCount
 	for rows.Next() {
-		item, err := s.scan(rowValues(*rows))
+		item, err := s.scan(row.Values(*rows))
 		if err != nil {
 			return nil, err
 		}

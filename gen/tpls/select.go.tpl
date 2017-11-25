@@ -7,6 +7,7 @@ import (
 	{{ if $f.ImportPath }}"{{$f.ImportPath}}"{{ end }}
 	{{- end }}
 	"github.com/posener/orm"
+	"github.com/posener/orm/row"
 
     "{{.Type.ImportPath}}"
 )
@@ -53,7 +54,7 @@ func (s *Select) Query() ([]{{.Type.FullName}}, error) {
 	// extract rows to structures
 	var all []{{.Type.FullName}}
 	for rows.Next() {
-		item, err := s.scan(rowValues(*rows))
+		item, err := s.scan(row.Values(*rows))
         if err != nil {
 			return nil, err
 		}
@@ -74,7 +75,7 @@ func (s *Select) Count() ([]{{.Type.Name}}Count, error) {
 	// extract rows to structures
 	var all []{{.Type.Name}}Count
 	for rows.Next() {
-		item, err := s.scan(rowValues(*rows))
+		item, err := s.scan(row.Values(*rows))
         if err != nil {
 			return nil, err
 		}

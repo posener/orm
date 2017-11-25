@@ -7,6 +7,14 @@ import (
     "github.com/posener/orm/dialect/{{.Dialect.Name}}"
 )
 
+const createString = `{{.Dialect.Create}}`
+
+// Exec creates a table for the given struct
+func (c *Create) Exec() (sql.Result, error) {
+	c.orm.log("Create: '%v'", createString)
+	return c.orm.db.Exec(createString)
+}
+
 func (s *Select) query() (*sql.Rows, error) {
     stmt, args := {{.Dialect.Name}}.Select(&s.Select)
 	s.orm.log("Query: '%v' %v", stmt, args)

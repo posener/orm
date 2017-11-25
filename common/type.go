@@ -10,7 +10,7 @@ import (
 	"github.com/posener/orm/load"
 )
 
-// CustomType describes the type of the given struct to generate code for
+// Type describes the type of the given struct to generate code for
 type Type struct {
 	// ImportPath is the import path of the package of the given struct.
 	// for example: "github.com/posener/orm/example"
@@ -22,7 +22,7 @@ type Type struct {
 	Fields []Field
 }
 
-// NewType returns a new CustomType
+// NewType returns a new Type
 func NewType(st *load.Struct) Type {
 	return Type{
 		ImportPath: st.Pkg.Path(),

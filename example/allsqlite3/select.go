@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"github.com/posener/orm"
+	"github.com/posener/orm/row"
 	"time"
 
 	"github.com/posener/orm/example"
@@ -52,7 +53,7 @@ func (s *Select) Query() ([]example.All, error) {
 	// extract rows to structures
 	var all []example.All
 	for rows.Next() {
-		item, err := s.scan(rowValues(*rows))
+		item, err := s.scan(row.Values(*rows))
 		if err != nil {
 			return nil, err
 		}
@@ -73,7 +74,7 @@ func (s *Select) Count() ([]AllCount, error) {
 	// extract rows to structures
 	var all []AllCount
 	for rows.Next() {
-		item, err := s.scan(rowValues(*rows))
+		item, err := s.scan(row.Values(*rows))
 		if err != nil {
 			return nil, err
 		}

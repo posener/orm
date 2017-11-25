@@ -8,6 +8,14 @@ import (
 	"github.com/posener/orm/dialect/sqlite3"
 )
 
+const createString = `CREATE TABLE 'all' ( 'int' INTEGER PRIMARY KEY AUTOINCREMENT, 'string' VARCHAR(100) NOT NULL, 'bool' BOOLEAN, 'time' TIMESTAMP, 'select' INTEGER )`
+
+// Exec creates a table for the given struct
+func (c *Create) Exec() (sql.Result, error) {
+	c.orm.log("Create: '%v'", createString)
+	return c.orm.db.Exec(createString)
+}
+
 func (s *Select) query() (*sql.Rows, error) {
 	stmt, args := sqlite3.Select(&s.Select)
 	s.orm.log("Query: '%v' %v", stmt, args)

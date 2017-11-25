@@ -1,11 +1,16 @@
 package orm
 
-// Dialect is
+// Dialect is API for different dialects
 type Dialect interface {
+	// Name is the dialect name
 	Name() string
+	// Create returns an SQL CREATE TABLE statement for a specific struct and specific dialect.
+	// It is used by the generation tool.
 	Create() string
 }
 
+// Columner is interface for generating columns of SELECT queries.
+// With this interface, a dialect talks to struct specific generated implementation.
 type Columner interface {
 	Columns() []string
 	Count() bool
@@ -20,6 +25,8 @@ type Where interface {
 	And(Where) Where
 }
 
+// StatementArger is interface for queries.
+// The statement and the args are given to the SQL query.
 type StatementArger interface {
 	Statement() string
 	Args() []interface{}
@@ -38,6 +45,7 @@ const (
 	OpLike = "LIKE"
 )
 
+// OrderDir is direction in which a column can be ordered
 type OrderDir string
 
 const (
