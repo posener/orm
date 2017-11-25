@@ -9,12 +9,17 @@ import (
 const table = "{{.Type.Table}}"
 
 // Open opens database connection
-func Open(dataSourceName string) (*ORM, error) {
+func Open(dataSourceName string) (API, error) {
 	db, err := sql.Open("{{.Dialect.Name}}", dataSourceName)
 	if err != nil {
 		return nil, err
 	}
 	return &ORM{db: db}, nil
+}
+
+// New returns an ORM object from a db instance
+func New(db DB) API {
+    return &ORM{db: db}
 }
 
 // Select returns an object to create a SELECT statement

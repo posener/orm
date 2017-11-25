@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"context"
+
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm"
 	"github.com/posener/orm/example"
@@ -15,6 +17,7 @@ import (
 func TestTypes(t *testing.T) {
 	t.Parallel()
 	db := prepareAll(t)
+	ctx := context.Background()
 
 	a := example.All{
 		Int:   1,
@@ -61,13 +64,13 @@ func TestTypes(t *testing.T) {
 	a.PBool = &a.Bool
 	a.PTime = &a.Time
 
-	res, err := db.InsertAll(&a).Exec()
+	res, err := db.InsertAll(&a).Exec(ctx)
 	require.Nil(t, err)
 	affected, err := res.RowsAffected()
 	require.Nil(t, err)
 	require.Equal(t, int64(1), affected)
 
-	alls, err := db.Select().Query()
+	alls, err := db.Select().Query(ctx)
 	require.Nil(t, err)
 	require.Equal(t, 1, len(alls))
 
@@ -77,27 +80,28 @@ func TestTypes(t *testing.T) {
 func TestAutoIncrement(t *testing.T) {
 	t.Parallel()
 	db := prepareAll(t)
+	ctx := context.Background()
 
-	res, err := db.Insert().SetNotNil("1").Exec()
+	res, err := db.Insert().SetNotNil("1").Exec(ctx)
 	require.Nil(t, err)
 	affected, err := res.RowsAffected()
 	require.Nil(t, err)
 	require.Equal(t, int64(1), affected)
 
-	res, err = db.Insert().SetNotNil("2").Exec()
+	res, err = db.Insert().SetNotNil("2").Exec(ctx)
 	require.Nil(t, err)
 	affected, err = res.RowsAffected()
 	require.Nil(t, err)
 	require.Equal(t, int64(1), affected)
 
-	alls, err := db.Select().OrderByAuto(orm.Asc).Query()
+	alls, err := db.Select().OrderByAuto(orm.Asc).Query(ctx)
 	require.Nil(t, err)
 	require.Equal(t, 2, len(alls))
 
 	assert.Equal(t, 1, alls[0].Auto)
 	assert.Equal(t, 2, alls[1].Auto)
 
-	alls, err = db.Select().OrderByAuto(orm.Desc).Query()
+	alls, err = db.Select().OrderByAuto(orm.Desc).Query(ctx)
 	require.Nil(t, err)
 	require.Equal(t, 2, len(alls))
 
@@ -108,17 +112,19 @@ func TestAutoIncrement(t *testing.T) {
 // TestNotNull tests that given inserting an empty not null field causes an error
 func TestNotNull(t *testing.T) {
 	t.Parallel()
+	ctx := context.Background()
 	orm := prepareAll(t)
 
-	_, err := orm.Insert().SetInt(1).Exec()
+	_, err := orm.Insert().SetInt(1).Exec(ctx)
 	require.NotNil(t, err)
 }
 
 func TestFieldReservedName(t *testing.T) {
 	t.Parallel()
+	ctx := context.Background()
 	db := prepareAll(t)
 
-	res, err := db.InsertAll(&example.All{Select: 42}).Exec()
+	res, err := db.InsertAll(&example.All{Select: 42}).Exec(ctx)
 	require.Nil(t, err)
 	assertRowsAffected(t, 1, res)
 
@@ -130,37 +136,38 @@ func TestFieldReservedName(t *testing.T) {
 		OrderBySelect(orm.Desc).
 		GroupBySelect()
 
-	alls, err := query.Query()
+	alls, err := query.Query(ctx)
 	require.Nil(t, err)
 	require.Equal(t, 1, len(alls))
 	assert.Equal(t, 42, alls[0].Select)
 
-	res, err = db.Update().SetSelect(11).Where(aorm.WhereSelect(orm.OpEq, 42)).Exec()
+	res, err = db.Update().SetSelect(11).Where(aorm.WhereSelect(orm.OpEq, 42)).Exec(ctx)
 	require.Nil(t, err)
 	assertRowsAffected(t, 1, res)
 
-	alls, err = db.Select().SelectSelect().Query()
+	alls, err = db.Select().SelectSelect().Query(ctx)
 	require.Nil(t, err)
 	require.Equal(t, 1, len(alls))
 	assert.Equal(t, 11, alls[0].Select)
 
-	res, err = db.Delete().Exec()
+	res, err = db.Delete().Exec(ctx)
 	require.Nil(t, err)
 	assertRowsAffected(t, 1, res)
 
-	alls, err = db.Select().SelectSelect().Query()
+	alls, err = db.Select().SelectSelect().Query(ctx)
 	require.Nil(t, err)
 	require.Equal(t, 0, len(alls))
 }
 
 func prepareAll(t *testing.T) aorm.API {
 	t.Helper()
+	ctx := context.Background()
 	db, err := aorm.Open(":memory:")
 	require.Nil(t, err)
 	if testing.Verbose() {
 		db.Logger(t.Logf)
 	}
-	_, err = db.Create().Exec()
+	_, err = db.Create().Exec(ctx)
 	require.Nil(t, err)
 
 	return db

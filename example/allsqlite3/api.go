@@ -2,6 +2,8 @@
 package allsqlite3
 
 import (
+	"context"
+
 	"github.com/posener/orm/example"
 )
 
@@ -21,12 +23,13 @@ type API interface {
 
 // Querier is the interface for a SELECT SQL statement
 type Querier interface {
-	Query() ([]example.All, error)
+	Query(context.Context) ([]example.All, error)
 }
 
 // Counter is the interface for a SELECT SQL statement for counting purposes
 type Counter interface {
-	Count() ([]AllCount, error)
+	Count(context.Context) ([]AllCount, error)
 }
 
+// check that ORM fulfill the API
 var _ API = &ORM{}

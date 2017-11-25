@@ -1,6 +1,8 @@
 package {{.Package}}
 
 import (
+    "context"
+
     "{{.Type.ImportPath}}"
 )
 
@@ -20,12 +22,12 @@ type API interface {
 
 // Querier is the interface for a SELECT SQL statement
 type Querier interface {
-    Query() ([]{{.Type.FullName}}, error)
+    Query(context.Context) ([]{{.Type.FullName}}, error)
 }
 
 // Counter is the interface for a SELECT SQL statement for counting purposes
 type Counter interface {
-    Count() ([]{{.Type.Name}}Count, error)
+    Count(context.Context) ([]{{.Type.Name}}Count, error)
 }
 
 // check that ORM fulfill the API

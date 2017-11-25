@@ -1,14 +1,21 @@
 package tpls
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/posener/orm/common"
 )
 
+type DB interface {
+	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
+	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
+	Close() error
+}
+
 type ORM struct {
 	dialect common.Dialect
-	db      *sql.DB
+	db      DB
 	logger  Logger
 }
 

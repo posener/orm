@@ -1,6 +1,7 @@
 package {{.Package}}
 
 import (
+    "context"
 	"database/sql/driver"
 	"fmt"
 	"reflect"
@@ -45,8 +46,8 @@ func (s *Select) Page(offset, limit int64) *Select {
 }
 
 // Query the database
-func (s *Select) Query() ([]{{.Type.FullName}}, error) {
-    rows, err := s.query()
+func (s *Select) Query(ctx context.Context) ([]{{.Type.FullName}}, error) {
+    rows, err := s.query(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -55,6 +56,10 @@ func (s *Select) Query() ([]{{.Type.FullName}}, error) {
 	// extract rows to structures
 	var all []{{.Type.FullName}}
 	for rows.Next() {
+	    // check context cancellation
+	    if err := ctx.Err(); err != nil  {
+	        return nil, err
+	    }
 		item, err := s.scan(row.Values(*rows))
         if err != nil {
 			return nil, err
@@ -65,9 +70,9 @@ func (s *Select) Query() ([]{{.Type.FullName}}, error) {
 }
 
 // Count add a count column to the query
-func (s *Select) Count() ([]{{.Type.Name}}Count, error) {
+func (s *Select) Count(ctx context.Context) ([]{{.Type.Name}}Count, error) {
     s.columns.count = true
-    rows, err := s.query()
+    rows, err := s.query(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +81,10 @@ func (s *Select) Count() ([]{{.Type.Name}}Count, error) {
 	// extract rows to structures
 	var all []{{.Type.Name}}Count
 	for rows.Next() {
+	    // check context cancellation
+	    if err := ctx.Err(); err != nil  {
+	        return nil, err
+	    }
 		item, err := s.scan(row.Values(*rows))
         if err != nil {
 			return nil, err

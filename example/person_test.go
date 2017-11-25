@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"testing"
 
+	"context"
+
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm"
 	"github.com/posener/orm/example"
@@ -22,16 +24,17 @@ var (
 
 func TestPersonSelect(t *testing.T) {
 	t.Parallel()
+	ctx := context.Background()
 	db := preparePerson(t)
 	defer db.Close()
 
-	res, err := db.Insert().SetName(p1.Name).SetAge(p1.Age).Exec()
+	res, err := db.Insert().SetName(p1.Name).SetAge(p1.Age).Exec(ctx)
 	require.Nil(t, err, "Failed inserting")
 	assertRowsAffected(t, 1, res)
-	res, err = db.Insert().SetName(p2.Name).SetAge(p2.Age).Exec()
+	res, err = db.Insert().SetName(p2.Name).SetAge(p2.Age).Exec(ctx)
 	require.Nil(t, err, "Failed inserting")
 	assertRowsAffected(t, 1, res)
-	res, err = db.InsertPerson(&p3).Exec()
+	res, err = db.InsertPerson(&p3).Exec(ctx)
 	require.Nil(t, err, "Failed inserting")
 	assertRowsAffected(t, 1, res)
 
@@ -114,7 +117,7 @@ func TestPersonSelect(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("%+v", tt.q), func(t *testing.T) {
-			p, err := tt.q.Query()
+			p, err := tt.q.Query(ctx)
 			if err != nil {
 				t.Error(err)
 			}
@@ -125,52 +128,54 @@ func TestPersonSelect(t *testing.T) {
 
 func TestSimpleCRUD(t *testing.T) {
 	t.Parallel()
+	ctx := context.Background()
 	db := preparePerson(t)
 	defer db.Close()
 
 	// prepareAll dataset
 	for _, p := range []example.Person{p1, p2, p3} {
-		res, err := db.InsertPerson(&p).Exec()
+		res, err := db.InsertPerson(&p).Exec(ctx)
 		require.Nil(t, err, "Failed inserting")
 		assertRowsAffected(t, 1, res)
 	}
 
-	ps, err := db.Select().Query()
+	ps, err := db.Select().Query(ctx)
 	require.Nil(t, err)
 	assert.Equal(t, []example.Person{p1, p2, p3}, ps)
 
 	// Test delete
 	delete := db.Delete().Where(porm.WhereName(orm.OpEq, "moshe"))
-	res, err := delete.Exec()
+	res, err := delete.Exec(ctx)
 	require.Nil(t, err)
 	assertRowsAffected(t, 1, res)
-	ps, err = db.Select().Query()
+	ps, err = db.Select().Query(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(t, []example.Person{p2, p3}, ps)
-	ps, err = db.Select().Where(porm.WhereName(orm.OpEq, "moshe")).Query()
+	ps, err = db.Select().Where(porm.WhereName(orm.OpEq, "moshe")).Query(ctx)
 	require.Nil(t, err)
 	assert.Equal(t, []example.Person(nil), ps)
 
 	// Test Update
 	update := db.Update().SetName("Jonney").Where(porm.WhereName(orm.OpEq, "zvika"))
-	res, err = update.Exec()
+	res, err = update.Exec(ctx)
 	require.Nil(t, err)
 	assertRowsAffected(t, 1, res)
 
-	ps, err = db.Select().Where(porm.WhereName(orm.OpEq, "Jonney")).Query()
+	ps, err = db.Select().Where(porm.WhereName(orm.OpEq, "Jonney")).Query(ctx)
 	require.Nil(t, err)
 	assert.Equal(t, []example.Person{{Name: "Jonney", Age: 3}}, ps)
 }
 
 func TestCount(t *testing.T) {
 	t.Parallel()
+	ctx := context.Background()
 	db := preparePerson(t)
 	defer db.Close()
 
 	for i := 0; i < 100; i++ {
-		res, err := db.InsertPerson(&example.Person{Name: fmt.Sprintf("Jim %d", i), Age: i / 5}).Exec()
+		res, err := db.InsertPerson(&example.Person{Name: fmt.Sprintf("Jim %d", i), Age: i / 5}).Exec(ctx)
 		require.Nil(t, err, "Failed inserting")
 		assertRowsAffected(t, 1, res)
 	}
@@ -211,14 +216,26 @@ func TestCount(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("%+v", tt.q), func(t *testing.T) {
-			got, err := tt.q.Count()
+			got, err := tt.q.Count(ctx)
 			if err != nil {
 				t.Error(err)
 			}
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
 
+func TestNew(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db, err := sql.Open("sqlite3", ":memory:")
+	require.Nil(t, err)
+	orm := porm.New(db)
+	if testing.Verbose() {
+		orm.Logger(t.Logf)
+	}
+	_, err = orm.Create().Exec(ctx)
+	require.Nil(t, err)
 }
 
 func assertRowsAffected(t *testing.T, wantRows int64, result sql.Result) {
@@ -229,12 +246,13 @@ func assertRowsAffected(t *testing.T, wantRows int64, result sql.Result) {
 
 func preparePerson(t *testing.T) porm.API {
 	t.Helper()
+	ctx := context.Background()
 	db, err := porm.Open(":memory:")
 	require.Nil(t, err)
 	if testing.Verbose() {
 		db.Logger(t.Logf)
 	}
-	_, err = db.Create().Exec()
+	_, err = db.Create().Exec(ctx)
 	require.Nil(t, err)
 
 	return db

@@ -2,6 +2,7 @@
 package personsqlite3
 
 import (
+	"context"
 	"database/sql/driver"
 	"fmt"
 	"reflect"
@@ -44,8 +45,8 @@ func (s *Select) Page(offset, limit int64) *Select {
 }
 
 // Query the database
-func (s *Select) Query() ([]example.Person, error) {
-	rows, err := s.query()
+func (s *Select) Query(ctx context.Context) ([]example.Person, error) {
+	rows, err := s.query(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +55,10 @@ func (s *Select) Query() ([]example.Person, error) {
 	// extract rows to structures
 	var all []example.Person
 	for rows.Next() {
+		// check context cancellation
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		item, err := s.scan(row.Values(*rows))
 		if err != nil {
 			return nil, err
@@ -64,9 +69,9 @@ func (s *Select) Query() ([]example.Person, error) {
 }
 
 // Count add a count column to the query
-func (s *Select) Count() ([]PersonCount, error) {
+func (s *Select) Count(ctx context.Context) ([]PersonCount, error) {
 	s.columns.count = true
-	rows, err := s.query()
+	rows, err := s.query(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -75,6 +80,10 @@ func (s *Select) Count() ([]PersonCount, error) {
 	// extract rows to structures
 	var all []PersonCount
 	for rows.Next() {
+		// check context cancellation
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		item, err := s.scan(row.Values(*rows))
 		if err != nil {
 			return nil, err
