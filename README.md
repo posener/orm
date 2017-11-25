@@ -30,6 +30,7 @@ is used in the arguments and in the return values.
 ```go
 import (
 	"log"
+	"context"
 	
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm"
@@ -40,29 +41,30 @@ func main() {
     db, err := porm.Open(source)
     defer db.Close()
     
+    ctx := context.Backeround()
     
     // Set a logger to log SQL commands
     db.Logger(log.Printf)
 
     // Create table:
-    _, err = db.Create().Exec()
+    _, err = db.Create().Exec(ctx)
 
     // Insert row with arguments:
-    _, err = db.Insert().SetName("John").SetAge(1).Exec()
+    _, err = db.Insert().SetName("John").SetAge(1).Exec(ctx)
 
     // Insert row with a struct:
-    _, err = db.InsertPerson(&example.Person{Name: "Doug", Age: 3}).Exec()
+    _, err = db.InsertPerson(&example.Person{Name: "Doug", Age: 3}).Exec(ctx)
 
     // Select rows from the table:
     ps, err := db.Select().
     	SelectAge().
         Where(porm.WhereName(orm.OpNe, "John")).
-        Query() // returns []example.Person, typed return value.
+        Query(ctx) // returns []example.Person, typed return value.
 
     println(ps[0].Age) // Output: 1
     
     // Delete row
-    _, err = db.Delete().Where(porm.WhereName(orm.Eq, "John")).Exec()
+    _, err = db.Delete().Where(porm.WhereName(orm.Eq, "John")).Exec(ctx)
 }
 ```
 
