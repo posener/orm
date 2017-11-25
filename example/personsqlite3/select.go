@@ -18,27 +18,27 @@ type PersonCount struct {
 
 // Select is the struct that holds the SELECT data
 type Select struct {
-	common.Select
-	orm *ORM
+	internal common.Select
+	orm      *ORM
 	columns
 }
 
 // Where applies where conditions on the query
 func (s *Select) Where(where common.Where) *Select {
-	s.Select.Where = where
+	s.internal.Where = where
 	return s
 }
 
 // Limit applies rows limit on the query response
 func (s *Select) Limit(limit int64) *Select {
-	s.Select.Page.Limit = limit
+	s.internal.Page.Limit = limit
 	return s
 }
 
 // Page applies rows offset and limit on the query response
 func (s *Select) Page(offset, limit int64) *Select {
-	s.Select.Page.Offset = offset
-	s.Select.Page.Limit = limit
+	s.internal.Page.Offset = offset
+	s.internal.Page.Limit = limit
 	return s
 }
 
@@ -91,13 +91,13 @@ func (s *Select) SelectName() *Select {
 
 // OrderByName set order to the query results according to column name
 func (s *Select) OrderByName(dir common.OrderDir) *Select {
-	s.Orders.Add("name", dir)
+	s.internal.Orders.Add("name", dir)
 	return s
 }
 
 // GroupByName make the query group by column name
 func (s *Select) GroupByName() *Select {
-	s.Groups.Add("name")
+	s.internal.Groups.Add("name")
 	return s
 }
 
@@ -109,13 +109,13 @@ func (s *Select) SelectAge() *Select {
 
 // OrderByAge set order to the query results according to column age
 func (s *Select) OrderByAge(dir common.OrderDir) *Select {
-	s.Orders.Add("age", dir)
+	s.internal.Orders.Add("age", dir)
 	return s
 }
 
 // GroupByAge make the query group by column age
 func (s *Select) GroupByAge() *Select {
-	s.Groups.Add("age")
+	s.internal.Groups.Add("age")
 	return s
 }
 

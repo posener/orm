@@ -10,40 +10,40 @@ import (
 // InsertAll creates an INSERT statement according to the given object
 func (o *ORM) InsertAll(p *example.All) *Insert {
 	i := o.Insert()
-	i.Assignments.Add("int", p.Int)
-	i.Assignments.Add("string", p.String)
-	i.Assignments.Add("bool", p.Bool)
-	i.Assignments.Add("time", p.Time)
-	i.Assignments.Add("select", p.Select)
+	i.internal.Assignments.Add("int", p.Int)
+	i.internal.Assignments.Add("string", p.String)
+	i.internal.Assignments.Add("bool", p.Bool)
+	i.internal.Assignments.Add("time", p.Time)
+	i.internal.Assignments.Add("select", p.Select)
 	return i
 }
 
 // SetInt sets value for column int in the INSERT statement
 func (i *Insert) SetInt(value int) *Insert {
-	i.Assignments.Add("int", value)
+	i.internal.Assignments.Add("int", value)
 	return i
 }
 
 // SetString sets value for column string in the INSERT statement
 func (i *Insert) SetString(value string) *Insert {
-	i.Assignments.Add("string", value)
+	i.internal.Assignments.Add("string", value)
 	return i
 }
 
 // SetBool sets value for column bool in the INSERT statement
 func (i *Insert) SetBool(value bool) *Insert {
-	i.Assignments.Add("bool", value)
+	i.internal.Assignments.Add("bool", value)
 	return i
 }
 
 // SetTime sets value for column time in the INSERT statement
 func (i *Insert) SetTime(value time.Time) *Insert {
-	i.Assignments.Add("time", value)
+	i.internal.Assignments.Add("time", value)
 	return i
 }
 
 // SetSelect sets value for column select in the INSERT statement
 func (i *Insert) SetSelect(value int) *Insert {
-	i.Assignments.Add("select", value)
+	i.internal.Assignments.Add("select", value)
 	return i
 }

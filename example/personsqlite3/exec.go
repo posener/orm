@@ -17,34 +17,34 @@ func (c *Create) Exec() (sql.Result, error) {
 }
 
 func (s *Select) query() (*sql.Rows, error) {
-	stmt, args := sqlite3.Select(&s.Select)
+	stmt, args := sqlite3.Select(&s.internal)
 	s.orm.log("Query: '%v' %v", stmt, args)
 	return s.orm.db.Query(stmt, args...)
 }
 
 // Exec inserts the data to the given database
 func (i *Insert) Exec() (sql.Result, error) {
-	if len(i.Assignments) == 0 {
+	if len(i.internal.Assignments) == 0 {
 		return nil, fmt.Errorf("nothing to insert")
 	}
-	stmt, args := sqlite3.Insert(&i.Insert)
+	stmt, args := sqlite3.Insert(&i.internal)
 	i.orm.log("Insert: '%v' %v", stmt, args)
 	return i.orm.db.Exec(stmt, args...)
 }
 
 // Exec inserts the data to the given database
 func (u *Update) Exec() (sql.Result, error) {
-	if len(u.Assignments) == 0 {
+	if len(u.internal.Assignments) == 0 {
 		return nil, fmt.Errorf("nothing to update")
 	}
-	stmt, args := sqlite3.Update(&u.Update)
+	stmt, args := sqlite3.Update(&u.internal)
 	u.orm.log("Update: '%v' %v", stmt, args)
 	return u.orm.db.Exec(stmt, args...)
 }
 
 // Exec runs the delete statement on a given database.
 func (d *Delete) Exec() (sql.Result, error) {
-	stmt, args := sqlite3.Delete(&d.Delete)
+	stmt, args := sqlite3.Delete(&d.internal)
 	d.orm.log("Delete: '%v' %v", stmt, args)
 	return d.orm.db.Exec(stmt, args...)
 }

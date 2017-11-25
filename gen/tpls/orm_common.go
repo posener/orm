@@ -33,29 +33,29 @@ type Create struct {
 
 // Insert is a struct to hold information for an INSERT statement
 type Insert struct {
-	common.Insert
-	orm *ORM
+	internal common.Insert
+	orm      *ORM
 }
 
 // Update is a struct to hold information for an INSERT statement
 type Update struct {
-	common.Update
-	orm *ORM
+	internal common.Update
+	orm      *ORM
 }
 
 func (u *Update) Where(where common.Where) *Update {
-	u.Update.Where = where
+	u.internal.Where = where
 	return u
 }
 
 // Delete is the struct that holds the SELECT data
 type Delete struct {
-	common.Delete
-	orm *ORM
+	internal common.Delete
+	orm      *ORM
 }
 
 // Where applies where conditions on the query
 func (d *Delete) Where(w common.Where) *Delete {
-	d.Delete.Where = w
+	d.internal.Where = w
 	return d
 }

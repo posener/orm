@@ -10,40 +10,40 @@ import (
 // InsertAll creates an UPDATE statement according to the given object
 func (o *ORM) UpdateAll(p *example.All) *Update {
 	u := o.Update()
-	u.Assignments.Add("int", p.Int)
-	u.Assignments.Add("string", p.String)
-	u.Assignments.Add("bool", p.Bool)
-	u.Assignments.Add("time", p.Time)
-	u.Assignments.Add("select", p.Select)
+	u.internal.Assignments.Add("int", p.Int)
+	u.internal.Assignments.Add("string", p.String)
+	u.internal.Assignments.Add("bool", p.Bool)
+	u.internal.Assignments.Add("time", p.Time)
+	u.internal.Assignments.Add("select", p.Select)
 	return u
 }
 
 // SetInt sets value for column int in the UPDATE statement
 func (u *Update) SetInt(value int) *Update {
-	u.Assignments.Add("int", value)
+	u.internal.Assignments.Add("int", value)
 	return u
 }
 
 // SetString sets value for column string in the UPDATE statement
 func (u *Update) SetString(value string) *Update {
-	u.Assignments.Add("string", value)
+	u.internal.Assignments.Add("string", value)
 	return u
 }
 
 // SetBool sets value for column bool in the UPDATE statement
 func (u *Update) SetBool(value bool) *Update {
-	u.Assignments.Add("bool", value)
+	u.internal.Assignments.Add("bool", value)
 	return u
 }
 
 // SetTime sets value for column time in the UPDATE statement
 func (u *Update) SetTime(value time.Time) *Update {
-	u.Assignments.Add("time", value)
+	u.internal.Assignments.Add("time", value)
 	return u
 }
 
 // SetSelect sets value for column select in the UPDATE statement
 func (u *Update) SetSelect(value int) *Update {
-	u.Assignments.Add("select", value)
+	u.internal.Assignments.Add("select", value)
 	return u
 }
