@@ -27,3 +27,6 @@ type Querier interface {
 type Counter interface {
     Count() ([]{{.Type.Name}}Count, error)
 }
+
+// check that ORM fulfill the API
+var _ API = &ORM{}

@@ -28,3 +28,5 @@ type Querier interface {
 type Counter interface {
 	Count() ([]PersonCount, error)
 }
+
+var _ API = &ORM{}
