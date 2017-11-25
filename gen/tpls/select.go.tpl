@@ -19,27 +19,27 @@ type {{.Type.Name}}Count struct {
 
 // Select is the struct that holds the SELECT data
 type Select struct {
-	common.Select
+	internal common.Select
 	orm *ORM
-	columns
+	columns columns
 }
 
 // Where applies where conditions on the query
 func (s *Select) Where(where common.Where) *Select {
-	s.Select.Where = where
+	s.internal.Where = where
 	return s
 }
 
 // Limit applies rows limit on the query response
 func (s *Select) Limit(limit int64) *Select {
-	s.Select.Page.Limit = limit
+	s.internal.Page.Limit = limit
 	return s
 }
 
 // Page applies rows offset and limit on the query response
 func (s *Select) Page(offset, limit int64) *Select {
-	s.Select.Page.Offset = offset
-	s.Select.Page.Limit = limit
+	s.internal.Page.Offset = offset
+	s.internal.Page.Limit = limit
 	return s
 }
 
@@ -93,13 +93,13 @@ func (s *Select) Select{{$f.Name}}() *Select {
 
 // OrderBy{{$f.Name}} set order to the query results according to column {{$f.SQL.Column}}
 func (s *Select) OrderBy{{$f.Name}}(dir common.OrderDir) *Select {
-    s.Orders.Add("{{$f.SQL.Column}}", dir)
+    s.internal.Orders.Add("{{$f.SQL.Column}}", dir)
     return s
 }
 
 // GroupBy{{$f.Name}} make the query group by column {{$f.SQL.Column}}
 func (s *Select) GroupBy{{$f.Name}}() *Select {
-    s.Groups.Add("{{$f.SQL.Column}}")
+    s.internal.Groups.Add("{{$f.SQL.Column}}")
     return s
 }
 {{ end -}}

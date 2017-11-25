@@ -8,19 +8,19 @@ import (
 // InsertPerson creates an UPDATE statement according to the given object
 func (o *ORM) UpdatePerson(p *example.Person) *Update {
 	u := o.Update()
-	u.Assignments.Add("name", p.Name)
-	u.Assignments.Add("age", p.Age)
+	u.internal.Assignments.Add("name", p.Name)
+	u.internal.Assignments.Add("age", p.Age)
 	return u
 }
 
 // SetName sets value for column name in the UPDATE statement
 func (u *Update) SetName(value string) *Update {
-	u.Assignments.Add("name", value)
+	u.internal.Assignments.Add("name", value)
 	return u
 }
 
 // SetAge sets value for column age in the UPDATE statement
 func (u *Update) SetAge(value int) *Update {
-	u.Assignments.Add("age", value)
+	u.internal.Assignments.Add("age", value)
 	return u
 }

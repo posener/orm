@@ -18,27 +18,27 @@ type AllCount struct {
 
 // Select is the struct that holds the SELECT data
 type Select struct {
-	common.Select
-	orm *ORM
-	columns
+	internal common.Select
+	orm      *ORM
+	columns  columns
 }
 
 // Where applies where conditions on the query
 func (s *Select) Where(where common.Where) *Select {
-	s.Select.Where = where
+	s.internal.Where = where
 	return s
 }
 
 // Limit applies rows limit on the query response
 func (s *Select) Limit(limit int64) *Select {
-	s.Select.Page.Limit = limit
+	s.internal.Page.Limit = limit
 	return s
 }
 
 // Page applies rows offset and limit on the query response
 func (s *Select) Page(offset, limit int64) *Select {
-	s.Select.Page.Offset = offset
-	s.Select.Page.Limit = limit
+	s.internal.Page.Offset = offset
+	s.internal.Page.Limit = limit
 	return s
 }
 
@@ -91,13 +91,13 @@ func (s *Select) SelectInt() *Select {
 
 // OrderByInt set order to the query results according to column int
 func (s *Select) OrderByInt(dir common.OrderDir) *Select {
-	s.Orders.Add("int", dir)
+	s.internal.Orders.Add("int", dir)
 	return s
 }
 
 // GroupByInt make the query group by column int
 func (s *Select) GroupByInt() *Select {
-	s.Groups.Add("int")
+	s.internal.Groups.Add("int")
 	return s
 }
 
@@ -109,13 +109,13 @@ func (s *Select) SelectString() *Select {
 
 // OrderByString set order to the query results according to column string
 func (s *Select) OrderByString(dir common.OrderDir) *Select {
-	s.Orders.Add("string", dir)
+	s.internal.Orders.Add("string", dir)
 	return s
 }
 
 // GroupByString make the query group by column string
 func (s *Select) GroupByString() *Select {
-	s.Groups.Add("string")
+	s.internal.Groups.Add("string")
 	return s
 }
 
@@ -127,13 +127,13 @@ func (s *Select) SelectBool() *Select {
 
 // OrderByBool set order to the query results according to column bool
 func (s *Select) OrderByBool(dir common.OrderDir) *Select {
-	s.Orders.Add("bool", dir)
+	s.internal.Orders.Add("bool", dir)
 	return s
 }
 
 // GroupByBool make the query group by column bool
 func (s *Select) GroupByBool() *Select {
-	s.Groups.Add("bool")
+	s.internal.Groups.Add("bool")
 	return s
 }
 
@@ -145,13 +145,13 @@ func (s *Select) SelectTime() *Select {
 
 // OrderByTime set order to the query results according to column time
 func (s *Select) OrderByTime(dir common.OrderDir) *Select {
-	s.Orders.Add("time", dir)
+	s.internal.Orders.Add("time", dir)
 	return s
 }
 
 // GroupByTime make the query group by column time
 func (s *Select) GroupByTime() *Select {
-	s.Groups.Add("time")
+	s.internal.Groups.Add("time")
 	return s
 }
 
@@ -163,13 +163,13 @@ func (s *Select) SelectSelect() *Select {
 
 // OrderBySelect set order to the query results according to column select
 func (s *Select) OrderBySelect(dir common.OrderDir) *Select {
-	s.Orders.Add("select", dir)
+	s.internal.Orders.Add("select", dir)
 	return s
 }
 
 // GroupBySelect make the query group by column select
 func (s *Select) GroupBySelect() *Select {
-	s.Groups.Add("select")
+	s.internal.Groups.Add("select")
 	return s
 }
 
