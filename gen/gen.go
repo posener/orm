@@ -11,7 +11,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/posener/orm"
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect"
 	"github.com/posener/orm/gen/b0x"
@@ -29,7 +28,7 @@ type TemplateArgs struct {
 	Package string
 	// CustomType describes the type of the given struct to generate code for
 	Type    common.Type
-	Dialect orm.Dialect
+	Dialect common.Dialect
 }
 
 var templates = template.New("").Funcs(template.FuncMap{

@@ -4,7 +4,7 @@ package allsqlite3
 import (
 	"database/sql/driver"
 	"fmt"
-	"github.com/posener/orm"
+	"github.com/posener/orm/common"
 	"github.com/posener/orm/row"
 	"time"
 
@@ -18,13 +18,13 @@ type AllCount struct {
 
 // Select is the struct that holds the SELECT data
 type Select struct {
-	orm.Select
+	common.Select
 	orm *ORM
 	columns
 }
 
 // Where applies where conditions on the query
-func (s *Select) Where(where orm.Where) *Select {
+func (s *Select) Where(where common.Where) *Select {
 	s.Select.Where = where
 	return s
 }
@@ -90,7 +90,7 @@ func (s *Select) SelectInt() *Select {
 }
 
 // OrderByInt set order to the query results according to column int
-func (s *Select) OrderByInt(dir orm.OrderDir) *Select {
+func (s *Select) OrderByInt(dir common.OrderDir) *Select {
 	s.Orders.Add("int", dir)
 	return s
 }
@@ -108,7 +108,7 @@ func (s *Select) SelectString() *Select {
 }
 
 // OrderByString set order to the query results according to column string
-func (s *Select) OrderByString(dir orm.OrderDir) *Select {
+func (s *Select) OrderByString(dir common.OrderDir) *Select {
 	s.Orders.Add("string", dir)
 	return s
 }
@@ -126,7 +126,7 @@ func (s *Select) SelectBool() *Select {
 }
 
 // OrderByBool set order to the query results according to column bool
-func (s *Select) OrderByBool(dir orm.OrderDir) *Select {
+func (s *Select) OrderByBool(dir common.OrderDir) *Select {
 	s.Orders.Add("bool", dir)
 	return s
 }
@@ -144,7 +144,7 @@ func (s *Select) SelectTime() *Select {
 }
 
 // OrderByTime set order to the query results according to column time
-func (s *Select) OrderByTime(dir orm.OrderDir) *Select {
+func (s *Select) OrderByTime(dir common.OrderDir) *Select {
 	s.Orders.Add("time", dir)
 	return s
 }
@@ -162,7 +162,7 @@ func (s *Select) SelectSelect() *Select {
 }
 
 // OrderBySelect set order to the query results according to column select
-func (s *Select) OrderBySelect(dir orm.OrderDir) *Select {
+func (s *Select) OrderBySelect(dir common.OrderDir) *Select {
 	s.Orders.Add("select", dir)
 	return s
 }

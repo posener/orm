@@ -4,11 +4,11 @@ package allsqlite3
 import (
 	"database/sql"
 
-	"github.com/posener/orm"
+	"github.com/posener/orm/common"
 )
 
 type ORM struct {
-	dialect orm.Dialect
+	dialect common.Dialect
 	db      *sql.DB
 	logger  Logger
 }
@@ -34,29 +34,29 @@ type Create struct {
 
 // Insert is a struct to hold information for an INSERT statement
 type Insert struct {
-	orm.Insert
+	common.Insert
 	orm *ORM
 }
 
 // Update is a struct to hold information for an INSERT statement
 type Update struct {
-	orm.Update
+	common.Update
 	orm *ORM
 }
 
-func (u *Update) Where(where orm.Where) *Update {
+func (u *Update) Where(where common.Where) *Update {
 	u.Update.Where = where
 	return u
 }
 
 // Delete is the struct that holds the SELECT data
 type Delete struct {
-	orm.Delete
+	common.Delete
 	orm *ORM
 }
 
 // Where applies where conditions on the query
-func (d *Delete) Where(w orm.Where) *Delete {
+func (d *Delete) Where(w common.Where) *Delete {
 	d.Delete.Where = w
 	return d
 }

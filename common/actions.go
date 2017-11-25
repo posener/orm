@@ -1,4 +1,4 @@
-package orm
+package common
 
 // Insert represents an SQL INSERT statement
 type Insert struct {

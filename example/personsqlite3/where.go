@@ -2,43 +2,43 @@
 package personsqlite3
 
 import (
-	"github.com/posener/orm"
+	"github.com/posener/orm/common"
 )
 
 // WhereName adds a condition on Name to the WHERE statement
-func WhereName(op orm.Op, val string) orm.Where {
-	return orm.NewWhere(op, "name", val)
+func WhereName(op common.Op, val string) common.Where {
+	return common.NewWhere(op, "name", val)
 }
 
 // WhereNameIn adds an IN condition on Name to the WHERE statement
-func WhereNameIn(vals ...string) orm.Where {
+func WhereNameIn(vals ...string) common.Where {
 	args := make([]interface{}, len(vals))
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return orm.NewWhereIn("name", args...)
+	return common.NewWhereIn("name", args...)
 }
 
 // WhereNameBetween adds a BETWEEN condition on Name to the WHERE statement
-func WhereNameBetween(low, high string) orm.Where {
-	return orm.NewWhereBetween("name", low, high)
+func WhereNameBetween(low, high string) common.Where {
+	return common.NewWhereBetween("name", low, high)
 }
 
 // WhereAge adds a condition on Age to the WHERE statement
-func WhereAge(op orm.Op, val int) orm.Where {
-	return orm.NewWhere(op, "age", val)
+func WhereAge(op common.Op, val int) common.Where {
+	return common.NewWhere(op, "age", val)
 }
 
 // WhereAgeIn adds an IN condition on Age to the WHERE statement
-func WhereAgeIn(vals ...int) orm.Where {
+func WhereAgeIn(vals ...int) common.Where {
 	args := make([]interface{}, len(vals))
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return orm.NewWhereIn("age", args...)
+	return common.NewWhereIn("age", args...)
 }
 
 // WhereAgeBetween adds a BETWEEN condition on Age to the WHERE statement
-func WhereAgeBetween(low, high int) orm.Where {
-	return orm.NewWhereBetween("age", low, high)
+func WhereAgeBetween(low, high int) common.Where {
+	return common.NewWhereBetween("age", low, high)
 }

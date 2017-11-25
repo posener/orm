@@ -6,7 +6,7 @@ import (
 	{{ range $_, $f := .Type.Fields -}}
 	{{ if $f.ImportPath }}"{{$f.ImportPath}}"{{ end }}
 	{{- end }}
-	"github.com/posener/orm"
+	"github.com/posener/orm/common"
 	"github.com/posener/orm/row"
 
     "{{.Type.ImportPath}}"
@@ -19,13 +19,13 @@ type {{.Type.Name}}Count struct {
 
 // Select is the struct that holds the SELECT data
 type Select struct {
-	orm.Select
+	common.Select
 	orm *ORM
 	columns
 }
 
 // Where applies where conditions on the query
-func (s *Select) Where(where orm.Where) *Select {
+func (s *Select) Where(where common.Where) *Select {
 	s.Select.Where = where
 	return s
 }
@@ -92,7 +92,7 @@ func (s *Select) Select{{$f.Name}}() *Select {
 }
 
 // OrderBy{{$f.Name}} set order to the query results according to column {{$f.SQL.Column}}
-func (s *Select) OrderBy{{$f.Name}}(dir orm.OrderDir) *Select {
+func (s *Select) OrderBy{{$f.Name}}(dir common.OrderDir) *Select {
     s.Orders.Add("{{$f.SQL.Column}}", dir)
     return s
 }
