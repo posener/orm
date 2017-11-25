@@ -30,6 +30,7 @@ import (
 	"database/sql"
 	"log"
 	
+	"github.com/posener/orm"
 	porm "package/personorm"
 )
 
@@ -53,13 +54,13 @@ func main() {
     // Select rows from the table:
     ps, err := db.Select().
     	SelectAge().
-        Where(porm.WhereName(porm.OpNe, "John")).
+        Where(porm.WhereName(orm.OpNe, "John")).
         Query() // returns []example.Person, typed return value.
 
     println(ps[0].Age) // Output: 1
     
     // Delete row
-    _, err = db.Delete().Where(porm.WhereName(porm.Eq, "John")).Exec()
+    _, err = db.Delete().Where(porm.WhereName(orm.Eq, "John")).Exec()
 }
 ```
 
