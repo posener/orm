@@ -58,6 +58,17 @@ type Field struct {
 	ImportPath string
 }
 
+func (f *Field) IsPointerType() bool {
+	return len(f.Type) > 0 && f.Type[0] == '*'
+}
+
+func (f *Field) NonPointerType() string {
+	if f.IsPointerType() {
+		return f.Type[1:]
+	}
+	return f.Type
+}
+
 func collectFields(st *load.Struct) []Field {
 	var fields []Field
 	for i := 0; i < st.Struct.NumFields(); i++ {
@@ -80,20 +91,6 @@ func collectFields(st *load.Struct) []Field {
 		})
 	}
 	return fields
-}
-
-// ConvertType is the type of the field when returned by sql/driver from database
-func (f *Field) ConvertType() string {
-	switch f.Type {
-	case "int":
-		return "int64"
-	case "float":
-		return "float64"
-	case "string":
-		return "[]byte"
-	default:
-		return f.Type
-	}
 }
 
 func fieldImportPath(typeName string, pkgMap map[string]*types.Package) string {

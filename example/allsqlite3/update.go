@@ -10,11 +10,53 @@ import (
 // InsertAll creates an UPDATE statement according to the given object
 func (o *ORM) UpdateAll(p *example.All) *Update {
 	u := o.Update()
+	u.internal.Assignments.Add("auto", p.Auto)
+	u.internal.Assignments.Add("notnil", p.NotNil)
 	u.internal.Assignments.Add("int", p.Int)
-	u.internal.Assignments.Add("string", p.String)
-	u.internal.Assignments.Add("bool", p.Bool)
+	u.internal.Assignments.Add("int8", p.Int8)
+	u.internal.Assignments.Add("int16", p.Int16)
+	u.internal.Assignments.Add("int32", p.Int32)
+	u.internal.Assignments.Add("int64", p.Int64)
+	u.internal.Assignments.Add("uint", p.UInt)
+	u.internal.Assignments.Add("uint8", p.UInt8)
+	u.internal.Assignments.Add("uint16", p.UInt16)
+	u.internal.Assignments.Add("uint32", p.UInt32)
+	u.internal.Assignments.Add("uint64", p.UInt64)
 	u.internal.Assignments.Add("time", p.Time)
+	u.internal.Assignments.Add("varcharstring", p.VarCharString)
+	u.internal.Assignments.Add("varcharbyte", p.VarCharByte)
+	u.internal.Assignments.Add("string", p.String)
+	u.internal.Assignments.Add("bytes", p.Bytes)
+	u.internal.Assignments.Add("bool", p.Bool)
+	u.internal.Assignments.Add("pint", p.PInt)
+	u.internal.Assignments.Add("pint8", p.PInt8)
+	u.internal.Assignments.Add("pint16", p.PInt16)
+	u.internal.Assignments.Add("pint32", p.PInt32)
+	u.internal.Assignments.Add("pint64", p.PInt64)
+	u.internal.Assignments.Add("puint", p.PUInt)
+	u.internal.Assignments.Add("puint8", p.PUInt8)
+	u.internal.Assignments.Add("puint16", p.PUInt16)
+	u.internal.Assignments.Add("puint32", p.PUInt32)
+	u.internal.Assignments.Add("puint64", p.PUInt64)
+	u.internal.Assignments.Add("ptime", p.PTime)
+	u.internal.Assignments.Add("pvarcharstring", p.PVarCharString)
+	u.internal.Assignments.Add("pvarcharbyte", p.PVarCharByte)
+	u.internal.Assignments.Add("pstring", p.PString)
+	u.internal.Assignments.Add("pbytes", p.PBytes)
+	u.internal.Assignments.Add("pbool", p.PBool)
 	u.internal.Assignments.Add("select", p.Select)
+	return u
+}
+
+// SetAuto sets value for column auto in the UPDATE statement
+func (u *Update) SetAuto(value int) *Update {
+	u.internal.Assignments.Add("auto", value)
+	return u
+}
+
+// SetNotNil sets value for column notnil in the UPDATE statement
+func (u *Update) SetNotNil(value string) *Update {
+	u.internal.Assignments.Add("notnil", value)
 	return u
 }
 
@@ -24,9 +66,87 @@ func (u *Update) SetInt(value int) *Update {
 	return u
 }
 
+// SetInt8 sets value for column int8 in the UPDATE statement
+func (u *Update) SetInt8(value int8) *Update {
+	u.internal.Assignments.Add("int8", value)
+	return u
+}
+
+// SetInt16 sets value for column int16 in the UPDATE statement
+func (u *Update) SetInt16(value int16) *Update {
+	u.internal.Assignments.Add("int16", value)
+	return u
+}
+
+// SetInt32 sets value for column int32 in the UPDATE statement
+func (u *Update) SetInt32(value int32) *Update {
+	u.internal.Assignments.Add("int32", value)
+	return u
+}
+
+// SetInt64 sets value for column int64 in the UPDATE statement
+func (u *Update) SetInt64(value int64) *Update {
+	u.internal.Assignments.Add("int64", value)
+	return u
+}
+
+// SetUInt sets value for column uint in the UPDATE statement
+func (u *Update) SetUInt(value uint) *Update {
+	u.internal.Assignments.Add("uint", value)
+	return u
+}
+
+// SetUInt8 sets value for column uint8 in the UPDATE statement
+func (u *Update) SetUInt8(value uint8) *Update {
+	u.internal.Assignments.Add("uint8", value)
+	return u
+}
+
+// SetUInt16 sets value for column uint16 in the UPDATE statement
+func (u *Update) SetUInt16(value uint16) *Update {
+	u.internal.Assignments.Add("uint16", value)
+	return u
+}
+
+// SetUInt32 sets value for column uint32 in the UPDATE statement
+func (u *Update) SetUInt32(value uint32) *Update {
+	u.internal.Assignments.Add("uint32", value)
+	return u
+}
+
+// SetUInt64 sets value for column uint64 in the UPDATE statement
+func (u *Update) SetUInt64(value uint64) *Update {
+	u.internal.Assignments.Add("uint64", value)
+	return u
+}
+
+// SetTime sets value for column time in the UPDATE statement
+func (u *Update) SetTime(value time.Time) *Update {
+	u.internal.Assignments.Add("time", value)
+	return u
+}
+
+// SetVarCharString sets value for column varcharstring in the UPDATE statement
+func (u *Update) SetVarCharString(value string) *Update {
+	u.internal.Assignments.Add("varcharstring", value)
+	return u
+}
+
+// SetVarCharByte sets value for column varcharbyte in the UPDATE statement
+func (u *Update) SetVarCharByte(value []byte) *Update {
+	u.internal.Assignments.Add("varcharbyte", value)
+	return u
+}
+
 // SetString sets value for column string in the UPDATE statement
 func (u *Update) SetString(value string) *Update {
 	u.internal.Assignments.Add("string", value)
+	return u
+}
+
+// SetBytes sets value for column bytes in the UPDATE statement
+func (u *Update) SetBytes(value []byte) *Update {
+	u.internal.Assignments.Add("bytes", value)
 	return u
 }
 
@@ -36,9 +156,99 @@ func (u *Update) SetBool(value bool) *Update {
 	return u
 }
 
-// SetTime sets value for column time in the UPDATE statement
-func (u *Update) SetTime(value time.Time) *Update {
-	u.internal.Assignments.Add("time", value)
+// SetPInt sets value for column pint in the UPDATE statement
+func (u *Update) SetPInt(value *int) *Update {
+	u.internal.Assignments.Add("pint", value)
+	return u
+}
+
+// SetPInt8 sets value for column pint8 in the UPDATE statement
+func (u *Update) SetPInt8(value *int8) *Update {
+	u.internal.Assignments.Add("pint8", value)
+	return u
+}
+
+// SetPInt16 sets value for column pint16 in the UPDATE statement
+func (u *Update) SetPInt16(value *int16) *Update {
+	u.internal.Assignments.Add("pint16", value)
+	return u
+}
+
+// SetPInt32 sets value for column pint32 in the UPDATE statement
+func (u *Update) SetPInt32(value *int32) *Update {
+	u.internal.Assignments.Add("pint32", value)
+	return u
+}
+
+// SetPInt64 sets value for column pint64 in the UPDATE statement
+func (u *Update) SetPInt64(value *int64) *Update {
+	u.internal.Assignments.Add("pint64", value)
+	return u
+}
+
+// SetPUInt sets value for column puint in the UPDATE statement
+func (u *Update) SetPUInt(value *uint) *Update {
+	u.internal.Assignments.Add("puint", value)
+	return u
+}
+
+// SetPUInt8 sets value for column puint8 in the UPDATE statement
+func (u *Update) SetPUInt8(value *uint8) *Update {
+	u.internal.Assignments.Add("puint8", value)
+	return u
+}
+
+// SetPUInt16 sets value for column puint16 in the UPDATE statement
+func (u *Update) SetPUInt16(value *uint16) *Update {
+	u.internal.Assignments.Add("puint16", value)
+	return u
+}
+
+// SetPUInt32 sets value for column puint32 in the UPDATE statement
+func (u *Update) SetPUInt32(value *uint32) *Update {
+	u.internal.Assignments.Add("puint32", value)
+	return u
+}
+
+// SetPUInt64 sets value for column puint64 in the UPDATE statement
+func (u *Update) SetPUInt64(value *uint64) *Update {
+	u.internal.Assignments.Add("puint64", value)
+	return u
+}
+
+// SetPTime sets value for column ptime in the UPDATE statement
+func (u *Update) SetPTime(value *time.Time) *Update {
+	u.internal.Assignments.Add("ptime", value)
+	return u
+}
+
+// SetPVarCharString sets value for column pvarcharstring in the UPDATE statement
+func (u *Update) SetPVarCharString(value *string) *Update {
+	u.internal.Assignments.Add("pvarcharstring", value)
+	return u
+}
+
+// SetPVarCharByte sets value for column pvarcharbyte in the UPDATE statement
+func (u *Update) SetPVarCharByte(value *[]byte) *Update {
+	u.internal.Assignments.Add("pvarcharbyte", value)
+	return u
+}
+
+// SetPString sets value for column pstring in the UPDATE statement
+func (u *Update) SetPString(value *string) *Update {
+	u.internal.Assignments.Add("pstring", value)
+	return u
+}
+
+// SetPBytes sets value for column pbytes in the UPDATE statement
+func (u *Update) SetPBytes(value *[]byte) *Update {
+	u.internal.Assignments.Add("pbytes", value)
+	return u
+}
+
+// SetPBool sets value for column pbool in the UPDATE statement
+func (u *Update) SetPBool(value *bool) *Update {
+	u.internal.Assignments.Add("pbool", value)
 	return u
 }
 

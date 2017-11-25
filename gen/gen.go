@@ -33,6 +33,7 @@ type TemplateArgs struct {
 
 var templates = template.New("").Funcs(template.FuncMap{
 	"plus1": func(x int) int { return x + 1 },
+	//"convert": func(fun func(common.Field) string, field common.Field) string { return fun(field) },
 })
 
 var commonFiles []string

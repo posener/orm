@@ -4,6 +4,7 @@ package personsqlite3
 import (
 	"database/sql/driver"
 	"fmt"
+	"reflect"
 
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/row"
@@ -130,9 +131,9 @@ func (s *Select) scan(vals []driver.Value) (*PersonCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
-				return nil, fmt.Errorf("converting Name: column %d with value %v to string", i, vals[i])
+				return nil, fmt.Errorf("converting Name: column %d with value %v (type %v) to string", i, vals[i], reflect.TypeOf(vals[i]).Name())
 			}
-			row.Name = string(val)
+			row.Name = (string)(val)
 		}
 		i++
 	}
@@ -140,9 +141,9 @@ func (s *Select) scan(vals []driver.Value) (*PersonCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf("converting Age: column %d with value %v to int", i, vals[i])
+				return nil, fmt.Errorf("converting Age: column %d with value %v (type %v) to int", i, vals[i], reflect.TypeOf(vals[i]).Name())
 			}
-			row.Age = int(val)
+			row.Age = (int)(val)
 		}
 		i++
 	}
@@ -150,7 +151,7 @@ func (s *Select) scan(vals []driver.Value) (*PersonCount, error) {
 		var ok bool
 		row.Count, ok = vals[i].(int64)
 		if !ok {
-			return nil, fmt.Errorf("converting COUNT(*): column %d with value %v to int64", i, vals[i])
+			return nil, fmt.Errorf("converting COUNT(*): column %d with value %v (type %v) to int64", i, vals[i], reflect.TypeOf(vals[i]).Name())
 		}
 	}
 	return &row, nil
