@@ -7,12 +7,17 @@ import (
 	"github.com/posener/orm/common"
 )
 
+// DB is an interface of functions of sql.DB which are used by ORM struct.
 type DB interface {
 	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
 	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
 	Close() error
 }
 
+// ORM represents an ORM of a given struct.
+// All functions available to interact with an SQL table that is related
+// to this struct, are done by an instance of this object.
+// To get an instance of ORM use Open or New functions.
 type ORM struct {
 	dialect common.Dialect
 	db      DB
