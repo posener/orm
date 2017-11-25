@@ -20,7 +20,7 @@ type PersonCount struct {
 type Select struct {
 	internal common.Select
 	orm      *ORM
-	columns
+	columns  columns
 }
 
 // Where applies where conditions on the query
