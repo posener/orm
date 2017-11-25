@@ -2,14 +2,7 @@ package {{.Package}}
 
 import (
     "context"
-	"database/sql/driver"
-	"fmt"
-	"reflect"
-	{{ range $_, $f := .Type.Fields -}}
-	{{ if $f.ImportPath }}"{{$f.ImportPath}}"{{ end }}
-	{{- end }}
 	"github.com/posener/orm/common"
-	"github.com/posener/orm/row"
 
     "{{.Type.ImportPath}}"
 )
@@ -60,7 +53,7 @@ func (s *Select) Query(ctx context.Context) ([]{{.Type.FullName}}, error) {
 	    if err := ctx.Err(); err != nil  {
 	        return nil, err
 	    }
-		item, err := s.scan(row.Values(*rows))
+		item, err := scan(s.orm.dialect.Name(), s.columns, rows)
         if err != nil {
 			return nil, err
 		}
@@ -85,7 +78,7 @@ func (s *Select) Count(ctx context.Context) ([]{{.Type.Name}}Count, error) {
 	    if err := ctx.Err(); err != nil  {
 	        return nil, err
 	    }
-		item, err := s.scan(row.Values(*rows))
+		item, err := scan(s.orm.dialect.Name(), s.columns, rows)
         if err != nil {
 			return nil, err
 		}
@@ -114,39 +107,3 @@ func (s *Select) GroupBy{{$f.Name}}() *Select {
 }
 {{ end -}}
 
-// scanArgs are list of fields to be given to the sql Scan command
-func (s *Select) scan(vals []driver.Value) (*{{.Type.Name}}Count, error) {
-    var (
-        row {{.Type.Name}}Count
-        all = s.columns.selectAll()
-        i = 0
-    )
-	{{ range $_, $f := .Type.Fields -}}
-	if all || s.columns.Select{{$f.Name}} {
-	    if vals[i] != nil {
-	        {{ $convertType := $.Dialect.ConvertType $f -}}
-            val, ok := vals[i].({{$convertType}})
-            if !ok {
-                return nil, fmt.Errorf("converting {{$f.Name}}: column %d with value %v (type %v) to {{$f.Type}}", i, vals[i], reflect.TypeOf(vals[i]).Name())
-            }
-            {{ if eq $f.Type $convertType -}}
-            row.{{$f.Name}} = val
-            {{ else if $f.IsPointerType -}}
-            tmp := {{$f.NonPointerType}}(val)
-            row.{{$f.Name}} = &tmp
-            {{ else -}}
-            row.{{$f.Name}} = ({{$f.Type}})(val)
-            {{ end -}}
-        }
-        i++
-	}
-	{{ end -}}
-	if s.columns.count {
-        var ok bool
-        row.Count, ok = vals[i].(int64)
-        if !ok {
-            return nil, fmt.Errorf("converting COUNT(*): column %d with value %v (type %v) to int64", i, vals[i], reflect.TypeOf(vals[i]).Name())
-        }
-    }
-	return &row, nil
-}

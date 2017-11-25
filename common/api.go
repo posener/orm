@@ -3,21 +3,6 @@ package common
 // Op is an SQL comparison operation
 type Op string
 
-// Dialect is API for different dialects
-type Dialect interface {
-	// Name is the dialect name
-	Name() string
-	// ColumnsStatement returns the fields parts of SQL CREATE TABLE statement
-	// for a specific struct and specific dialect.
-	// It is used by the generation tool.
-	ColumnsStatement() string
-	// ConvertType is the type of the field when returned by sql/driver from database
-	// The returned values from the driver are of interface{} type.
-	// This function is used to convert each field with `value.(<ConvertType>)` expression,
-	// Where <ConvertType> is the string returned from this function to the given field.
-	ConvertType(field *Field) string
-}
-
 // Columner is interface for generating columns of SELECT queries.
 // With this interface, a dialect talks to struct specific generated implementation.
 type Columner interface {

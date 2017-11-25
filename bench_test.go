@@ -10,15 +10,15 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/posener/orm/example"
-	aorm "github.com/posener/orm/example/allsqlite3"
-	porm "github.com/posener/orm/example/personsqlite3"
+	aorm "github.com/posener/orm/example/allorm"
+	porm "github.com/posener/orm/example/personorm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // BenchmarkORMInsert tests inserts with posener/orm package
 func BenchmarkORMInsert(b *testing.B) {
-	orm, err := porm.Open(":memory:")
+	orm, err := porm.Open("sqlite3", ":memory:")
 	ctx := context.Background()
 	require.Nil(b, err)
 	defer orm.Close()
@@ -71,7 +71,7 @@ const datasetSize = 1000
 // BenchmarkORMQuery tests queries with posener/orm package
 func BenchmarkORMQuery(b *testing.B) {
 	ctx := context.Background()
-	orm, err := porm.Open(":memory:")
+	orm, err := porm.Open("sqlite3", ":memory:")
 	require.Nil(b, err)
 	defer orm.Close()
 
@@ -147,7 +147,7 @@ func BenchmarkRawQuery(b *testing.B) {
 // BenchmarkORMQueryLargeStruct tests large struct queries with posener/orm package
 func BenchmarkORMQueryLargeStruct(b *testing.B) {
 	ctx := context.Background()
-	orm, err := aorm.Open(":memory:")
+	orm, err := aorm.Open("sqlite3", ":memory:")
 	require.Nil(b, err)
 	defer orm.Close()
 
