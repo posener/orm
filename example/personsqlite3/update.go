@@ -6,7 +6,7 @@ import (
 )
 
 // InsertPerson creates an UPDATE statement according to the given object
-func (o *ORM) UpdatePerson(p *example.Person) *Update {
+func (o *orm) UpdatePerson(p *example.Person) *Update {
 	u := o.Update()
 	u.internal.Assignments.Add("name", p.Name)
 	u.internal.Assignments.Add("age", p.Age)

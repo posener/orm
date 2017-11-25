@@ -8,7 +8,7 @@ import (
 )
 
 // InsertAll creates an INSERT statement according to the given object
-func (o *ORM) InsertAll(p *example.All) *Insert {
+func (o *orm) InsertAll(p *example.All) *Insert {
 	i := o.Insert()
 	i.internal.Assignments.Add("auto", p.Auto)
 	i.internal.Assignments.Add("notnil", p.NotNil)

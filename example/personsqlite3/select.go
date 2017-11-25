@@ -21,7 +21,7 @@ type PersonCount struct {
 // Select is the struct that holds the SELECT data
 type Select struct {
 	internal common.Select
-	orm      *ORM
+	orm      *orm
 	columns  columns
 }
 

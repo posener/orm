@@ -9,7 +9,7 @@ import (
 )
 
 // Insert{{.Type.Name}} creates an UPDATE statement according to the given object
-func (o *ORM) Update{{.Type.Name}}(p *{{.Type.FullName}}) *Update {
+func (o *orm) Update{{.Type.Name}}(p *{{.Type.FullName}}) *Update {
 	u := o.Update()
 	{{- range $_, $f := .Type.Fields}}
 	u.internal.Assignments.Add("{{$f.SQL.Column}}", p.{{$f.Name}})

@@ -6,7 +6,7 @@ import (
 )
 
 // InsertPerson creates an INSERT statement according to the given object
-func (o *ORM) InsertPerson(p *example.Person) *Insert {
+func (o *orm) InsertPerson(p *example.Person) *Insert {
 	i := o.Insert()
 	i.internal.Assignments.Add("name", p.Name)
 	i.internal.Assignments.Add("age", p.Age)

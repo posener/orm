@@ -30,6 +30,3 @@ type Querier interface {
 type Counter interface {
 	Count(context.Context) ([]PersonCount, error)
 }
-
-// check that ORM fulfill the API
-var _ API = &ORM{}

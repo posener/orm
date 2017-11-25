@@ -14,16 +14,16 @@ func Open(dataSourceName string) (API, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &ORM{db: db}, nil
+	return &orm{db: db}, nil
 }
 
-// New returns an ORM object from a db instance
+// New returns an orm object from a db instance
 func New(db DB) API {
-    return &ORM{db: db}
+    return &orm{db: db}
 }
 
 // Select returns an object to create a SELECT statement
-func (o *ORM) Select() *Select {
+func (o *orm) Select() *Select {
 	s := &Select{
 		internal: common.Select{Table: table},
 		orm: o,
@@ -33,7 +33,7 @@ func (o *ORM) Select() *Select {
 }
 
 // Insert returns a new INSERT statement
-func (o *ORM) Insert() *Insert {
+func (o *orm) Insert() *Insert {
 	return &Insert{
 		internal: common.Insert{Table: table},
 		orm: o,
@@ -41,7 +41,7 @@ func (o *ORM) Insert() *Insert {
 }
 
 // Update returns a new UPDATE statement
-func (o *ORM) Update() *Update {
+func (o *orm) Update() *Update {
 	return &Update{
 		internal: common.Update{Table: table},
 		orm: o,
@@ -49,7 +49,7 @@ func (o *ORM) Update() *Update {
 }
 
 // Delete returns an object for a DELETE statement
-func (o *ORM) Delete() *Delete {
+func (o *orm) Delete() *Delete {
 	return &Delete{
 		internal: common.Delete{Table: table},
 		orm: o,
