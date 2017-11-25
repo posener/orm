@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/posener/orm"
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect/sqltypes"
 )
 
-func New(tp common.Type) orm.Dialect {
+func New(tp common.Type) common.Dialect {
 	return &sqlite3{tp: tp}
 }
 
@@ -18,7 +17,7 @@ type sqlite3 struct {
 }
 
 // Insert returns an SQL INSERT statement and arguments
-func Insert(i *orm.Insert) (string, []interface{}) {
+func Insert(i *common.Insert) (string, []interface{}) {
 	stmt := fmt.Sprintf(`INSERT INTO '%s' (%s) VALUES (%s)`,
 		i.Table,
 		assignColumns(i.Assignments),
@@ -34,7 +33,7 @@ func Insert(i *orm.Insert) (string, []interface{}) {
 }
 
 // Select returns an SQL SELECT statement and arguments
-func Select(s *orm.Select) (string, []interface{}) {
+func Select(s *common.Select) (string, []interface{}) {
 	stmt := fmt.Sprintf("SELECT %s FROM '%s' %s %s %s %s",
 		columns(s.Columns),
 		s.Table,
@@ -53,7 +52,7 @@ func Select(s *orm.Select) (string, []interface{}) {
 }
 
 // Delete returns an SQL DELETE statement and arguments
-func Delete(d *orm.Delete) (string, []interface{}) {
+func Delete(d *common.Delete) (string, []interface{}) {
 	stmt := fmt.Sprintf("DELETE FROM '%s' %s", d.Table, whereStatement(d.Where))
 
 	var args []interface{}
@@ -65,7 +64,7 @@ func Delete(d *orm.Delete) (string, []interface{}) {
 }
 
 // Update returns an SQL UPDATE statement and arguments
-func Update(u *orm.Update) (string, []interface{}) {
+func Update(u *common.Update) (string, []interface{}) {
 	stmt := fmt.Sprintf(`UPDATE '%s' SET %s %s`, u.Table, assignSets(u.Assignments), whereStatement(u.Where))
 
 	var args []interface{}
@@ -109,7 +108,7 @@ func sqlType(f *common.Field) sqltypes.Type {
 	return defaultSQLTypes(f.Type)
 }
 
-func columns(c orm.Columner) string {
+func columns(c common.Columner) string {
 	if c == nil {
 		return "*"
 	}
@@ -130,7 +129,7 @@ func columns(c orm.Columner) string {
 	return s[:len(s)-2]
 }
 
-func whereStatement(c orm.StatementArger) string {
+func whereStatement(c common.StatementArger) string {
 	if c == nil {
 		return ""
 	}
@@ -141,7 +140,7 @@ func whereStatement(c orm.StatementArger) string {
 	return "WHERE " + where
 }
 
-func groups(groups []orm.Group) string {
+func groups(groups []common.Group) string {
 	if len(groups) == 0 {
 		return ""
 	}
@@ -154,7 +153,7 @@ func groups(groups []orm.Group) string {
 	return s[:len(s)-2]
 }
 
-func orders(orders []orm.Order) string {
+func orders(orders []common.Order) string {
 	if len(orders) == 0 {
 		return ""
 	}
@@ -168,7 +167,7 @@ func orders(orders []orm.Order) string {
 	return s[:len(s)-2]
 }
 
-func page(p orm.Page) string {
+func page(p common.Page) string {
 	if p.Limit == 0 { // why would someone ask for a page of zero size?
 		return ""
 	}
@@ -179,7 +178,7 @@ func page(p orm.Page) string {
 	return stmt
 }
 
-func assignColumns(a orm.Assignments) string {
+func assignColumns(a common.Assignments) string {
 	if len(a) == 0 {
 		return ""
 	}
@@ -192,7 +191,7 @@ func assignColumns(a orm.Assignments) string {
 	return s[:len(s)-2]
 }
 
-func assignSets(a orm.Assignments) string {
+func assignSets(a common.Assignments) string {
 	if len(a) == 0 {
 		return ""
 	}

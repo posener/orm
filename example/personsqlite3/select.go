@@ -5,7 +5,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 
-	"github.com/posener/orm"
+	"github.com/posener/orm/common"
 	"github.com/posener/orm/row"
 
 	"github.com/posener/orm/example"
@@ -18,13 +18,13 @@ type PersonCount struct {
 
 // Select is the struct that holds the SELECT data
 type Select struct {
-	orm.Select
+	common.Select
 	orm *ORM
 	columns
 }
 
 // Where applies where conditions on the query
-func (s *Select) Where(where orm.Where) *Select {
+func (s *Select) Where(where common.Where) *Select {
 	s.Select.Where = where
 	return s
 }
@@ -90,7 +90,7 @@ func (s *Select) SelectName() *Select {
 }
 
 // OrderByName set order to the query results according to column name
-func (s *Select) OrderByName(dir orm.OrderDir) *Select {
+func (s *Select) OrderByName(dir common.OrderDir) *Select {
 	s.Orders.Add("name", dir)
 	return s
 }
@@ -108,7 +108,7 @@ func (s *Select) SelectAge() *Select {
 }
 
 // OrderByAge set order to the query results according to column age
-func (s *Select) OrderByAge(dir orm.OrderDir) *Select {
+func (s *Select) OrderByAge(dir common.OrderDir) *Select {
 	s.Orders.Add("age", dir)
 	return s
 }

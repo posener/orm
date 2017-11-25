@@ -1,11 +1,18 @@
-package orm
+package common
 
 import (
 	"fmt"
 	"strings"
-
-	"github.com/posener/orm/common"
 )
+
+// Where is an API for creating WHERE statements
+type Where interface {
+	StatementArger
+	// Or applies OR condition with another Where statement
+	Or(Where) Where
+	// And applies AND condition with another Where statement
+	And(Where) Where
+}
 
 // Where are options for SQL WHERE statement
 type where struct {
@@ -24,7 +31,7 @@ func NewWhere(op Op, variable string, value interface{}) Where {
 // NewWhereIn returns a new 'WHERE variable IN (...)' statement
 func NewWhereIn(variable string, values ...interface{}) Where {
 	var w where
-	w.stmt = append(w.stmt, fmt.Sprintf("`%s` IN (%s)", variable, common.QMarks(len(values))))
+	w.stmt = append(w.stmt, fmt.Sprintf("`%s` IN (%s)", variable, QMarks(len(values))))
 	w.args = append(w.args, values...)
 	return &w
 }

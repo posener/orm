@@ -3,7 +3,7 @@ package {{.Package}}
 import (
     "database/sql"
 
-	"github.com/posener/orm"
+	"github.com/posener/orm/common"
 )
 
 const table = "{{.Type.Table}}"
@@ -20,7 +20,7 @@ func Open(dataSourceName string) (*ORM, error) {
 // Select returns an object to create a SELECT statement
 func (o *ORM) Select() *Select {
 	s := &Select{
-		Select: orm.Select{
+		Select: common.Select{
 			Table: table,
 		},
 		orm: o,
@@ -32,7 +32,7 @@ func (o *ORM) Select() *Select {
 // Insert returns a new INSERT statement
 func (o *ORM) Insert() *Insert {
 	return &Insert{
-		Insert: orm.Insert{Table: table},
+		Insert: common.Insert{Table: table},
 		orm: o,
 	}
 }
@@ -40,7 +40,7 @@ func (o *ORM) Insert() *Insert {
 // Update returns a new UPDATE statement
 func (o *ORM) Update() *Update {
 	return &Update{
-		Update: orm.Update{Table: table},
+		Update: common.Update{Table: table},
 		orm: o,
     }
 }
@@ -48,7 +48,7 @@ func (o *ORM) Update() *Update {
 // Delete returns an object for a DELETE statement
 func (o *ORM) Delete() *Delete {
 	return &Delete{
-		Delete: orm.Delete{Table: table},
+		Delete: common.Delete{Table: table},
 		orm: o,
     }
 }
