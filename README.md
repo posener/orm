@@ -27,9 +27,9 @@ is used in the arguments and in the return values.
 
 ```go
 import (
-	"database/sql"
 	"log"
 	
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm"
 	porm "package/personorm"
 )

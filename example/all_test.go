@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm"
 	"github.com/posener/orm/example"
 	aorm "github.com/posener/orm/example/allsqlite3"
