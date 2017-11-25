@@ -4,11 +4,13 @@
 [![GoDoc](https://godoc.org/github.com/posener/orm?status.svg)](http://godoc.org/github.com/posener/orm)
 [![Go Report Card](https://goreportcard.com/badge/github.com/posener/orm)](https://goreportcard.com/report/github.com/posener/orm)
 
-An attermpt to write a **typed** ORM for Go.
+An attempt to write a **typed** ORM for Go.
 
 > This is a PROOF OF CONCEPT
 
 > Very very (very) limited implementations, and plenty of TODOs :-)
+
+Check out the [Wiki](https://github.com/posener/orm/wiki) for documentation.
 
 This repository gives a command line tool, called `orm`, for generating
 ORM code for a given struct. The generated code is typed and has no `interface{}`s arguments
@@ -125,23 +127,4 @@ BenchmarkGORMQueryLargeStruct-4   	    1000	  20876834 ns/op
 BenchmarkRawQueryLargeStruct-4    	    2000	   7429866 ns/op
 PASS
 ok  	github.com/posener/orm	167.655s
-
 ```
-
-# Documentation
-
-## Model definition
-
-In the model, it is possible to annotate a field with Go tags.
-`orm` will consider the `sql` keyword in the tag of any field.
-
-### Supported Tags
-
-The supported tags are shown in [ParseTags](./gen/tags.go) function.
-
-- `type`: Type of SQL column.
-- `primary_key`/`primary key`: Is the field a primary key. (can be given to multiple fields in the same struct)
-- `not null`/`not_null`: Field is not allowed to be null.
-- `auto_increment`/`auto increment`: Apply auto increment for this column.
-- `unique`: Each row in this column must be unique.
-- `default`: Give a default value for this field.
