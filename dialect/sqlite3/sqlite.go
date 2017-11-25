@@ -16,6 +16,48 @@ type sqlite3 struct {
 	tp common.Type
 }
 
+func (s *sqlite3) Name() string {
+	return "sqlite3"
+}
+
+// ConvertType is the type of the field when returned by sql/driver from database
+func (s *sqlite3) ConvertType(f *common.Field) string {
+	switch sqltypes.Family(s.sqlType(f)) {
+	case sqltypes.Integer:
+		return "int64"
+	case sqltypes.Float:
+		return "float64"
+	case sqltypes.Text, sqltypes.Blob, sqltypes.VarChar:
+		return "[]byte"
+	case sqltypes.Boolean:
+		return "bool"
+	default:
+		return f.NonPointerType()
+	}
+}
+
+func (sqlite3) sqlType(f *common.Field) sqltypes.Type {
+	if f.SQL.CustomType != "" {
+		return f.SQL.CustomType
+	}
+	switch f.NonPointerType() {
+	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
+		return sqltypes.Integer
+	case "float", "float8", "float16", "float32", "float64":
+		return sqltypes.Float
+	case "bool":
+		return sqltypes.Boolean
+	case "string":
+		return sqltypes.Text
+	case "[]byte":
+		return sqltypes.Blob
+	case "time.Time":
+		return sqltypes.TimeStamp
+	default:
+		return sqltypes.NA
+	}
+}
+
 // Insert returns an SQL INSERT statement and arguments
 func Insert(i *common.Insert) (string, []interface{}) {
 	stmt := fmt.Sprintf(`INSERT INTO '%s' (%s) VALUES (%s)`,
@@ -76,36 +118,6 @@ func Update(u *common.Update) (string, []interface{}) {
 	}
 
 	return stmt, args
-}
-
-func defaultSQLTypes(tp string) sqltypes.Type {
-	switch tp {
-	case "int", "int32", "int64":
-		return sqltypes.Integer
-	case "float", "float32", "float64":
-		return sqltypes.Float
-	case "bool":
-		return sqltypes.Boolean
-	case "string":
-		return sqltypes.Text
-	case "[]byte":
-		return sqltypes.Blob
-	case "time.Time":
-		return sqltypes.TimeStamp
-	default:
-		return sqltypes.NA
-	}
-}
-
-func (s *sqlite3) Name() string {
-	return "sqlite3"
-}
-
-func sqlType(f *common.Field) sqltypes.Type {
-	if f.SQL.CustomType != "" {
-		return f.SQL.CustomType
-	}
-	return defaultSQLTypes(f.Type)
 }
 
 func columns(c common.Columner) string {

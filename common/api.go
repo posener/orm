@@ -10,6 +10,11 @@ type Dialect interface {
 	// Create returns an SQL CREATE TABLE statement for a specific struct and specific dialect.
 	// It is used by the generation tool.
 	Create() string
+	// ConvertType is the type of the field when returned by sql/driver from database
+	// The returned values from the driver are of interface{} type.
+	// This function is used to convert each field with `value.(<ConvertType>)` expression,
+	// Where <ConvertType> is the string returned from this function to the given field.
+	ConvertType(field *Field) string
 }
 
 // Columner is interface for generating columns of SELECT queries.

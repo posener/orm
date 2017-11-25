@@ -15,13 +15,14 @@ func (s *sqlite3) Create() string {
 func (s *sqlite3) fieldsCreateString() string {
 	fieldsStmt := make([]string, len(s.tp.Fields))
 	for i, f := range s.tp.Fields {
-		fieldsStmt[i] = fieldCreateString(&f)
+		fieldsStmt[i] = s.fieldCreateString(&f)
 	}
 	return strings.Join(fieldsStmt, ", ")
 }
 
-func fieldCreateString(f *common.Field) string {
-	stmt := []string{fmt.Sprintf("'%s' %s", f.SQL.Column, sqlType(f))}
+func (s *sqlite3) fieldCreateString(f *common.Field) string {
+	sqlType := s.sqlType(f)
+	stmt := []string{fmt.Sprintf("'%s' %s", f.SQL.Column, sqlType)}
 	if f.SQL.NotNull {
 		stmt = append(stmt, "NOT NULL")
 	}
@@ -32,7 +33,7 @@ func fieldCreateString(f *common.Field) string {
 		stmt = append(stmt, "PRIMARY KEY")
 	}
 	if f.SQL.AutoIncrement {
-		if !f.SQL.PrimaryKey || defaultSQLTypes(f.Type) != sqltypes.Integer {
+		if !f.SQL.PrimaryKey || sqlType != sqltypes.Integer {
 			log.Fatalf("sqlite3 supports autoincrement only for 'INTEGER PRIMARY KEY' columns")
 		}
 		stmt = append(stmt, "AUTOINCREMENT")

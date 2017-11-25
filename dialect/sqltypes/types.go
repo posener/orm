@@ -1,6 +1,8 @@
 package sqltypes
 
-import "fmt"
+import (
+	"strings"
+)
 
 type Type string
 
@@ -12,8 +14,13 @@ const (
 	Text      Type = "TEXT"
 	Blob      Type = "BLOB"
 	TimeStamp Type = "TIMESTAMP"
+	VarChar   Type = "VARCHAR"
 )
 
-func VarChar(size int) Type {
-	return Type(fmt.Sprintf("VARCHAR(%d)", size))
+func Family(t Type) Type {
+	prefixEnds := strings.Index(string(t), "(")
+	if prefixEnds == -1 {
+		return t
+	}
+	return Type(string(t)[:prefixEnds])
 }

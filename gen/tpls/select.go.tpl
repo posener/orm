@@ -3,6 +3,7 @@ package {{.Package}}
 import (
 	"database/sql/driver"
 	"fmt"
+	"reflect"
 	{{ range $_, $f := .Type.Fields -}}
 	{{ if $f.ImportPath }}"{{$f.ImportPath}}"{{ end }}
 	{{- end }}
@@ -114,11 +115,19 @@ func (s *Select) scan(vals []driver.Value) (*{{.Type.Name}}Count, error) {
 	{{ range $_, $f := .Type.Fields -}}
 	if all || s.columns.Select{{$f.Name}} {
 	    if vals[i] != nil {
-            val, ok := vals[i].({{$f.ConvertType}})
+	        {{ $convertType := $.Dialect.ConvertType $f -}}
+            val, ok := vals[i].({{$convertType}})
             if !ok {
-                return nil, fmt.Errorf("converting {{$f.Name}}: column %d with value %v to {{$f.Type}}", i, vals[i])
+                return nil, fmt.Errorf("converting {{$f.Name}}: column %d with value %v (type %v) to {{$f.Type}}", i, vals[i], reflect.TypeOf(vals[i]).Name())
             }
-            row.{{$f.Name}} = {{$f.Type}}(val)
+            {{ if eq $f.Type $convertType -}}
+            row.{{$f.Name}} = val
+            {{ else if $f.IsPointerType -}}
+            tmp := {{$f.NonPointerType}}(val)
+            row.{{$f.Name}} = &tmp
+            {{ else -}}
+            row.{{$f.Name}} = ({{$f.Type}})(val)
+            {{ end -}}
         }
         i++
 	}
@@ -127,7 +136,7 @@ func (s *Select) scan(vals []driver.Value) (*{{.Type.Name}}Count, error) {
         var ok bool
         row.Count, ok = vals[i].(int64)
         if !ok {
-            return nil, fmt.Errorf("converting COUNT(*): column %d with value %v to int64", i, vals[i])
+            return nil, fmt.Errorf("converting COUNT(*): column %d with value %v (type %v) to int64", i, vals[i], reflect.TypeOf(vals[i]).Name())
         }
     }
 	return &row, nil
