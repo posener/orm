@@ -1,4 +1,4 @@
-package main_test
+package orm_test
 
 import (
 	"database/sql"
@@ -8,19 +8,17 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/posener/orm/example"
-	aorm "github.com/posener/orm/example/allorm"
-	porm "github.com/posener/orm/example/personorm"
+	aorm "github.com/posener/orm/example/allsqlite3"
+	porm "github.com/posener/orm/example/personsqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // BenchmarkORMInsert tests inserts with posener/orm package
 func BenchmarkORMInsert(b *testing.B) {
-	db, err := sql.Open("sqlite3", ":memory:")
+	orm, err := porm.Open(":memory:")
 	require.Nil(b, err)
-	defer db.Close()
-
-	orm := porm.New(db)
+	defer orm.Close()
 
 	_, err = orm.Create().Exec()
 	require.Nil(b, err)
@@ -69,11 +67,9 @@ const datasetSize = 1000
 
 // BenchmarkORMQuery tests queries with posener/orm package
 func BenchmarkORMQuery(b *testing.B) {
-	db, err := sql.Open("sqlite3", ":memory:")
+	orm, err := porm.Open(":memory:")
 	require.Nil(b, err)
-	defer db.Close()
-
-	orm := porm.New(db)
+	defer orm.Close()
 
 	_, err = orm.Create().Exec()
 	require.Nil(b, err)
@@ -146,11 +142,9 @@ func BenchmarkRawQuery(b *testing.B) {
 
 // BenchmarkORMQueryLargeStruct tests large struct queries with posener/orm package
 func BenchmarkORMQueryLargeStruct(b *testing.B) {
-	db, err := sql.Open("sqlite3", ":memory:")
+	orm, err := aorm.Open(":memory:")
 	require.Nil(b, err)
-	defer db.Close()
-
-	orm := aorm.New(db)
+	defer orm.Close()
 
 	_, err = orm.Create().Exec()
 	require.Nil(b, err)
@@ -158,7 +152,7 @@ func BenchmarkORMQueryLargeStruct(b *testing.B) {
 	tm := time.Now().Round(time.Millisecond).UTC()
 
 	for i := 0; i < datasetSize; i++ {
-		_, err = orm.InsertAll(&example.All{String: "xxx", Select: i, Auto: i, Int: i, Time: tm, Bool: true}).Exec()
+		_, err = orm.InsertAll(&example.All{String: "xxx", Select: i, Int: i, Time: tm, Bool: true}).Exec()
 		require.Nil(b, err)
 	}
 
@@ -182,7 +176,7 @@ func BenchmarkGORMQueryLargeStruct(b *testing.B) {
 	tm := time.Now().Round(time.Millisecond).UTC()
 
 	for i := 0; i < datasetSize; i++ {
-		err = db.Create(&example.All{String: "xxx", Select: i, Auto: i, Int: i, Time: tm, Bool: true}).Error
+		err = db.Create(&example.All{String: "xxx", Select: i, Int: i, Time: tm, Bool: true}).Error
 		require.Nil(b, err)
 	}
 
@@ -201,13 +195,13 @@ func BenchmarkRawQueryLargeStruct(b *testing.B) {
 	require.Nil(b, err)
 	defer db.Close()
 
-	_, err = db.Exec(`CREATE TABLE 'all' ( 'int' INT PRIMARY KEY, 'string' VARCHAR(100) NOT NULL, 'bool' BOOLEAN, 'auto' INT AUTO_INCREMENT, 'time' TIMESTAMP, 'select' INT )`)
+	_, err = db.Exec(`CREATE TABLE 'all' ( 'int' INTEGER PRIMARY KEY AUTOINCREMENT, 'string' VARCHAR(100) NOT NULL, 'bool' BOOLEAN, 'time' TIMESTAMP, 'select' INT )`)
 	require.Nil(b, err)
 
 	tm := time.Now().Round(time.Millisecond).UTC()
 
 	for i := 0; i < datasetSize; i++ {
-		_, err = db.Exec(`INSERT INTO 'all' ('int', 'string', 'bool', 'auto', 'time', 'select') VALUES (?, ?, ?, ?, ?, ?)`, i, "xxx", true, i, tm, i)
+		_, err = db.Exec(`INSERT INTO 'all' ('int', 'string', 'bool', 'time', 'select') VALUES (?, ?, ?, ?, ?)`, i, "xxx", true, tm, i)
 		require.Nil(b, err)
 	}
 
@@ -218,7 +212,7 @@ func BenchmarkRawQueryLargeStruct(b *testing.B) {
 		var ps []example.All
 		for rows.Next() {
 			var p example.All
-			err := rows.Scan(&p.Int, &p.String, &p.Bool, &p.Auto, &p.Time, &p.Select)
+			err := rows.Scan(&p.Int, &p.String, &p.Bool, &p.Time, &p.Select)
 			require.Nil(b, err)
 			ps = append(ps, p)
 		}

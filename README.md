@@ -16,8 +16,8 @@ and return values as in other ORM Go libraries.
 
 ## Example:
 
-Running the orm command on the `Person` struct in the `example` package, will create a `personorm` package, with
-ORM functions for the given struct.
+Running the orm command on the `Person` struct in the `example` package with `sqlite3` dialect, 
+will create a `personsqlite3` package, with ORM functions for the given struct.
 
 By doing so, and having a database engine, `db`, one could do database operations with
 ORM semantics.
@@ -30,37 +30,37 @@ import (
 	"database/sql"
 	"log"
 	
+	"github.com/posener/orm"
 	porm "package/personorm"
 )
 
 func main() {
-    db, err := sql.Open(...)
+    db, err := porm.Open(source)
     defer db.Close()
     
-    orm = porm.New(db)
     
     // Set a logger to log SQL commands
-    orm.Logger(log.Printf)
+    db.Logger(log.Printf)
 
     // Create table:
-    _, err = orm.Create().Exec()
+    _, err = db.Create().Exec()
 
     // Insert row with arguments:
-    _, err = orm.Insert().SetName("John").SetAge(1).Exec()
+    _, err = db.Insert().SetName("John").SetAge(1).Exec()
 
     // Insert row with a struct:
-    _, err = orm.InsertPerson(&example.Person{Name: "Doug", Age: 3}).Exec()
+    _, err = db.InsertPerson(&example.Person{Name: "Doug", Age: 3}).Exec()
 
     // Select rows from the table:
-    ps, err := orm.Select().
+    ps, err := db.Select().
     	SelectAge().
-        Where(porm.WhereName(porm.OpNe, "John")).
+        Where(porm.WhereName(orm.OpNe, "John")).
         Query() // returns []example.Person, typed return value.
 
     println(ps[0].Age) // Output: 1
     
     // Delete row
-    _, err = orm.Delete().Where(porm.WhereName(porm.Eq, "John")).Exec()
+    _, err = db.Delete().Where(porm.WhereName(orm.Eq, "John")).Exec()
 }
 ```
 
@@ -69,14 +69,14 @@ func main() {
 ### Install:
 
 ```bash
-go get -u github.com/posener/orm
+go get -u github.com/posener/orm/cmd/orm
 ```
 
 ### Usage
 
 Run `orm -h` to get detailed usage information.
 
-Simple use case is to run `orm -pkg mypackage -name MyStruct`.
+Simple use case is to run `orm -pkg mypackage -name MyStruct -dialect sqlite3`.
 
 #### go generate
 
@@ -84,7 +84,7 @@ By adding the comment aside to the type deceleration, as shown below, one could 
 to generate the ORM files for `MyType`.
 
 ```go
-//go:generate orm -name MyType
+//go:generate orm -name MyType -dialect sqlite3
 
 type MyType struct {
 	...
@@ -104,6 +104,8 @@ Initial benchmark tests are available in [here](./example/bench_test.go).
 #### Operations:
 
 - [x] INSERT
+- [X] SELECT
+- [X] SELECT with big structs
 
 ### Results:
 

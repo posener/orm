@@ -6,9 +6,9 @@ echo ">> Generating templates binaries"
 go generate ./gen/...
 
 echo ">> Installing"
-go install
+go install ./cmd/orm
 
-echo ">> Generating Person ORM..."
+echo ">> Generating ORMs..."
 go generate ./example/...
 
 echo ">> Running tests..."
