@@ -7,7 +7,10 @@ import (
 	"github.com/posener/orm/common"
 )
 
-const table = "all"
+const (
+	table                 = "all"
+	createFieldsStatement = `'auto' INTEGER PRIMARY KEY AUTOINCREMENT, 'notnil' TEXT NOT NULL, 'int' INTEGER, 'int8' INTEGER, 'int16' INTEGER, 'int32' INTEGER, 'int64' INTEGER, 'uint' INTEGER, 'uint8' INTEGER, 'uint16' INTEGER, 'uint32' INTEGER, 'uint64' INTEGER, 'time' TIMESTAMP, 'varcharstring' VARCHAR(100), 'varcharbyte' VARCHAR(100), 'string' TEXT, 'bytes' BLOB, 'bool' BOOLEAN, 'pint' INTEGER, 'pint8' INTEGER, 'pint16' INTEGER, 'pint32' INTEGER, 'pint64' INTEGER, 'puint' INTEGER, 'puint8' INTEGER, 'puint16' INTEGER, 'puint32' INTEGER, 'puint64' INTEGER, 'ptime' TIMESTAMP, 'pvarcharstring' VARCHAR(100), 'pvarcharbyte' VARCHAR(100), 'pstring' TEXT, 'pbytes' BLOB, 'pbool' BOOLEAN, 'select' INTEGER`
+)
 
 // Open opens database connection
 func Open(dataSourceName string) (API, error) {
@@ -21,6 +24,17 @@ func Open(dataSourceName string) (API, error) {
 // New returns an orm object from a db instance
 func New(db DB) API {
 	return &orm{db: db}
+}
+
+// Create returns a struct for a CREATE statement
+func (o *orm) Create() *Create {
+	return &Create{
+		internal: common.Create{
+			Table:            table,
+			ColumnsStatement: createFieldsStatement,
+		},
+		orm: o,
+	}
 }
 
 // Select returns an object to create a SELECT statement

@@ -7,9 +7,10 @@ type Op string
 type Dialect interface {
 	// Name is the dialect name
 	Name() string
-	// Create returns an SQL CREATE TABLE statement for a specific struct and specific dialect.
+	// ColumnsStatement returns the fields parts of SQL CREATE TABLE statement
+	// for a specific struct and specific dialect.
 	// It is used by the generation tool.
-	Create() string
+	ColumnsStatement() string
 	// ConvertType is the type of the field when returned by sql/driver from database
 	// The returned values from the driver are of interface{} type.
 	// This function is used to convert each field with `value.(<ConvertType>)` expression,

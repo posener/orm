@@ -29,11 +29,6 @@ func (o *orm) Close() error {
 	return o.db.Close()
 }
 
-// Create returns a struct for a CREATE statement
-func (o *orm) Create() *Create {
-	return &Create{orm: o}
-}
-
 // Logger sets a logger to the orm package
 func (o *orm) Logger(logger Logger) {
 	o.logger = logger
@@ -41,7 +36,14 @@ func (o *orm) Logger(logger Logger) {
 
 // Create is a struct that holds data for the CREATE statement
 type Create struct {
-	orm *orm
+	internal common.Create
+	orm      *orm
+}
+
+// IfNotExists sets IF NOT EXISTS for the CREATE SQL statement
+func (c *Create) IfNotExists() *Create {
+	c.internal.IfNotExists = true
+	return c
 }
 
 // Insert is a struct to hold information for an INSERT statement

@@ -8,14 +8,14 @@ import (
     "github.com/posener/orm/dialect/{{.Dialect.Name}}"
 )
 
-const createString = `{{.Dialect.Create}}`
-
 // Exec creates a table for the given struct
 func (c *Create) Exec(ctx context.Context) (sql.Result, error) {
-	c.orm.log("Create: '%v'", createString)
-	return c.orm.db.ExecContext(ctx, createString)
+    stmt, args := {{.Dialect.Name}}.Create(&c.internal)
+	c.orm.log("Create: '%v' %v", stmt, args)
+	return c.orm.db.ExecContext(ctx, stmt, args...)
 }
 
+// query is used by the Select.Query and Select.Limit functions
 func (s *Select) query(ctx context.Context) (*sql.Rows, error) {
     stmt, args := {{.Dialect.Name}}.Select(&s.internal)
 	s.orm.log("Query: '%v' %v", stmt, args)

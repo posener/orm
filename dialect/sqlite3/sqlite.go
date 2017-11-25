@@ -58,6 +58,17 @@ func (sqlite3) sqlType(f *common.Field) sqltypes.Type {
 	}
 }
 
+// Insert returns an SQL CREATE statement and arguments
+func Create(c *common.Create) (string, []interface{}) {
+	stmt := fmt.Sprintf(`CREATE TABLE %s '%s' ( %s )`,
+		ifNotExists(c.IfNotExists),
+		c.Table,
+		c.ColumnsStatement,
+	)
+
+	return stmt, nil
+}
+
 // Insert returns an SQL INSERT statement and arguments
 func Insert(i *common.Insert) (string, []interface{}) {
 	stmt := fmt.Sprintf(`INSERT INTO '%s' (%s) VALUES (%s)`,
@@ -214,4 +225,11 @@ func assignSets(a common.Assignments) string {
 
 	s := b.String()
 	return s[:len(s)-2]
+}
+
+func ifNotExists(ifNotExists bool) interface{} {
+	if ifNotExists {
+		return "IF NOT EXISTS"
+	}
+	return ""
 }

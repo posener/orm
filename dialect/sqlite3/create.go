@@ -9,10 +9,7 @@ import (
 	"github.com/posener/orm/dialect/sqltypes"
 )
 
-func (s *sqlite3) Create() string {
-	return fmt.Sprintf("CREATE TABLE '%s' ( %s )", s.tp.Table(), s.fieldsCreateString())
-}
-func (s *sqlite3) fieldsCreateString() string {
+func (s *sqlite3) ColumnsStatement() string {
 	fieldsStmt := make([]string, len(s.tp.Fields))
 	for i, f := range s.tp.Fields {
 		fieldsStmt[i] = s.fieldCreateString(&f)

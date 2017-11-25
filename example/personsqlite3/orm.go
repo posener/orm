@@ -7,7 +7,10 @@ import (
 	"github.com/posener/orm/common"
 )
 
-const table = "person"
+const (
+	table                 = "person"
+	createFieldsStatement = `'name' TEXT, 'age' INTEGER`
+)
 
 // Open opens database connection
 func Open(dataSourceName string) (API, error) {
@@ -21,6 +24,17 @@ func Open(dataSourceName string) (API, error) {
 // New returns an orm object from a db instance
 func New(db DB) API {
 	return &orm{db: db}
+}
+
+// Create returns a struct for a CREATE statement
+func (o *orm) Create() *Create {
+	return &Create{
+		internal: common.Create{
+			Table:            table,
+			ColumnsStatement: createFieldsStatement,
+		},
+		orm: o,
+	}
 }
 
 // Select returns an object to create a SELECT statement

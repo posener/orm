@@ -230,12 +230,26 @@ func TestNew(t *testing.T) {
 	ctx := context.Background()
 	db, err := sql.Open("sqlite3", ":memory:")
 	require.Nil(t, err)
+	defer db.Close()
 	orm := porm.New(db)
 	if testing.Verbose() {
 		orm.Logger(t.Logf)
 	}
 	_, err = orm.Create().Exec(ctx)
 	require.Nil(t, err)
+}
+
+func TestCreateIfNotExists(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db := preparePerson(t)
+	defer db.Close()
+
+	_, err := db.Create().IfNotExists().Exec(ctx)
+	require.Nil(t, err)
+
+	_, err = db.Create().Exec(ctx)
+	require.NotNil(t, err)
 }
 
 func assertRowsAffected(t *testing.T, wantRows int64, result sql.Result) {
