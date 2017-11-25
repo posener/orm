@@ -20,9 +20,7 @@ func Open(dataSourceName string) (*ORM, error) {
 // Select returns an object to create a SELECT statement
 func (o *ORM) Select() *Select {
 	s := &Select{
-		internal: common.Select{
-			Table: table,
-		},
+		internal: common.Select{Table: table},
 		orm: o,
 	}
     s.internal.Columns = &s.columns

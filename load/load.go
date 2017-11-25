@@ -47,7 +47,7 @@ func Load(pkg, structName string) (*Struct, error) {
 	s.Name = structName
 
 	s.PkgMap = map[string]*types.Package{}
-	for pkg, _ := range p.AllPackages {
+	for pkg := range p.AllPackages {
 		s.PkgMap[pkg.Name()] = pkg
 	}
 
