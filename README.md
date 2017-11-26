@@ -30,7 +30,6 @@ is used in the arguments and in the return values.
 ```go
 import (
 	"log"
-	"context"
 	
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm"
@@ -38,33 +37,31 @@ import (
 )
 
 func main() {
-    db, err := porm.Open(source)
+    db, err := porm.Open(dialect, source)
     defer db.Close()
-    
-    ctx := context.Backeround()
     
     // Set a logger to log SQL commands
     db.Logger(log.Printf)
 
     // Create table:
-    _, err = db.Create().Exec(ctx)
+    _, err = db.Create().Exec()
 
     // Insert row with arguments:
-    _, err = db.Insert().SetName("John").SetAge(1).Exec(ctx)
+    _, err = db.Insert().SetName("John").SetAge(1).Exec()
 
     // Insert row with a struct:
-    _, err = db.InsertPerson(&example.Person{Name: "Doug", Age: 3}).Exec(ctx)
+    _, err = db.InsertPerson(&example.Person{Name: "Doug", Age: 3}).Exec()
 
     // Select rows from the table:
     ps, err := db.Select().
     	SelectAge().
         Where(porm.WhereName(orm.OpNe, "John")).
-        Query(ctx) // returns []example.Person, typed return value.
+        Query() // returns []example.Person, typed return value.
 
     println(ps[0].Age) // Output: 1
     
     // Delete row
-    _, err = db.Delete().Where(porm.WhereName(orm.Eq, "John")).Exec(ctx)
+    _, err = db.Delete().Where(porm.WhereName(orm.Eq, "John")).Exec()
 }
 ```
 

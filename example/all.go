@@ -2,7 +2,7 @@ package example
 
 import "time"
 
-//go:generate orm -name All -dialect sqlite3
+//go:generate orm -name All
 
 // All is to test generation of variant fields and types
 type All struct {

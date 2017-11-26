@@ -1,10 +1,13 @@
 package sqltypes
 
 import (
-	"strings"
+	"regexp"
+	"strconv"
 )
 
 type Type string
+
+var typeFormat = regexp.MustCompile(`([^(]+)(\((\d+)\))?`)
 
 const (
 	NA        Type = ""
@@ -14,13 +17,20 @@ const (
 	Text      Type = "TEXT"
 	Blob      Type = "BLOB"
 	TimeStamp Type = "TIMESTAMP"
+	DateTime  Type = "DATETIME"
 	VarChar   Type = "VARCHAR"
 )
 
-func Family(t Type) Type {
-	prefixEnds := strings.Index(string(t), "(")
-	if prefixEnds == -1 {
-		return t
+func (t Type) Family() Type {
+	m := typeFormat.FindStringSubmatch(string(t))
+	return Type(m[1])
+}
+
+func (t Type) Size() int {
+	m := typeFormat.FindStringSubmatch(string(t))
+	if len(m) < 4 {
+		return 0
 	}
-	return Type(string(t)[:prefixEnds])
+	i, _ := strconv.Atoi(m[3])
+	return i
 }

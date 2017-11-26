@@ -1,12 +1,10 @@
-package sqlite3
+package mysql
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/posener/orm/common"
-	"github.com/posener/orm/dialect/sqltypes"
 )
 
 func (g *Gen) ColumnsStatement() string {
@@ -19,7 +17,7 @@ func (g *Gen) ColumnsStatement() string {
 
 func (g *Gen) fieldCreateString(f *common.Field) string {
 	sqlType := g.sqlType(f)
-	stmt := []string{fmt.Sprintf("'%s' %s", f.SQL.Column, sqlType)}
+	stmt := []string{fmt.Sprintf("`%s` %s", f.SQL.Column, sqlType)}
 	if f.SQL.NotNull {
 		stmt = append(stmt, "NOT NULL")
 	}
@@ -30,10 +28,7 @@ func (g *Gen) fieldCreateString(f *common.Field) string {
 		stmt = append(stmt, "PRIMARY KEY")
 	}
 	if f.SQL.AutoIncrement {
-		if !f.SQL.PrimaryKey || sqlType != sqltypes.Integer {
-			log.Fatalf("Gen supports autoincrement only for 'INTEGER PRIMARY KEY' columns")
-		}
-		stmt = append(stmt, "AUTOINCREMENT")
+		stmt = append(stmt, "AUTO_INCREMENT")
 	}
 	if f.SQL.Unique {
 		stmt = append(stmt, " UNIQUE")

@@ -1,6 +1,8 @@
 package common
 
-import "strings"
+import (
+	"strings"
+)
 
 func QMarks(n int) string {
 	if n == 0 {

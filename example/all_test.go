@@ -1,23 +1,77 @@
 package example_test
 
 import (
+	"context"
+	"database/sql"
+	"fmt"
+	"os"
 	"testing"
 	"time"
 
-	"context"
-
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm"
 	"github.com/posener/orm/example"
-	aorm "github.com/posener/orm/example/allsqlite3"
+	aorm "github.com/posener/orm/example/allorm"
+	porm "github.com/posener/orm/example/personorm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestTypes(t *testing.T) {
+var mySQLAddr = os.Getenv("MYSQL_ADDR")
+
+func TestMySQL(t *testing.T) {
+	if mySQLAddr == "" {
+		t.Skipf("mysql environment is not set")
+	}
+	db, err := sql.Open("mysql", mySQLAddr)
+	require.Nil(t, err)
+	defer db.Close()
+
+	t.Run("all", func(t *testing.T) { testAllTable(t, "mysql", db) })
+	t.Run("person", func(t *testing.T) { testPersonTable(t, "mysql", db) })
+}
+
+func TestTypesSQLite(t *testing.T) {
 	t.Parallel()
-	db := prepareAll(t)
-	ctx := context.Background()
+	db, err := sql.Open("sqlite3", ":memory:")
+	require.Nil(t, err)
+	defer db.Close()
+
+	t.Run("all", func(t *testing.T) { testAllTable(t, "sqlite3", db) })
+	t.Run("person", func(t *testing.T) { testPersonTable(t, "sqlite3", db) })
+}
+
+func testAllTable(t *testing.T, dialect string, db aorm.DB) {
+	t.Helper()
+
+	all, err := aorm.New(dialect, db)
+	require.Nil(t, err)
+
+	if testing.Verbose() {
+		all.Logger(t.Logf)
+	}
+
+	resetAllTable(t, db, all)
+	t.Run("types", func(t *testing.T) { testTypes(t, all) })
+	resetAllTable(t, db, all)
+	t.Run("auto increment", func(t *testing.T) { testAutoIncrement(t, all) })
+	resetAllTable(t, db, all)
+	t.Run("not null", func(t *testing.T) { testNotNull(t, all) })
+	resetAllTable(t, db, all)
+	t.Run("field with reserved name", func(t *testing.T) { testFieldReservedName(t, all) })
+}
+
+func resetAllTable(t *testing.T, db aorm.DB, orm aorm.API) {
+	t.Helper()
+	_, err := db.ExecContext(context.Background(), "DROP TABLE IF EXISTS `all`")
+	require.Nil(t, err)
+	_, err = orm.Create().Exec()
+	require.Nil(t, err)
+}
+
+func testTypes(t *testing.T, db aorm.API) {
+	t.Helper()
 
 	a := example.All{
 		Int:   1,
@@ -64,13 +118,13 @@ func TestTypes(t *testing.T) {
 	a.PBool = &a.Bool
 	a.PTime = &a.Time
 
-	res, err := db.InsertAll(&a).Exec(ctx)
+	res, err := db.InsertAll(&a).Exec()
 	require.Nil(t, err)
 	affected, err := res.RowsAffected()
 	require.Nil(t, err)
 	require.Equal(t, int64(1), affected)
 
-	alls, err := db.Select().Query(ctx)
+	alls, err := db.Select().Query()
 	require.Nil(t, err)
 	require.Equal(t, 1, len(alls))
 
@@ -78,31 +132,29 @@ func TestTypes(t *testing.T) {
 	assert.Equal(t, a, alls[0])
 }
 
-func TestAutoIncrement(t *testing.T) {
-	t.Parallel()
-	db := prepareAll(t)
-	ctx := context.Background()
+func testAutoIncrement(t *testing.T, db aorm.API) {
+	t.Helper()
 
-	res, err := db.Insert().SetNotNil("1").Exec(ctx)
+	res, err := db.Insert().SetNotNil("1").Exec()
 	require.Nil(t, err)
 	affected, err := res.RowsAffected()
 	require.Nil(t, err)
 	require.Equal(t, int64(1), affected)
 
-	res, err = db.Insert().SetNotNil("2").Exec(ctx)
+	res, err = db.Insert().SetNotNil("2").Exec()
 	require.Nil(t, err)
 	affected, err = res.RowsAffected()
 	require.Nil(t, err)
 	require.Equal(t, int64(1), affected)
 
-	alls, err := db.Select().OrderByAuto(orm.Asc).Query(ctx)
+	alls, err := db.Select().OrderByAuto(orm.Asc).Query()
 	require.Nil(t, err)
 	require.Equal(t, 2, len(alls))
 
 	assert.Equal(t, 1, alls[0].Auto)
 	assert.Equal(t, 2, alls[1].Auto)
 
-	alls, err = db.Select().OrderByAuto(orm.Desc).Query(ctx)
+	alls, err = db.Select().OrderByAuto(orm.Desc).Query()
 	require.Nil(t, err)
 	require.Equal(t, 2, len(alls))
 
@@ -111,21 +163,16 @@ func TestAutoIncrement(t *testing.T) {
 }
 
 // TestNotNull tests that given inserting an empty not null field causes an error
-func TestNotNull(t *testing.T) {
-	t.Parallel()
-	ctx := context.Background()
-	orm := prepareAll(t)
-
-	_, err := orm.Insert().SetInt(1).Exec(ctx)
+func testNotNull(t *testing.T, db aorm.API) {
+	t.Helper()
+	_, err := db.Insert().SetInt(1).Exec()
 	require.NotNil(t, err)
 }
 
-func TestFieldReservedName(t *testing.T) {
-	t.Parallel()
-	ctx := context.Background()
-	db := prepareAll(t)
+func testFieldReservedName(t *testing.T, db aorm.API) {
+	t.Helper()
 
-	res, err := db.InsertAll(&example.All{Select: 42}).Exec(ctx)
+	res, err := db.Insert().SetSelect(42).SetNotNil("not-nil").Exec()
 	require.Nil(t, err)
 	assertRowsAffected(t, 1, res)
 
@@ -137,39 +184,281 @@ func TestFieldReservedName(t *testing.T) {
 		OrderBySelect(orm.Desc).
 		GroupBySelect()
 
-	alls, err := query.Query(ctx)
+	alls, err := query.Query()
 	require.Nil(t, err)
 	require.Equal(t, 1, len(alls))
 	assert.Equal(t, 42, alls[0].Select)
 
-	res, err = db.Update().SetSelect(11).Where(aorm.WhereSelect(orm.OpEq, 42)).Exec(ctx)
+	res, err = db.Update().SetSelect(11).Where(aorm.WhereSelect(orm.OpEq, 42)).Exec()
 	require.Nil(t, err)
 	assertRowsAffected(t, 1, res)
 
-	alls, err = db.Select().SelectSelect().Query(ctx)
+	alls, err = db.Select().SelectSelect().Query()
 	require.Nil(t, err)
 	require.Equal(t, 1, len(alls))
 	assert.Equal(t, 11, alls[0].Select)
 
-	res, err = db.Delete().Exec(ctx)
+	res, err = db.Delete().Exec()
 	require.Nil(t, err)
 	assertRowsAffected(t, 1, res)
 
-	alls, err = db.Select().SelectSelect().Query(ctx)
+	alls, err = db.Select().SelectSelect().Query()
 	require.Nil(t, err)
 	require.Equal(t, 0, len(alls))
 }
 
-func prepareAll(t *testing.T) aorm.API {
+var (
+	p1 = example.Person{Name: "moshe", Age: 1}
+	p2 = example.Person{Name: "haim", Age: 2}
+	p3 = example.Person{Name: "zvika", Age: 3}
+)
+
+func testPersonTable(t *testing.T, dialect string, db porm.DB) {
 	t.Helper()
-	ctx := context.Background()
-	db, err := aorm.Open(":memory:")
-	require.Nil(t, err)
-	if testing.Verbose() {
-		db.Logger(t.Logf)
-	}
-	_, err = db.Create().Exec(ctx)
+
+	person, err := porm.New(dialect, db)
 	require.Nil(t, err)
 
-	return db
+	if testing.Verbose() {
+		person.Logger(t.Logf)
+	}
+
+	resetPersonTable(t, db, person)
+	t.Run("select", func(t *testing.T) { testPersonSelect(t, person) })
+	resetPersonTable(t, db, person)
+	t.Run("CRUD", func(t *testing.T) { testCRUD(t, person) })
+	resetPersonTable(t, db, person)
+	t.Run("count", func(t *testing.T) { testCount(t, person) })
+	resetPersonTable(t, db, person)
+	t.Run("create if not exists", func(t *testing.T) { testCreateIfNotExists(t, person) })
+}
+
+func resetPersonTable(t *testing.T, db porm.DB, orm porm.API) {
+	t.Helper()
+	_, err := db.ExecContext(context.Background(), "DROP TABLE IF EXISTS `person`")
+	require.Nil(t, err)
+	_, err = orm.Create().Exec()
+	require.Nil(t, err)
+}
+
+func testPersonSelect(t *testing.T, db porm.API) {
+	t.Parallel()
+
+	res, err := db.Insert().SetName(p1.Name).SetAge(p1.Age).Exec()
+	require.Nil(t, err, "Failed inserting")
+	assertRowsAffected(t, 1, res)
+	res, err = db.Insert().SetName(p2.Name).SetAge(p2.Age).Exec()
+	require.Nil(t, err, "Failed inserting")
+	assertRowsAffected(t, 1, res)
+	res, err = db.InsertPerson(&p3).Exec()
+	require.Nil(t, err, "Failed inserting")
+	assertRowsAffected(t, 1, res)
+
+	tests := []struct {
+		q    porm.Querier
+		want []example.Person
+	}{
+		{
+			q:    db.Select(),
+			want: []example.Person{p1, p2, p3},
+		},
+		{
+			q:    db.Select().SelectName(),
+			want: []example.Person{{Name: "moshe"}, {Name: "haim"}, {Name: "zvika"}},
+		},
+		{
+			q:    db.Select().SelectAge(),
+			want: []example.Person{{Age: 1}, {Age: 2}, {Age: 3}},
+		},
+		{
+			q:    db.Select().SelectAge().SelectName(),
+			want: []example.Person{p1, p2, p3},
+		},
+		{
+			q:    db.Select().SelectName().SelectAge(),
+			want: []example.Person{p1, p2, p3},
+		},
+		{
+			q:    db.Select().Where(porm.WhereName(orm.OpEq, "moshe")),
+			want: []example.Person{p1},
+		},
+		{
+			q:    db.Select().Where(porm.WhereName(orm.OpEq, "moshe").Or(porm.WhereAge(orm.OpEq, 2))),
+			want: []example.Person{p1, p2},
+		},
+		{
+			q:    db.Select().Where(porm.WhereName(orm.OpEq, "moshe").And(porm.WhereAge(orm.OpEq, 1))),
+			want: []example.Person{p1},
+		},
+		{
+			q: db.Select().Where(porm.WhereName(orm.OpEq, "moshe").And(porm.WhereAge(orm.OpEq, 2))),
+		},
+		{
+			q:    db.Select().Where(porm.WhereAge(orm.OpGE, 2)),
+			want: []example.Person{p2, p3},
+		},
+		{
+			q:    db.Select().Where(porm.WhereAge(orm.OpGt, 2)),
+			want: []example.Person{p3},
+		},
+		{
+			q:    db.Select().Where(porm.WhereAge(orm.OpLE, 2)),
+			want: []example.Person{p1, p2},
+		},
+		{
+			q:    db.Select().Where(porm.WhereAge(orm.OpLt, 2)),
+			want: []example.Person{p1},
+		},
+		{
+			q:    db.Select().Where(porm.WhereName(orm.OpNe, "moshe")),
+			want: []example.Person{p2, p3},
+		},
+		{
+			q:    db.Select().Where(porm.WhereNameIn("moshe", "haim")),
+			want: []example.Person{p1, p2},
+		},
+		{
+			q:    db.Select().Where(porm.WhereAgeBetween(0, 2)),
+			want: []example.Person{p1, p2},
+		},
+		{
+			q:    db.Select().Limit(2),
+			want: []example.Person{p1, p2},
+		},
+		{
+			q:    db.Select().Page(1, 1),
+			want: []example.Person{p2},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("%+v", tt.q), func(t *testing.T) {
+			p, err := tt.q.Query()
+			if err != nil {
+				t.Error(err)
+			}
+			assert.Equal(t, tt.want, p)
+		})
+	}
+}
+
+func testCRUD(t *testing.T, db porm.API) {
+	t.Helper()
+
+	// prepareAll dataset
+	for _, p := range []example.Person{p1, p2, p3} {
+		res, err := db.InsertPerson(&p).Exec()
+		require.Nil(t, err, "Failed inserting")
+		assertRowsAffected(t, 1, res)
+	}
+
+	ps, err := db.Select().Query()
+	require.Nil(t, err)
+	assert.Equal(t, []example.Person{p1, p2, p3}, ps)
+
+	// Test delete
+	delete := db.Delete().Where(porm.WhereName(orm.OpEq, "moshe"))
+	res, err := delete.Exec()
+	require.Nil(t, err)
+	assertRowsAffected(t, 1, res)
+	ps, err = db.Select().Query()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, []example.Person{p2, p3}, ps)
+	ps, err = db.Select().Where(porm.WhereName(orm.OpEq, "moshe")).Query()
+	require.Nil(t, err)
+	assert.Equal(t, []example.Person(nil), ps)
+
+	// Test Update
+	update := db.Update().SetName("Jonney").Where(porm.WhereName(orm.OpEq, "zvika"))
+	res, err = update.Exec()
+	require.Nil(t, err)
+	assertRowsAffected(t, 1, res)
+
+	ps, err = db.Select().Where(porm.WhereName(orm.OpEq, "Jonney")).Query()
+	require.Nil(t, err)
+	assert.Equal(t, []example.Person{{Name: "Jonney", Age: 3}}, ps)
+}
+
+func testCount(t *testing.T, db porm.API) {
+	t.Helper()
+
+	for i := 0; i < 100; i++ {
+		res, err := db.InsertPerson(&example.Person{Name: fmt.Sprintf("Jim %d", i), Age: i / 5}).Exec()
+		require.Nil(t, err, "Failed inserting")
+		assertRowsAffected(t, 1, res)
+	}
+
+	tests := []struct {
+		q    porm.Counter
+		want []porm.PersonCount
+	}{
+		{
+			q:    db.Select(),
+			want: []porm.PersonCount{{Count: 100}},
+		},
+		{
+			q:    db.Select().Where(porm.WhereAge(orm.OpLt, 10)),
+			want: []porm.PersonCount{{Count: 50}},
+		},
+		{
+			q: db.Select().SelectAge().GroupByAge().Where(porm.WhereAgeIn(1, 3, 12)),
+			want: []porm.PersonCount{
+				{Person: example.Person{Age: 1}, Count: 5},
+				{Person: example.Person{Age: 3}, Count: 5},
+				{Person: example.Person{Age: 12}, Count: 5},
+			},
+		},
+		{
+			q: db.Select().SelectAge().GroupByAge().Where(porm.WhereAgeIn(1, 3, 12)).OrderByAge(orm.Desc),
+			want: []porm.PersonCount{
+				{Person: example.Person{Age: 12}, Count: 5},
+				{Person: example.Person{Age: 3}, Count: 5},
+				{Person: example.Person{Age: 1}, Count: 5},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("%+v", tt.q), func(t *testing.T) {
+			got, err := tt.q.Count()
+			if err != nil {
+				t.Error(err)
+			}
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func testCreateIfNotExists(t *testing.T, db porm.API) {
+	t.Helper()
+
+	_, err := db.Create().IfNotExists().Exec()
+	require.Nil(t, err)
+
+	_, err = db.Create().Exec()
+	require.NotNil(t, err)
+}
+
+func assertRowsAffected(t *testing.T, wantRows int64, result sql.Result) {
+	gotRows, err := result.RowsAffected()
+	require.Nil(t, err)
+	assert.Equal(t, wantRows, gotRows)
+}
+
+func TestNew(t *testing.T) {
+	t.Parallel()
+	db, err := sql.Open("sqlite3", ":memory:")
+	require.Nil(t, err)
+	defer db.Close()
+
+	orm, err := porm.New("sqlite3", db)
+	require.Nil(t, err)
+
+	if testing.Verbose() {
+		orm.Logger(t.Logf)
+	}
+	_, err = orm.Create().Exec()
+	require.Nil(t, err)
 }
