@@ -1,8 +1,9 @@
 package {{.Package}}
 
 import (
-	"github.com/posener/orm/common"
+    "context"
 
+	"github.com/posener/orm/common"
     "{{.Type.ImportPath}}"
 )
 
@@ -19,40 +20,46 @@ type SelectBuilder struct {
 }
 
 // Where applies where conditions on the query
-func (s *SelectBuilder) Where(where common.Where) *SelectBuilder {
-	s.params.Where = where
-	return s
+func (b *SelectBuilder) Where(where common.Where) *SelectBuilder {
+	b.params.Where = where
+	return b
 }
 
 // Limit applies rows limit on the query response
-func (s *SelectBuilder) Limit(limit int64) *SelectBuilder {
-	s.params.Page.Limit = limit
-	return s
+func (b *SelectBuilder) Limit(limit int64) *SelectBuilder {
+	b.params.Page.Limit = limit
+	return b
 }
 
 // Page applies rows offset and limit on the query response
-func (s *SelectBuilder) Page(offset, limit int64) *SelectBuilder {
-	s.params.Page.Offset = offset
-	s.params.Page.Limit = limit
-	return s
+func (b *SelectBuilder) Page(offset, limit int64) *SelectBuilder {
+	b.params.Page.Offset = offset
+	b.params.Page.Limit = limit
+	return b
 }
 
 {{ range $_, $f := .Type.Fields -}}
 // Select{{$f.Name}} adds {{$f.Name}} to the selected column of a query
-func (s *SelectBuilder) Select{{$f.Name}}() *SelectBuilder {
-    s.columns.Select{{$f.Name}} = true
-    return s
+func (b *SelectBuilder) Select{{$f.Name}}() *SelectBuilder {
+    b.columns.Select{{$f.Name}} = true
+    return b
 }
 
 // OrderBy{{$f.Name}} set order to the query results according to column {{$f.SQL.Column}}
-func (s *SelectBuilder) OrderBy{{$f.Name}}(dir common.OrderDir) *SelectBuilder {
-    s.params.Orders.Add("{{$f.SQL.Column}}", dir)
-    return s
+func (b *SelectBuilder) OrderBy{{$f.Name}}(dir common.OrderDir) *SelectBuilder {
+    b.params.Orders.Add("{{$f.SQL.Column}}", dir)
+    return b
 }
 
 // GroupBy{{$f.Name}} make the query group by column {{$f.SQL.Column}}
-func (s *SelectBuilder) GroupBy{{$f.Name}}() *SelectBuilder {
-    s.params.Groups.Add("{{$f.SQL.Column}}")
-    return s
+func (b *SelectBuilder) GroupBy{{$f.Name}}() *SelectBuilder {
+    b.params.Groups.Add("{{$f.SQL.Column}}")
+    return b
 }
 {{ end -}}
+
+// Context sets the context for the SQL query
+func (b *SelectBuilder) Context(ctx context.Context) *SelectBuilder {
+	b.params.Ctx = ctx
+	return b
+}

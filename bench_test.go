@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"context"
-
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/posener/orm/example"
@@ -19,16 +17,15 @@ import (
 // BenchmarkORMInsert tests inserts with posener/orm package
 func BenchmarkORMInsert(b *testing.B) {
 	orm, err := porm.Open("sqlite3", ":memory:")
-	ctx := context.Background()
 	require.Nil(b, err)
 	defer orm.Close()
 
-	_, err = orm.Create().Exec(ctx)
+	_, err = orm.Create().Exec()
 	require.Nil(b, err)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err = orm.InsertPerson(&example.Person{Name: "xxx", Age: i}).Exec(ctx)
+		_, err = orm.InsertPerson(&example.Person{Name: "xxx", Age: i}).Exec()
 		assert.Nil(b, err)
 	}
 }
@@ -70,22 +67,21 @@ const datasetSize = 1000
 
 // BenchmarkORMQuery tests queries with posener/orm package
 func BenchmarkORMQuery(b *testing.B) {
-	ctx := context.Background()
 	orm, err := porm.Open("sqlite3", ":memory:")
 	require.Nil(b, err)
 	defer orm.Close()
 
-	_, err = orm.Create().Exec(ctx)
+	_, err = orm.Create().Exec()
 	require.Nil(b, err)
 
 	for i := 0; i < datasetSize; i++ {
-		_, err = orm.InsertPerson(&example.Person{Name: "xxx", Age: i}).Exec(ctx)
+		_, err = orm.InsertPerson(&example.Person{Name: "xxx", Age: i}).Exec()
 		require.Nil(b, err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ps, err := orm.Select().Query(ctx)
+		ps, err := orm.Select().Query()
 		require.Nil(b, err)
 		assert.Equal(b, datasetSize, len(ps))
 	}
@@ -146,24 +142,23 @@ func BenchmarkRawQuery(b *testing.B) {
 
 // BenchmarkORMQueryLargeStruct tests large struct queries with posener/orm package
 func BenchmarkORMQueryLargeStruct(b *testing.B) {
-	ctx := context.Background()
 	orm, err := aorm.Open("sqlite3", ":memory:")
 	require.Nil(b, err)
 	defer orm.Close()
 
-	_, err = orm.Create().Exec(ctx)
+	_, err = orm.Create().Exec()
 	require.Nil(b, err)
 
 	tm := time.Now().Round(time.Millisecond).UTC()
 
 	for i := 0; i < datasetSize; i++ {
-		_, err = orm.InsertAll(&example.All{String: "xxx", Select: i, Int: i, Time: tm, Bool: true}).Exec(ctx)
+		_, err = orm.InsertAll(&example.All{String: "xxx", Select: i, Int: i, Time: tm, Bool: true}).Exec()
 		require.Nil(b, err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		alls, err := orm.Select().Query(ctx)
+		alls, err := orm.Select().Query()
 		require.Nil(b, err)
 		assert.Equal(b, datasetSize, len(alls))
 	}

@@ -2,8 +2,9 @@
 package personorm
 
 import (
-	"github.com/posener/orm/common"
+	"context"
 
+	"github.com/posener/orm/common"
 	"github.com/posener/orm/example"
 )
 
@@ -20,56 +21,62 @@ type SelectBuilder struct {
 }
 
 // Where applies where conditions on the query
-func (s *SelectBuilder) Where(where common.Where) *SelectBuilder {
-	s.params.Where = where
-	return s
+func (b *SelectBuilder) Where(where common.Where) *SelectBuilder {
+	b.params.Where = where
+	return b
 }
 
 // Limit applies rows limit on the query response
-func (s *SelectBuilder) Limit(limit int64) *SelectBuilder {
-	s.params.Page.Limit = limit
-	return s
+func (b *SelectBuilder) Limit(limit int64) *SelectBuilder {
+	b.params.Page.Limit = limit
+	return b
 }
 
 // Page applies rows offset and limit on the query response
-func (s *SelectBuilder) Page(offset, limit int64) *SelectBuilder {
-	s.params.Page.Offset = offset
-	s.params.Page.Limit = limit
-	return s
+func (b *SelectBuilder) Page(offset, limit int64) *SelectBuilder {
+	b.params.Page.Offset = offset
+	b.params.Page.Limit = limit
+	return b
 }
 
 // SelectName adds Name to the selected column of a query
-func (s *SelectBuilder) SelectName() *SelectBuilder {
-	s.columns.SelectName = true
-	return s
+func (b *SelectBuilder) SelectName() *SelectBuilder {
+	b.columns.SelectName = true
+	return b
 }
 
 // OrderByName set order to the query results according to column name
-func (s *SelectBuilder) OrderByName(dir common.OrderDir) *SelectBuilder {
-	s.params.Orders.Add("name", dir)
-	return s
+func (b *SelectBuilder) OrderByName(dir common.OrderDir) *SelectBuilder {
+	b.params.Orders.Add("name", dir)
+	return b
 }
 
 // GroupByName make the query group by column name
-func (s *SelectBuilder) GroupByName() *SelectBuilder {
-	s.params.Groups.Add("name")
-	return s
+func (b *SelectBuilder) GroupByName() *SelectBuilder {
+	b.params.Groups.Add("name")
+	return b
 }
 
 // SelectAge adds Age to the selected column of a query
-func (s *SelectBuilder) SelectAge() *SelectBuilder {
-	s.columns.SelectAge = true
-	return s
+func (b *SelectBuilder) SelectAge() *SelectBuilder {
+	b.columns.SelectAge = true
+	return b
 }
 
 // OrderByAge set order to the query results according to column age
-func (s *SelectBuilder) OrderByAge(dir common.OrderDir) *SelectBuilder {
-	s.params.Orders.Add("age", dir)
-	return s
+func (b *SelectBuilder) OrderByAge(dir common.OrderDir) *SelectBuilder {
+	b.params.Orders.Add("age", dir)
+	return b
 }
 
 // GroupByAge make the query group by column age
-func (s *SelectBuilder) GroupByAge() *SelectBuilder {
-	s.params.Groups.Add("age")
-	return s
+func (b *SelectBuilder) GroupByAge() *SelectBuilder {
+	b.params.Groups.Add("age")
+	return b
+}
+
+// Context sets the context for the SQL query
+func (b *SelectBuilder) Context(ctx context.Context) *SelectBuilder {
+	b.params.Ctx = ctx
+	return b
 }

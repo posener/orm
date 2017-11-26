@@ -2,7 +2,6 @@
 package personorm
 
 import (
-	"context"
 	"github.com/posener/orm/example"
 )
 
@@ -22,10 +21,10 @@ type API interface {
 
 // Querier is the interface for a SELECT SQL statement
 type Querier interface {
-	Query(context.Context) ([]example.Person, error)
+	Query() ([]example.Person, error)
 }
 
 // Counter is the interface for a SELECT SQL statement for counting purposes
 type Counter interface {
-	Count(context.Context) ([]PersonCount, error)
+	Count() ([]PersonCount, error)
 }

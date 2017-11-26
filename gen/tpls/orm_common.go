@@ -41,9 +41,15 @@ type CreateBuilder struct {
 }
 
 // IfNotExists sets IF NOT EXISTS for the CREATE SQL statement
-func (c *CreateBuilder) IfNotExists() *CreateBuilder {
-	c.params.IfNotExists = true
-	return c
+func (b *CreateBuilder) IfNotExists() *CreateBuilder {
+	b.params.IfNotExists = true
+	return b
+}
+
+// Context sets the context for the SQL query
+func (b *CreateBuilder) Context(ctx context.Context) *CreateBuilder {
+	b.params.Ctx = ctx
+	return b
 }
 
 // InsertBuilder builds an INSERT statement parameters
@@ -52,15 +58,28 @@ type InsertBuilder struct {
 	orm    *orm
 }
 
+// Context sets the context for the SQL query
+func (b *InsertBuilder) Context(ctx context.Context) *InsertBuilder {
+	b.params.Ctx = ctx
+	return b
+}
+
 // UpdateBuilder builds SQL INSERT statement parameters
 type UpdateBuilder struct {
 	params common.UpdateParams
 	orm    *orm
 }
 
-func (u *UpdateBuilder) Where(where common.Where) *UpdateBuilder {
-	u.params.Where = where
-	return u
+// Where sets the WHERE statement to the SQL query
+func (b *UpdateBuilder) Where(where common.Where) *UpdateBuilder {
+	b.params.Where = where
+	return b
+}
+
+// Context sets the context for the SQL query
+func (b *UpdateBuilder) Context(ctx context.Context) *UpdateBuilder {
+	b.params.Ctx = ctx
+	return b
 }
 
 // DeleteBuilder builds SQL DELETE statement parameters
@@ -69,8 +88,14 @@ type DeleteBuilder struct {
 	orm    *orm
 }
 
-// Where applies where conditions on the query
-func (d *DeleteBuilder) Where(w common.Where) *DeleteBuilder {
-	d.params.Where = w
-	return d
+// Where applies where conditions on the SQL query
+func (b *DeleteBuilder) Where(w common.Where) *DeleteBuilder {
+	b.params.Where = w
+	return b
+}
+
+// Context sets the context for the SQL query
+func (b *DeleteBuilder) Context(ctx context.Context) *DeleteBuilder {
+	b.params.Ctx = ctx
+	return b
 }

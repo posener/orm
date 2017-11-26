@@ -9,49 +9,50 @@ import (
 )
 
 // Exec creates a table for the given struct
-func (c *CreateBuilder) Exec(ctx context.Context) (sql.Result, error) {
-	stmt, args := c.orm.dialect.Create(&c.params)
-	c.orm.log("Create: '%v' %v", stmt, args)
-	return c.orm.db.ExecContext(ctx, stmt, args...)
+func (b *CreateBuilder) Exec() (sql.Result, error) {
+	stmt, args := b.orm.dialect.Create(&b.params)
+	b.orm.log("Create: '%v' %v", stmt, args)
+	return b.orm.db.ExecContext(contextOrBackground(b.params.Ctx), stmt, args...)
 }
 
 // query is used by the Select.Query and Select.Limit functions
-func (s *SelectBuilder) query(ctx context.Context) (*sql.Rows, error) {
-	stmt, args := s.orm.dialect.Select(&s.params)
-	s.orm.log("Query: '%v' %v", stmt, args)
-	return s.orm.db.QueryContext(ctx, stmt, args...)
+func (b *SelectBuilder) query(ctx context.Context) (*sql.Rows, error) {
+	stmt, args := b.orm.dialect.Select(&b.params)
+	b.orm.log("Query: '%v' %v", stmt, args)
+	return b.orm.db.QueryContext(ctx, stmt, args...)
 }
 
 // Exec inserts the data to the given database
-func (i *InsertBuilder) Exec(ctx context.Context) (sql.Result, error) {
-	if len(i.params.Assignments) == 0 {
+func (b *InsertBuilder) Exec() (sql.Result, error) {
+	if len(b.params.Assignments) == 0 {
 		return nil, fmt.Errorf("nothing to insert")
 	}
-	stmt, args := i.orm.dialect.Insert(&i.params)
-	i.orm.log("Insert: '%v' %v", stmt, args)
-	return i.orm.db.ExecContext(ctx, stmt, args...)
+	stmt, args := b.orm.dialect.Insert(&b.params)
+	b.orm.log("Insert: '%v' %v", stmt, args)
+	return b.orm.db.ExecContext(contextOrBackground(b.params.Ctx), stmt, args...)
 }
 
 // Exec inserts the data to the given database
-func (u *UpdateBuilder) Exec(ctx context.Context) (sql.Result, error) {
-	if len(u.params.Assignments) == 0 {
+func (b *UpdateBuilder) Exec() (sql.Result, error) {
+	if len(b.params.Assignments) == 0 {
 		return nil, fmt.Errorf("nothing to update")
 	}
-	stmt, args := u.orm.dialect.Update(&u.params)
-	u.orm.log("Update: '%v' %v", stmt, args)
-	return u.orm.db.ExecContext(ctx, stmt, args...)
+	stmt, args := b.orm.dialect.Update(&b.params)
+	b.orm.log("Update: '%v' %v", stmt, args)
+	return b.orm.db.ExecContext(contextOrBackground(b.params.Ctx), stmt, args...)
 }
 
 // Exec runs the delete statement on a given database.
-func (d *DeleteBuilder) Exec(ctx context.Context) (sql.Result, error) {
-	stmt, args := d.orm.dialect.Delete(&d.params)
-	d.orm.log("Delete: '%v' %v", stmt, args)
-	return d.orm.db.ExecContext(ctx, stmt, args...)
+func (b *DeleteBuilder) Exec() (sql.Result, error) {
+	stmt, args := b.orm.dialect.Delete(&b.params)
+	b.orm.log("Delete: '%v' %v", stmt, args)
+	return b.orm.db.ExecContext(contextOrBackground(b.params.Ctx), stmt, args...)
 }
 
 // Query the database
-func (s *SelectBuilder) Query(ctx context.Context) ([]{{.Type.FullName}}, error) {
-    rows, err := s.query(ctx)
+func (b *SelectBuilder) Query() ([]{{.Type.FullName}}, error) {
+    ctx := contextOrBackground(b.params.Ctx)
+    rows, err := b.query(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +65,7 @@ func (s *SelectBuilder) Query(ctx context.Context) ([]{{.Type.FullName}}, error)
 	    if err := ctx.Err(); err != nil  {
 	        return nil, err
 	    }
-		item, err := scan(s.orm.dialect.Name(), s.columns, rows)
+		item, err := scan(b.orm.dialect.Name(), b.columns, rows)
         if err != nil {
 			return nil, err
 		}
@@ -74,9 +75,10 @@ func (s *SelectBuilder) Query(ctx context.Context) ([]{{.Type.FullName}}, error)
 }
 
 // Count add a count column to the query
-func (s *SelectBuilder) Count(ctx context.Context) ([]{{.Type.Name}}Count, error) {
-    s.columns.count = true
-    rows, err := s.query(ctx)
+func (b *SelectBuilder) Count() ([]{{.Type.Name}}Count, error) {
+    ctx := contextOrBackground(b.params.Ctx)
+    b.columns.count = true
+    rows, err := b.query(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +91,7 @@ func (s *SelectBuilder) Count(ctx context.Context) ([]{{.Type.Name}}Count, error
 	    if err := ctx.Err(); err != nil  {
 	        return nil, err
 	    }
-		item, err := scan(s.orm.dialect.Name(), s.columns, rows)
+		item, err := scan(b.orm.dialect.Name(), b.columns, rows)
         if err != nil {
 			return nil, err
 		}
@@ -98,3 +100,9 @@ func (s *SelectBuilder) Count(ctx context.Context) ([]{{.Type.Name}}Count, error
 	return all, rows.Err()
 }
 
+func contextOrBackground(ctx context.Context) context.Context {
+	if ctx == nil {
+	    return context.Background()
+	}
+	return ctx
+}

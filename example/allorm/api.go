@@ -2,7 +2,6 @@
 package allorm
 
 import (
-	"context"
 	"github.com/posener/orm/example"
 )
 
@@ -22,10 +21,10 @@ type API interface {
 
 // Querier is the interface for a SELECT SQL statement
 type Querier interface {
-	Query(context.Context) ([]example.All, error)
+	Query() ([]example.All, error)
 }
 
 // Counter is the interface for a SELECT SQL statement for counting purposes
 type Counter interface {
-	Count(context.Context) ([]AllCount, error)
+	Count() ([]AllCount, error)
 }

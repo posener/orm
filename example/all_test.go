@@ -66,7 +66,7 @@ func resetAllTable(t *testing.T, db aorm.DB, orm aorm.API) {
 	t.Helper()
 	_, err := db.ExecContext(context.Background(), "DROP TABLE IF EXISTS `all`")
 	require.Nil(t, err)
-	_, err = orm.Create().Exec(context.Background())
+	_, err = orm.Create().Exec()
 	require.Nil(t, err)
 }
 
@@ -118,15 +118,13 @@ func testTypes(t *testing.T, db aorm.API) {
 	a.PBool = &a.Bool
 	a.PTime = &a.Time
 
-	ctx := context.Background()
-
-	res, err := db.InsertAll(&a).Exec(ctx)
+	res, err := db.InsertAll(&a).Exec()
 	require.Nil(t, err)
 	affected, err := res.RowsAffected()
 	require.Nil(t, err)
 	require.Equal(t, int64(1), affected)
 
-	alls, err := db.Select().Query(ctx)
+	alls, err := db.Select().Query()
 	require.Nil(t, err)
 	require.Equal(t, 1, len(alls))
 
@@ -136,28 +134,27 @@ func testTypes(t *testing.T, db aorm.API) {
 
 func testAutoIncrement(t *testing.T, db aorm.API) {
 	t.Helper()
-	ctx := context.Background()
 
-	res, err := db.Insert().SetNotNil("1").Exec(ctx)
+	res, err := db.Insert().SetNotNil("1").Exec()
 	require.Nil(t, err)
 	affected, err := res.RowsAffected()
 	require.Nil(t, err)
 	require.Equal(t, int64(1), affected)
 
-	res, err = db.Insert().SetNotNil("2").Exec(ctx)
+	res, err = db.Insert().SetNotNil("2").Exec()
 	require.Nil(t, err)
 	affected, err = res.RowsAffected()
 	require.Nil(t, err)
 	require.Equal(t, int64(1), affected)
 
-	alls, err := db.Select().OrderByAuto(orm.Asc).Query(ctx)
+	alls, err := db.Select().OrderByAuto(orm.Asc).Query()
 	require.Nil(t, err)
 	require.Equal(t, 2, len(alls))
 
 	assert.Equal(t, 1, alls[0].Auto)
 	assert.Equal(t, 2, alls[1].Auto)
 
-	alls, err = db.Select().OrderByAuto(orm.Desc).Query(ctx)
+	alls, err = db.Select().OrderByAuto(orm.Desc).Query()
 	require.Nil(t, err)
 	require.Equal(t, 2, len(alls))
 
@@ -168,16 +165,14 @@ func testAutoIncrement(t *testing.T, db aorm.API) {
 // TestNotNull tests that given inserting an empty not null field causes an error
 func testNotNull(t *testing.T, db aorm.API) {
 	t.Helper()
-	ctx := context.Background()
-	_, err := db.Insert().SetInt(1).Exec(ctx)
+	_, err := db.Insert().SetInt(1).Exec()
 	require.NotNil(t, err)
 }
 
 func testFieldReservedName(t *testing.T, db aorm.API) {
 	t.Helper()
-	ctx := context.Background()
 
-	res, err := db.Insert().SetSelect(42).SetNotNil("not-nil").Exec(ctx)
+	res, err := db.Insert().SetSelect(42).SetNotNil("not-nil").Exec()
 	require.Nil(t, err)
 	assertRowsAffected(t, 1, res)
 
@@ -189,25 +184,25 @@ func testFieldReservedName(t *testing.T, db aorm.API) {
 		OrderBySelect(orm.Desc).
 		GroupBySelect()
 
-	alls, err := query.Query(ctx)
+	alls, err := query.Query()
 	require.Nil(t, err)
 	require.Equal(t, 1, len(alls))
 	assert.Equal(t, 42, alls[0].Select)
 
-	res, err = db.Update().SetSelect(11).Where(aorm.WhereSelect(orm.OpEq, 42)).Exec(ctx)
+	res, err = db.Update().SetSelect(11).Where(aorm.WhereSelect(orm.OpEq, 42)).Exec()
 	require.Nil(t, err)
 	assertRowsAffected(t, 1, res)
 
-	alls, err = db.Select().SelectSelect().Query(ctx)
+	alls, err = db.Select().SelectSelect().Query()
 	require.Nil(t, err)
 	require.Equal(t, 1, len(alls))
 	assert.Equal(t, 11, alls[0].Select)
 
-	res, err = db.Delete().Exec(ctx)
+	res, err = db.Delete().Exec()
 	require.Nil(t, err)
 	assertRowsAffected(t, 1, res)
 
-	alls, err = db.Select().SelectSelect().Query(ctx)
+	alls, err = db.Select().SelectSelect().Query()
 	require.Nil(t, err)
 	require.Equal(t, 0, len(alls))
 }
@@ -242,21 +237,20 @@ func resetPersonTable(t *testing.T, db porm.DB, orm porm.API) {
 	t.Helper()
 	_, err := db.ExecContext(context.Background(), "DROP TABLE IF EXISTS `person`")
 	require.Nil(t, err)
-	_, err = orm.Create().Exec(context.Background())
+	_, err = orm.Create().Exec()
 	require.Nil(t, err)
 }
 
 func testPersonSelect(t *testing.T, db porm.API) {
 	t.Parallel()
-	ctx := context.Background()
 
-	res, err := db.Insert().SetName(p1.Name).SetAge(p1.Age).Exec(ctx)
+	res, err := db.Insert().SetName(p1.Name).SetAge(p1.Age).Exec()
 	require.Nil(t, err, "Failed inserting")
 	assertRowsAffected(t, 1, res)
-	res, err = db.Insert().SetName(p2.Name).SetAge(p2.Age).Exec(ctx)
+	res, err = db.Insert().SetName(p2.Name).SetAge(p2.Age).Exec()
 	require.Nil(t, err, "Failed inserting")
 	assertRowsAffected(t, 1, res)
-	res, err = db.InsertPerson(&p3).Exec(ctx)
+	res, err = db.InsertPerson(&p3).Exec()
 	require.Nil(t, err, "Failed inserting")
 	assertRowsAffected(t, 1, res)
 
@@ -339,7 +333,7 @@ func testPersonSelect(t *testing.T, db porm.API) {
 
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("%+v", tt.q), func(t *testing.T) {
-			p, err := tt.q.Query(ctx)
+			p, err := tt.q.Query()
 			if err != nil {
 				t.Error(err)
 			}
@@ -350,50 +344,48 @@ func testPersonSelect(t *testing.T, db porm.API) {
 
 func testCRUD(t *testing.T, db porm.API) {
 	t.Helper()
-	ctx := context.Background()
 
 	// prepareAll dataset
 	for _, p := range []example.Person{p1, p2, p3} {
-		res, err := db.InsertPerson(&p).Exec(ctx)
+		res, err := db.InsertPerson(&p).Exec()
 		require.Nil(t, err, "Failed inserting")
 		assertRowsAffected(t, 1, res)
 	}
 
-	ps, err := db.Select().Query(ctx)
+	ps, err := db.Select().Query()
 	require.Nil(t, err)
 	assert.Equal(t, []example.Person{p1, p2, p3}, ps)
 
 	// Test delete
 	delete := db.Delete().Where(porm.WhereName(orm.OpEq, "moshe"))
-	res, err := delete.Exec(ctx)
+	res, err := delete.Exec()
 	require.Nil(t, err)
 	assertRowsAffected(t, 1, res)
-	ps, err = db.Select().Query(ctx)
+	ps, err = db.Select().Query()
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(t, []example.Person{p2, p3}, ps)
-	ps, err = db.Select().Where(porm.WhereName(orm.OpEq, "moshe")).Query(ctx)
+	ps, err = db.Select().Where(porm.WhereName(orm.OpEq, "moshe")).Query()
 	require.Nil(t, err)
 	assert.Equal(t, []example.Person(nil), ps)
 
 	// Test Update
 	update := db.Update().SetName("Jonney").Where(porm.WhereName(orm.OpEq, "zvika"))
-	res, err = update.Exec(ctx)
+	res, err = update.Exec()
 	require.Nil(t, err)
 	assertRowsAffected(t, 1, res)
 
-	ps, err = db.Select().Where(porm.WhereName(orm.OpEq, "Jonney")).Query(ctx)
+	ps, err = db.Select().Where(porm.WhereName(orm.OpEq, "Jonney")).Query()
 	require.Nil(t, err)
 	assert.Equal(t, []example.Person{{Name: "Jonney", Age: 3}}, ps)
 }
 
 func testCount(t *testing.T, db porm.API) {
 	t.Helper()
-	ctx := context.Background()
 
 	for i := 0; i < 100; i++ {
-		res, err := db.InsertPerson(&example.Person{Name: fmt.Sprintf("Jim %d", i), Age: i / 5}).Exec(ctx)
+		res, err := db.InsertPerson(&example.Person{Name: fmt.Sprintf("Jim %d", i), Age: i / 5}).Exec()
 		require.Nil(t, err, "Failed inserting")
 		assertRowsAffected(t, 1, res)
 	}
@@ -430,7 +422,7 @@ func testCount(t *testing.T, db porm.API) {
 
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("%+v", tt.q), func(t *testing.T) {
-			got, err := tt.q.Count(ctx)
+			got, err := tt.q.Count()
 			if err != nil {
 				t.Error(err)
 			}
@@ -441,12 +433,11 @@ func testCount(t *testing.T, db porm.API) {
 
 func testCreateIfNotExists(t *testing.T, db porm.API) {
 	t.Helper()
-	ctx := context.Background()
 
-	_, err := db.Create().IfNotExists().Exec(ctx)
+	_, err := db.Create().IfNotExists().Exec()
 	require.Nil(t, err)
 
-	_, err = db.Create().Exec(ctx)
+	_, err = db.Create().Exec()
 	require.NotNil(t, err)
 }
 
@@ -458,7 +449,6 @@ func assertRowsAffected(t *testing.T, wantRows int64, result sql.Result) {
 
 func TestNew(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	db, err := sql.Open("sqlite3", ":memory:")
 	require.Nil(t, err)
 	defer db.Close()
@@ -469,6 +459,6 @@ func TestNew(t *testing.T) {
 	if testing.Verbose() {
 		orm.Logger(t.Logf)
 	}
-	_, err = orm.Create().Exec(ctx)
+	_, err = orm.Create().Exec()
 	require.Nil(t, err)
 }
