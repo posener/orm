@@ -9,14 +9,21 @@ import (
 )
 
 type Dialect interface {
+	// Name returns the name of the dialect
 	Name() string
+	// Create returns the SQL CREATE statement and arguments according to the given parameters
 	Create(*common.CreateParams) (string, []interface{})
+	// Insert returns the SQL INSERT statement and arguments according to the given parameters
 	Insert(*common.InsertParams) (string, []interface{})
+	// Select returns the SQL SELECT statement and arguments according to the given parameters
 	Select(*common.SelectParams) (string, []interface{})
+	// Delete returns the SQL DELETE statement and arguments according to the given parameters
 	Delete(*common.DeleteParams) (string, []interface{})
+	// Update returns the SQL UPDATE statement and arguments according to the given parameters
 	Update(*common.UpdateParams) (string, []interface{})
 }
 
+// New returns a new Dialect according to it's name
 func New(name string) (Dialect, error) {
 	switch name {
 	case "mysql":
@@ -39,7 +46,7 @@ type Generator interface {
 	ConvertValueCode(field *common.Field) string
 }
 
-// NewGen returns all known DialectGenerators
+// NewGen returns all known Generators
 func NewGen(tp common.Type) []Generator {
 	return []Generator{
 		&mysql.Gen{Tp: tp},

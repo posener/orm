@@ -7,6 +7,7 @@ import (
 	"github.com/posener/orm/dialect/format"
 )
 
+// Dialect represents the mysql dialect
 type Dialect struct{}
 
 func (*Dialect) Name() string {

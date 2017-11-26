@@ -11,6 +11,7 @@ import (
 	"github.com/posener/orm/dialect/sqltypes"
 )
 
+// Gen is code generator for mysql dialect
 type Gen struct {
 	Tp common.Type
 }

@@ -1,10 +1,8 @@
 package sqlite3
 
 import (
-	"html/template"
-
 	"bytes"
-
+	"html/template"
 	"strings"
 
 	"github.com/labstack/gommon/log"
@@ -12,6 +10,7 @@ import (
 	"github.com/posener/orm/dialect/sqltypes"
 )
 
+// Gen is code generator for sqlite3 dialect
 type Gen struct {
 	Tp common.Type
 }
