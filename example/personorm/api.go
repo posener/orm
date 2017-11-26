@@ -3,20 +3,19 @@ package personorm
 
 import (
 	"context"
-
 	"github.com/posener/orm/example"
 )
 
 // API is the interface of the ORM object
 type API interface {
 	Close() error
-	Create() *Create
-	Select() *Select
-	Insert() *Insert
-	Update() *Update
-	Delete() *Delete
-	InsertPerson(*example.Person) *Insert
-	UpdatePerson(*example.Person) *Update
+	Create() *CreateBuilder
+	Select() *SelectBuilder
+	Insert() *InsertBuilder
+	Update() *UpdateBuilder
+	Delete() *DeleteBuilder
+	InsertPerson(*example.Person) *InsertBuilder
+	UpdatePerson(*example.Person) *UpdateBuilder
 
 	Logger(Logger)
 }

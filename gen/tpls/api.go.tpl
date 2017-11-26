@@ -2,20 +2,19 @@ package {{.Package}}
 
 import (
     "context"
-
     "{{.Type.ImportPath}}"
 )
 
 // API is the interface of the ORM object
 type API interface {
     Close() error
-    Create() *Create
-    Select() *Select
-    Insert() *Insert
-    Update() *Update
-    Delete() *Delete
-    Insert{{.Type.Name}}(*{{.Type.FullName}}) *Insert
-    Update{{.Type.Name}}(*{{.Type.FullName}}) *Update
+    Create() *CreateBuilder
+    Select() *SelectBuilder
+    Insert() *InsertBuilder
+    Update() *UpdateBuilder
+    Delete() *DeleteBuilder
+    Insert{{.Type.Name}}(*{{.Type.FullName}}) *InsertBuilder
+    Update{{.Type.Name}}(*{{.Type.FullName}}) *UpdateBuilder
 
     Logger(Logger)
 }

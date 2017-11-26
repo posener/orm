@@ -34,43 +34,43 @@ func (o *orm) Logger(logger Logger) {
 	o.logger = logger
 }
 
-// Create is a struct that holds data for the CREATE statement
-type Create struct {
-	internal common.Create
-	orm      *orm
+// CreateBuilder builds an SQL CREATE statement parameters
+type CreateBuilder struct {
+	params common.CreateParams
+	orm    *orm
 }
 
 // IfNotExists sets IF NOT EXISTS for the CREATE SQL statement
-func (c *Create) IfNotExists() *Create {
-	c.internal.IfNotExists = true
+func (c *CreateBuilder) IfNotExists() *CreateBuilder {
+	c.params.IfNotExists = true
 	return c
 }
 
-// Insert is a struct to hold information for an INSERT statement
-type Insert struct {
-	internal common.Insert
-	orm      *orm
+// InsertBuilder builds an INSERT statement parameters
+type InsertBuilder struct {
+	params common.InsertParams
+	orm    *orm
 }
 
-// Update is a struct to hold information for an INSERT statement
-type Update struct {
-	internal common.Update
-	orm      *orm
+// UpdateBuilder builds SQL INSERT statement parameters
+type UpdateBuilder struct {
+	params common.UpdateParams
+	orm    *orm
 }
 
-func (u *Update) Where(where common.Where) *Update {
-	u.internal.Where = where
+func (u *UpdateBuilder) Where(where common.Where) *UpdateBuilder {
+	u.params.Where = where
 	return u
 }
 
-// Delete is the struct that holds the SELECT data
-type Delete struct {
-	internal common.Delete
-	orm      *orm
+// DeleteBuilder builds SQL DELETE statement parameters
+type DeleteBuilder struct {
+	params common.DeleteParams
+	orm    *orm
 }
 
 // Where applies where conditions on the query
-func (d *Delete) Where(w common.Where) *Delete {
-	d.internal.Where = w
+func (d *DeleteBuilder) Where(w common.Where) *DeleteBuilder {
+	d.params.Where = w
 	return d
 }

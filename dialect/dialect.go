@@ -10,11 +10,11 @@ import (
 
 type Dialect interface {
 	Name() string
-	Create(*common.Create) (string, []interface{})
-	Insert(*common.Insert) (string, []interface{})
-	Select(*common.Select) (string, []interface{})
-	Delete(*common.Delete) (string, []interface{})
-	Update(*common.Update) (string, []interface{})
+	Create(*common.CreateParams) (string, []interface{})
+	Insert(*common.InsertParams) (string, []interface{})
+	Select(*common.SelectParams) (string, []interface{})
+	Delete(*common.DeleteParams) (string, []interface{})
+	Update(*common.UpdateParams) (string, []interface{})
 }
 
 func New(name string) (Dialect, error) {

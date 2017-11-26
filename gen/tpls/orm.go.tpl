@@ -2,9 +2,14 @@ package {{.Package}}
 
 import (
     "database/sql"
+    {{ range $_, $f := .Type.Fields -}}
+    {{ if $f.ImportPath }}"{{$f.ImportPath}}"{{ end }}
+    {{- end }}
 
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect"
+
+    "{{.Type.ImportPath}}"
 )
 
 const table = "{{.Type.Table}}"
@@ -37,10 +42,10 @@ func New(driverName string, db DB) (API, error) {
     return &orm{dialect: dialect, db: db}, nil
 }
 
-// Create returns a struct for a CREATE statement
-func (o *orm) Create() *Create {
-	return &Create{
-		internal: common.Create{
+// Create returns a builder of an SQL CREATE statement
+func (o *orm) Create() *CreateBuilder {
+	return &CreateBuilder{
+		params: common.CreateParams{
 		    Table: table,
 		    ColumnsStatement: createColumnsStatements[o.dialect.Name()],
         },
@@ -48,37 +53,74 @@ func (o *orm) Create() *Create {
     }
 }
 
-// Select returns an object to create a SELECT statement
-func (o *orm) Select() *Select {
-	s := &Select{
-		internal: common.Select{Table: table},
+// Select returns a builder of an SQL SELECT statement
+func (o *orm) Select() *SelectBuilder {
+	s := &SelectBuilder{
+		params: common.SelectParams{Table: table},
 		orm: o,
 	}
-    s.internal.Columns = &s.columns
+    s.params.Columns = &s.columns
     return s
 }
 
-// Insert returns a new INSERT statement
-func (o *orm) Insert() *Insert {
-	return &Insert{
-		internal: common.Insert{Table: table},
+// Insert returns a builder of an SQL INSERT statement
+func (o *orm) Insert() *InsertBuilder {
+	return &InsertBuilder{
+		params: common.InsertParams{Table: table},
 		orm: o,
 	}
 }
 
-// Update returns a new UPDATE statement
-func (o *orm) Update() *Update {
-	return &Update{
-		internal: common.Update{Table: table},
+// Insert{{.Type.Name}} returns an SQL INSERT statement builder filled with values of a given object
+func (o *orm) Insert{{.Type.Name}}(p *{{.Type.FullName}}) *InsertBuilder {
+	i := o.Insert()
+	{{- range $_, $f := .Type.Fields }}
+	{{- if not $f.SQL.Auto }}
+	i.params.Assignments.Add("{{$f.SQL.Column}}", p.{{$f.Name}})
+	{{- end -}}
+	{{- end }}
+	return i
+}
+
+// Update returns a builder of an SQL UPDATE statement
+func (o *orm) Update() *UpdateBuilder {
+	return &UpdateBuilder{
+		params: common.UpdateParams{Table: table},
 		orm: o,
     }
 }
 
-// Delete returns an object for a DELETE statement
-func (o *orm) Delete() *Delete {
-	return &Delete{
-		internal: common.Delete{Table: table},
+// Update{{.Type.Name}} returns an SQL UPDATE statement builder filled with values of a given object
+func (o *orm) Update{{.Type.Name}}(p *{{.Type.FullName}}) *UpdateBuilder {
+	u := o.Update()
+	{{- range $_, $f := .Type.Fields }}
+    {{- if not $f.SQL.Auto }}
+	u.params.Assignments.Add("{{$f.SQL.Column}}", p.{{$f.Name}})
+	{{- end -}}
+	{{- end }}
+	return u
+}
+
+// Delete returns a builder of an SQL DELETE statement
+func (o *orm) Delete() *DeleteBuilder {
+	return &DeleteBuilder{
+		params: common.DeleteParams{Table: table},
 		orm: o,
     }
 }
 
+{{- range $_, $f := .Type.Fields }}
+{{ if not $f.SQL.Auto -}}
+// Set{{$f.Name}} sets value for column {{$f.SQL.Column}} in the INSERT statement
+func (i *InsertBuilder) Set{{$f.Name}}(value {{$f.Type}}) *InsertBuilder {
+	i.params.Assignments.Add("{{$f.SQL.Column}}", value)
+	return i
+}
+
+// Set{{$f.Name}} sets value for column {{$f.SQL.Column}} in the UPDATE statement
+func (u *UpdateBuilder) Set{{$f.Name}}(value {{$f.Type}}) *UpdateBuilder {
+	u.params.Assignments.Add("{{$f.SQL.Column}}", value)
+	return u
+}
+{{ end -}}
+{{ end -}}

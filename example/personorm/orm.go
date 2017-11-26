@@ -6,6 +6,8 @@ import (
 
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect"
+
+	"github.com/posener/orm/example"
 )
 
 const table = "person"
@@ -37,10 +39,10 @@ func New(driverName string, db DB) (API, error) {
 	return &orm{dialect: dialect, db: db}, nil
 }
 
-// Create returns a struct for a CREATE statement
-func (o *orm) Create() *Create {
-	return &Create{
-		internal: common.Create{
+// Create returns a builder of an SQL CREATE statement
+func (o *orm) Create() *CreateBuilder {
+	return &CreateBuilder{
+		params: common.CreateParams{
 			Table:            table,
 			ColumnsStatement: createColumnsStatements[o.dialect.Name()],
 		},
@@ -48,36 +50,76 @@ func (o *orm) Create() *Create {
 	}
 }
 
-// Select returns an object to create a SELECT statement
-func (o *orm) Select() *Select {
-	s := &Select{
-		internal: common.Select{Table: table},
-		orm:      o,
+// Select returns a builder of an SQL SELECT statement
+func (o *orm) Select() *SelectBuilder {
+	s := &SelectBuilder{
+		params: common.SelectParams{Table: table},
+		orm:    o,
 	}
-	s.internal.Columns = &s.columns
+	s.params.Columns = &s.columns
 	return s
 }
 
-// Insert returns a new INSERT statement
-func (o *orm) Insert() *Insert {
-	return &Insert{
-		internal: common.Insert{Table: table},
-		orm:      o,
+// Insert returns a builder of an SQL INSERT statement
+func (o *orm) Insert() *InsertBuilder {
+	return &InsertBuilder{
+		params: common.InsertParams{Table: table},
+		orm:    o,
 	}
 }
 
-// Update returns a new UPDATE statement
-func (o *orm) Update() *Update {
-	return &Update{
-		internal: common.Update{Table: table},
-		orm:      o,
+// InsertPerson returns an SQL INSERT statement builder filled with values of a given object
+func (o *orm) InsertPerson(p *example.Person) *InsertBuilder {
+	i := o.Insert()
+	i.params.Assignments.Add("name", p.Name)
+	i.params.Assignments.Add("age", p.Age)
+	return i
+}
+
+// Update returns a builder of an SQL UPDATE statement
+func (o *orm) Update() *UpdateBuilder {
+	return &UpdateBuilder{
+		params: common.UpdateParams{Table: table},
+		orm:    o,
 	}
 }
 
-// Delete returns an object for a DELETE statement
-func (o *orm) Delete() *Delete {
-	return &Delete{
-		internal: common.Delete{Table: table},
-		orm:      o,
+// UpdatePerson returns an SQL UPDATE statement builder filled with values of a given object
+func (o *orm) UpdatePerson(p *example.Person) *UpdateBuilder {
+	u := o.Update()
+	u.params.Assignments.Add("name", p.Name)
+	u.params.Assignments.Add("age", p.Age)
+	return u
+}
+
+// Delete returns a builder of an SQL DELETE statement
+func (o *orm) Delete() *DeleteBuilder {
+	return &DeleteBuilder{
+		params: common.DeleteParams{Table: table},
+		orm:    o,
 	}
+}
+
+// SetName sets value for column name in the INSERT statement
+func (i *InsertBuilder) SetName(value string) *InsertBuilder {
+	i.params.Assignments.Add("name", value)
+	return i
+}
+
+// SetName sets value for column name in the UPDATE statement
+func (u *UpdateBuilder) SetName(value string) *UpdateBuilder {
+	u.params.Assignments.Add("name", value)
+	return u
+}
+
+// SetAge sets value for column age in the INSERT statement
+func (i *InsertBuilder) SetAge(value int) *InsertBuilder {
+	i.params.Assignments.Add("age", value)
+	return i
+}
+
+// SetAge sets value for column age in the UPDATE statement
+func (u *UpdateBuilder) SetAge(value int) *UpdateBuilder {
+	u.params.Assignments.Add("age", value)
+	return u
 }

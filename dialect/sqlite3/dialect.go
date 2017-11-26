@@ -13,8 +13,8 @@ func (*Dialect) Name() string {
 	return "sqlite3"
 }
 
-// Create returns an SQL CREATE statement and arguments
-func (d *Dialect) Create(p *common.Create) (string, []interface{}) {
+// CreateParams returns an SQL CREATE statement and arguments
+func (d *Dialect) Create(p *common.CreateParams) (string, []interface{}) {
 	stmt := fmt.Sprintf(`CREATE TABLE %s '%s' ( %s )`,
 		format.IfNotExists(p.IfNotExists),
 		p.Table,
@@ -24,8 +24,8 @@ func (d *Dialect) Create(p *common.Create) (string, []interface{}) {
 	return stmt, nil
 }
 
-// Insert returns an SQL INSERT statement and arguments
-func (d *Dialect) Insert(p *common.Insert) (string, []interface{}) {
+// InsertParams returns an SQL INSERT statement and arguments
+func (d *Dialect) Insert(p *common.InsertParams) (string, []interface{}) {
 	stmt := fmt.Sprintf(`INSERT INTO '%s' (%s) VALUES (%s)`,
 		p.Table,
 		format.AssignColumns(p.Assignments),
@@ -40,8 +40,8 @@ func (d *Dialect) Insert(p *common.Insert) (string, []interface{}) {
 	return stmt, args
 }
 
-// Select returns an SQL SELECT statement and arguments
-func (d *Dialect) Select(p *common.Select) (string, []interface{}) {
+// SelectParams returns an SQL SELECT statement and arguments
+func (d *Dialect) Select(p *common.SelectParams) (string, []interface{}) {
 	stmt := fmt.Sprintf("SELECT %s FROM '%s' %s %s %s %s",
 		format.Columns(p.Columns),
 		p.Table,
@@ -59,8 +59,8 @@ func (d *Dialect) Select(p *common.Select) (string, []interface{}) {
 	return stmt, args
 }
 
-// Delete returns an SQL DELETE statement and arguments
-func (d *Dialect) Delete(p *common.Delete) (string, []interface{}) {
+// DeleteParams returns an SQL DELETE statement and arguments
+func (d *Dialect) Delete(p *common.DeleteParams) (string, []interface{}) {
 	stmt := fmt.Sprintf("DELETE FROM '%s' %s",
 		p.Table,
 		format.Where(p.Where),
@@ -74,8 +74,8 @@ func (d *Dialect) Delete(p *common.Delete) (string, []interface{}) {
 	return stmt, args
 }
 
-// Update returns an SQL UPDATE statement and arguments
-func (d *Dialect) Update(p *common.Update) (string, []interface{}) {
+// UpdateParams returns an SQL UPDATE statement and arguments
+func (d *Dialect) Update(p *common.UpdateParams) (string, []interface{}) {
 	stmt := fmt.Sprintf(`UPDATE '%s' SET %s %s`,
 		p.Table,
 		format.AssignSets(p.Assignments),

@@ -3,20 +3,19 @@ package allorm
 
 import (
 	"context"
-
 	"github.com/posener/orm/example"
 )
 
 // API is the interface of the ORM object
 type API interface {
 	Close() error
-	Create() *Create
-	Select() *Select
-	Insert() *Insert
-	Update() *Update
-	Delete() *Delete
-	InsertAll(*example.All) *Insert
-	UpdateAll(*example.All) *Update
+	Create() *CreateBuilder
+	Select() *SelectBuilder
+	Insert() *InsertBuilder
+	Update() *UpdateBuilder
+	Delete() *DeleteBuilder
+	InsertAll(*example.All) *InsertBuilder
+	UpdateAll(*example.All) *UpdateBuilder
 
 	Logger(Logger)
 }

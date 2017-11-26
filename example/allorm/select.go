@@ -2,7 +2,6 @@
 package allorm
 
 import (
-	"context"
 	"github.com/posener/orm/common"
 
 	"github.com/posener/orm/example"
@@ -13,707 +12,658 @@ type AllCount struct {
 	Count int64
 }
 
-// Select is the struct that holds the SELECT data
-type Select struct {
-	internal common.Select
-	orm      *orm
-	columns  columns
+// SelectBuilder builds an SQL SELECT statement parameters
+type SelectBuilder struct {
+	params  common.SelectParams
+	orm     *orm
+	columns columns
 }
 
 // Where applies where conditions on the query
-func (s *Select) Where(where common.Where) *Select {
-	s.internal.Where = where
+func (s *SelectBuilder) Where(where common.Where) *SelectBuilder {
+	s.params.Where = where
 	return s
 }
 
 // Limit applies rows limit on the query response
-func (s *Select) Limit(limit int64) *Select {
-	s.internal.Page.Limit = limit
+func (s *SelectBuilder) Limit(limit int64) *SelectBuilder {
+	s.params.Page.Limit = limit
 	return s
 }
 
 // Page applies rows offset and limit on the query response
-func (s *Select) Page(offset, limit int64) *Select {
-	s.internal.Page.Offset = offset
-	s.internal.Page.Limit = limit
+func (s *SelectBuilder) Page(offset, limit int64) *SelectBuilder {
+	s.params.Page.Offset = offset
+	s.params.Page.Limit = limit
 	return s
 }
 
-// Query the database
-func (s *Select) Query(ctx context.Context) ([]example.All, error) {
-	rows, err := s.query(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	// extract rows to structures
-	var all []example.All
-	for rows.Next() {
-		// check context cancellation
-		if err := ctx.Err(); err != nil {
-			return nil, err
-		}
-		item, err := scan(s.orm.dialect.Name(), s.columns, rows)
-		if err != nil {
-			return nil, err
-		}
-		all = append(all, item.All)
-	}
-	return all, rows.Err()
-}
-
-// Count add a count column to the query
-func (s *Select) Count(ctx context.Context) ([]AllCount, error) {
-	s.columns.count = true
-	rows, err := s.query(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	// extract rows to structures
-	var all []AllCount
-	for rows.Next() {
-		// check context cancellation
-		if err := ctx.Err(); err != nil {
-			return nil, err
-		}
-		item, err := scan(s.orm.dialect.Name(), s.columns, rows)
-		if err != nil {
-			return nil, err
-		}
-		all = append(all, *item)
-	}
-	return all, rows.Err()
-}
-
 // SelectAuto adds Auto to the selected column of a query
-func (s *Select) SelectAuto() *Select {
+func (s *SelectBuilder) SelectAuto() *SelectBuilder {
 	s.columns.SelectAuto = true
 	return s
 }
 
 // OrderByAuto set order to the query results according to column auto
-func (s *Select) OrderByAuto(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("auto", dir)
+func (s *SelectBuilder) OrderByAuto(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("auto", dir)
 	return s
 }
 
 // GroupByAuto make the query group by column auto
-func (s *Select) GroupByAuto() *Select {
-	s.internal.Groups.Add("auto")
+func (s *SelectBuilder) GroupByAuto() *SelectBuilder {
+	s.params.Groups.Add("auto")
 	return s
 }
 
 // SelectNotNil adds NotNil to the selected column of a query
-func (s *Select) SelectNotNil() *Select {
+func (s *SelectBuilder) SelectNotNil() *SelectBuilder {
 	s.columns.SelectNotNil = true
 	return s
 }
 
 // OrderByNotNil set order to the query results according to column notnil
-func (s *Select) OrderByNotNil(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("notnil", dir)
+func (s *SelectBuilder) OrderByNotNil(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("notnil", dir)
 	return s
 }
 
 // GroupByNotNil make the query group by column notnil
-func (s *Select) GroupByNotNil() *Select {
-	s.internal.Groups.Add("notnil")
+func (s *SelectBuilder) GroupByNotNil() *SelectBuilder {
+	s.params.Groups.Add("notnil")
 	return s
 }
 
 // SelectInt adds Int to the selected column of a query
-func (s *Select) SelectInt() *Select {
+func (s *SelectBuilder) SelectInt() *SelectBuilder {
 	s.columns.SelectInt = true
 	return s
 }
 
 // OrderByInt set order to the query results according to column int
-func (s *Select) OrderByInt(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("int", dir)
+func (s *SelectBuilder) OrderByInt(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("int", dir)
 	return s
 }
 
 // GroupByInt make the query group by column int
-func (s *Select) GroupByInt() *Select {
-	s.internal.Groups.Add("int")
+func (s *SelectBuilder) GroupByInt() *SelectBuilder {
+	s.params.Groups.Add("int")
 	return s
 }
 
 // SelectInt8 adds Int8 to the selected column of a query
-func (s *Select) SelectInt8() *Select {
+func (s *SelectBuilder) SelectInt8() *SelectBuilder {
 	s.columns.SelectInt8 = true
 	return s
 }
 
 // OrderByInt8 set order to the query results according to column int8
-func (s *Select) OrderByInt8(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("int8", dir)
+func (s *SelectBuilder) OrderByInt8(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("int8", dir)
 	return s
 }
 
 // GroupByInt8 make the query group by column int8
-func (s *Select) GroupByInt8() *Select {
-	s.internal.Groups.Add("int8")
+func (s *SelectBuilder) GroupByInt8() *SelectBuilder {
+	s.params.Groups.Add("int8")
 	return s
 }
 
 // SelectInt16 adds Int16 to the selected column of a query
-func (s *Select) SelectInt16() *Select {
+func (s *SelectBuilder) SelectInt16() *SelectBuilder {
 	s.columns.SelectInt16 = true
 	return s
 }
 
 // OrderByInt16 set order to the query results according to column int16
-func (s *Select) OrderByInt16(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("int16", dir)
+func (s *SelectBuilder) OrderByInt16(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("int16", dir)
 	return s
 }
 
 // GroupByInt16 make the query group by column int16
-func (s *Select) GroupByInt16() *Select {
-	s.internal.Groups.Add("int16")
+func (s *SelectBuilder) GroupByInt16() *SelectBuilder {
+	s.params.Groups.Add("int16")
 	return s
 }
 
 // SelectInt32 adds Int32 to the selected column of a query
-func (s *Select) SelectInt32() *Select {
+func (s *SelectBuilder) SelectInt32() *SelectBuilder {
 	s.columns.SelectInt32 = true
 	return s
 }
 
 // OrderByInt32 set order to the query results according to column int32
-func (s *Select) OrderByInt32(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("int32", dir)
+func (s *SelectBuilder) OrderByInt32(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("int32", dir)
 	return s
 }
 
 // GroupByInt32 make the query group by column int32
-func (s *Select) GroupByInt32() *Select {
-	s.internal.Groups.Add("int32")
+func (s *SelectBuilder) GroupByInt32() *SelectBuilder {
+	s.params.Groups.Add("int32")
 	return s
 }
 
 // SelectInt64 adds Int64 to the selected column of a query
-func (s *Select) SelectInt64() *Select {
+func (s *SelectBuilder) SelectInt64() *SelectBuilder {
 	s.columns.SelectInt64 = true
 	return s
 }
 
 // OrderByInt64 set order to the query results according to column int64
-func (s *Select) OrderByInt64(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("int64", dir)
+func (s *SelectBuilder) OrderByInt64(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("int64", dir)
 	return s
 }
 
 // GroupByInt64 make the query group by column int64
-func (s *Select) GroupByInt64() *Select {
-	s.internal.Groups.Add("int64")
+func (s *SelectBuilder) GroupByInt64() *SelectBuilder {
+	s.params.Groups.Add("int64")
 	return s
 }
 
 // SelectUInt adds UInt to the selected column of a query
-func (s *Select) SelectUInt() *Select {
+func (s *SelectBuilder) SelectUInt() *SelectBuilder {
 	s.columns.SelectUInt = true
 	return s
 }
 
 // OrderByUInt set order to the query results according to column uint
-func (s *Select) OrderByUInt(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("uint", dir)
+func (s *SelectBuilder) OrderByUInt(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("uint", dir)
 	return s
 }
 
 // GroupByUInt make the query group by column uint
-func (s *Select) GroupByUInt() *Select {
-	s.internal.Groups.Add("uint")
+func (s *SelectBuilder) GroupByUInt() *SelectBuilder {
+	s.params.Groups.Add("uint")
 	return s
 }
 
 // SelectUInt8 adds UInt8 to the selected column of a query
-func (s *Select) SelectUInt8() *Select {
+func (s *SelectBuilder) SelectUInt8() *SelectBuilder {
 	s.columns.SelectUInt8 = true
 	return s
 }
 
 // OrderByUInt8 set order to the query results according to column uint8
-func (s *Select) OrderByUInt8(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("uint8", dir)
+func (s *SelectBuilder) OrderByUInt8(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("uint8", dir)
 	return s
 }
 
 // GroupByUInt8 make the query group by column uint8
-func (s *Select) GroupByUInt8() *Select {
-	s.internal.Groups.Add("uint8")
+func (s *SelectBuilder) GroupByUInt8() *SelectBuilder {
+	s.params.Groups.Add("uint8")
 	return s
 }
 
 // SelectUInt16 adds UInt16 to the selected column of a query
-func (s *Select) SelectUInt16() *Select {
+func (s *SelectBuilder) SelectUInt16() *SelectBuilder {
 	s.columns.SelectUInt16 = true
 	return s
 }
 
 // OrderByUInt16 set order to the query results according to column uint16
-func (s *Select) OrderByUInt16(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("uint16", dir)
+func (s *SelectBuilder) OrderByUInt16(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("uint16", dir)
 	return s
 }
 
 // GroupByUInt16 make the query group by column uint16
-func (s *Select) GroupByUInt16() *Select {
-	s.internal.Groups.Add("uint16")
+func (s *SelectBuilder) GroupByUInt16() *SelectBuilder {
+	s.params.Groups.Add("uint16")
 	return s
 }
 
 // SelectUInt32 adds UInt32 to the selected column of a query
-func (s *Select) SelectUInt32() *Select {
+func (s *SelectBuilder) SelectUInt32() *SelectBuilder {
 	s.columns.SelectUInt32 = true
 	return s
 }
 
 // OrderByUInt32 set order to the query results according to column uint32
-func (s *Select) OrderByUInt32(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("uint32", dir)
+func (s *SelectBuilder) OrderByUInt32(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("uint32", dir)
 	return s
 }
 
 // GroupByUInt32 make the query group by column uint32
-func (s *Select) GroupByUInt32() *Select {
-	s.internal.Groups.Add("uint32")
+func (s *SelectBuilder) GroupByUInt32() *SelectBuilder {
+	s.params.Groups.Add("uint32")
 	return s
 }
 
 // SelectUInt64 adds UInt64 to the selected column of a query
-func (s *Select) SelectUInt64() *Select {
+func (s *SelectBuilder) SelectUInt64() *SelectBuilder {
 	s.columns.SelectUInt64 = true
 	return s
 }
 
 // OrderByUInt64 set order to the query results according to column uint64
-func (s *Select) OrderByUInt64(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("uint64", dir)
+func (s *SelectBuilder) OrderByUInt64(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("uint64", dir)
 	return s
 }
 
 // GroupByUInt64 make the query group by column uint64
-func (s *Select) GroupByUInt64() *Select {
-	s.internal.Groups.Add("uint64")
+func (s *SelectBuilder) GroupByUInt64() *SelectBuilder {
+	s.params.Groups.Add("uint64")
 	return s
 }
 
 // SelectTime adds Time to the selected column of a query
-func (s *Select) SelectTime() *Select {
+func (s *SelectBuilder) SelectTime() *SelectBuilder {
 	s.columns.SelectTime = true
 	return s
 }
 
 // OrderByTime set order to the query results according to column time
-func (s *Select) OrderByTime(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("time", dir)
+func (s *SelectBuilder) OrderByTime(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("time", dir)
 	return s
 }
 
 // GroupByTime make the query group by column time
-func (s *Select) GroupByTime() *Select {
-	s.internal.Groups.Add("time")
+func (s *SelectBuilder) GroupByTime() *SelectBuilder {
+	s.params.Groups.Add("time")
 	return s
 }
 
 // SelectVarCharString adds VarCharString to the selected column of a query
-func (s *Select) SelectVarCharString() *Select {
+func (s *SelectBuilder) SelectVarCharString() *SelectBuilder {
 	s.columns.SelectVarCharString = true
 	return s
 }
 
 // OrderByVarCharString set order to the query results according to column varcharstring
-func (s *Select) OrderByVarCharString(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("varcharstring", dir)
+func (s *SelectBuilder) OrderByVarCharString(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("varcharstring", dir)
 	return s
 }
 
 // GroupByVarCharString make the query group by column varcharstring
-func (s *Select) GroupByVarCharString() *Select {
-	s.internal.Groups.Add("varcharstring")
+func (s *SelectBuilder) GroupByVarCharString() *SelectBuilder {
+	s.params.Groups.Add("varcharstring")
 	return s
 }
 
 // SelectVarCharByte adds VarCharByte to the selected column of a query
-func (s *Select) SelectVarCharByte() *Select {
+func (s *SelectBuilder) SelectVarCharByte() *SelectBuilder {
 	s.columns.SelectVarCharByte = true
 	return s
 }
 
 // OrderByVarCharByte set order to the query results according to column varcharbyte
-func (s *Select) OrderByVarCharByte(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("varcharbyte", dir)
+func (s *SelectBuilder) OrderByVarCharByte(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("varcharbyte", dir)
 	return s
 }
 
 // GroupByVarCharByte make the query group by column varcharbyte
-func (s *Select) GroupByVarCharByte() *Select {
-	s.internal.Groups.Add("varcharbyte")
+func (s *SelectBuilder) GroupByVarCharByte() *SelectBuilder {
+	s.params.Groups.Add("varcharbyte")
 	return s
 }
 
 // SelectString adds String to the selected column of a query
-func (s *Select) SelectString() *Select {
+func (s *SelectBuilder) SelectString() *SelectBuilder {
 	s.columns.SelectString = true
 	return s
 }
 
 // OrderByString set order to the query results according to column string
-func (s *Select) OrderByString(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("string", dir)
+func (s *SelectBuilder) OrderByString(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("string", dir)
 	return s
 }
 
 // GroupByString make the query group by column string
-func (s *Select) GroupByString() *Select {
-	s.internal.Groups.Add("string")
+func (s *SelectBuilder) GroupByString() *SelectBuilder {
+	s.params.Groups.Add("string")
 	return s
 }
 
 // SelectBytes adds Bytes to the selected column of a query
-func (s *Select) SelectBytes() *Select {
+func (s *SelectBuilder) SelectBytes() *SelectBuilder {
 	s.columns.SelectBytes = true
 	return s
 }
 
 // OrderByBytes set order to the query results according to column bytes
-func (s *Select) OrderByBytes(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("bytes", dir)
+func (s *SelectBuilder) OrderByBytes(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("bytes", dir)
 	return s
 }
 
 // GroupByBytes make the query group by column bytes
-func (s *Select) GroupByBytes() *Select {
-	s.internal.Groups.Add("bytes")
+func (s *SelectBuilder) GroupByBytes() *SelectBuilder {
+	s.params.Groups.Add("bytes")
 	return s
 }
 
 // SelectBool adds Bool to the selected column of a query
-func (s *Select) SelectBool() *Select {
+func (s *SelectBuilder) SelectBool() *SelectBuilder {
 	s.columns.SelectBool = true
 	return s
 }
 
 // OrderByBool set order to the query results according to column bool
-func (s *Select) OrderByBool(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("bool", dir)
+func (s *SelectBuilder) OrderByBool(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("bool", dir)
 	return s
 }
 
 // GroupByBool make the query group by column bool
-func (s *Select) GroupByBool() *Select {
-	s.internal.Groups.Add("bool")
+func (s *SelectBuilder) GroupByBool() *SelectBuilder {
+	s.params.Groups.Add("bool")
 	return s
 }
 
 // SelectPInt adds PInt to the selected column of a query
-func (s *Select) SelectPInt() *Select {
+func (s *SelectBuilder) SelectPInt() *SelectBuilder {
 	s.columns.SelectPInt = true
 	return s
 }
 
 // OrderByPInt set order to the query results according to column pint
-func (s *Select) OrderByPInt(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("pint", dir)
+func (s *SelectBuilder) OrderByPInt(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("pint", dir)
 	return s
 }
 
 // GroupByPInt make the query group by column pint
-func (s *Select) GroupByPInt() *Select {
-	s.internal.Groups.Add("pint")
+func (s *SelectBuilder) GroupByPInt() *SelectBuilder {
+	s.params.Groups.Add("pint")
 	return s
 }
 
 // SelectPInt8 adds PInt8 to the selected column of a query
-func (s *Select) SelectPInt8() *Select {
+func (s *SelectBuilder) SelectPInt8() *SelectBuilder {
 	s.columns.SelectPInt8 = true
 	return s
 }
 
 // OrderByPInt8 set order to the query results according to column pint8
-func (s *Select) OrderByPInt8(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("pint8", dir)
+func (s *SelectBuilder) OrderByPInt8(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("pint8", dir)
 	return s
 }
 
 // GroupByPInt8 make the query group by column pint8
-func (s *Select) GroupByPInt8() *Select {
-	s.internal.Groups.Add("pint8")
+func (s *SelectBuilder) GroupByPInt8() *SelectBuilder {
+	s.params.Groups.Add("pint8")
 	return s
 }
 
 // SelectPInt16 adds PInt16 to the selected column of a query
-func (s *Select) SelectPInt16() *Select {
+func (s *SelectBuilder) SelectPInt16() *SelectBuilder {
 	s.columns.SelectPInt16 = true
 	return s
 }
 
 // OrderByPInt16 set order to the query results according to column pint16
-func (s *Select) OrderByPInt16(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("pint16", dir)
+func (s *SelectBuilder) OrderByPInt16(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("pint16", dir)
 	return s
 }
 
 // GroupByPInt16 make the query group by column pint16
-func (s *Select) GroupByPInt16() *Select {
-	s.internal.Groups.Add("pint16")
+func (s *SelectBuilder) GroupByPInt16() *SelectBuilder {
+	s.params.Groups.Add("pint16")
 	return s
 }
 
 // SelectPInt32 adds PInt32 to the selected column of a query
-func (s *Select) SelectPInt32() *Select {
+func (s *SelectBuilder) SelectPInt32() *SelectBuilder {
 	s.columns.SelectPInt32 = true
 	return s
 }
 
 // OrderByPInt32 set order to the query results according to column pint32
-func (s *Select) OrderByPInt32(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("pint32", dir)
+func (s *SelectBuilder) OrderByPInt32(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("pint32", dir)
 	return s
 }
 
 // GroupByPInt32 make the query group by column pint32
-func (s *Select) GroupByPInt32() *Select {
-	s.internal.Groups.Add("pint32")
+func (s *SelectBuilder) GroupByPInt32() *SelectBuilder {
+	s.params.Groups.Add("pint32")
 	return s
 }
 
 // SelectPInt64 adds PInt64 to the selected column of a query
-func (s *Select) SelectPInt64() *Select {
+func (s *SelectBuilder) SelectPInt64() *SelectBuilder {
 	s.columns.SelectPInt64 = true
 	return s
 }
 
 // OrderByPInt64 set order to the query results according to column pint64
-func (s *Select) OrderByPInt64(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("pint64", dir)
+func (s *SelectBuilder) OrderByPInt64(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("pint64", dir)
 	return s
 }
 
 // GroupByPInt64 make the query group by column pint64
-func (s *Select) GroupByPInt64() *Select {
-	s.internal.Groups.Add("pint64")
+func (s *SelectBuilder) GroupByPInt64() *SelectBuilder {
+	s.params.Groups.Add("pint64")
 	return s
 }
 
 // SelectPUInt adds PUInt to the selected column of a query
-func (s *Select) SelectPUInt() *Select {
+func (s *SelectBuilder) SelectPUInt() *SelectBuilder {
 	s.columns.SelectPUInt = true
 	return s
 }
 
 // OrderByPUInt set order to the query results according to column puint
-func (s *Select) OrderByPUInt(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("puint", dir)
+func (s *SelectBuilder) OrderByPUInt(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("puint", dir)
 	return s
 }
 
 // GroupByPUInt make the query group by column puint
-func (s *Select) GroupByPUInt() *Select {
-	s.internal.Groups.Add("puint")
+func (s *SelectBuilder) GroupByPUInt() *SelectBuilder {
+	s.params.Groups.Add("puint")
 	return s
 }
 
 // SelectPUInt8 adds PUInt8 to the selected column of a query
-func (s *Select) SelectPUInt8() *Select {
+func (s *SelectBuilder) SelectPUInt8() *SelectBuilder {
 	s.columns.SelectPUInt8 = true
 	return s
 }
 
 // OrderByPUInt8 set order to the query results according to column puint8
-func (s *Select) OrderByPUInt8(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("puint8", dir)
+func (s *SelectBuilder) OrderByPUInt8(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("puint8", dir)
 	return s
 }
 
 // GroupByPUInt8 make the query group by column puint8
-func (s *Select) GroupByPUInt8() *Select {
-	s.internal.Groups.Add("puint8")
+func (s *SelectBuilder) GroupByPUInt8() *SelectBuilder {
+	s.params.Groups.Add("puint8")
 	return s
 }
 
 // SelectPUInt16 adds PUInt16 to the selected column of a query
-func (s *Select) SelectPUInt16() *Select {
+func (s *SelectBuilder) SelectPUInt16() *SelectBuilder {
 	s.columns.SelectPUInt16 = true
 	return s
 }
 
 // OrderByPUInt16 set order to the query results according to column puint16
-func (s *Select) OrderByPUInt16(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("puint16", dir)
+func (s *SelectBuilder) OrderByPUInt16(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("puint16", dir)
 	return s
 }
 
 // GroupByPUInt16 make the query group by column puint16
-func (s *Select) GroupByPUInt16() *Select {
-	s.internal.Groups.Add("puint16")
+func (s *SelectBuilder) GroupByPUInt16() *SelectBuilder {
+	s.params.Groups.Add("puint16")
 	return s
 }
 
 // SelectPUInt32 adds PUInt32 to the selected column of a query
-func (s *Select) SelectPUInt32() *Select {
+func (s *SelectBuilder) SelectPUInt32() *SelectBuilder {
 	s.columns.SelectPUInt32 = true
 	return s
 }
 
 // OrderByPUInt32 set order to the query results according to column puint32
-func (s *Select) OrderByPUInt32(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("puint32", dir)
+func (s *SelectBuilder) OrderByPUInt32(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("puint32", dir)
 	return s
 }
 
 // GroupByPUInt32 make the query group by column puint32
-func (s *Select) GroupByPUInt32() *Select {
-	s.internal.Groups.Add("puint32")
+func (s *SelectBuilder) GroupByPUInt32() *SelectBuilder {
+	s.params.Groups.Add("puint32")
 	return s
 }
 
 // SelectPUInt64 adds PUInt64 to the selected column of a query
-func (s *Select) SelectPUInt64() *Select {
+func (s *SelectBuilder) SelectPUInt64() *SelectBuilder {
 	s.columns.SelectPUInt64 = true
 	return s
 }
 
 // OrderByPUInt64 set order to the query results according to column puint64
-func (s *Select) OrderByPUInt64(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("puint64", dir)
+func (s *SelectBuilder) OrderByPUInt64(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("puint64", dir)
 	return s
 }
 
 // GroupByPUInt64 make the query group by column puint64
-func (s *Select) GroupByPUInt64() *Select {
-	s.internal.Groups.Add("puint64")
+func (s *SelectBuilder) GroupByPUInt64() *SelectBuilder {
+	s.params.Groups.Add("puint64")
 	return s
 }
 
 // SelectPTime adds PTime to the selected column of a query
-func (s *Select) SelectPTime() *Select {
+func (s *SelectBuilder) SelectPTime() *SelectBuilder {
 	s.columns.SelectPTime = true
 	return s
 }
 
 // OrderByPTime set order to the query results according to column ptime
-func (s *Select) OrderByPTime(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("ptime", dir)
+func (s *SelectBuilder) OrderByPTime(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("ptime", dir)
 	return s
 }
 
 // GroupByPTime make the query group by column ptime
-func (s *Select) GroupByPTime() *Select {
-	s.internal.Groups.Add("ptime")
+func (s *SelectBuilder) GroupByPTime() *SelectBuilder {
+	s.params.Groups.Add("ptime")
 	return s
 }
 
 // SelectPVarCharString adds PVarCharString to the selected column of a query
-func (s *Select) SelectPVarCharString() *Select {
+func (s *SelectBuilder) SelectPVarCharString() *SelectBuilder {
 	s.columns.SelectPVarCharString = true
 	return s
 }
 
 // OrderByPVarCharString set order to the query results according to column pvarcharstring
-func (s *Select) OrderByPVarCharString(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("pvarcharstring", dir)
+func (s *SelectBuilder) OrderByPVarCharString(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("pvarcharstring", dir)
 	return s
 }
 
 // GroupByPVarCharString make the query group by column pvarcharstring
-func (s *Select) GroupByPVarCharString() *Select {
-	s.internal.Groups.Add("pvarcharstring")
+func (s *SelectBuilder) GroupByPVarCharString() *SelectBuilder {
+	s.params.Groups.Add("pvarcharstring")
 	return s
 }
 
 // SelectPVarCharByte adds PVarCharByte to the selected column of a query
-func (s *Select) SelectPVarCharByte() *Select {
+func (s *SelectBuilder) SelectPVarCharByte() *SelectBuilder {
 	s.columns.SelectPVarCharByte = true
 	return s
 }
 
 // OrderByPVarCharByte set order to the query results according to column pvarcharbyte
-func (s *Select) OrderByPVarCharByte(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("pvarcharbyte", dir)
+func (s *SelectBuilder) OrderByPVarCharByte(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("pvarcharbyte", dir)
 	return s
 }
 
 // GroupByPVarCharByte make the query group by column pvarcharbyte
-func (s *Select) GroupByPVarCharByte() *Select {
-	s.internal.Groups.Add("pvarcharbyte")
+func (s *SelectBuilder) GroupByPVarCharByte() *SelectBuilder {
+	s.params.Groups.Add("pvarcharbyte")
 	return s
 }
 
 // SelectPString adds PString to the selected column of a query
-func (s *Select) SelectPString() *Select {
+func (s *SelectBuilder) SelectPString() *SelectBuilder {
 	s.columns.SelectPString = true
 	return s
 }
 
 // OrderByPString set order to the query results according to column pstring
-func (s *Select) OrderByPString(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("pstring", dir)
+func (s *SelectBuilder) OrderByPString(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("pstring", dir)
 	return s
 }
 
 // GroupByPString make the query group by column pstring
-func (s *Select) GroupByPString() *Select {
-	s.internal.Groups.Add("pstring")
+func (s *SelectBuilder) GroupByPString() *SelectBuilder {
+	s.params.Groups.Add("pstring")
 	return s
 }
 
 // SelectPBytes adds PBytes to the selected column of a query
-func (s *Select) SelectPBytes() *Select {
+func (s *SelectBuilder) SelectPBytes() *SelectBuilder {
 	s.columns.SelectPBytes = true
 	return s
 }
 
 // OrderByPBytes set order to the query results according to column pbytes
-func (s *Select) OrderByPBytes(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("pbytes", dir)
+func (s *SelectBuilder) OrderByPBytes(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("pbytes", dir)
 	return s
 }
 
 // GroupByPBytes make the query group by column pbytes
-func (s *Select) GroupByPBytes() *Select {
-	s.internal.Groups.Add("pbytes")
+func (s *SelectBuilder) GroupByPBytes() *SelectBuilder {
+	s.params.Groups.Add("pbytes")
 	return s
 }
 
 // SelectPBool adds PBool to the selected column of a query
-func (s *Select) SelectPBool() *Select {
+func (s *SelectBuilder) SelectPBool() *SelectBuilder {
 	s.columns.SelectPBool = true
 	return s
 }
 
 // OrderByPBool set order to the query results according to column pbool
-func (s *Select) OrderByPBool(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("pbool", dir)
+func (s *SelectBuilder) OrderByPBool(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("pbool", dir)
 	return s
 }
 
 // GroupByPBool make the query group by column pbool
-func (s *Select) GroupByPBool() *Select {
-	s.internal.Groups.Add("pbool")
+func (s *SelectBuilder) GroupByPBool() *SelectBuilder {
+	s.params.Groups.Add("pbool")
 	return s
 }
 
 // SelectSelect adds Select to the selected column of a query
-func (s *Select) SelectSelect() *Select {
+func (s *SelectBuilder) SelectSelect() *SelectBuilder {
 	s.columns.SelectSelect = true
 	return s
 }
 
 // OrderBySelect set order to the query results according to column select
-func (s *Select) OrderBySelect(dir common.OrderDir) *Select {
-	s.internal.Orders.Add("select", dir)
+func (s *SelectBuilder) OrderBySelect(dir common.OrderDir) *SelectBuilder {
+	s.params.Orders.Add("select", dir)
 	return s
 }
 
 // GroupBySelect make the query group by column select
-func (s *Select) GroupBySelect() *Select {
-	s.internal.Groups.Add("select")
+func (s *SelectBuilder) GroupBySelect() *SelectBuilder {
+	s.params.Groups.Add("select")
 	return s
 }
