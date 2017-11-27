@@ -86,7 +86,7 @@ func collectFields(st *load.Struct) []Field {
 			log.Fatalf("Creating SQL properties for type field %s: %s", st.Name, err)
 		}
 
-		log.Printf("Field '%s(%s)': '%+field'", field.Name(), fieldType, sql)
+		log.Printf("Field '%s(%s)': '%+v'", field.Name(), fieldType, sql)
 		fields = append(fields, Field{
 			Name:       field.Name(),
 			Type:       fieldType,
