@@ -94,7 +94,7 @@ type MyType struct {
 
 ## Benchmark
 
-Initial benchmark tests are available in [here](./example/bench_test.go).
+Initial benchmark tests are available in [here](./bench_test.go).
 
 #### Compared packages:
 
