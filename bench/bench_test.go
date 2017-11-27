@@ -1,4 +1,4 @@
-package orm_test
+package main
 
 import (
 	"database/sql"
@@ -152,7 +152,7 @@ func BenchmarkORMQueryLargeStruct(b *testing.B) {
 	tm := time.Now().Round(time.Millisecond).UTC()
 
 	for i := 0; i < datasetSize; i++ {
-		_, err = orm.InsertAll(&example.All{String: "xxx", Select: i, Int: i, Time: tm, Bool: true}).Exec()
+		_, err = orm.InsertAll(&example.All{String: "xxx", Select: i, Int: i, Time: tm, Bool: true, NotNil: "notnil"}).Exec()
 		require.Nil(b, err)
 	}
 
@@ -176,7 +176,7 @@ func BenchmarkGORMQueryLargeStruct(b *testing.B) {
 	tm := time.Now().Round(time.Millisecond).UTC()
 
 	for i := 0; i < datasetSize; i++ {
-		err = db.Create(&example.All{String: "xxx", Select: i, Int: i, Time: tm, Bool: true}).Error
+		err = db.Create(&example.All{String: "xxx", Select: i, Int: i, Time: tm, Bool: true, NotNil: "notnil"}).Error
 		require.Nil(b, err)
 	}
 
@@ -195,13 +195,13 @@ func BenchmarkRawQueryLargeStruct(b *testing.B) {
 	require.Nil(b, err)
 	defer db.Close()
 
-	_, err = db.Exec(`CREATE TABLE 'all' ( 'int' INTEGER PRIMARY KEY AUTOINCREMENT, 'string' VARCHAR(100) NOT NULL, 'bool' BOOLEAN, 'time' TIMESTAMP, 'select' INT )`)
+	_, err = db.Exec("CREATE TABLE  'all' ( 'auto' INTEGER PRIMARY KEY AUTOINCREMENT, 'notnil' TEXT NOT NULL, 'int' INTEGER, 'int8' INTEGER, 'int16' INTEGER, 'int32' INTEGER, 'int64' INTEGER, 'uint' INTEGER, 'uint8' INTEGER, 'uint16' INTEGER, 'uint32' INTEGER, 'uint64' INTEGER, 'time' TIMESTAMP, 'varcharstring' VARCHAR(100), 'varcharbyte' VARCHAR(100), 'string' TEXT, 'bytes' BLOB, 'bool' BOOLEAN, 'pint' INTEGER, 'pint8' INTEGER, 'pint16' INTEGER, 'pint32' INTEGER, 'pint64' INTEGER, 'puint' INTEGER, 'puint8' INTEGER, 'puint16' INTEGER, 'puint32' INTEGER, 'puint64' INTEGER, 'ptime' TIMESTAMP, 'pvarcharstring' VARCHAR(100), 'pvarcharbyte' VARCHAR(100), 'pstring' TEXT, 'pbytes' BLOB, 'pbool' BOOLEAN, 'select' INTEGER )")
 	require.Nil(b, err)
 
 	tm := time.Now().Round(time.Millisecond).UTC()
 
 	for i := 0; i < datasetSize; i++ {
-		_, err = db.Exec(`INSERT INTO 'all' ('int', 'string', 'bool', 'time', 'select') VALUES (?, ?, ?, ?, ?)`, i, "xxx", true, tm, i)
+		_, err = db.Exec(`INSERT INTO 'all' ('int', 'string', 'bool', 'time', 'select', 'notnil') VALUES (?, ?, ?, ?, ?, ?)`, i, "xxx", true, tm, i, "notnil")
 		require.Nil(b, err)
 	}
 
@@ -211,10 +211,19 @@ func BenchmarkRawQueryLargeStruct(b *testing.B) {
 		require.Nil(b, err)
 		var ps []example.All
 		for rows.Next() {
-			var p example.All
-			err := rows.Scan(&p.Int, &p.String, &p.Bool, &p.Time, &p.Select)
+			var p1, p2 example.All
+			err := rows.Scan(
+				&p1.Auto, &p1.NotNil, &p2.PInt, &p2.PInt8, &p2.PInt16,
+				&p2.PInt32, &p2.PInt64, &p2.PUInt, &p2.PUInt8, &p2.PUInt16,
+				&p2.PUInt32, &p2.PUInt64, &p2.Time, &p2.PVarCharString, &p1.VarCharByte,
+				&p1.String, &p1.Bytes, &p1.Bool,
+				&p1.PInt, &p1.PInt8, &p1.PInt16, &p1.PInt32, &p1.PInt64,
+				&p1.PUInt, &p1.PUInt8, &p1.PUInt16, &p1.PUInt32, &p1.PUInt64,
+				&p1.PTime, &p1.PVarCharString, &p1.PVarCharByte,
+				&p1.PString, &p1.PBytes, &p1.PBool, &p1.Select,
+			)
 			require.Nil(b, err)
-			ps = append(ps, p)
+			ps = append(ps, p1)
 		}
 		assert.Equal(b, datasetSize, len(ps))
 		rows.Close()

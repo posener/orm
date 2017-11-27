@@ -94,36 +94,4 @@ type MyType struct {
 
 ## Benchmark
 
-Initial benchmark tests are available in [here](./bench_test.go).
-
-#### Compared packages:
-
-- [x] posener/orm (this package)
-- [x] jinzhu/gorm
-- [x] Direct SQL commands
-
-#### Operations:
-
-- [x] INSERT
-- [X] SELECT
-- [X] SELECT with big structs
-
-### Results:
-
-```bash
-$ go test -bench . -benchtime 10s
-goos: linux
-goarch: amd64
-pkg: github.com/posener/orm
-BenchmarkORMInsert-4              	 1000000	     21634 ns/op
-BenchmarkGORMInsert-4             	  200000	     67917 ns/op
-BenchmarkRawInsert-4              	 1000000	     18546 ns/op
-BenchmarkORMQuery-4               	    5000	   2954333 ns/op
-BenchmarkGORMQuery-4              	    2000	   9880517 ns/op
-BenchmarkRawQuery-4               	    5000	   2672430 ns/op
-BenchmarkORMQueryLargeStruct-4    	    2000	   6741345 ns/op
-BenchmarkGORMQueryLargeStruct-4   	    1000	  20876834 ns/op
-BenchmarkRawQueryLargeStruct-4    	    2000	   7429866 ns/op
-PASS
-ok  	github.com/posener/orm	167.655s
-```
+See [benchmarking results](./bench).
