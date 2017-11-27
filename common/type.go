@@ -31,6 +31,7 @@ func NewType(st *load.Struct) Type {
 	}
 }
 
+// Table is SQL table name of a type
 func (t Type) Table() string {
 	return strings.ToLower(t.Name)
 }
@@ -58,10 +59,13 @@ type Field struct {
 	ImportPath string
 }
 
+// IsPointerType returns true if field is a pointer
 func (f *Field) IsPointerType() bool {
 	return len(f.Type) > 0 && f.Type[0] == '*'
 }
 
+// NonPointerType returns the non-pointer type of a filed.
+// ex, if the type is `*int`, this function will return `int`
 func (f *Field) NonPointerType() string {
 	if f.IsPointerType() {
 		return f.Type[1:]

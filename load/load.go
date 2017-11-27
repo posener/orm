@@ -2,10 +2,9 @@ package load
 
 import (
 	"errors"
+	"go/importer"
 	"go/types"
 	"log"
-
-	"go/importer"
 
 	"golang.org/x/tools/go/loader"
 )
@@ -23,6 +22,7 @@ type Struct struct {
 }
 
 var (
+	// ErrTypeNotFound is returned when the request type was not found
 	ErrTypeNotFound = errors.New("type was not found")
 )
 

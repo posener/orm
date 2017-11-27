@@ -8,6 +8,10 @@ import (
 	"github.com/posener/orm/dialect/sqlite3"
 )
 
+// Dialect is an interface to represent an SQL dialect
+// Objects that implement this interface, can convert query params, such as SelectParams or
+// UpdateParams, and convert them to an SQL statement and a list of arguments, which can be used
+// to invoke SQL Exec or Query functions.
 type Dialect interface {
 	// Name returns the name of the dialect
 	Name() string
@@ -43,6 +47,8 @@ type Generator interface {
 	// for a specific struct and specific dialect.
 	// It is used by the generation tool.
 	ColumnsStatement() string
+	// ConvertValueCode returns go code for converting value returned from the
+	// database to the given field.
 	ConvertValueCode(field *common.Field) string
 }
 

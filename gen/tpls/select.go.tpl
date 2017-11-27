@@ -7,6 +7,7 @@ import (
     "{{.Type.ImportPath}}"
 )
 
+// {{.Type.Name}}Count is a struct for counting rows of type {{.Type.Name}}
 type {{.Type.Name}}Count struct {
     {{.Type.FullName}}
     Count int64

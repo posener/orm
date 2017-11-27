@@ -16,10 +16,13 @@ type Gen struct {
 	Tp common.Type
 }
 
+// Name returns the dialect name
 func (g *Gen) Name() string {
 	return "mysql"
 }
 
+// ConvertValueCode returns go code for converting value returned from the
+// database to the given field.
 func (g *Gen) ConvertValueCode(field *common.Field) string {
 	s := tmpltType{
 		Field:             field,

@@ -7,6 +7,7 @@ import (
 	"github.com/posener/orm/common"
 )
 
+// Columns extract SQL columns list statement
 func Columns(c common.Columner) string {
 	if c == nil {
 		return "*"
@@ -28,6 +29,7 @@ func Columns(c common.Columner) string {
 	return s[:len(s)-2]
 }
 
+// Where formats an SQL WHERE statement
 func Where(c common.StatementArger) string {
 	if c == nil {
 		return ""
@@ -39,6 +41,7 @@ func Where(c common.StatementArger) string {
 	return "WHERE " + where
 }
 
+// GroupBy formats an SQL GROUP BY statement
 func GroupBy(groups []common.Group) string {
 	if len(groups) == 0 {
 		return ""
@@ -52,6 +55,7 @@ func GroupBy(groups []common.Group) string {
 	return s[:len(s)-2]
 }
 
+// OrderBy formats an SQL ORDER BY statement
 func OrderBy(orders []common.Order) string {
 	if len(orders) == 0 {
 		return ""
@@ -66,6 +70,7 @@ func OrderBy(orders []common.Order) string {
 	return s[:len(s)-2]
 }
 
+// Page formats an SQL LIMIT...OFFSET statement
 func Page(p common.Page) string {
 	if p.Limit == 0 { // why would someone ask for a page of zero size?
 		return ""
@@ -77,6 +82,7 @@ func Page(p common.Page) string {
 	return stmt
 }
 
+// AssignSets formats a list of assignments for SQL UPDATE SET statements
 func AssignSets(a common.Assignments) string {
 	if len(a) == 0 {
 		return ""
@@ -90,8 +96,8 @@ func AssignSets(a common.Assignments) string {
 	return s[:len(s)-2]
 }
 
-// AssignColumns gets an assignment list and returns the assign column names
-// separated by commas
+// AssignColumns gets an assignment list and formats the assign column names
+// for an SQL INSERT STATEMENT
 func AssignColumns(a common.Assignments) string {
 	if len(a) == 0 {
 		return ""
@@ -105,6 +111,7 @@ func AssignColumns(a common.Assignments) string {
 	return s[:len(s)-2]
 }
 
+// IfNotExists formats an SQL IF NOT EXISTS statement
 func IfNotExists(ifNotExists bool) interface{} {
 	if ifNotExists {
 		return "IF NOT EXISTS"

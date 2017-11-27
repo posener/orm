@@ -9,6 +9,7 @@ import (
 	"github.com/posener/orm/dialect/sqltypes"
 )
 
+// ColumnsStatement returns the fields parts of SQL CREATE TABLE statement
 func (g *Gen) ColumnsStatement() string {
 	fieldsStmt := make([]string, len(g.Tp.Fields))
 	for i, f := range g.Tp.Fields {
