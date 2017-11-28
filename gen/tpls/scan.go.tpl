@@ -13,11 +13,11 @@ import (
 const errMsg = "converting %s: column %d with value %v (type %T) to %s"
 
 // scanArgs are list of fields to be given to the sql Scan command
-func scan(dialect string, cols columns, rows *sql.Rows) (*{{.Type.Name}}Count, error) {
+func (c *columns) scan(dialect string, rows *sql.Rows) (*{{.Type.Name}}Count, error) {
     switch dialect {
     {{- range $_, $dialect := $.Dialects }}
     case "{{$dialect.Name}}":
-        return scan{{$dialect.Name}}(cols, rows)
+        return c.scan{{$dialect.Name}}(rows)
     {{ end -}}
     default:
         return nil, fmt.Errorf("unsupported dialect %s", dialect)
@@ -25,15 +25,15 @@ func scan(dialect string, cols columns, rows *sql.Rows) (*{{.Type.Name}}Count, e
 }
 
 {{ range $_, $dialect := $.Dialects }}
-func scan{{$dialect.Name}} (cols columns, rows *sql.Rows) (*{{$.Type.Name}}Count, error) {
+func (c *columns) scan{{$dialect.Name}} (rows *sql.Rows) (*{{$.Type.Name}}Count, error) {
     var (
         vals = values(*rows)
         row {{$.Type.Name}}Count
-        all = cols.selectAll()
+        all = c.selectAll()
         i = 0
     )
     {{ range $_, $f := $.Type.Fields }}
-    if all || cols.Select{{$f.Name}} {
+    if all || c.Select{{$f.Name}} {
         if vals[i] != nil {
 {{$dialect.ConvertValueCode $f}}
         }
@@ -41,7 +41,7 @@ func scan{{$dialect.Name}} (cols columns, rows *sql.Rows) (*{{$.Type.Name}}Count
     }
     {{ end }}
 
-    if cols.count {
+    if c.count {
         switch val := vals[i].(type) {
         case int64:
             row.Count = val

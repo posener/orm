@@ -12,27 +12,27 @@ import (
 const errMsg = "converting %s: column %d with value %v (type %T) to %s"
 
 // scanArgs are list of fields to be given to the sql Scan command
-func scan(dialect string, cols columns, rows *sql.Rows) (*PersonCount, error) {
+func (c *columns) scan(dialect string, rows *sql.Rows) (*PersonCount, error) {
 	switch dialect {
 	case "mysql":
-		return scanmysql(cols, rows)
+		return c.scanmysql(rows)
 
 	case "sqlite3":
-		return scansqlite3(cols, rows)
+		return c.scansqlite3(rows)
 	default:
 		return nil, fmt.Errorf("unsupported dialect %s", dialect)
 	}
 }
 
-func scanmysql(cols columns, rows *sql.Rows) (*PersonCount, error) {
+func (c *columns) scanmysql(rows *sql.Rows) (*PersonCount, error) {
 	var (
 		vals = values(*rows)
 		row  PersonCount
-		all  = cols.selectAll()
+		all  = c.selectAll()
 		i    = 0
 	)
 
-	if all || cols.SelectName {
+	if all || c.SelectName {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -45,7 +45,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*PersonCount, error) {
 		i++
 	}
 
-	if all || cols.SelectAge {
+	if all || c.SelectAge {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -61,7 +61,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*PersonCount, error) {
 		i++
 	}
 
-	if cols.count {
+	if c.count {
 		switch val := vals[i].(type) {
 		case int64:
 			row.Count = val
@@ -75,15 +75,15 @@ func scanmysql(cols columns, rows *sql.Rows) (*PersonCount, error) {
 	return &row, nil
 }
 
-func scansqlite3(cols columns, rows *sql.Rows) (*PersonCount, error) {
+func (c *columns) scansqlite3(rows *sql.Rows) (*PersonCount, error) {
 	var (
 		vals = values(*rows)
 		row  PersonCount
-		all  = cols.selectAll()
+		all  = c.selectAll()
 		i    = 0
 	)
 
-	if all || cols.SelectName {
+	if all || c.SelectName {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
@@ -95,7 +95,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*PersonCount, error) {
 		i++
 	}
 
-	if all || cols.SelectAge {
+	if all || c.SelectAge {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -107,7 +107,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*PersonCount, error) {
 		i++
 	}
 
-	if cols.count {
+	if c.count {
 		switch val := vals[i].(type) {
 		case int64:
 			row.Count = val

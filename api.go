@@ -1,6 +1,15 @@
 package orm
 
-import "github.com/posener/orm/common"
+import (
+	"errors"
+
+	"github.com/posener/orm/common"
+)
+
+// Errors exported by ORM package
+var (
+	ErrNotFound = errors.New("Not Found")
+)
 
 // Operators for SQL WHERE statements
 const (
