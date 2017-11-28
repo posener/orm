@@ -6,6 +6,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	api "github.com/posener/orm"
+
 	"github.com/posener/orm/example"
 )
 
@@ -99,6 +101,31 @@ func (b *SelectBuilder) Count() ([]PersonCount, error) {
 		all = append(all, *item)
 	}
 	return all, rows.Err()
+}
+
+// First returns the first row that matches the query.
+// If no row matches the query, an ErrNotFound will be returned.
+// This call cancels any paging that was set with the
+// SelectBuilder previously.
+func (b *SelectBuilder) First() (*example.Person, error) {
+	ctx := contextOrBackground(b.params.Ctx)
+	b.params.Page.Limit = 1
+	b.params.Page.Offset = 0
+	rows, err := b.query(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	found := rows.Next()
+	if !found {
+		return nil, api.ErrNotFound
+	}
+	item, err := scan(b.orm.dialect.Name(), b.columns, rows)
+	if err != nil {
+		return nil, err
+	}
+	return &item.Person, rows.Err()
 }
 
 func contextOrBackground(ctx context.Context) context.Context {

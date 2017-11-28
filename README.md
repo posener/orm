@@ -60,6 +60,9 @@ func main() {
 
     println(ps[0].Age) // Output: 1
     
+    // Get first matching row or "not found" error
+    p, err := db.Select().First()
+    
     // Delete row
     _, err = db.Delete().Where(porm.WhereName(orm.Eq, "John")).Exec()
 }
