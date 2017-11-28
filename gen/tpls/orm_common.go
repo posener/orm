@@ -15,6 +15,9 @@ type DB interface {
 	Close() error
 }
 
+// Logger is a fmt.Printf - like function
+type Logger func(string, ...interface{})
+
 // orm represents an orm of a given struct.
 // All functions available to interact with an SQL table that is related
 // to this struct, are done by an instance of this object.
@@ -98,4 +101,12 @@ func (b *DeleteBuilder) Where(w common.Where) *DeleteBuilder {
 func (b *DeleteBuilder) Context(ctx context.Context) *DeleteBuilder {
 	b.params.Ctx = ctx
 	return b
+}
+
+// log if a logger was set
+func (o *orm) log(s string, args ...interface{}) {
+	if o.logger == nil {
+		return
+	}
+	o.logger(s, args...)
 }

@@ -10,11 +10,37 @@ import (
 	"github.com/posener/orm/example"
 )
 
+// table is SQL table name
 const table = "person"
 
+// createColumnsStatements are columns definitions in different dialects
 var createColumnsStatements = map[string]string{
 	"mysql":   "`name` TEXT, `age` INTEGER",
 	"sqlite3": "'name' TEXT, 'age' INTEGER",
+}
+
+// API is the interface of the ORM object
+type API interface {
+	Close() error
+	Create() *CreateBuilder
+	Select() *SelectBuilder
+	Insert() *InsertBuilder
+	Update() *UpdateBuilder
+	Delete() *DeleteBuilder
+	InsertPerson(*example.Person) *InsertBuilder
+	UpdatePerson(*example.Person) *UpdateBuilder
+
+	Logger(Logger)
+}
+
+// Querier is the interface for a SELECT SQL statement
+type Querier interface {
+	Query() ([]example.Person, error)
+}
+
+// Counter is the interface for a SELECT SQL statement for counting purposes
+type Counter interface {
+	Count() ([]PersonCount, error)
 }
 
 // Open opens database connection

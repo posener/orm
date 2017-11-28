@@ -12,12 +12,38 @@ import (
     "{{.Type.ImportPath}}"
 )
 
+// table is SQL table name
 const table = "{{.Type.Table}}"
 
+// createColumnsStatements are columns definitions in different dialects
 var createColumnsStatements = map[string]string{
     {{ range $_, $d := .Dialects -}}
     "{{$d.Name}}": "{{$d.ColumnsStatement}}",
     {{ end -}}
+}
+
+// API is the interface of the ORM object
+type API interface {
+    Close() error
+    Create() *CreateBuilder
+    Select() *SelectBuilder
+    Insert() *InsertBuilder
+    Update() *UpdateBuilder
+    Delete() *DeleteBuilder
+    Insert{{.Type.Name}}(*{{.Type.FullName}}) *InsertBuilder
+    Update{{.Type.Name}}(*{{.Type.FullName}}) *UpdateBuilder
+
+    Logger(Logger)
+}
+
+// Querier is the interface for a SELECT SQL statement
+type Querier interface {
+    Query() ([]{{.Type.FullName}}, error)
+}
+
+// Counter is the interface for a SELECT SQL statement for counting purposes
+type Counter interface {
+    Count() ([]{{.Type.Name}}Count, error)
 }
 
 // Open opens database connection
