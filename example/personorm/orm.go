@@ -49,20 +49,20 @@ func Open(driverName, dataSourceName string) (API, error) {
 	if err != nil {
 		return nil, err
 	}
-	dialect, err := dialect.New(driverName)
+	d, err := dialect.New(driverName)
 	if err != nil {
 		return nil, err
 	}
-	return &orm{dialect: dialect, db: db}, nil
+	return &orm{dialect: d, db: db}, nil
 }
 
 // New returns an orm object from a db instance
 func New(driverName string, db DB) (API, error) {
-	dialect, err := dialect.New(driverName)
+	d, err := dialect.New(driverName)
 	if err != nil {
 		return nil, err
 	}
-	return &orm{dialect: dialect, db: db}, nil
+	return &orm{dialect: d, db: db}, nil
 }
 
 // Create returns a builder of an SQL CREATE statement
