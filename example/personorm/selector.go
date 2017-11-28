@@ -11,28 +11,55 @@ import (
 
 const errMsg = "converting %s: column %d with value %v (type %T) to %s"
 
-// scanArgs are list of fields to be given to the sql Scan command
-func (c *columns) scan(dialect string, rows *sql.Rows) (*PersonCount, error) {
+// selector selects columns for SQL queries and for parsing SQL rows
+type selector struct {
+	SelectName bool
+	SelectAge  bool
+
+	count bool // used for sql COUNT(*) column
+}
+
+// Columns are the names of selected columns
+func (s *selector) Columns() []string {
+	var cols []string
+	if s.SelectName {
+		cols = append(cols, "name")
+	}
+	if s.SelectAge {
+		cols = append(cols, "age")
+	}
+
+	return cols
+}
+
+// Count is true when a COUNT(*) column should be added to the query
+func (s *selector) Count() bool {
+	return s.count
+}
+
+// scan an SQL row to a PersonCount struct
+func (s *selector) scan(dialect string, rows *sql.Rows) (*PersonCount, error) {
 	switch dialect {
 	case "mysql":
-		return c.scanmysql(rows)
+		return s.scanmysql(rows)
 
 	case "sqlite3":
-		return c.scansqlite3(rows)
+		return s.scansqlite3(rows)
 	default:
 		return nil, fmt.Errorf("unsupported dialect %s", dialect)
 	}
 }
 
-func (c *columns) scanmysql(rows *sql.Rows) (*PersonCount, error) {
+// scanmysql scans mysql row to a Person struct
+func (s *selector) scanmysql(rows *sql.Rows) (*PersonCount, error) {
 	var (
 		vals = values(*rows)
 		row  PersonCount
-		all  = c.selectAll()
+		all  = s.selectAll()
 		i    = 0
 	)
 
-	if all || c.SelectName {
+	if all || s.SelectName {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -45,7 +72,7 @@ func (c *columns) scanmysql(rows *sql.Rows) (*PersonCount, error) {
 		i++
 	}
 
-	if all || c.SelectAge {
+	if all || s.SelectAge {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -61,7 +88,7 @@ func (c *columns) scanmysql(rows *sql.Rows) (*PersonCount, error) {
 		i++
 	}
 
-	if c.count {
+	if s.count {
 		switch val := vals[i].(type) {
 		case int64:
 			row.Count = val
@@ -75,15 +102,16 @@ func (c *columns) scanmysql(rows *sql.Rows) (*PersonCount, error) {
 	return &row, nil
 }
 
-func (c *columns) scansqlite3(rows *sql.Rows) (*PersonCount, error) {
+// scansqlite3 scans sqlite3 row to a Person struct
+func (s *selector) scansqlite3(rows *sql.Rows) (*PersonCount, error) {
 	var (
 		vals = values(*rows)
 		row  PersonCount
-		all  = c.selectAll()
+		all  = s.selectAll()
 		i    = 0
 	)
 
-	if all || c.SelectName {
+	if all || s.SelectName {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
@@ -95,7 +123,7 @@ func (c *columns) scansqlite3(rows *sql.Rows) (*PersonCount, error) {
 		i++
 	}
 
-	if all || c.SelectAge {
+	if all || s.SelectAge {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -107,7 +135,7 @@ func (c *columns) scansqlite3(rows *sql.Rows) (*PersonCount, error) {
 		i++
 	}
 
-	if c.count {
+	if s.count {
 		switch val := vals[i].(type) {
 		case int64:
 			row.Count = val
@@ -121,7 +149,12 @@ func (c *columns) scansqlite3(rows *sql.Rows) (*PersonCount, error) {
 	return &row, nil
 }
 
-// Values is a hack to the sql.Rows struct
+// selectAll returns true if no column was specifically selected
+func (s *selector) selectAll() bool {
+	return !s.SelectName && !s.SelectAge && !s.count
+}
+
+// values is a hack to the sql.Rows struct
 // since the rows struct does not expose it's lastcols values, or a way to give
 // a custom scanner to the Scan method.
 // See issue https://github.com/golang/go/issues/22544

@@ -16,9 +16,9 @@ type AllCount struct {
 
 // SelectBuilder builds an SQL SELECT statement parameters
 type SelectBuilder struct {
-	params  common.SelectParams
-	orm     *orm
-	columns columns
+	params   common.SelectParams
+	orm      *orm
+	selector selector
 }
 
 // Where applies where conditions on the query
@@ -42,7 +42,7 @@ func (b *SelectBuilder) Page(offset, limit int64) *SelectBuilder {
 
 // SelectAuto adds Auto to the selected column of a query
 func (b *SelectBuilder) SelectAuto() *SelectBuilder {
-	b.columns.SelectAuto = true
+	b.selector.SelectAuto = true
 	return b
 }
 
@@ -60,7 +60,7 @@ func (b *SelectBuilder) GroupByAuto() *SelectBuilder {
 
 // SelectNotNil adds NotNil to the selected column of a query
 func (b *SelectBuilder) SelectNotNil() *SelectBuilder {
-	b.columns.SelectNotNil = true
+	b.selector.SelectNotNil = true
 	return b
 }
 
@@ -78,7 +78,7 @@ func (b *SelectBuilder) GroupByNotNil() *SelectBuilder {
 
 // SelectInt adds Int to the selected column of a query
 func (b *SelectBuilder) SelectInt() *SelectBuilder {
-	b.columns.SelectInt = true
+	b.selector.SelectInt = true
 	return b
 }
 
@@ -96,7 +96,7 @@ func (b *SelectBuilder) GroupByInt() *SelectBuilder {
 
 // SelectInt8 adds Int8 to the selected column of a query
 func (b *SelectBuilder) SelectInt8() *SelectBuilder {
-	b.columns.SelectInt8 = true
+	b.selector.SelectInt8 = true
 	return b
 }
 
@@ -114,7 +114,7 @@ func (b *SelectBuilder) GroupByInt8() *SelectBuilder {
 
 // SelectInt16 adds Int16 to the selected column of a query
 func (b *SelectBuilder) SelectInt16() *SelectBuilder {
-	b.columns.SelectInt16 = true
+	b.selector.SelectInt16 = true
 	return b
 }
 
@@ -132,7 +132,7 @@ func (b *SelectBuilder) GroupByInt16() *SelectBuilder {
 
 // SelectInt32 adds Int32 to the selected column of a query
 func (b *SelectBuilder) SelectInt32() *SelectBuilder {
-	b.columns.SelectInt32 = true
+	b.selector.SelectInt32 = true
 	return b
 }
 
@@ -150,7 +150,7 @@ func (b *SelectBuilder) GroupByInt32() *SelectBuilder {
 
 // SelectInt64 adds Int64 to the selected column of a query
 func (b *SelectBuilder) SelectInt64() *SelectBuilder {
-	b.columns.SelectInt64 = true
+	b.selector.SelectInt64 = true
 	return b
 }
 
@@ -168,7 +168,7 @@ func (b *SelectBuilder) GroupByInt64() *SelectBuilder {
 
 // SelectUInt adds UInt to the selected column of a query
 func (b *SelectBuilder) SelectUInt() *SelectBuilder {
-	b.columns.SelectUInt = true
+	b.selector.SelectUInt = true
 	return b
 }
 
@@ -186,7 +186,7 @@ func (b *SelectBuilder) GroupByUInt() *SelectBuilder {
 
 // SelectUInt8 adds UInt8 to the selected column of a query
 func (b *SelectBuilder) SelectUInt8() *SelectBuilder {
-	b.columns.SelectUInt8 = true
+	b.selector.SelectUInt8 = true
 	return b
 }
 
@@ -204,7 +204,7 @@ func (b *SelectBuilder) GroupByUInt8() *SelectBuilder {
 
 // SelectUInt16 adds UInt16 to the selected column of a query
 func (b *SelectBuilder) SelectUInt16() *SelectBuilder {
-	b.columns.SelectUInt16 = true
+	b.selector.SelectUInt16 = true
 	return b
 }
 
@@ -222,7 +222,7 @@ func (b *SelectBuilder) GroupByUInt16() *SelectBuilder {
 
 // SelectUInt32 adds UInt32 to the selected column of a query
 func (b *SelectBuilder) SelectUInt32() *SelectBuilder {
-	b.columns.SelectUInt32 = true
+	b.selector.SelectUInt32 = true
 	return b
 }
 
@@ -240,7 +240,7 @@ func (b *SelectBuilder) GroupByUInt32() *SelectBuilder {
 
 // SelectUInt64 adds UInt64 to the selected column of a query
 func (b *SelectBuilder) SelectUInt64() *SelectBuilder {
-	b.columns.SelectUInt64 = true
+	b.selector.SelectUInt64 = true
 	return b
 }
 
@@ -258,7 +258,7 @@ func (b *SelectBuilder) GroupByUInt64() *SelectBuilder {
 
 // SelectTime adds Time to the selected column of a query
 func (b *SelectBuilder) SelectTime() *SelectBuilder {
-	b.columns.SelectTime = true
+	b.selector.SelectTime = true
 	return b
 }
 
@@ -276,7 +276,7 @@ func (b *SelectBuilder) GroupByTime() *SelectBuilder {
 
 // SelectVarCharString adds VarCharString to the selected column of a query
 func (b *SelectBuilder) SelectVarCharString() *SelectBuilder {
-	b.columns.SelectVarCharString = true
+	b.selector.SelectVarCharString = true
 	return b
 }
 
@@ -294,7 +294,7 @@ func (b *SelectBuilder) GroupByVarCharString() *SelectBuilder {
 
 // SelectVarCharByte adds VarCharByte to the selected column of a query
 func (b *SelectBuilder) SelectVarCharByte() *SelectBuilder {
-	b.columns.SelectVarCharByte = true
+	b.selector.SelectVarCharByte = true
 	return b
 }
 
@@ -312,7 +312,7 @@ func (b *SelectBuilder) GroupByVarCharByte() *SelectBuilder {
 
 // SelectString adds String to the selected column of a query
 func (b *SelectBuilder) SelectString() *SelectBuilder {
-	b.columns.SelectString = true
+	b.selector.SelectString = true
 	return b
 }
 
@@ -330,7 +330,7 @@ func (b *SelectBuilder) GroupByString() *SelectBuilder {
 
 // SelectBytes adds Bytes to the selected column of a query
 func (b *SelectBuilder) SelectBytes() *SelectBuilder {
-	b.columns.SelectBytes = true
+	b.selector.SelectBytes = true
 	return b
 }
 
@@ -348,7 +348,7 @@ func (b *SelectBuilder) GroupByBytes() *SelectBuilder {
 
 // SelectBool adds Bool to the selected column of a query
 func (b *SelectBuilder) SelectBool() *SelectBuilder {
-	b.columns.SelectBool = true
+	b.selector.SelectBool = true
 	return b
 }
 
@@ -366,7 +366,7 @@ func (b *SelectBuilder) GroupByBool() *SelectBuilder {
 
 // SelectPInt adds PInt to the selected column of a query
 func (b *SelectBuilder) SelectPInt() *SelectBuilder {
-	b.columns.SelectPInt = true
+	b.selector.SelectPInt = true
 	return b
 }
 
@@ -384,7 +384,7 @@ func (b *SelectBuilder) GroupByPInt() *SelectBuilder {
 
 // SelectPInt8 adds PInt8 to the selected column of a query
 func (b *SelectBuilder) SelectPInt8() *SelectBuilder {
-	b.columns.SelectPInt8 = true
+	b.selector.SelectPInt8 = true
 	return b
 }
 
@@ -402,7 +402,7 @@ func (b *SelectBuilder) GroupByPInt8() *SelectBuilder {
 
 // SelectPInt16 adds PInt16 to the selected column of a query
 func (b *SelectBuilder) SelectPInt16() *SelectBuilder {
-	b.columns.SelectPInt16 = true
+	b.selector.SelectPInt16 = true
 	return b
 }
 
@@ -420,7 +420,7 @@ func (b *SelectBuilder) GroupByPInt16() *SelectBuilder {
 
 // SelectPInt32 adds PInt32 to the selected column of a query
 func (b *SelectBuilder) SelectPInt32() *SelectBuilder {
-	b.columns.SelectPInt32 = true
+	b.selector.SelectPInt32 = true
 	return b
 }
 
@@ -438,7 +438,7 @@ func (b *SelectBuilder) GroupByPInt32() *SelectBuilder {
 
 // SelectPInt64 adds PInt64 to the selected column of a query
 func (b *SelectBuilder) SelectPInt64() *SelectBuilder {
-	b.columns.SelectPInt64 = true
+	b.selector.SelectPInt64 = true
 	return b
 }
 
@@ -456,7 +456,7 @@ func (b *SelectBuilder) GroupByPInt64() *SelectBuilder {
 
 // SelectPUInt adds PUInt to the selected column of a query
 func (b *SelectBuilder) SelectPUInt() *SelectBuilder {
-	b.columns.SelectPUInt = true
+	b.selector.SelectPUInt = true
 	return b
 }
 
@@ -474,7 +474,7 @@ func (b *SelectBuilder) GroupByPUInt() *SelectBuilder {
 
 // SelectPUInt8 adds PUInt8 to the selected column of a query
 func (b *SelectBuilder) SelectPUInt8() *SelectBuilder {
-	b.columns.SelectPUInt8 = true
+	b.selector.SelectPUInt8 = true
 	return b
 }
 
@@ -492,7 +492,7 @@ func (b *SelectBuilder) GroupByPUInt8() *SelectBuilder {
 
 // SelectPUInt16 adds PUInt16 to the selected column of a query
 func (b *SelectBuilder) SelectPUInt16() *SelectBuilder {
-	b.columns.SelectPUInt16 = true
+	b.selector.SelectPUInt16 = true
 	return b
 }
 
@@ -510,7 +510,7 @@ func (b *SelectBuilder) GroupByPUInt16() *SelectBuilder {
 
 // SelectPUInt32 adds PUInt32 to the selected column of a query
 func (b *SelectBuilder) SelectPUInt32() *SelectBuilder {
-	b.columns.SelectPUInt32 = true
+	b.selector.SelectPUInt32 = true
 	return b
 }
 
@@ -528,7 +528,7 @@ func (b *SelectBuilder) GroupByPUInt32() *SelectBuilder {
 
 // SelectPUInt64 adds PUInt64 to the selected column of a query
 func (b *SelectBuilder) SelectPUInt64() *SelectBuilder {
-	b.columns.SelectPUInt64 = true
+	b.selector.SelectPUInt64 = true
 	return b
 }
 
@@ -546,7 +546,7 @@ func (b *SelectBuilder) GroupByPUInt64() *SelectBuilder {
 
 // SelectPTime adds PTime to the selected column of a query
 func (b *SelectBuilder) SelectPTime() *SelectBuilder {
-	b.columns.SelectPTime = true
+	b.selector.SelectPTime = true
 	return b
 }
 
@@ -564,7 +564,7 @@ func (b *SelectBuilder) GroupByPTime() *SelectBuilder {
 
 // SelectPVarCharString adds PVarCharString to the selected column of a query
 func (b *SelectBuilder) SelectPVarCharString() *SelectBuilder {
-	b.columns.SelectPVarCharString = true
+	b.selector.SelectPVarCharString = true
 	return b
 }
 
@@ -582,7 +582,7 @@ func (b *SelectBuilder) GroupByPVarCharString() *SelectBuilder {
 
 // SelectPVarCharByte adds PVarCharByte to the selected column of a query
 func (b *SelectBuilder) SelectPVarCharByte() *SelectBuilder {
-	b.columns.SelectPVarCharByte = true
+	b.selector.SelectPVarCharByte = true
 	return b
 }
 
@@ -600,7 +600,7 @@ func (b *SelectBuilder) GroupByPVarCharByte() *SelectBuilder {
 
 // SelectPString adds PString to the selected column of a query
 func (b *SelectBuilder) SelectPString() *SelectBuilder {
-	b.columns.SelectPString = true
+	b.selector.SelectPString = true
 	return b
 }
 
@@ -618,7 +618,7 @@ func (b *SelectBuilder) GroupByPString() *SelectBuilder {
 
 // SelectPBytes adds PBytes to the selected column of a query
 func (b *SelectBuilder) SelectPBytes() *SelectBuilder {
-	b.columns.SelectPBytes = true
+	b.selector.SelectPBytes = true
 	return b
 }
 
@@ -636,7 +636,7 @@ func (b *SelectBuilder) GroupByPBytes() *SelectBuilder {
 
 // SelectPBool adds PBool to the selected column of a query
 func (b *SelectBuilder) SelectPBool() *SelectBuilder {
-	b.columns.SelectPBool = true
+	b.selector.SelectPBool = true
 	return b
 }
 
@@ -654,7 +654,7 @@ func (b *SelectBuilder) GroupByPBool() *SelectBuilder {
 
 // SelectSelect adds Select to the selected column of a query
 func (b *SelectBuilder) SelectSelect() *SelectBuilder {
-	b.columns.SelectSelect = true
+	b.selector.SelectSelect = true
 	return b
 }
 

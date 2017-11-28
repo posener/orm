@@ -16,9 +16,9 @@ type PersonCount struct {
 
 // SelectBuilder builds an SQL SELECT statement parameters
 type SelectBuilder struct {
-	params  common.SelectParams
-	orm     *orm
-	columns columns
+	params   common.SelectParams
+	orm      *orm
+	selector selector
 }
 
 // Where applies where conditions on the query
@@ -42,7 +42,7 @@ func (b *SelectBuilder) Page(offset, limit int64) *SelectBuilder {
 
 // SelectName adds Name to the selected column of a query
 func (b *SelectBuilder) SelectName() *SelectBuilder {
-	b.columns.SelectName = true
+	b.selector.SelectName = true
 	return b
 }
 
@@ -60,7 +60,7 @@ func (b *SelectBuilder) GroupByName() *SelectBuilder {
 
 // SelectAge adds Age to the selected column of a query
 func (b *SelectBuilder) SelectAge() *SelectBuilder {
-	b.columns.SelectAge = true
+	b.selector.SelectAge = true
 	return b
 }
 

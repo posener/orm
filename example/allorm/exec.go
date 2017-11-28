@@ -68,7 +68,7 @@ func (b *SelectBuilder) Query() ([]example.All, error) {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		item, err := b.columns.scan(b.orm.dialect.Name(), rows)
+		item, err := b.selector.scan(b.orm.dialect.Name(), rows)
 		if err != nil {
 			return nil, err
 		}
@@ -80,7 +80,7 @@ func (b *SelectBuilder) Query() ([]example.All, error) {
 // Count add a count column to the query
 func (b *SelectBuilder) Count() ([]AllCount, error) {
 	ctx := contextOrBackground(b.params.Ctx)
-	b.columns.count = true
+	b.selector.count = true
 	rows, err := b.query(ctx)
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (b *SelectBuilder) Count() ([]AllCount, error) {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		item, err := b.columns.scan(b.orm.dialect.Name(), rows)
+		item, err := b.selector.scan(b.orm.dialect.Name(), rows)
 		if err != nil {
 			return nil, err
 		}
@@ -121,7 +121,7 @@ func (b *SelectBuilder) First() (*example.All, error) {
 	if !found {
 		return nil, api.ErrNotFound
 	}
-	item, err := b.columns.scan(b.orm.dialect.Name(), rows)
+	item, err := b.selector.scan(b.orm.dialect.Name(), rows)
 	if err != nil {
 		return nil, err
 	}
