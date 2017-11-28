@@ -13,27 +13,27 @@ import (
 const errMsg = "converting %s: column %d with value %v (type %T) to %s"
 
 // scanArgs are list of fields to be given to the sql Scan command
-func scan(dialect string, cols columns, rows *sql.Rows) (*AllCount, error) {
+func (c *columns) scan(dialect string, rows *sql.Rows) (*AllCount, error) {
 	switch dialect {
 	case "mysql":
-		return scanmysql(cols, rows)
+		return c.scanmysql(rows)
 
 	case "sqlite3":
-		return scansqlite3(cols, rows)
+		return c.scansqlite3(rows)
 	default:
 		return nil, fmt.Errorf("unsupported dialect %s", dialect)
 	}
 }
 
-func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
+func (c *columns) scanmysql(rows *sql.Rows) (*AllCount, error) {
 	var (
 		vals = values(*rows)
 		row  AllCount
-		all  = cols.selectAll()
+		all  = c.selectAll()
 		i    = 0
 	)
 
-	if all || cols.SelectAuto {
+	if all || c.SelectAuto {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -49,7 +49,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectNotNil {
+	if all || c.SelectNotNil {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -62,7 +62,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectInt {
+	if all || c.SelectInt {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -78,7 +78,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectInt8 {
+	if all || c.SelectInt8 {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -94,7 +94,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectInt16 {
+	if all || c.SelectInt16 {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -110,7 +110,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectInt32 {
+	if all || c.SelectInt32 {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -126,7 +126,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectInt64 {
+	if all || c.SelectInt64 {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -142,7 +142,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectUInt {
+	if all || c.SelectUInt {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -158,7 +158,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectUInt8 {
+	if all || c.SelectUInt8 {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -174,7 +174,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectUInt16 {
+	if all || c.SelectUInt16 {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -190,7 +190,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectUInt32 {
+	if all || c.SelectUInt32 {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -206,7 +206,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectUInt64 {
+	if all || c.SelectUInt64 {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -222,7 +222,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectTime {
+	if all || c.SelectTime {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -238,7 +238,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectVarCharString {
+	if all || c.SelectVarCharString {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -251,7 +251,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectVarCharByte {
+	if all || c.SelectVarCharByte {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -264,7 +264,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectString {
+	if all || c.SelectString {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -277,7 +277,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectBytes {
+	if all || c.SelectBytes {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -290,7 +290,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectBool {
+	if all || c.SelectBool {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -306,7 +306,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPInt {
+	if all || c.SelectPInt {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -322,7 +322,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPInt8 {
+	if all || c.SelectPInt8 {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -338,7 +338,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPInt16 {
+	if all || c.SelectPInt16 {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -354,7 +354,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPInt32 {
+	if all || c.SelectPInt32 {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -370,7 +370,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPInt64 {
+	if all || c.SelectPInt64 {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -386,7 +386,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPUInt {
+	if all || c.SelectPUInt {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -402,7 +402,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPUInt8 {
+	if all || c.SelectPUInt8 {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -418,7 +418,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPUInt16 {
+	if all || c.SelectPUInt16 {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -434,7 +434,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPUInt32 {
+	if all || c.SelectPUInt32 {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -450,7 +450,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPUInt64 {
+	if all || c.SelectPUInt64 {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -466,7 +466,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPTime {
+	if all || c.SelectPTime {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -482,7 +482,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPVarCharString {
+	if all || c.SelectPVarCharString {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -495,7 +495,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPVarCharByte {
+	if all || c.SelectPVarCharByte {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -508,7 +508,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPString {
+	if all || c.SelectPString {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -521,7 +521,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPBytes {
+	if all || c.SelectPBytes {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -534,7 +534,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPBool {
+	if all || c.SelectPBool {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -550,7 +550,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectSelect {
+	if all || c.SelectSelect {
 		if vals[i] != nil {
 			switch val := vals[i].(type) {
 			case []byte:
@@ -566,7 +566,7 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if cols.count {
+	if c.count {
 		switch val := vals[i].(type) {
 		case int64:
 			row.Count = val
@@ -580,15 +580,15 @@ func scanmysql(cols columns, rows *sql.Rows) (*AllCount, error) {
 	return &row, nil
 }
 
-func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
+func (c *columns) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 	var (
 		vals = values(*rows)
 		row  AllCount
-		all  = cols.selectAll()
+		all  = c.selectAll()
 		i    = 0
 	)
 
-	if all || cols.SelectAuto {
+	if all || c.SelectAuto {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -600,7 +600,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectNotNil {
+	if all || c.SelectNotNil {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
@@ -612,7 +612,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectInt {
+	if all || c.SelectInt {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -624,7 +624,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectInt8 {
+	if all || c.SelectInt8 {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -636,7 +636,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectInt16 {
+	if all || c.SelectInt16 {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -648,7 +648,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectInt32 {
+	if all || c.SelectInt32 {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -660,7 +660,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectInt64 {
+	if all || c.SelectInt64 {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -672,7 +672,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectUInt {
+	if all || c.SelectUInt {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -684,7 +684,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectUInt8 {
+	if all || c.SelectUInt8 {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -696,7 +696,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectUInt16 {
+	if all || c.SelectUInt16 {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -708,7 +708,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectUInt32 {
+	if all || c.SelectUInt32 {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -720,7 +720,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectUInt64 {
+	if all || c.SelectUInt64 {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -732,7 +732,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectTime {
+	if all || c.SelectTime {
 		if vals[i] != nil {
 			val, ok := vals[i].(time.Time)
 			if !ok {
@@ -744,7 +744,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectVarCharString {
+	if all || c.SelectVarCharString {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
@@ -756,7 +756,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectVarCharByte {
+	if all || c.SelectVarCharByte {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
@@ -768,7 +768,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectString {
+	if all || c.SelectString {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
@@ -780,7 +780,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectBytes {
+	if all || c.SelectBytes {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
@@ -792,7 +792,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectBool {
+	if all || c.SelectBool {
 		if vals[i] != nil {
 			val, ok := vals[i].(bool)
 			if !ok {
@@ -804,7 +804,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPInt {
+	if all || c.SelectPInt {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -816,7 +816,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPInt8 {
+	if all || c.SelectPInt8 {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -828,7 +828,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPInt16 {
+	if all || c.SelectPInt16 {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -840,7 +840,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPInt32 {
+	if all || c.SelectPInt32 {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -852,7 +852,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPInt64 {
+	if all || c.SelectPInt64 {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -864,7 +864,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPUInt {
+	if all || c.SelectPUInt {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -876,7 +876,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPUInt8 {
+	if all || c.SelectPUInt8 {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -888,7 +888,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPUInt16 {
+	if all || c.SelectPUInt16 {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -900,7 +900,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPUInt32 {
+	if all || c.SelectPUInt32 {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -912,7 +912,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPUInt64 {
+	if all || c.SelectPUInt64 {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -924,7 +924,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPTime {
+	if all || c.SelectPTime {
 		if vals[i] != nil {
 			val, ok := vals[i].(time.Time)
 			if !ok {
@@ -936,7 +936,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPVarCharString {
+	if all || c.SelectPVarCharString {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
@@ -948,7 +948,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPVarCharByte {
+	if all || c.SelectPVarCharByte {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
@@ -960,7 +960,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPString {
+	if all || c.SelectPString {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
@@ -972,7 +972,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPBytes {
+	if all || c.SelectPBytes {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
@@ -984,7 +984,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectPBool {
+	if all || c.SelectPBool {
 		if vals[i] != nil {
 			val, ok := vals[i].(bool)
 			if !ok {
@@ -996,7 +996,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if all || cols.SelectSelect {
+	if all || c.SelectSelect {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
@@ -1008,7 +1008,7 @@ func scansqlite3(cols columns, rows *sql.Rows) (*AllCount, error) {
 		i++
 	}
 
-	if cols.count {
+	if c.count {
 		switch val := vals[i].(type) {
 		case int64:
 			row.Count = val

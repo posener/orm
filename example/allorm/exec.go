@@ -68,7 +68,7 @@ func (b *SelectBuilder) Query() ([]example.All, error) {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		item, err := scan(b.orm.dialect.Name(), b.columns, rows)
+		item, err := b.columns.scan(b.orm.dialect.Name(), rows)
 		if err != nil {
 			return nil, err
 		}
@@ -94,7 +94,7 @@ func (b *SelectBuilder) Count() ([]AllCount, error) {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		item, err := scan(b.orm.dialect.Name(), b.columns, rows)
+		item, err := b.columns.scan(b.orm.dialect.Name(), rows)
 		if err != nil {
 			return nil, err
 		}
@@ -121,7 +121,7 @@ func (b *SelectBuilder) First() (*example.All, error) {
 	if !found {
 		return nil, api.ErrNotFound
 	}
-	item, err := scan(b.orm.dialect.Name(), b.columns, rows)
+	item, err := b.columns.scan(b.orm.dialect.Name(), rows)
 	if err != nil {
 		return nil, err
 	}
