@@ -17,7 +17,7 @@ type {{.Type.Name}}Count struct {
 type SelectBuilder struct {
 	params common.SelectParams
 	orm *orm
-	columns columns
+	selector selector
 }
 
 // Where applies where conditions on the query
@@ -42,7 +42,7 @@ func (b *SelectBuilder) Page(offset, limit int64) *SelectBuilder {
 {{ range $_, $f := .Type.Fields -}}
 // Select{{$f.Name}} adds {{$f.Name}} to the selected column of a query
 func (b *SelectBuilder) Select{{$f.Name}}() *SelectBuilder {
-    b.columns.Select{{$f.Name}} = true
+    b.selector.Select{{$f.Name}} = true
     return b
 }
 

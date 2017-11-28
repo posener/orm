@@ -59,7 +59,7 @@ func (o *orm) Select() *SelectBuilder {
 		params: common.SelectParams{Table: table},
 		orm: o,
 	}
-    s.params.Columns = &s.columns
+    s.params.Columns = &s.selector
     return s
 }
 

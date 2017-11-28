@@ -1,4 +1,5 @@
 package {{.Package}}
+
 import (
 	"database/sql"
 	"database/sql/driver"
@@ -12,12 +13,36 @@ import (
 
 const errMsg = "converting %s: column %d with value %v (type %T) to %s"
 
-// scanArgs are list of fields to be given to the sql Scan command
-func (c *columns) scan(dialect string, rows *sql.Rows) (*{{.Type.Name}}Count, error) {
+// selector selects columns for SQL queries and for parsing SQL rows
+type selector struct {
+    {{ range $i, $f := .Type.Fields -}}
+    Select{{$f.Name}} bool
+    {{ end }}
+    count bool // used for sql COUNT(*) column
+}
+
+// Columns are the names of selected columns
+func (s *selector) Columns() []string {
+	var cols []string
+    {{ range $i, $f := .Type.Fields -}}
+    if s.Select{{$f.Name}} {
+        cols = append(cols, "{{$f.SQL.Column}}")
+    }
+    {{ end }}
+	return cols
+}
+
+// Count is true when a COUNT(*) column should be added to the query
+func (s *selector) Count() bool {
+    return s.count
+}
+
+// scan an SQL row to a {{.Type.Name}}Count struct
+func (s *selector) scan(dialect string, rows *sql.Rows) (*{{.Type.Name}}Count, error) {
     switch dialect {
     {{- range $_, $dialect := $.Dialects }}
     case "{{$dialect.Name}}":
-        return c.scan{{$dialect.Name}}(rows)
+        return s.scan{{$dialect.Name}}(rows)
     {{ end -}}
     default:
         return nil, fmt.Errorf("unsupported dialect %s", dialect)
@@ -25,15 +50,16 @@ func (c *columns) scan(dialect string, rows *sql.Rows) (*{{.Type.Name}}Count, er
 }
 
 {{ range $_, $dialect := $.Dialects }}
-func (c *columns) scan{{$dialect.Name}} (rows *sql.Rows) (*{{$.Type.Name}}Count, error) {
+// scan{{$dialect.Name}} scans {{$dialect.Name}} row to a {{$.Type.Name}} struct
+func (s *selector) scan{{$dialect.Name}} (rows *sql.Rows) (*{{$.Type.Name}}Count, error) {
     var (
         vals = values(*rows)
         row {{$.Type.Name}}Count
-        all = c.selectAll()
+        all = s.selectAll()
         i = 0
     )
     {{ range $_, $f := $.Type.Fields }}
-    if all || c.Select{{$f.Name}} {
+    if all || s.Select{{$f.Name}} {
         if vals[i] != nil {
 {{$dialect.ConvertValueCode $f}}
         }
@@ -41,7 +67,7 @@ func (c *columns) scan{{$dialect.Name}} (rows *sql.Rows) (*{{$.Type.Name}}Count,
     }
     {{ end }}
 
-    if c.count {
+    if s.count {
         switch val := vals[i].(type) {
         case int64:
             row.Count = val
@@ -56,7 +82,12 @@ func (c *columns) scan{{$dialect.Name}} (rows *sql.Rows) (*{{$.Type.Name}}Count,
 }
 {{ end }}
 
-// Values is a hack to the sql.Rows struct
+// selectAll returns true if no column was specifically selected
+func (s *selector) selectAll() bool {
+    return {{ range $i, $f := .Type.Fields -}} !s.Select{{$f.Name}} && {{end}} !s.count
+}
+
+// values is a hack to the sql.Rows struct
 // since the rows struct does not expose it's lastcols values, or a way to give
 // a custom scanner to the Scan method.
 // See issue https://github.com/golang/go/issues/22544
