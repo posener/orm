@@ -1,6 +1,8 @@
 package orm
 
 import (
+	"context"
+	"database/sql"
 	"errors"
 
 	"github.com/posener/orm/common"
@@ -27,3 +29,10 @@ const (
 	Asc  common.OrderDir = "ASC"
 	Desc common.OrderDir = "DESC"
 )
+
+// DB is an interface of functions of sql.DB which are used by orm struct.
+type DB interface {
+	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
+	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
+	Close() error
+}

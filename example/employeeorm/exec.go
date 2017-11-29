@@ -5,23 +5,23 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	api "github.com/posener/orm"
+	"github.com/posener/orm"
 
 	"github.com/posener/orm/example"
 )
 
 // Exec creates a table for the given struct
 func (b *CreateBuilder) Exec() (sql.Result, error) {
-	stmt, args := b.orm.dialect.Create(&b.params)
-	b.orm.log("Create: '%v' %v", stmt, args)
-	return b.orm.db.ExecContext(contextOrBackground(b.params.Ctx), stmt, args...)
+	stmt, args := b.conn.dialect.Create(&b.params)
+	b.conn.log("Create: '%v' %v", stmt, args)
+	return b.conn.db.ExecContext(contextOrBackground(b.params.Ctx), stmt, args...)
 }
 
 // query is used by the Select.Query and Select.Limit functions
 func (b *SelectBuilder) query(ctx context.Context) (*sql.Rows, error) {
-	stmt, args := b.orm.dialect.Select(&b.params)
-	b.orm.log("Query: '%v' %v", stmt, args)
-	return b.orm.db.QueryContext(ctx, stmt, args...)
+	stmt, args := b.conn.dialect.Select(&b.params)
+	b.conn.log("Query: '%v' %v", stmt, args)
+	return b.conn.db.QueryContext(ctx, stmt, args...)
 }
 
 // Exec inserts the data to the given database
@@ -29,9 +29,9 @@ func (b *InsertBuilder) Exec() (sql.Result, error) {
 	if len(b.params.Assignments) == 0 {
 		return nil, fmt.Errorf("nothing to insert")
 	}
-	stmt, args := b.orm.dialect.Insert(&b.params)
-	b.orm.log("Insert: '%v' %v", stmt, args)
-	return b.orm.db.ExecContext(contextOrBackground(b.params.Ctx), stmt, args...)
+	stmt, args := b.conn.dialect.Insert(&b.params)
+	b.conn.log("Insert: '%v' %v", stmt, args)
+	return b.conn.db.ExecContext(contextOrBackground(b.params.Ctx), stmt, args...)
 }
 
 // Exec inserts the data to the given database
@@ -39,16 +39,16 @@ func (b *UpdateBuilder) Exec() (sql.Result, error) {
 	if len(b.params.Assignments) == 0 {
 		return nil, fmt.Errorf("nothing to update")
 	}
-	stmt, args := b.orm.dialect.Update(&b.params)
-	b.orm.log("Update: '%v' %v", stmt, args)
-	return b.orm.db.ExecContext(contextOrBackground(b.params.Ctx), stmt, args...)
+	stmt, args := b.conn.dialect.Update(&b.params)
+	b.conn.log("Update: '%v' %v", stmt, args)
+	return b.conn.db.ExecContext(contextOrBackground(b.params.Ctx), stmt, args...)
 }
 
 // Exec runs the delete statement on a given database.
 func (b *DeleteBuilder) Exec() (sql.Result, error) {
-	stmt, args := b.orm.dialect.Delete(&b.params)
-	b.orm.log("Delete: '%v' %v", stmt, args)
-	return b.orm.db.ExecContext(contextOrBackground(b.params.Ctx), stmt, args...)
+	stmt, args := b.conn.dialect.Delete(&b.params)
+	b.conn.log("Delete: '%v' %v", stmt, args)
+	return b.conn.db.ExecContext(contextOrBackground(b.params.Ctx), stmt, args...)
 }
 
 // Query the database
@@ -67,7 +67,7 @@ func (b *SelectBuilder) Query() ([]example.Employee, error) {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		item, err := b.selector.scan(b.orm.dialect.Name(), rows)
+		item, err := b.selector.scan(b.conn.dialect.Name(), rows)
 		if err != nil {
 			return nil, err
 		}
@@ -93,7 +93,7 @@ func (b *SelectBuilder) Count() ([]EmployeeCount, error) {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		item, err := b.selector.scan(b.orm.dialect.Name(), rows)
+		item, err := b.selector.scan(b.conn.dialect.Name(), rows)
 		if err != nil {
 			return nil, err
 		}
@@ -118,9 +118,9 @@ func (b *SelectBuilder) First() (*example.Employee, error) {
 
 	found := rows.Next()
 	if !found {
-		return nil, api.ErrNotFound
+		return nil, orm.ErrNotFound
 	}
-	item, err := b.selector.scan(b.orm.dialect.Name(), rows)
+	item, err := b.selector.scan(b.conn.dialect.Name(), rows)
 	if err != nil {
 		return nil, err
 	}

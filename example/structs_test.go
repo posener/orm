@@ -484,7 +484,7 @@ func allDB(t *testing.T, name string) aorm.API {
 	return db
 }
 
-func conn(t *testing.T, name string) aorm.DB {
+func conn(t *testing.T, name string) orm.DB {
 	t.Helper()
 	switch name {
 	case "mysql":

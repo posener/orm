@@ -16,7 +16,7 @@ type {{.Type.Name}}Count struct {
 // SelectBuilder builds an SQL SELECT statement parameters
 type SelectBuilder struct {
 	params common.SelectParams
-	orm *orm
+	conn *conn
 	selector selector
 }
 

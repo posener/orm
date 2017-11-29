@@ -3,6 +3,8 @@ package employeeorm
 
 import (
 	"database/sql"
+
+	"github.com/posener/orm"
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect"
 
@@ -52,50 +54,50 @@ func Open(driverName, dataSourceName string) (API, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &orm{dialect: d, db: db}, nil
+	return &conn{dialect: d, db: db}, nil
 }
 
-// New returns an orm object from a db instance
-func New(driverName string, db DB) (API, error) {
+// New returns an conn object from a db instance
+func New(driverName string, db orm.DB) (API, error) {
 	d, err := dialect.New(driverName)
 	if err != nil {
 		return nil, err
 	}
-	return &orm{dialect: d, db: db}, nil
+	return &conn{dialect: d, db: db}, nil
 }
 
 // Create returns a builder of an SQL CREATE statement
-func (o *orm) Create() *CreateBuilder {
+func (c *conn) Create() *CreateBuilder {
 	return &CreateBuilder{
 		params: common.CreateParams{
 			Table:            table,
-			ColumnsStatement: createColumnsStatements[o.dialect.Name()],
+			ColumnsStatement: createColumnsStatements[c.dialect.Name()],
 		},
-		orm: o,
+		conn: c,
 	}
 }
 
 // Select returns a builder of an SQL SELECT statement
-func (o *orm) Select() *SelectBuilder {
+func (c *conn) Select() *SelectBuilder {
 	s := &SelectBuilder{
 		params: common.SelectParams{Table: table},
-		orm:    o,
+		conn:   c,
 	}
 	s.params.Columns = &s.selector
 	return s
 }
 
 // Insert returns a builder of an SQL INSERT statement
-func (o *orm) Insert() *InsertBuilder {
+func (c *conn) Insert() *InsertBuilder {
 	return &InsertBuilder{
 		params: common.InsertParams{Table: table},
-		orm:    o,
+		conn:   c,
 	}
 }
 
 // InsertEmployee returns an SQL INSERT statement builder filled with values of a given object
-func (o *orm) InsertEmployee(p *example.Employee) *InsertBuilder {
-	i := o.Insert()
+func (c *conn) InsertEmployee(p *example.Employee) *InsertBuilder {
+	i := c.Insert()
 	i.params.Assignments.Add("name", p.Name)
 	i.params.Assignments.Add("age", p.Age)
 	i.params.Assignments.Add("salary", p.Salary)
@@ -103,16 +105,16 @@ func (o *orm) InsertEmployee(p *example.Employee) *InsertBuilder {
 }
 
 // Update returns a builder of an SQL UPDATE statement
-func (o *orm) Update() *UpdateBuilder {
+func (c *conn) Update() *UpdateBuilder {
 	return &UpdateBuilder{
 		params: common.UpdateParams{Table: table},
-		orm:    o,
+		conn:   c,
 	}
 }
 
 // UpdateEmployee returns an SQL UPDATE statement builder filled with values of a given object
-func (o *orm) UpdateEmployee(p *example.Employee) *UpdateBuilder {
-	u := o.Update()
+func (c *conn) UpdateEmployee(p *example.Employee) *UpdateBuilder {
+	u := c.Update()
 	u.params.Assignments.Add("name", p.Name)
 	u.params.Assignments.Add("age", p.Age)
 	u.params.Assignments.Add("salary", p.Salary)
@@ -120,10 +122,10 @@ func (o *orm) UpdateEmployee(p *example.Employee) *UpdateBuilder {
 }
 
 // Delete returns a builder of an SQL DELETE statement
-func (o *orm) Delete() *DeleteBuilder {
+func (c *conn) Delete() *DeleteBuilder {
 	return &DeleteBuilder{
 		params: common.DeleteParams{Table: table},
-		orm:    o,
+		conn:   c,
 	}
 }
 
