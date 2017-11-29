@@ -6,6 +6,7 @@ import (
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect/mysql"
 	"github.com/posener/orm/dialect/sqlite3"
+	"github.com/posener/orm/load"
 )
 
 // Dialect is an interface to represent an SQL dialect
@@ -49,11 +50,11 @@ type Generator interface {
 	ColumnsStatement() string
 	// ConvertValueCode returns go code for converting value returned from the
 	// database to the given field.
-	ConvertValueCode(field *common.Field) string
+	ConvertValueCode(field *load.Field) string
 }
 
 // NewGen returns all known Generators
-func NewGen(tp common.Type) []Generator {
+func NewGen(tp *load.Type) []Generator {
 	return []Generator{
 		&mysql.Gen{Tp: tp},
 		&sqlite3.Gen{Tp: tp},

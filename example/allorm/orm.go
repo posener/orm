@@ -3,10 +3,9 @@ package allorm
 
 import (
 	"database/sql"
-	"time"
-
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect"
+	"time"
 
 	"github.com/posener/orm/example"
 )

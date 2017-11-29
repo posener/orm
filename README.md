@@ -80,7 +80,7 @@ go get -u github.com/posener/orm/cmd/orm
 
 Run `orm -h` to get detailed usage information.
 
-Simple use case is to run `orm -pkg mypackage -name MyStruct -dialect sqlite3`.
+Simple use case is to run `orm -pkg mypackage -name MyStruct
 
 #### go generate
 
@@ -88,7 +88,7 @@ By adding the comment aside to the type deceleration, as shown below, one could 
 to generate the ORM files for `MyType`.
 
 ```go
-//go:generate orm -name MyType -dialect sqlite3
+//go:generate orm -name MyType
 
 type MyType struct {
 	...

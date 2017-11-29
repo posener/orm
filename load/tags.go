@@ -1,4 +1,4 @@
-package common
+package load
 
 import (
 	"go/types"

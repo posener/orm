@@ -2,13 +2,11 @@ package {{.Package}}
 
 import (
     "database/sql"
-    {{ range $_, $f := .Type.Fields -}}
-    {{ if $f.ImportPath }}"{{$f.ImportPath}}"{{ end }}
-    {{- end }}
-
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect"
-
+    {{ range $_, $import := .Type.FieldsImports -}}
+    "{{$import}}"
+    {{ end }}
     "{{.Type.ImportPath}}"
 )
 
@@ -30,15 +28,15 @@ type API interface {
     Insert() *InsertBuilder
     Update() *UpdateBuilder
     Delete() *DeleteBuilder
-    Insert{{.Type.Name}}(*{{.Type.FullName}}) *InsertBuilder
-    Update{{.Type.Name}}(*{{.Type.FullName}}) *UpdateBuilder
+    Insert{{.Type.Name}}(*{{.Type.ExtTypeName}}) *InsertBuilder
+    Update{{.Type.Name}}(*{{.Type.ExtTypeName}}) *UpdateBuilder
 
     Logger(Logger)
 }
 
 // Querier is the interface for a SELECT SQL statement
 type Querier interface {
-    Query() ([]{{.Type.FullName}}, error)
+    Query() ([]{{.Type.ExtTypeName}}, error)
 }
 
 // Counter is the interface for a SELECT SQL statement for counting purposes
@@ -98,7 +96,7 @@ func (o *orm) Insert() *InsertBuilder {
 }
 
 // Insert{{.Type.Name}} returns an SQL INSERT statement builder filled with values of a given object
-func (o *orm) Insert{{.Type.Name}}(p *{{.Type.FullName}}) *InsertBuilder {
+func (o *orm) Insert{{.Type.Name}}(p *{{.Type.ExtTypeName}}) *InsertBuilder {
 	i := o.Insert()
 	{{- range $_, $f := .Type.Fields }}
 	{{- if not $f.SQL.Auto }}
@@ -117,7 +115,7 @@ func (o *orm) Update() *UpdateBuilder {
 }
 
 // Update{{.Type.Name}} returns an SQL UPDATE statement builder filled with values of a given object
-func (o *orm) Update{{.Type.Name}}(p *{{.Type.FullName}}) *UpdateBuilder {
+func (o *orm) Update{{.Type.Name}}(p *{{.Type.ExtTypeName}}) *UpdateBuilder {
 	u := o.Update()
 	{{- range $_, $f := .Type.Fields }}
     {{- if not $f.SQL.Auto }}
@@ -138,13 +136,13 @@ func (o *orm) Delete() *DeleteBuilder {
 {{- range $_, $f := .Type.Fields }}
 {{ if not $f.SQL.Auto -}}
 // Set{{$f.Name}} sets value for column {{$f.SQL.Column}} in the INSERT statement
-func (i *InsertBuilder) Set{{$f.Name}}(value {{$f.Type}}) *InsertBuilder {
+func (i *InsertBuilder) Set{{$f.Name}}(value {{$f.ExtTypeName}}) *InsertBuilder {
 	i.params.Assignments.Add("{{$f.SQL.Column}}", value)
 	return i
 }
 
 // Set{{$f.Name}} sets value for column {{$f.SQL.Column}} in the UPDATE statement
-func (u *UpdateBuilder) Set{{$f.Name}}(value {{$f.Type}}) *UpdateBuilder {
+func (u *UpdateBuilder) Set{{$f.Name}}(value {{$f.ExtTypeName}}) *UpdateBuilder {
 	u.params.Assignments.Add("{{$f.SQL.Column}}", value)
 	return u
 }

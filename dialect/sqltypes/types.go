@@ -27,6 +27,9 @@ const (
 // ex. the family of VARCHAR(10) is VARCHAR, the family of INT is INT.
 func (t Type) Family() Type {
 	m := typeFormat.FindStringSubmatch(string(t))
+	if len(m) < 2 {
+		return t
+	}
 	return Type(m[1])
 }
 

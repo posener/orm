@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-
 	api "github.com/posener/orm"
 
 	"github.com/posener/orm/example"
