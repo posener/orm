@@ -44,6 +44,12 @@ type Counter interface {
 	Count() ([]PersonCount, error)
 }
 
+// Firster is the interface for a SELECT SQL statement for getting only the
+// first item. if no item matches the query, an `orm.ErrNotFound` will be returned.
+type Firster interface {
+	First() (*example.Person, error)
+}
+
 // Open opens database connection
 func Open(driverName, dataSourceName string) (API, error) {
 	db, err := sql.Open(driverName, dataSourceName)
