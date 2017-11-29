@@ -6,13 +6,13 @@ import (
 	"strings"
 
 	"github.com/labstack/gommon/log"
-	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect/sqltypes"
+	"github.com/posener/orm/load"
 )
 
 // Gen is code generator for sqlite3 dialect
 type Gen struct {
-	Tp common.Type
+	Tp *load.Type
 }
 
 // Name returns the dialect name
@@ -22,7 +22,7 @@ func (g *Gen) Name() string {
 
 // ConvertValueCode returns go code for converting value returned from the
 // database to the given field.
-func (g *Gen) ConvertValueCode(field *common.Field) string {
+func (g *Gen) ConvertValueCode(field *load.Field) string {
 	s := tmpltType{
 		Field:       field,
 		ConvertType: g.convertType(field),
@@ -37,20 +37,20 @@ func (g *Gen) ConvertValueCode(field *common.Field) string {
 
 type tmpltType struct {
 	ConvertType string
-	Field       *common.Field
+	Field       *load.Field
 }
 
 var tmplt = template.Must(template.New("sqlite3").Parse(`
 				val, ok := vals[i].({{.ConvertType}})
 				if !ok {
-					return nil, fmt.Errorf(errMsg, "{{.Field.Name}}", i, vals[i], vals[i], "{{.Field.Type}}")
+					return nil, fmt.Errorf(errMsg, "{{.Field.Name}}", i, vals[i], vals[i], "{{.Field.ExtTypeName}}")
 				}
-				tmp := {{.Field.NonPointerType}}(val)
-				row.{{.Field.Name}} = {{if .Field.IsPointerType -}}&{{end}}tmp
+				tmp := {{.Field.ExtNonPointer}}(val)
+				row.{{.Field.Name}} = {{if .Field.IsPointer -}}&{{end}}tmp
 `))
 
 // ConvertType is the type of the field when returned by sql/driver from database
-func (g *Gen) convertType(f *common.Field) string {
+func (g *Gen) convertType(f *load.Field) string {
 	switch g.sqlType(f).Family() {
 	case sqltypes.Integer:
 		return "int64"
@@ -61,15 +61,15 @@ func (g *Gen) convertType(f *common.Field) string {
 	case sqltypes.Boolean:
 		return "bool"
 	default:
-		return f.NonPointerType()
+		return f.ExtNonPointer()
 	}
 }
 
-func (Gen) sqlType(f *common.Field) sqltypes.Type {
+func (Gen) sqlType(f *load.Field) sqltypes.Type {
 	if f.SQL.CustomType != "" {
 		return f.SQL.CustomType
 	}
-	switch f.NonPointerType() {
+	switch f.ExtNonPointer() {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
 		return sqltypes.Integer
 	case "float", "float8", "float16", "float32", "float64":
@@ -83,6 +83,7 @@ func (Gen) sqlType(f *common.Field) sqltypes.Type {
 	case "time.Time":
 		return sqltypes.TimeStamp
 	default:
+		log.Fatalf("Unknown column type for %s", f.ExtNonPointer())
 		return sqltypes.NA
 	}
 }

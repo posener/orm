@@ -8,6 +8,9 @@ go generate ./gen/...
 echo ">> Installing"
 go install ./cmd/orm
 
+echo ">> Cleaning previous generations"
+rm -r ./example/*orm
+
 echo ">> Generating ORMs..."
 go generate ./example/...
 

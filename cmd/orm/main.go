@@ -25,7 +25,7 @@ func main() {
 	if options.name == "" {
 		log.Fatal("Must give struct name")
 	}
-	st, err := load.Load(options.pkg, options.name)
+	st, err := load.Load(load.GoType{Type: options.name, ImportPath: options.pkg})
 	failOnErr(err, "load struct")
 	failOnErr(gen.Gen(st), "generating")
 }

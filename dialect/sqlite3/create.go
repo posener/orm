@@ -5,8 +5,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect/sqltypes"
+	"github.com/posener/orm/load"
 )
 
 // ColumnsStatement returns the fields parts of SQL CREATE TABLE statement
@@ -18,7 +18,7 @@ func (g *Gen) ColumnsStatement() string {
 	return strings.Join(fieldsStmt, ", ")
 }
 
-func (g *Gen) fieldCreateString(f *common.Field) string {
+func (g *Gen) fieldCreateString(f *load.Field) string {
 	sqlType := g.sqlType(f)
 	stmt := []string{fmt.Sprintf("'%s' %s", f.SQL.Column, sqlType)}
 	if f.SQL.NotNull {

@@ -9,7 +9,7 @@ import (
 
 // {{.Type.Name}}Count is a struct for counting rows of type {{.Type.Name}}
 type {{.Type.Name}}Count struct {
-    {{.Type.FullName}}
+    {{.Type.ExtTypeName}}
     Count int64
 }
 

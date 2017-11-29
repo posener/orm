@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"unsafe"
 	"fmt"
-	{{ range $_, $f := .Type.Fields -}}
-	{{ if $f.ImportPath }} "{{$f.ImportPath}}"{{ end }}
-	{{- end }}
+    {{ range $_, $import := .Type.FieldsImports -}}
+    "{{$import}}"
+    {{ end }}
 )
 
 const errMsg = "converting %s: column %d with value %v (type %T) to %s"

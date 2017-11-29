@@ -2,6 +2,24 @@ package example
 
 import "time"
 
+//go:generate orm -name Person
+
+// Person is en example struct for the ORM package
+type Person struct {
+	Name       string
+	Age        int
+	unexported bool
+}
+
+//go:generate orm -name Employee
+
+// Employee is a person who works
+// This is a test case for struct embedding
+type Employee struct {
+	Person
+	Salary int
+}
+
 //go:generate orm -name All
 
 // All is to test generation of variant fields and types

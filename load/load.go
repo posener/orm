@@ -9,18 +9,6 @@ import (
 	"golang.org/x/tools/go/loader"
 )
 
-// Struct is information about loaded struct
-type Struct struct {
-	// Name is name of struct
-	Name string
-	// Struct describes the actual struct
-	Struct *types.Struct
-	// Pkg describes the package of the struct
-	Pkg *types.Package
-	// PkgMap describes all loaded packages
-	PkgMap map[string]*types.Package
-}
-
 var (
 	// ErrTypeNotFound is returned when the request type was not found
 	ErrTypeNotFound = errors.New("type was not found")
@@ -28,7 +16,9 @@ var (
 
 // Load loads a struct with name 'structName' in a package 'pkg'
 // It returns descriptors for the package of the struct and the struct itself.
-func Load(pkg, structName string) (*Struct, error) {
+func Load(goType GoType) (*Type, error) {
+	log.Printf("Loading struct %s", goType)
+	structName := goType.NonPointer()
 	l := loader.Config{
 		AllowErrors:         true,
 		TypeCheckFuncBodies: func(_ string) bool { return false },
@@ -37,18 +27,10 @@ func Load(pkg, structName string) (*Struct, error) {
 			Importer:                 importer.Default(),
 		},
 	}
-	l.Import(pkg)
+	l.Import(goType.ImportPath)
 	p, err := l.Load()
 	if err != nil {
 		return nil, err
-	}
-
-	s := new(Struct)
-	s.Name = structName
-
-	s.PkgMap = map[string]*types.Package{}
-	for pkg := range p.AllPackages {
-		s.PkgMap[pkg.Name()] = pkg
 	}
 
 	for pkgName, pkg := range p.Imported {
@@ -56,9 +38,8 @@ func Load(pkg, structName string) (*Struct, error) {
 		for _, scope := range pkg.Scopes {
 			st := lookup(scope.Parent(), structName)
 			if st != nil {
-				s.Struct = st
-				s.Pkg = pkg.Pkg
-				return s, nil
+				tp := newType(structName, st, pkg.Pkg)
+				return tp, nil
 			}
 		}
 	}

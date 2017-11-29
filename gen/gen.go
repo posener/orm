@@ -11,7 +11,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect"
 	"github.com/posener/orm/gen/b0x"
 	"github.com/posener/orm/load"
@@ -28,9 +27,8 @@ const (
 // TemplateArgs arguments for the templates
 type TemplateArgs struct {
 	// The name	of the new created package
-	Package string
-	// CustomType describes the type of the given struct to generate code for
-	Type     common.Type
+	Package  string
+	Type     *load.Type
 	Dialects []dialect.Generator
 }
 
@@ -61,18 +59,17 @@ func init() {
 
 // Gen generates all the ORM files for a given struct in a given package.
 // st is the type descriptor of the struct
-func Gen(st *load.Struct) error {
+func Gen(tp *load.Type) error {
 	// get the package ormDir on disk
-	structPkgDir, err := packagePath(st.Pkg.Path())
+	structPkgDir, err := packagePath(tp.ImportPath)
 	if err != nil {
 		return err
 	}
 
-	tp := common.NewType(st)
 	dialects := dialect.NewGen(tp)
 
 	// the new created package name is the name of the struct with "orm" suffix
-	ormPkgName := strings.ToLower(st.Name + pkgSuffix)
+	ormPkgName := strings.ToLower(tp.Name() + pkgSuffix)
 
 	// the files will be generated in a sub package
 	ormDir := filepath.Join(structPkgDir, ormPkgName)
@@ -134,7 +131,7 @@ func packagePath(pkg string) (string, error) {
 			return pkgPath, nil
 		}
 	}
-	return "", fmt.Errorf("package path was not found")
+	return "", fmt.Errorf("package path was not found: %s", pkg)
 }
 
 func writeTemplate(tpl *template.Template, props TemplateArgs, dir string) error {
