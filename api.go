@@ -36,3 +36,6 @@ type DB interface {
 	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
 	Close() error
 }
+
+// Logger is a fmt.Printf - like function
+type Logger func(string, ...interface{})

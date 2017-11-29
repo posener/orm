@@ -31,7 +31,7 @@ type API interface {
 	InsertPerson(*example.Person) *InsertBuilder
 	UpdatePerson(*example.Person) *UpdateBuilder
 
-	Logger(Logger)
+	Logger(orm.Logger)
 }
 
 // Querier is the interface for a SELECT SQL statement

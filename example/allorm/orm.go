@@ -32,7 +32,7 @@ type API interface {
 	InsertAll(*example.All) *InsertBuilder
 	UpdateAll(*example.All) *UpdateBuilder
 
-	Logger(Logger)
+	Logger(orm.Logger)
 }
 
 // Querier is the interface for a SELECT SQL statement

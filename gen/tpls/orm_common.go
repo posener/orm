@@ -8,9 +8,6 @@ import (
 	"github.com/posener/orm/dialect"
 )
 
-// Logger is a fmt.Printf - like function
-type Logger func(string, ...interface{})
-
 // conn represents a DB connection for manipulating a given struct.
 // All functions available to interact with an SQL table that is related
 // to this struct, are done by an instance of this object.
@@ -18,7 +15,7 @@ type Logger func(string, ...interface{})
 type conn struct {
 	dialect dialect.Dialect
 	db      orm.DB
-	logger  Logger
+	logger  orm.Logger
 }
 
 func (c *conn) Close() error {
@@ -26,7 +23,7 @@ func (c *conn) Close() error {
 }
 
 // Logger sets a logger to the conn package
-func (c *conn) Logger(logger Logger) {
+func (c *conn) Logger(logger orm.Logger) {
 	c.logger = logger
 }
 

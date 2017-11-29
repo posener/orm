@@ -34,7 +34,7 @@ type API interface {
     Insert{{.Type.Name}}(*{{.Type.ExtTypeName}}) *InsertBuilder
     Update{{.Type.Name}}(*{{.Type.ExtTypeName}}) *UpdateBuilder
 
-    Logger(Logger)
+    Logger(orm.Logger)
 }
 
 // Querier is the interface for a SELECT SQL statement
