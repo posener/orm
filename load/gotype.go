@@ -5,6 +5,25 @@ import (
 	"strings"
 )
 
+var basicTypes = map[string]bool{
+	"bool":      true,
+	"int":       true,
+	"int8":      true,
+	"int16":     true,
+	"int32":     true,
+	"int64":     true,
+	"uint":      true,
+	"uint8":     true,
+	"uint16":    true,
+	"uint32":    true,
+	"uint64":    true,
+	"float32":   true,
+	"float64":   true,
+	"string":    true,
+	"[]byte":    true,
+	"time.Time": true,
+}
+
 type GoType struct {
 	Type string
 	// ImportPath is a path to add to the import section for this type
@@ -20,7 +39,7 @@ func newGoType(fullName string) GoType {
 
 func (g GoType) String() string {
 	if g.ImportPath != "" {
-		return pointer(g.Type) + g.ImportPath + "." + g.NonPointer()
+		return pointer(g.Type) + g.ImportPath + "." + g.nonPointerType()
 	}
 	return g.Type
 }
@@ -29,19 +48,19 @@ func (g GoType) String() string {
 // outside the defining package. For example: "example.Person"
 func (g GoType) ExtTypeName() string {
 	if g.Package() != "" {
-		return pointer(g.Type) + g.Package() + "." + g.NonPointer()
+		return pointer(g.Type) + g.Package() + "." + g.nonPointerType()
 	}
 	return g.Type
 }
 
-// ExtNonPointer is the full type of the imported type in it's non-pointer form,
+// NonPointer is the full type of the imported type in it's non-pointer form,
 // as used in a go code outside the defining package.
 // For example: "example.Person"
-func (g GoType) ExtNonPointer() string {
+func (g GoType) NonPointer() string {
 	if g.Package() != "" {
-		return g.Package() + "." + g.NonPointer()
+		return g.Package() + "." + g.nonPointerType()
 	}
-	return g.NonPointer()
+	return g.nonPointerType()
 }
 
 // Package is the package name of the type
@@ -57,9 +76,13 @@ func (g *GoType) IsPointer() bool {
 	return len(g.Type) > 0 && g.Type[0] == '*'
 }
 
-// NonPointer returns the non-pointer type of a filed.
+func (g *GoType) IsBasic() bool {
+	return basicTypes[g.NonPointer()]
+}
+
+// nonPointerType returns the non-pointer type of a filed.
 // ex, if the type is `*int`, this function will return `int`
-func (g *GoType) NonPointer() string {
+func (g *GoType) nonPointerType() string {
 	if g.IsPointer() {
 		return g.Type[1:]
 	}
