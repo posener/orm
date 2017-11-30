@@ -202,7 +202,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := int(val)
 				row.Auto = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "Auto", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "int", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -215,7 +215,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := string(val)
 				row.NotNil = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "NotNil", i, vals[i], vals[i], "[]byte, []byte")
+				return nil, fmt.Errorf(errMsg, "string", i, vals[i], vals[i], "[]byte, []byte")
 			}
 		}
 		i++
@@ -231,7 +231,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := int(val)
 				row.Int = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "Int", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "int", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -247,7 +247,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := int8(val)
 				row.Int8 = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "Int8", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "int8", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -263,7 +263,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := int16(val)
 				row.Int16 = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "Int16", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "int16", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -279,7 +279,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := int32(val)
 				row.Int32 = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "Int32", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "int32", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -295,7 +295,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := int64(val)
 				row.Int64 = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "Int64", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "int64", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -311,7 +311,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := uint(val)
 				row.UInt = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "UInt", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "uint", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -327,7 +327,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := uint8(val)
 				row.UInt8 = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "UInt8", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "uint8", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -343,7 +343,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := uint16(val)
 				row.UInt16 = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "UInt16", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "uint16", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -359,7 +359,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := uint32(val)
 				row.UInt32 = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "UInt32", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "uint32", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -375,7 +375,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := uint64(val)
 				row.UInt64 = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "UInt64", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "uint64", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -404,7 +404,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := string(val)
 				row.VarCharString = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "VarCharString", i, vals[i], vals[i], "[]byte, []byte")
+				return nil, fmt.Errorf(errMsg, "string", i, vals[i], vals[i], "[]byte, []byte")
 			}
 		}
 		i++
@@ -417,7 +417,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := []byte(val)
 				row.VarCharByte = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "VarCharByte", i, vals[i], vals[i], "[]byte, []byte")
+				return nil, fmt.Errorf(errMsg, "[]byte", i, vals[i], vals[i], "[]byte, []byte")
 			}
 		}
 		i++
@@ -430,7 +430,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := string(val)
 				row.String = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "String", i, vals[i], vals[i], "[]byte, []byte")
+				return nil, fmt.Errorf(errMsg, "string", i, vals[i], vals[i], "[]byte, []byte")
 			}
 		}
 		i++
@@ -443,7 +443,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := []byte(val)
 				row.Bytes = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "Bytes", i, vals[i], vals[i], "[]byte, []byte")
+				return nil, fmt.Errorf(errMsg, "[]byte", i, vals[i], vals[i], "[]byte, []byte")
 			}
 		}
 		i++
@@ -459,7 +459,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := bool(val)
 				row.Bool = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "Bool", i, vals[i], vals[i], "[]byte, bool")
+				return nil, fmt.Errorf(errMsg, "bool", i, vals[i], vals[i], "[]byte, bool")
 			}
 		}
 		i++
@@ -475,7 +475,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := int(val)
 				row.PInt = &tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "PInt", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "*int", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -491,7 +491,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := int8(val)
 				row.PInt8 = &tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "PInt8", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "*int8", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -507,7 +507,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := int16(val)
 				row.PInt16 = &tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "PInt16", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "*int16", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -523,7 +523,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := int32(val)
 				row.PInt32 = &tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "PInt32", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "*int32", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -539,7 +539,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := int64(val)
 				row.PInt64 = &tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "PInt64", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "*int64", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -555,7 +555,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := uint(val)
 				row.PUInt = &tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "PUInt", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "*uint", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -571,7 +571,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := uint8(val)
 				row.PUInt8 = &tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "PUInt8", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "*uint8", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -587,7 +587,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := uint16(val)
 				row.PUInt16 = &tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "PUInt16", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "*uint16", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -603,7 +603,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := uint32(val)
 				row.PUInt32 = &tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "PUInt32", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "*uint32", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -619,7 +619,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := uint64(val)
 				row.PUInt64 = &tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "PUInt64", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "*uint64", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -635,7 +635,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := time.Time(val)
 				row.PTime = &tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "PTime", i, vals[i], vals[i], "[]byte, time.Time")
+				return nil, fmt.Errorf(errMsg, "*Time", i, vals[i], vals[i], "[]byte, time.Time")
 			}
 		}
 		i++
@@ -648,7 +648,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := string(val)
 				row.PVarCharString = &tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "PVarCharString", i, vals[i], vals[i], "[]byte, []byte")
+				return nil, fmt.Errorf(errMsg, "*string", i, vals[i], vals[i], "[]byte, []byte")
 			}
 		}
 		i++
@@ -661,7 +661,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := []byte(val)
 				row.PVarCharByte = &tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "PVarCharByte", i, vals[i], vals[i], "[]byte, []byte")
+				return nil, fmt.Errorf(errMsg, "*[]byte", i, vals[i], vals[i], "[]byte, []byte")
 			}
 		}
 		i++
@@ -674,7 +674,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := string(val)
 				row.PString = &tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "PString", i, vals[i], vals[i], "[]byte, []byte")
+				return nil, fmt.Errorf(errMsg, "*string", i, vals[i], vals[i], "[]byte, []byte")
 			}
 		}
 		i++
@@ -687,7 +687,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := []byte(val)
 				row.PBytes = &tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "PBytes", i, vals[i], vals[i], "[]byte, []byte")
+				return nil, fmt.Errorf(errMsg, "*[]byte", i, vals[i], vals[i], "[]byte, []byte")
 			}
 		}
 		i++
@@ -703,7 +703,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := bool(val)
 				row.PBool = &tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "PBool", i, vals[i], vals[i], "[]byte, bool")
+				return nil, fmt.Errorf(errMsg, "*bool", i, vals[i], vals[i], "[]byte, bool")
 			}
 		}
 		i++
@@ -719,7 +719,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*AllCount, error) {
 				tmp := int(val)
 				row.Select = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "Select", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "int", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -752,7 +752,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "Auto", i, vals[i], vals[i], "int")
+				return nil, fmt.Errorf(errMsg, "int", i, vals[i], vals[i], "int")
 			}
 			tmp := int(val)
 			row.Auto = tmp
@@ -764,7 +764,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "NotNil", i, vals[i], vals[i], "string")
+				return nil, fmt.Errorf(errMsg, "string", i, vals[i], vals[i], "string")
 			}
 			tmp := string(val)
 			row.NotNil = tmp
@@ -776,7 +776,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "Int", i, vals[i], vals[i], "int")
+				return nil, fmt.Errorf(errMsg, "int", i, vals[i], vals[i], "int")
 			}
 			tmp := int(val)
 			row.Int = tmp
@@ -788,7 +788,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "Int8", i, vals[i], vals[i], "int8")
+				return nil, fmt.Errorf(errMsg, "int8", i, vals[i], vals[i], "int8")
 			}
 			tmp := int8(val)
 			row.Int8 = tmp
@@ -800,7 +800,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "Int16", i, vals[i], vals[i], "int16")
+				return nil, fmt.Errorf(errMsg, "int16", i, vals[i], vals[i], "int16")
 			}
 			tmp := int16(val)
 			row.Int16 = tmp
@@ -812,7 +812,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "Int32", i, vals[i], vals[i], "int32")
+				return nil, fmt.Errorf(errMsg, "int32", i, vals[i], vals[i], "int32")
 			}
 			tmp := int32(val)
 			row.Int32 = tmp
@@ -824,7 +824,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "Int64", i, vals[i], vals[i], "int64")
+				return nil, fmt.Errorf(errMsg, "int64", i, vals[i], vals[i], "int64")
 			}
 			tmp := int64(val)
 			row.Int64 = tmp
@@ -836,7 +836,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "UInt", i, vals[i], vals[i], "uint")
+				return nil, fmt.Errorf(errMsg, "uint", i, vals[i], vals[i], "uint")
 			}
 			tmp := uint(val)
 			row.UInt = tmp
@@ -848,7 +848,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "UInt8", i, vals[i], vals[i], "uint8")
+				return nil, fmt.Errorf(errMsg, "uint8", i, vals[i], vals[i], "uint8")
 			}
 			tmp := uint8(val)
 			row.UInt8 = tmp
@@ -860,7 +860,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "UInt16", i, vals[i], vals[i], "uint16")
+				return nil, fmt.Errorf(errMsg, "uint16", i, vals[i], vals[i], "uint16")
 			}
 			tmp := uint16(val)
 			row.UInt16 = tmp
@@ -872,7 +872,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "UInt32", i, vals[i], vals[i], "uint32")
+				return nil, fmt.Errorf(errMsg, "uint32", i, vals[i], vals[i], "uint32")
 			}
 			tmp := uint32(val)
 			row.UInt32 = tmp
@@ -884,7 +884,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "UInt64", i, vals[i], vals[i], "uint64")
+				return nil, fmt.Errorf(errMsg, "uint64", i, vals[i], vals[i], "uint64")
 			}
 			tmp := uint64(val)
 			row.UInt64 = tmp
@@ -908,7 +908,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "VarCharString", i, vals[i], vals[i], "string")
+				return nil, fmt.Errorf(errMsg, "string", i, vals[i], vals[i], "string")
 			}
 			tmp := string(val)
 			row.VarCharString = tmp
@@ -920,7 +920,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "VarCharByte", i, vals[i], vals[i], "[]byte")
+				return nil, fmt.Errorf(errMsg, "[]byte", i, vals[i], vals[i], "[]byte")
 			}
 			tmp := []byte(val)
 			row.VarCharByte = tmp
@@ -932,7 +932,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "String", i, vals[i], vals[i], "string")
+				return nil, fmt.Errorf(errMsg, "string", i, vals[i], vals[i], "string")
 			}
 			tmp := string(val)
 			row.String = tmp
@@ -944,7 +944,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "Bytes", i, vals[i], vals[i], "[]byte")
+				return nil, fmt.Errorf(errMsg, "[]byte", i, vals[i], vals[i], "[]byte")
 			}
 			tmp := []byte(val)
 			row.Bytes = tmp
@@ -956,7 +956,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(bool)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "Bool", i, vals[i], vals[i], "bool")
+				return nil, fmt.Errorf(errMsg, "bool", i, vals[i], vals[i], "bool")
 			}
 			tmp := bool(val)
 			row.Bool = tmp
@@ -968,7 +968,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "PInt", i, vals[i], vals[i], "*int")
+				return nil, fmt.Errorf(errMsg, "*int", i, vals[i], vals[i], "*int")
 			}
 			tmp := int(val)
 			row.PInt = &tmp
@@ -980,7 +980,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "PInt8", i, vals[i], vals[i], "*int8")
+				return nil, fmt.Errorf(errMsg, "*int8", i, vals[i], vals[i], "*int8")
 			}
 			tmp := int8(val)
 			row.PInt8 = &tmp
@@ -992,7 +992,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "PInt16", i, vals[i], vals[i], "*int16")
+				return nil, fmt.Errorf(errMsg, "*int16", i, vals[i], vals[i], "*int16")
 			}
 			tmp := int16(val)
 			row.PInt16 = &tmp
@@ -1004,7 +1004,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "PInt32", i, vals[i], vals[i], "*int32")
+				return nil, fmt.Errorf(errMsg, "*int32", i, vals[i], vals[i], "*int32")
 			}
 			tmp := int32(val)
 			row.PInt32 = &tmp
@@ -1016,7 +1016,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "PInt64", i, vals[i], vals[i], "*int64")
+				return nil, fmt.Errorf(errMsg, "*int64", i, vals[i], vals[i], "*int64")
 			}
 			tmp := int64(val)
 			row.PInt64 = &tmp
@@ -1028,7 +1028,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "PUInt", i, vals[i], vals[i], "*uint")
+				return nil, fmt.Errorf(errMsg, "*uint", i, vals[i], vals[i], "*uint")
 			}
 			tmp := uint(val)
 			row.PUInt = &tmp
@@ -1040,7 +1040,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "PUInt8", i, vals[i], vals[i], "*uint8")
+				return nil, fmt.Errorf(errMsg, "*uint8", i, vals[i], vals[i], "*uint8")
 			}
 			tmp := uint8(val)
 			row.PUInt8 = &tmp
@@ -1052,7 +1052,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "PUInt16", i, vals[i], vals[i], "*uint16")
+				return nil, fmt.Errorf(errMsg, "*uint16", i, vals[i], vals[i], "*uint16")
 			}
 			tmp := uint16(val)
 			row.PUInt16 = &tmp
@@ -1064,7 +1064,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "PUInt32", i, vals[i], vals[i], "*uint32")
+				return nil, fmt.Errorf(errMsg, "*uint32", i, vals[i], vals[i], "*uint32")
 			}
 			tmp := uint32(val)
 			row.PUInt32 = &tmp
@@ -1076,7 +1076,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "PUInt64", i, vals[i], vals[i], "*uint64")
+				return nil, fmt.Errorf(errMsg, "*uint64", i, vals[i], vals[i], "*uint64")
 			}
 			tmp := uint64(val)
 			row.PUInt64 = &tmp
@@ -1088,7 +1088,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(time.Time)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "PTime", i, vals[i], vals[i], "*time.Time")
+				return nil, fmt.Errorf(errMsg, "*Time", i, vals[i], vals[i], "*time.Time")
 			}
 			tmp := time.Time(val)
 			row.PTime = &tmp
@@ -1100,7 +1100,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "PVarCharString", i, vals[i], vals[i], "*string")
+				return nil, fmt.Errorf(errMsg, "*string", i, vals[i], vals[i], "*string")
 			}
 			tmp := string(val)
 			row.PVarCharString = &tmp
@@ -1112,7 +1112,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "PVarCharByte", i, vals[i], vals[i], "*[]byte")
+				return nil, fmt.Errorf(errMsg, "*[]byte", i, vals[i], vals[i], "*[]byte")
 			}
 			tmp := []byte(val)
 			row.PVarCharByte = &tmp
@@ -1124,7 +1124,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "PString", i, vals[i], vals[i], "*string")
+				return nil, fmt.Errorf(errMsg, "*string", i, vals[i], vals[i], "*string")
 			}
 			tmp := string(val)
 			row.PString = &tmp
@@ -1136,7 +1136,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "PBytes", i, vals[i], vals[i], "*[]byte")
+				return nil, fmt.Errorf(errMsg, "*[]byte", i, vals[i], vals[i], "*[]byte")
 			}
 			tmp := []byte(val)
 			row.PBytes = &tmp
@@ -1148,7 +1148,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(bool)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "PBool", i, vals[i], vals[i], "*bool")
+				return nil, fmt.Errorf(errMsg, "*bool", i, vals[i], vals[i], "*bool")
 			}
 			tmp := bool(val)
 			row.PBool = &tmp
@@ -1160,7 +1160,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*AllCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "Select", i, vals[i], vals[i], "int")
+				return nil, fmt.Errorf(errMsg, "int", i, vals[i], vals[i], "int")
 			}
 			tmp := int(val)
 			row.Select = tmp

@@ -109,7 +109,7 @@ func (c *conn) Insert{{.Type.Name}}(p *{{.Type.ExtTypeName}}) *InsertBuilder {
 	i := c.Insert()
 	{{- range $_, $f := .Type.Fields }}
 	{{- if not $f.SQL.Auto }}
-	i.params.Assignments.Add("{{$f.SQL.Column}}", p.{{$f.Name}})
+	i.params.Assignments.Add("{{$f.SQL.Column}}", p.{{$f.VarName}})
 	{{- end -}}
 	{{- end }}
 	return i
@@ -128,7 +128,7 @@ func (c *conn) Update{{.Type.Name}}(p *{{.Type.ExtTypeName}}) *UpdateBuilder {
 	u := c.Update()
 	{{- range $_, $f := .Type.Fields }}
     {{- if not $f.SQL.Auto }}
-	u.params.Assignments.Add("{{$f.SQL.Column}}", p.{{$f.Name}})
+	u.params.Assignments.Add("{{$f.SQL.Column}}", p.{{$f.VarName}})
 	{{- end -}}
 	{{- end }}
 	return u
@@ -144,14 +144,14 @@ func (c *conn) Delete() *DeleteBuilder {
 
 {{- range $_, $f := .Type.Fields }}
 {{ if not $f.SQL.Auto -}}
-// Set{{$f.Name}} sets value for column {{$f.SQL.Column}} in the INSERT statement
-func (i *InsertBuilder) Set{{$f.Name}}(value {{$f.ExtTypeName}}) *InsertBuilder {
+// Set{{$f.VarName}} sets value for column {{$f.SQL.Column}} in the INSERT statement
+func (i *InsertBuilder) Set{{$f.VarName}}(value {{$f.ExtTypeName}}) *InsertBuilder {
 	i.params.Assignments.Add("{{$f.SQL.Column}}", value)
 	return i
 }
 
-// Set{{$f.Name}} sets value for column {{$f.SQL.Column}} in the UPDATE statement
-func (u *UpdateBuilder) Set{{$f.Name}}(value {{$f.ExtTypeName}}) *UpdateBuilder {
+// Set{{$f.VarName}} sets value for column {{$f.SQL.Column}} in the UPDATE statement
+func (u *UpdateBuilder) Set{{$f.VarName}}(value {{$f.ExtTypeName}}) *UpdateBuilder {
 	u.params.Assignments.Add("{{$f.SQL.Column}}", value)
 	return u
 }

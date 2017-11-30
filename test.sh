@@ -9,7 +9,7 @@ echo ">> Installing"
 go install ./cmd/orm
 
 echo ">> Cleaning previous generations"
-rm -r ./example/*orm
+rm -r ./example/*orm || true
 
 echo ">> Generating ORMs..."
 go generate ./example/...

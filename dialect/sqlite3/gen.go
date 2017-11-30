@@ -45,8 +45,8 @@ var tmplt = template.Must(template.New("sqlite3").Parse(`
 				if !ok {
 					return nil, fmt.Errorf(errMsg, "{{.Field.Name}}", i, vals[i], vals[i], "{{.Field.ExtTypeName}}")
 				}
-				tmp := {{.Field.ExtNonPointer}}(val)
-				row.{{.Field.Name}} = {{if .Field.IsPointer -}}&{{end}}tmp
+				tmp := {{.Field.NonPointer}}(val)
+				row.{{.Field.VarName}} = {{if .Field.IsPointer -}}&{{end}}tmp
 `))
 
 // ConvertType is the type of the field when returned by sql/driver from database
@@ -61,7 +61,7 @@ func (g *Gen) convertType(f *load.Field) string {
 	case sqltypes.Boolean:
 		return "bool"
 	default:
-		return f.ExtNonPointer()
+		return f.NonPointer()
 	}
 }
 
@@ -69,7 +69,7 @@ func (Gen) sqlType(f *load.Field) sqltypes.Type {
 	if f.SQL.CustomType != "" {
 		return f.SQL.CustomType
 	}
-	switch f.ExtNonPointer() {
+	switch f.NonPointer() {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
 		return sqltypes.Integer
 	case "float", "float8", "float16", "float32", "float64":
@@ -83,7 +83,7 @@ func (Gen) sqlType(f *load.Field) sqltypes.Type {
 	case "time.Time":
 		return sqltypes.TimeStamp
 	default:
-		log.Fatalf("Unknown column type for %s", f.ExtNonPointer())
+		log.Fatalf("Unknown column type for %s", f.NonPointer())
 		return sqltypes.NA
 	}
 }

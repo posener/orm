@@ -12,14 +12,8 @@ import (
 var (
 	// ErrTypeNotFound is returned when the request type was not found
 	ErrTypeNotFound = errors.New("type was not found")
-)
 
-// Load loads a struct with name 'structName' in a package 'pkg'
-// It returns descriptors for the package of the struct and the struct itself.
-func Load(goType GoType) (*Type, error) {
-	log.Printf("Loading struct %s", goType)
-	structName := goType.NonPointer()
-	l := loader.Config{
+	load = loader.Config{
 		AllowErrors:         true,
 		TypeCheckFuncBodies: func(_ string) bool { return false },
 		TypeChecker: types.Config{
@@ -27,10 +21,23 @@ func Load(goType GoType) (*Type, error) {
 			Importer:                 importer.Default(),
 		},
 	}
-	l.Import(goType.ImportPath)
-	p, err := l.Load()
+)
+
+// loadStruct loads struct information from go package
+func (t *Type) loadStruct() (*types.Struct, *types.Package, error) {
+	log.Printf("Loading struct %s", t)
+	structName := t.nonPointerType()
+
+	// if import path is not define, try to import from local directory
+	importPath := t.ImportPath
+	if importPath == "" {
+		importPath = "./"
+	}
+	load.Import(importPath)
+
+	p, err := load.Load()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	for pkgName, pkg := range p.Imported {
@@ -38,12 +45,11 @@ func Load(goType GoType) (*Type, error) {
 		for _, scope := range pkg.Scopes {
 			st := lookup(scope.Parent(), structName)
 			if st != nil {
-				tp := newType(structName, st, pkg.Pkg)
-				return tp, nil
+				return st, pkg.Pkg, nil
 			}
 		}
 	}
-	return nil, ErrTypeNotFound
+	return nil, nil, ErrTypeNotFound
 }
 
 // lookup is a recursive lookup for a struct with name in a scope
