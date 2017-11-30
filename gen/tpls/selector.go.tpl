@@ -16,7 +16,7 @@ const errMsg = "converting %s: column %d with value %v (type %T) to %s"
 // selector selects columns for SQL queries and for parsing SQL rows
 type selector struct {
     {{ range $i, $f := .Type.Fields -}}
-    Select{{$f.Name}} bool
+    Select{{$f.VarName}} bool
     {{ end }}
     count bool // used for sql COUNT(*) column
 }
@@ -25,7 +25,7 @@ type selector struct {
 func (s *selector) Columns() []string {
 	var cols []string
     {{ range $i, $f := .Type.Fields -}}
-    if s.Select{{$f.Name}} {
+    if s.Select{{$f.VarName}} {
         cols = append(cols, "{{$f.SQL.Column}}")
     }
     {{ end }}
@@ -59,7 +59,7 @@ func (s *selector) scan{{$dialect.Name}} (rows *sql.Rows) (*{{$.Type.Name}}Count
         i = 0
     )
     {{ range $_, $f := $.Type.Fields }}
-    if all || s.Select{{$f.Name}} {
+    if all || s.Select{{$f.VarName}} {
         if vals[i] != nil {
 {{$dialect.ConvertValueCode $f}}
         }
@@ -84,7 +84,7 @@ func (s *selector) scan{{$dialect.Name}} (rows *sql.Rows) (*{{$.Type.Name}}Count
 
 // selectAll returns true if no column was specifically selected
 func (s *selector) selectAll() bool {
-    return {{ range $i, $f := .Type.Fields -}} !s.Select{{$f.Name}} && {{end}} !s.count
+    return {{ range $i, $f := .Type.Fields -}} !s.Select{{$f.VarName}} && {{end}} !s.count
 }
 
 // values is a hack to the sql.Rows struct

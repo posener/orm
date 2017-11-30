@@ -70,7 +70,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*EmployeeCount, error) {
 				tmp := string(val)
 				row.Name = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "Name", i, vals[i], vals[i], "[]byte, []byte")
+				return nil, fmt.Errorf(errMsg, "string", i, vals[i], vals[i], "[]byte, []byte")
 			}
 		}
 		i++
@@ -86,7 +86,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*EmployeeCount, error) {
 				tmp := int(val)
 				row.Age = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "Age", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "int", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -102,7 +102,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*EmployeeCount, error) {
 				tmp := int(val)
 				row.Salary = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "Salary", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "int", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -135,7 +135,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*EmployeeCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "Name", i, vals[i], vals[i], "string")
+				return nil, fmt.Errorf(errMsg, "string", i, vals[i], vals[i], "string")
 			}
 			tmp := string(val)
 			row.Name = tmp
@@ -147,7 +147,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*EmployeeCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "Age", i, vals[i], vals[i], "int")
+				return nil, fmt.Errorf(errMsg, "int", i, vals[i], vals[i], "int")
 			}
 			tmp := int(val)
 			row.Age = tmp
@@ -159,7 +159,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*EmployeeCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "Salary", i, vals[i], vals[i], "int")
+				return nil, fmt.Errorf(errMsg, "int", i, vals[i], vals[i], "int")
 			}
 			tmp := int(val)
 			row.Salary = tmp

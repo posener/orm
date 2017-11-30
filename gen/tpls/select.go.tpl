@@ -40,20 +40,20 @@ func (b *SelectBuilder) Page(offset, limit int64) *SelectBuilder {
 }
 
 {{ range $_, $f := .Type.Fields -}}
-// Select{{$f.Name}} adds {{$f.Name}} to the selected column of a query
-func (b *SelectBuilder) Select{{$f.Name}}() *SelectBuilder {
-    b.selector.Select{{$f.Name}} = true
+// Select{{$f.VarName}} adds {{$f.VarName}} to the selected column of a query
+func (b *SelectBuilder) Select{{$f.VarName}}() *SelectBuilder {
+    b.selector.Select{{$f.VarName}} = true
     return b
 }
 
-// OrderBy{{$f.Name}} set order to the query results according to column {{$f.SQL.Column}}
-func (b *SelectBuilder) OrderBy{{$f.Name}}(dir common.OrderDir) *SelectBuilder {
+// OrderBy{{$f.VarName}} set order to the query results according to column {{$f.SQL.Column}}
+func (b *SelectBuilder) OrderBy{{$f.VarName}}(dir common.OrderDir) *SelectBuilder {
     b.params.Orders.Add("{{$f.SQL.Column}}", dir)
     return b
 }
 
-// GroupBy{{$f.Name}} make the query group by column {{$f.SQL.Column}}
-func (b *SelectBuilder) GroupBy{{$f.Name}}() *SelectBuilder {
+// GroupBy{{$f.VarName}} make the query group by column {{$f.SQL.Column}}
+func (b *SelectBuilder) GroupBy{{$f.VarName}}() *SelectBuilder {
     b.params.Groups.Add("{{$f.SQL.Column}}")
     return b
 }

@@ -69,7 +69,7 @@ func Gen(tp *load.Type) error {
 	dialects := dialect.NewGen(tp)
 
 	// the new created package name is the name of the struct with "orm" suffix
-	ormPkgName := strings.ToLower(tp.Name() + pkgSuffix)
+	ormPkgName := strings.ToLower(tp.Name + pkgSuffix)
 
 	// the files will be generated in a sub package
 	ormDir := filepath.Join(structPkgDir, ormPkgName)

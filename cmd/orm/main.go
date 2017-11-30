@@ -10,24 +10,26 @@ import (
 
 var (
 	options struct {
-		pkg  string
-		name string
+		typeName string
 	}
 )
 
 func init() {
-	flag.StringVar(&options.pkg, "pkg", ".", "package of struct")
-	flag.StringVar(&options.name, "name", "", "struct name")
+	flag.StringVar(&options.typeName, "type", "", `Type name.
+	Might be of the form '<pkg>.<type>' or just '<type>'. Where:
+	- <pkg> can be either package name (e.x 'github.com/repository/project/package')
+	  or relative path (e.x './' or '../package').
+	- <type> should be the type name.`)
 	flag.Parse()
 }
 
 func main() {
-	if options.name == "" {
-		log.Fatal("Must give struct name")
+	if options.typeName == "" {
+		log.Fatal("Must give type full name")
 	}
-	st, err := load.Load(load.GoType{Type: options.name, ImportPath: options.pkg})
-	failOnErr(err, "load struct")
-	failOnErr(gen.Gen(st), "generating")
+	tp, err := load.New(options.typeName)
+	failOnErr(err, "load type")
+	failOnErr(gen.Gen(tp), "generating")
 }
 
 func failOnErr(err error, msg string) {
