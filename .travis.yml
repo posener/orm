@@ -6,20 +6,17 @@ go:
   - 1.9
 
 services:
-  - docker
+  - mysql
 
 env:
   global:
     - TRAVIS=1
-    - DB_PASSWORD=secret
-    - DB_DATABASE=test
-    - MYSQL_PORT=19423
-    - MYSQL_ADDR=root:${DB_PASSWORD}@(127.0.0.1:${MYSQL_PORT})/${DB_DATABASE}
+    - MYSQL_ADDR=travis:@(127.0.0.1:3306)/test
 
 before_install:
   - go get -u -t ./...
   - go get -u github.com/UnnoTed/fileb0x
-  - ./scripts/start-mysql.sh
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS test;'
 
 script:
   - ./test.sh
