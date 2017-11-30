@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGoType(t *testing.T) {
+func TestType(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		typeName        string

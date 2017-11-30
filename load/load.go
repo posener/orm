@@ -6,6 +6,10 @@ import (
 	"go/types"
 	"log"
 
+	"sync"
+
+	"fmt"
+
 	"golang.org/x/tools/go/loader"
 )
 
@@ -13,7 +17,7 @@ var (
 	// ErrTypeNotFound is returned when the request type was not found
 	ErrTypeNotFound = errors.New("type was not found")
 
-	load = loader.Config{
+	loadConfig = loader.Config{
 		AllowErrors:         true,
 		TypeCheckFuncBodies: func(_ string) bool { return false },
 		TypeChecker: types.Config{
@@ -21,7 +25,15 @@ var (
 			Importer:                 importer.Default(),
 		},
 	}
+	loadMu sync.Mutex
 )
+
+func loadProgram(importPath string) (*loader.Program, error) {
+	loadMu.Lock()
+	defer loadMu.Unlock()
+	loadConfig.Import(importPath)
+	return loadConfig.Load()
+}
 
 // loadStruct loads struct information from go package
 func (t *Type) loadStruct() (*types.Struct, *types.Package, error) {
@@ -33,11 +45,9 @@ func (t *Type) loadStruct() (*types.Struct, *types.Package, error) {
 	if importPath == "" {
 		importPath = "./"
 	}
-	load.Import(importPath)
-
-	p, err := load.Load()
+	p, err := loadProgram(importPath)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("loading program: %s", err)
 	}
 
 	for pkgName, pkg := range p.Imported {
