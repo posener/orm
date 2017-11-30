@@ -15,7 +15,11 @@ var (
 )
 
 func init() {
-	flag.StringVar(&options.typeName, "type", "", "type full name")
+	flag.StringVar(&options.typeName, "type", "", `Type name.
+	Might be of the form '<pkg>.<type>' or just '<type>'. Where:
+	- <pkg> can be either package name (e.x 'github.com/repository/project/package')
+	  or relative path (e.x './' or '../package').
+	- <type> should be the type name.`)
 	flag.Parse()
 }
 
