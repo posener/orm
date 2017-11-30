@@ -18,12 +18,6 @@ func TestLoad(t *testing.T) {
 		wantErr        bool
 	}{
 		{
-			// IMPORTANT: this test must be first, otherwise the package is loaded and the
-			// test will not return an error as it should
-			typeName: "nosuchpkg.Person",
-			wantErr:  true,
-		},
-		{
 			typeName: "github.com/posener/orm/example.NoOne",
 			wantErr:  true,
 		},
