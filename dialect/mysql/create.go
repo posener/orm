@@ -22,7 +22,7 @@ func (g *Gen) ColumnsStatement(tp *load.Type) string {
 		}
 	}
 	for _, f := range refs {
-		stmts = append(stmts, g.referenceString(f))
+		stmts = append(stmts, g.referenceString(f)...)
 	}
 	return strings.Join(stmts, ", ")
 }
@@ -48,7 +48,7 @@ func (g *Gen) fieldCreateString(f *load.Field) string {
 	return strings.Join(stmt, " ")
 }
 
-func (g *Gen) referenceString(f *load.Field) string {
+func (g *Gen) referenceString(f *load.Field) []string {
 	refType := f.Type
 	pk := refType.PrimaryKey
 	if pk == nil {
@@ -60,5 +60,8 @@ func (g *Gen) referenceString(f *load.Field) string {
 		refTable   = refType.Table()
 		refColumn  = pk.Column()
 	)
-	return fmt.Sprintf("%s %s FOREIGN KEY REFERENCES %s(%s)", columnName, columnType, refTable, refColumn)
+	return []string{
+		fmt.Sprintf("%s %s", columnName, columnType),
+		fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s(%s)", columnName, refTable, refColumn),
+	}
 }

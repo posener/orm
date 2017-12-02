@@ -16,7 +16,7 @@ const table = "loaner"
 
 // createColumnsStatements are columns definitions in different dialects
 var createColumnsStatements = map[string]string{
-	"mysql":   "`id` INTEGER PRIMARY KEY AUTO_INCREMENT, `name` TEXT, book_id INTEGER FOREIGN KEY REFERENCES book(id)",
+	"mysql":   "`id` INTEGER PRIMARY KEY AUTO_INCREMENT, `name` TEXT, book_id INTEGER, FOREIGN KEY (book_id) REFERENCES book(id)",
 	"sqlite3": "'id' INTEGER PRIMARY KEY AUTOINCREMENT, 'name' TEXT, book_id INTEGER, FOREIGN KEY (book_id) REFERENCES book(id)",
 }
 

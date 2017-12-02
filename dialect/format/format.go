@@ -126,7 +126,7 @@ func Join(table string, c common.Columner) string {
 		conds  []string
 	)
 	for _, j := range joins {
-		tables = append(tables, fmt.Sprintf("'%s'", j.RefTable))
+		tables = append(tables, fmt.Sprintf("`%s`", j.RefTable))
 		conds = append(conds, fmt.Sprintf("`%s`.`%s` = `%s`.`%s`", table, j.Column, j.RefTable, j.RefColumn))
 	}
 	return fmt.Sprintf("JOIN (%s) ON (%s)",
