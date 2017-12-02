@@ -47,11 +47,11 @@ var tmplt = template.Must(template.New("sqlite3").Parse(`
 				switch val := vals[i].(type) {
 				case []byte:
 					tmp := {{.ConvertFuncString}}
-					row.{{.Field.VarName}} = {{if .Field.IsPointer}}&{{end}}tmp
+					row.{{.Field.Name}} = {{if .Field.Type.IsPointer}}&{{end}}tmp
 				{{- if ne .ConvertType "[]byte" }}
 				case {{.ConvertType}}:
-					tmp := {{.Field.NonPointer}}(val)
-					row.{{.Field.VarName}} = {{if .Field.IsPointer -}}&{{end}}tmp
+					tmp := {{.Field.Type.NonPointer}}(val)
+					row.{{.Field.Name}} = {{if .Field.Type.IsPointer -}}&{{end}}tmp
 				{{- end }}
 				default:
 					return nil, fmt.Errorf(errMsg, "{{.Field.Name}}", i, vals[i], vals[i], "[]byte, {{.ConvertType}}")
@@ -60,7 +60,7 @@ var tmplt = template.Must(template.New("sqlite3").Parse(`
 
 // convertFuncString is a function for converting the data from SQL to the right type
 func (g *Gen) convertFuncString(f *load.Field) string {
-	switch tp := f.NonPointer(); tp {
+	switch tp := strings.TrimLeft(f.SetType(), "*"); tp {
 	case "string":
 		return "string(val)"
 	case "[]byte":
@@ -89,15 +89,15 @@ func (g *Gen) convertType(f *load.Field) string {
 	case sqltypes.Boolean:
 		return "bool"
 	default:
-		return f.NonPointer()
+		return f.Type.NonPointer()
 	}
 }
 
 func (Gen) sqlType(f *load.Field) sqltypes.Type {
-	if f.SQL.CustomType != "" {
-		return f.SQL.CustomType
+	if custom := f.SQL.CustomType; custom != "" {
+		return custom
 	}
-	switch f.NonPointer() {
+	switch typeName := strings.TrimLeft(f.SetType(), "*"); typeName {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
 		return sqltypes.Integer
 	case "float", "float8", "float16", "float32", "float64":
@@ -111,7 +111,7 @@ func (Gen) sqlType(f *load.Field) sqltypes.Type {
 	case "time.Time":
 		return sqltypes.DateTime + "(3)"
 	default:
-		log.Fatalf("Unknown column type for %s", f.NonPointer())
+		log.Fatalf("Unknown column type for %s", typeName)
 		return sqltypes.NA
 	}
 }

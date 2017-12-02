@@ -231,6 +231,10 @@ func (c *columner) Columns() []string {
 	return c.columns
 }
 
+func (c *columner) Joins() []common.Join {
+	return nil
+}
+
 func (c *columner) Count() bool {
 	return c.count
 }

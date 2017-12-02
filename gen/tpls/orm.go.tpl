@@ -1,16 +1,13 @@
 package {{.Package}}
 
 import (
-    "database/sql"
-    {{ range $_, $import := .Type.FieldsImports -}}
+    {{ range $_, $import := .Type.Imports -}}
     "{{$import}}"
     {{ end }}
-
+    "database/sql"
 	"github.com/posener/orm"
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect"
-
-    "{{.Type.ImportPath}}"
 )
 
 // table is SQL table name
@@ -37,7 +34,7 @@ type API interface {
 
 // Querier is the interface for a SELECT SQL statement
 type Querier interface {
-    Query() ([]{{.Type.ExtTypeName}}, error)
+    Query() ([]{{.Type.ExtName}}, error)
 }
 
 // Counter is the interface for a SELECT SQL statement for counting purposes
@@ -48,7 +45,7 @@ type Counter interface {
 // Firster is the interface for a SELECT SQL statement for getting only the
 // first item. if no item matches the query, an `orm.ErrNotFound` will be returned.
 type Firster interface {
-	First() (*{{.Type.ExtTypeName}}, error)
+	First() (*{{.Type.ExtName}}, error)
 }
 
 // Open opens database connection

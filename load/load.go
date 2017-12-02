@@ -2,13 +2,11 @@ package load
 
 import (
 	"errors"
+	"fmt"
 	"go/importer"
 	"go/types"
 	"log"
-
 	"sync"
-
-	"fmt"
 
 	"golang.org/x/tools/go/loader"
 )
@@ -25,7 +23,8 @@ var (
 			Importer:                 importer.Default(),
 		},
 	}
-	loadMu sync.Mutex
+	loadCache = map[string]*Type{}
+	loadMu    sync.Mutex
 )
 
 func loadProgram(importPath string) (*loader.Program, error) {
@@ -33,6 +32,22 @@ func loadProgram(importPath string) (*loader.Program, error) {
 	defer loadMu.Unlock()
 	loadConfig.Import(importPath)
 	return loadConfig.Load()
+}
+
+// cacheGetOrUpdate get or updates the cache.
+// the cache is used to prevent recursive load of fields
+// - if the type exists in the cache, it return the full type and true value
+// - if it does not exists, it sets it in the cache, return it and false value
+// the bool return value means 'exists in cache'
+func cacheGetOrUpdate(tp *Type) (*Type, bool) {
+	loadMu.Lock()
+	defer loadMu.Unlock()
+	fullName := tp.String()
+	if loaded := loadCache[fullName]; loaded != nil {
+		return loaded, true
+	}
+	loadCache[fullName] = tp
+	return tp, false
 }
 
 // loadStruct loads struct information from go package

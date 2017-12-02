@@ -11,16 +11,26 @@ import (
 
 // ColumnsStatement returns the fields parts of SQL CREATE TABLE statement
 func (g *Gen) ColumnsStatement() string {
-	fieldsStmt := make([]string, len(g.Tp.Fields))
-	for i, f := range g.Tp.Fields {
-		fieldsStmt[i] = g.fieldCreateString(&f)
+	var (
+		stmts []string
+		refs  []*load.Field
+	)
+	for _, f := range g.Tp.Fields {
+		if f.IsReference() {
+			refs = append(refs, &f)
+		} else {
+			stmts = append(stmts, g.fieldCreateString(&f))
+		}
 	}
-	return strings.Join(fieldsStmt, ", ")
+	for _, f := range refs {
+		stmts = append(stmts, g.referenceString(f)...)
+	}
+	return strings.Join(stmts, ", ")
 }
 
 func (g *Gen) fieldCreateString(f *load.Field) string {
 	sqlType := g.sqlType(f)
-	stmt := []string{fmt.Sprintf("'%s' %s", f.SQL.Column, sqlType)}
+	stmt := []string{fmt.Sprintf("'%s' %s", f.Column(), sqlType)}
 	if f.SQL.NotNull {
 		stmt = append(stmt, "NOT NULL")
 	}
@@ -40,4 +50,22 @@ func (g *Gen) fieldCreateString(f *load.Field) string {
 		stmt = append(stmt, " UNIQUE")
 	}
 	return strings.Join(stmt, " ")
+}
+
+func (g *Gen) referenceString(f *load.Field) []string {
+	refType := f.Type
+	pk := refType.PrimaryKey
+	if pk == nil {
+		log.Fatalf("type %s referenced by %s does not have primary key defined", refType, g.Tp)
+	}
+	var (
+		columnName = f.Column()
+		columnType = g.sqlType(refType.PrimaryKey)
+		refTable   = refType.Table()
+		refColumn  = pk.Column()
+	)
+	return []string{
+		fmt.Sprintf("%s %s", columnName, columnType),
+		fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s(%s)", columnName, refTable, refColumn),
+	}
 }

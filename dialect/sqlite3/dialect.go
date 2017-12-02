@@ -47,6 +47,7 @@ func (d *Dialect) Select(p *common.SelectParams) (string, []interface{}) {
 	stmt := fmt.Sprintf("SELECT %s FROM '%s' %s %s %s %s %s",
 		format.Columns(p.Table, p.Columns),
 		p.Table,
+		format.Join(p.Table, p.Columns),
 		format.Where(p.Where),
 		format.GroupBy(p.Table, p.Groups),
 		format.OrderBy(p.Table, p.Orders),

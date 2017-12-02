@@ -34,14 +34,8 @@ type Type struct {
 	// ImportPath is a path to add to the import section for this type
 	ImportPath string
 	// Fields is the list of exported fields
-	Fields []Field
-}
-
-// Field is a struct that represents type's field
-type Field struct {
-	Type
-	VarName string
-	SQL     SQL
+	Fields     []Field
+	PrimaryKey *Field
 }
 
 // New loads a Type
@@ -65,8 +59,15 @@ func New(fullName string) (*Type, error) {
 	// update the import path to the full package path
 	t.ImportPath = pkg.Path()
 
-	// populate all the struct fields
-	return t, t.loadFields(st)
+	// now that we have the type's full name...
+	// before loading the fields, check if the type cached in the cache already
+	t, cached := cacheGetOrUpdate(t)
+	if !cached {
+		// the type was not in the cache, we should load all it's fields, which might lead
+		// to recursive calls to New function
+		err = t.loadFields(st)
+	}
+	return t, err
 }
 
 func (t *Type) String() string {
@@ -78,12 +79,12 @@ func (t *Type) String() string {
 
 // Table is SQL table name of a type
 func (t *Type) Table() string {
-	return strings.ToLower(t.Name)
+	return strings.ToLower(t.nonPointerType())
 }
 
-// ExtTypeName is the full type of the imported type, as used in a go code
+// ExtName is the full type of the imported type, as used in a go code
 // outside the defining package. For example: "example.Person"
-func (t Type) ExtTypeName() string {
+func (t Type) ExtName() string {
 	if t.Package() != "" {
 		return pointer(t.Name) + t.Package() + "." + t.nonPointerType()
 	}
@@ -117,19 +118,31 @@ func (t *Type) IsBasic() bool {
 	return basicTypes[t.NonPointer()]
 }
 
-// FieldsImports returns a list of all imports for this type's fields
-func (t *Type) FieldsImports() []string {
+// Imports returns a list of all imports for this type's fields
+func (t *Type) Imports() []string {
 	impsMap := map[string]bool{}
 	for _, f := range t.Fields {
-		if f.ImportPath != "" {
-			impsMap[f.ImportPath] = true
+		if f.Type.ImportPath != "" {
+			impsMap[f.Type.ImportPath] = true
 		}
 	}
+	impsMap[t.ImportPath] = true
 	imps := make([]string, 0, len(impsMap))
 	for imp := range impsMap {
 		imps = append(imps, imp)
 	}
 	return imps
+}
+
+// References returns all reference fields
+func (t *Type) References() []Field {
+	var refs []Field
+	for _, field := range t.Fields {
+		if field.IsReference() {
+			refs = append(refs, field)
+		}
+	}
+	return refs
 }
 
 // nonPointerType returns the non-pointer type of a filed.
@@ -150,32 +163,41 @@ func (t *Type) loadFields(st *types.Struct) error {
 			continue
 		}
 
+		log.Printf("%s -> loading %s", t.Name, field.Name())
+
 		fieldType, err := New(field.Type().String())
 		if err != nil {
 			return fmt.Errorf("creating type %s: %s", fieldType, err)
 		}
-		sql, err := newSQL(field.Name(), st, i)
+		sql, err := newSQL(st, i)
 		if err != nil {
 			return fmt.Errorf("creating SQL properties for type field %s: %s", fieldType, err)
 		}
 
-		switch {
+		f := Field{
+			Name:     field.Name(),
+			Type:     *fieldType,
+			SQL:      *sql,
+			Embedded: field.Anonymous(),
+		}
 
-		case field.Anonymous():
-			// For embedded fields (aka anonymous) we collect all their fields recursively
-			// to the parent fields.
+		log.Printf("%s -> loaded %s (%s): %s", t.Name, field.Name(), fieldType, sql)
+
+		switch {
+		case f.Embedded:
+			// Embedded field (aka anonymous)
+			// collect all their fields recursively to the parent fields.
 			for _, field := range fieldType.Fields {
 				t.Fields = append(t.Fields, field)
 			}
-
 		default:
-			log.Printf("Field '%s(%s)': '%+v'", field.Name(), fieldType, sql)
-			t.Fields = append(t.Fields, Field{
-				VarName: field.Name(),
-				Type:    *fieldType,
-				SQL:     *sql,
-			})
+			// Basic type field: just add a field
+			if sql.PrimaryKey {
+				t.PrimaryKey = &f
+			}
+			t.Fields = append(t.Fields, f)
 		}
+
 	}
 	return nil
 }

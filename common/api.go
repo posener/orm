@@ -7,7 +7,14 @@ type Op string
 // With this interface, a dialect talks to struct specific generated implementation.
 type Columner interface {
 	Columns() []string
+	Joins() []Join
 	Count() bool
+}
+
+type Join struct {
+	Column    string
+	RefTable  string
+	RefColumn string
 }
 
 // StatementArger is interface for queries.

@@ -3,6 +3,7 @@ package format
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/posener/orm/common"
 )
@@ -109,6 +110,29 @@ func AssignColumns(a common.Assignments) string {
 
 	s := b.String()
 	return s[:len(s)-2]
+}
+
+// Join extract SQL join list statement
+func Join(table string, c common.Columner) string {
+	if c == nil {
+		return ""
+	}
+	joins := c.Joins()
+	if len(joins) == 0 {
+		return ""
+	}
+	var (
+		tables []string
+		conds  []string
+	)
+	for _, j := range joins {
+		tables = append(tables, fmt.Sprintf("'%s'", j.RefTable))
+		conds = append(conds, fmt.Sprintf("`%s`.`%s` = `%s`.`%s`", table, j.Column, j.RefTable, j.RefColumn))
+	}
+	return fmt.Sprintf("JOIN (%s) ON (%s)",
+		strings.Join(tables, ", "),
+		strings.Join(conds, " AND "),
+	)
 }
 
 // IfNotExists formats an SQL IF NOT EXISTS statement

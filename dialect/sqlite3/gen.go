@@ -43,10 +43,10 @@ type tmpltType struct {
 var tmplt = template.Must(template.New("sqlite3").Parse(`
 				val, ok := vals[i].({{.ConvertType}})
 				if !ok {
-					return nil, fmt.Errorf(errMsg, "{{.Field.Name}}", i, vals[i], vals[i], "{{.Field.ExtTypeName}}")
+					return nil, fmt.Errorf(errMsg, "{{.Field.Name}}", i, vals[i], vals[i], "{{.Field.Type.ExtName}}")
 				}
-				tmp := {{.Field.NonPointer}}(val)
-				row.{{.Field.VarName}} = {{if .Field.IsPointer -}}&{{end}}tmp
+				tmp := {{.Field.Type.NonPointer}}(val)
+				row.{{.Field.Name}} = {{if .Field.Type.IsPointer -}}&{{end}}tmp
 `))
 
 // ConvertType is the type of the field when returned by sql/driver from database
@@ -61,15 +61,15 @@ func (g *Gen) convertType(f *load.Field) string {
 	case sqltypes.Boolean:
 		return "bool"
 	default:
-		return f.NonPointer()
+		return f.Type.NonPointer()
 	}
 }
 
 func (Gen) sqlType(f *load.Field) sqltypes.Type {
-	if f.SQL.CustomType != "" {
-		return f.SQL.CustomType
+	if custom := f.SQL.CustomType; custom != "" {
+		return custom
 	}
-	switch f.NonPointer() {
+	switch typeName := strings.TrimLeft(f.SetType(), "*"); typeName {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
 		return sqltypes.Integer
 	case "float", "float8", "float16", "float32", "float64":
@@ -83,7 +83,7 @@ func (Gen) sqlType(f *load.Field) sqltypes.Type {
 	case "time.Time":
 		return sqltypes.TimeStamp
 	default:
-		log.Fatalf("Unknown column type for %s", f.NonPointer())
+		log.Fatalf("Unknown column type for %s", typeName)
 		return sqltypes.NA
 	}
 }

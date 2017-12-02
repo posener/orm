@@ -26,8 +26,8 @@ func TestLoad(t *testing.T) {
 			wantName:     "Person",
 			wantFullName: "example.Person",
 			wantFields: []Field{
-				{VarName: "Name", Type: Type{Name: "string"}, SQL: SQL{Column: "name"}},
-				{VarName: "Age", Type: Type{Name: "int"}, SQL: SQL{Column: "age"}},
+				{Name: "Name", Type: Type{Name: "string"}},
+				{Name: "Age", Type: Type{Name: "int"}},
 			},
 			wantImportPath: "github.com/posener/orm/example",
 		},
@@ -36,8 +36,8 @@ func TestLoad(t *testing.T) {
 			wantName:     "Person",
 			wantFullName: "example.Person",
 			wantFields: []Field{
-				{VarName: "Name", Type: Type{Name: "string"}, SQL: SQL{Column: "name"}},
-				{VarName: "Age", Type: Type{Name: "int"}, SQL: SQL{Column: "age"}},
+				{Name: "Name", Type: Type{Name: "string"}},
+				{Name: "Age", Type: Type{Name: "int"}},
 			},
 			wantImportPath: "github.com/posener/orm/example",
 		},
@@ -46,9 +46,9 @@ func TestLoad(t *testing.T) {
 			wantName:     "Employee",
 			wantFullName: "example.Employee",
 			wantFields: []Field{
-				{VarName: "Name", Type: Type{Name: "string"}, SQL: SQL{Column: "name"}},
-				{VarName: "Age", Type: Type{Name: "int"}, SQL: SQL{Column: "age"}},
-				{VarName: "Salary", Type: Type{Name: "int"}, SQL: SQL{Column: "salary"}},
+				{Name: "Name", Type: Type{Name: "string"}},
+				{Name: "Age", Type: Type{Name: "int"}},
+				{Name: "Salary", Type: Type{Name: "int"}},
 			},
 			wantImportPath: "github.com/posener/orm/example",
 		},
@@ -62,7 +62,7 @@ func TestLoad(t *testing.T) {
 			} else {
 				require.Nil(t, err)
 				assert.Equal(t, tt.wantName, tp.Name)
-				assert.Equal(t, tt.wantFullName, tp.ExtTypeName())
+				assert.Equal(t, tt.wantFullName, tp.ExtName())
 				assert.Equal(t, tt.wantFields, tp.Fields)
 				assert.Equal(t, tt.wantImportPath, tp.ImportPath)
 			}
