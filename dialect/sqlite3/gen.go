@@ -11,9 +11,7 @@ import (
 )
 
 // Gen is code generator for sqlite3 dialect
-type Gen struct {
-	Tp *load.Type
-}
+type Gen struct{}
 
 // Name returns the dialect name
 func (g *Gen) Name() string {

@@ -2,11 +2,12 @@
 package personorm
 
 import (
-	"database/sql"
 	"database/sql/driver"
 	"fmt"
-	"reflect"
-	"unsafe"
+
+	"github.com/posener/orm/example"
+
+	"github.com/posener/orm/common"
 )
 
 const errMsg = "converting %s: column %d with value %v (type %T) to %s"
@@ -14,7 +15,8 @@ const errMsg = "converting %s: column %d with value %v (type %T) to %s"
 // selector selects columns for SQL queries and for parsing SQL rows
 type selector struct {
 	SelectName bool
-	SelectAge  bool
+
+	SelectAge bool
 
 	count bool // used for sql COUNT(*) column
 }
@@ -25,6 +27,7 @@ func (s *selector) Columns() []string {
 	if s.SelectName {
 		cols = append(cols, "name")
 	}
+
 	if s.SelectAge {
 		cols = append(cols, "age")
 	}
@@ -32,31 +35,46 @@ func (s *selector) Columns() []string {
 	return cols
 }
 
+// Joins are join options of the query
+func (s *selector) Joins() []common.Join {
+	var joins []common.Join
+
+	return joins
+}
+
 // Count is true when a COUNT(*) column should be added to the query
 func (s *selector) Count() bool {
 	return s.count
 }
 
-// scan an SQL row to a PersonCount struct
-func (s *selector) scan(dialect string, rows *sql.Rows) (*PersonCount, error) {
+// FirstCount scans an SQL row to a PersonCount struct
+func (s *selector) FirstCount(dialect string, vals []driver.Value) (*PersonCount, error) {
 	switch dialect {
 	case "mysql":
-		return s.scanmysql(rows)
+		return s.scanmysql(vals)
 
 	case "sqlite3":
-		return s.scansqlite3(rows)
+		return s.scansqlite3(vals)
 	default:
 		return nil, fmt.Errorf("unsupported dialect %s", dialect)
 	}
 }
 
+// First scans an SQL row to a Person struct
+func (s *selector) First(dialect string, vals []driver.Value) (*example.Person, error) {
+	item, err := s.FirstCount(dialect, vals)
+	if err != nil {
+		return nil, err
+	}
+	return &item.Person, nil
+}
+
 // scanmysql scans mysql row to a Person struct
-func (s *selector) scanmysql(rows *sql.Rows) (*PersonCount, error) {
+func (s *selector) scanmysql(vals []driver.Value) (*PersonCount, error) {
 	var (
-		vals = values(*rows)
-		row  PersonCount
-		all  = s.selectAll()
-		i    = 0
+		row PersonCount
+		all = s.selectAll()
+		i   int
 	)
 
 	if all || s.SelectName {
@@ -66,7 +84,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*PersonCount, error) {
 				tmp := string(val)
 				row.Name = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "string", i, vals[i], vals[i], "[]byte, []byte")
+				return nil, fmt.Errorf(errMsg, "Name", i, vals[i], vals[i], "[]byte, []byte")
 			}
 		}
 		i++
@@ -82,7 +100,7 @@ func (s *selector) scanmysql(rows *sql.Rows) (*PersonCount, error) {
 				tmp := int(val)
 				row.Age = tmp
 			default:
-				return nil, fmt.Errorf(errMsg, "int", i, vals[i], vals[i], "[]byte, int64")
+				return nil, fmt.Errorf(errMsg, "Age", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
 		i++
@@ -97,25 +115,25 @@ func (s *selector) scanmysql(rows *sql.Rows) (*PersonCount, error) {
 		default:
 			return nil, fmt.Errorf(errMsg, "COUNT(*)", i, vals[i], vals[i], "int64, []byte")
 		}
+		i++
 	}
 
 	return &row, nil
 }
 
 // scansqlite3 scans sqlite3 row to a Person struct
-func (s *selector) scansqlite3(rows *sql.Rows) (*PersonCount, error) {
+func (s *selector) scansqlite3(vals []driver.Value) (*PersonCount, error) {
 	var (
-		vals = values(*rows)
-		row  PersonCount
-		all  = s.selectAll()
-		i    = 0
+		row PersonCount
+		all = s.selectAll()
+		i   int
 	)
 
 	if all || s.SelectName {
 		if vals[i] != nil {
 			val, ok := vals[i].([]byte)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "string", i, vals[i], vals[i], "string")
+				return nil, fmt.Errorf(errMsg, "Name", i, vals[i], vals[i], "string")
 			}
 			tmp := string(val)
 			row.Name = tmp
@@ -127,7 +145,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*PersonCount, error) {
 		if vals[i] != nil {
 			val, ok := vals[i].(int64)
 			if !ok {
-				return nil, fmt.Errorf(errMsg, "int", i, vals[i], vals[i], "int")
+				return nil, fmt.Errorf(errMsg, "Age", i, vals[i], vals[i], "int")
 			}
 			tmp := int(val)
 			row.Age = tmp
@@ -144,6 +162,7 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*PersonCount, error) {
 		default:
 			return nil, fmt.Errorf(errMsg, "COUNT(*)", i, vals[i], vals[i], "int64, []byte")
 		}
+		i++
 	}
 
 	return &row, nil
@@ -152,18 +171,4 @@ func (s *selector) scansqlite3(rows *sql.Rows) (*PersonCount, error) {
 // selectAll returns true if no column was specifically selected
 func (s *selector) selectAll() bool {
 	return !s.SelectName && !s.SelectAge && !s.count
-}
-
-// values is a hack to the sql.Rows struct
-// since the rows struct does not expose it's lastcols values, or a way to give
-// a custom scanner to the Scan method.
-// See issue https://github.com/golang/go/issues/22544
-func values(r sql.Rows) []driver.Value {
-	// some ugly hack to access lastcols field
-	rs := reflect.ValueOf(&r).Elem()
-	rf := rs.FieldByName("lastcols")
-
-	// overcome panic reflect.Value.Interface: cannot return value obtained from unexported field or method
-	rf = reflect.NewAt(rf.Type(), unsafe.Pointer(rf.UnsafeAddr())).Elem()
-	return rf.Interface().([]driver.Value)
 }

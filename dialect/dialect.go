@@ -47,7 +47,7 @@ type Generator interface {
 	// ColumnsStatement returns the fields parts of SQL CREATE TABLE statement
 	// for a specific struct and specific dialect.
 	// It is used by the generation tool.
-	ColumnsStatement() string
+	ColumnsStatement(tp *load.Type) string
 	// ConvertValueCode returns go code for converting value returned from the
 	// database to the given field.
 	ConvertValueCode(field *load.Field) string
@@ -56,7 +56,7 @@ type Generator interface {
 // NewGen returns all known Generators
 func NewGen(tp *load.Type) []Generator {
 	return []Generator{
-		&mysql.Gen{Tp: tp},
-		&sqlite3.Gen{Tp: tp},
+		new(mysql.Gen),
+		new(sqlite3.Gen),
 	}
 }

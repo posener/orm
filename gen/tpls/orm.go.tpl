@@ -16,7 +16,7 @@ const table = "{{.Type.Table}}"
 // createColumnsStatements are columns definitions in different dialects
 var createColumnsStatements = map[string]string{
     {{ range $_, $d := .Dialects -}}
-    "{{$d.Name}}": "{{$d.ColumnsStatement}}",
+    "{{$d.Name}}": "{{$d.ColumnsStatement $.Type}}",
     {{ end -}}
 }
 

@@ -12,9 +12,7 @@ import (
 )
 
 // Gen is code generator for mysql dialect
-type Gen struct {
-	Tp *load.Type
-}
+type Gen struct{}
 
 // Name returns the dialect name
 func (g *Gen) Name() string {

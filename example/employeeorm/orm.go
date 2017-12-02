@@ -2,13 +2,13 @@
 package employeeorm
 
 import (
+	"github.com/posener/orm/example"
+
 	"database/sql"
 
 	"github.com/posener/orm"
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect"
-
-	"github.com/posener/orm/example"
 )
 
 // table is SQL table name
@@ -28,8 +28,6 @@ type API interface {
 	Insert() *InsertBuilder
 	Update() *UpdateBuilder
 	Delete() *DeleteBuilder
-	InsertEmployee(*example.Employee) *InsertBuilder
-	UpdateEmployee(*example.Employee) *UpdateBuilder
 
 	Logger(orm.Logger)
 }
@@ -101,30 +99,12 @@ func (c *conn) Insert() *InsertBuilder {
 	}
 }
 
-// InsertEmployee returns an SQL INSERT statement builder filled with values of a given object
-func (c *conn) InsertEmployee(p *example.Employee) *InsertBuilder {
-	i := c.Insert()
-	i.params.Assignments.Add("name", p.Name)
-	i.params.Assignments.Add("age", p.Age)
-	i.params.Assignments.Add("salary", p.Salary)
-	return i
-}
-
 // Update returns a builder of an SQL UPDATE statement
 func (c *conn) Update() *UpdateBuilder {
 	return &UpdateBuilder{
 		params: common.UpdateParams{Table: table},
 		conn:   c,
 	}
-}
-
-// UpdateEmployee returns an SQL UPDATE statement builder filled with values of a given object
-func (c *conn) UpdateEmployee(p *example.Employee) *UpdateBuilder {
-	u := c.Update()
-	u.params.Assignments.Add("name", p.Name)
-	u.params.Assignments.Add("age", p.Age)
-	u.params.Assignments.Add("salary", p.Salary)
-	return u
 }
 
 // Delete returns a builder of an SQL DELETE statement
@@ -135,38 +115,54 @@ func (c *conn) Delete() *DeleteBuilder {
 	}
 }
 
+// InsertEmployee returns an SQL INSERT statement builder filled with values of a given object
+func (b *InsertBuilder) InsertEmployee(p *example.Employee) *InsertBuilder {
+	b.params.Assignments.Add("name", p.Name)
+	b.params.Assignments.Add("age", p.Age)
+	b.params.Assignments.Add("salary", p.Salary)
+	return b
+}
+
+// UpdateEmployee update values for all struct fields
+func (b *UpdateBuilder) UpdateEmployee(p *example.Employee) *UpdateBuilder {
+	b.params.Assignments.Add("name", p.Name)
+	b.params.Assignments.Add("age", p.Age)
+	b.params.Assignments.Add("salary", p.Salary)
+	return b
+}
+
 // SetName sets value for column name in the INSERT statement
-func (i *InsertBuilder) SetName(value string) *InsertBuilder {
-	i.params.Assignments.Add("name", value)
-	return i
+func (b *InsertBuilder) SetName(value string) *InsertBuilder {
+	b.params.Assignments.Add("name", value)
+	return b
 }
 
 // SetName sets value for column name in the UPDATE statement
-func (u *UpdateBuilder) SetName(value string) *UpdateBuilder {
-	u.params.Assignments.Add("name", value)
-	return u
+func (b *UpdateBuilder) SetName(value string) *UpdateBuilder {
+	b.params.Assignments.Add("name", value)
+	return b
 }
 
 // SetAge sets value for column age in the INSERT statement
-func (i *InsertBuilder) SetAge(value int) *InsertBuilder {
-	i.params.Assignments.Add("age", value)
-	return i
+func (b *InsertBuilder) SetAge(value int) *InsertBuilder {
+	b.params.Assignments.Add("age", value)
+	return b
 }
 
 // SetAge sets value for column age in the UPDATE statement
-func (u *UpdateBuilder) SetAge(value int) *UpdateBuilder {
-	u.params.Assignments.Add("age", value)
-	return u
+func (b *UpdateBuilder) SetAge(value int) *UpdateBuilder {
+	b.params.Assignments.Add("age", value)
+	return b
 }
 
 // SetSalary sets value for column salary in the INSERT statement
-func (i *InsertBuilder) SetSalary(value int) *InsertBuilder {
-	i.params.Assignments.Add("salary", value)
-	return i
+func (b *InsertBuilder) SetSalary(value int) *InsertBuilder {
+	b.params.Assignments.Add("salary", value)
+	return b
 }
 
 // SetSalary sets value for column salary in the UPDATE statement
-func (u *UpdateBuilder) SetSalary(value int) *UpdateBuilder {
-	u.params.Assignments.Add("salary", value)
-	return u
+func (b *UpdateBuilder) SetSalary(value int) *UpdateBuilder {
+	b.params.Assignments.Add("salary", value)
+	return b
 }

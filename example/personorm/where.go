@@ -7,7 +7,7 @@ import (
 
 // WhereName adds a condition on Name to the WHERE statement
 func WhereName(op common.Op, val string) common.Where {
-	return common.NewWhere(op, "name", val)
+	return common.NewWhere(op, "person", "name", val)
 }
 
 // WhereNameIn adds an IN condition on Name to the WHERE statement
@@ -16,17 +16,17 @@ func WhereNameIn(vals ...string) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("name", args...)
+	return common.NewWhereIn("person", "name", args...)
 }
 
 // WhereNameBetween adds a BETWEEN condition on Name to the WHERE statement
 func WhereNameBetween(low, high string) common.Where {
-	return common.NewWhereBetween("name", low, high)
+	return common.NewWhereBetween("person", "name", low, high)
 }
 
 // WhereAge adds a condition on Age to the WHERE statement
 func WhereAge(op common.Op, val int) common.Where {
-	return common.NewWhere(op, "age", val)
+	return common.NewWhere(op, "person", "age", val)
 }
 
 // WhereAgeIn adds an IN condition on Age to the WHERE statement
@@ -35,10 +35,10 @@ func WhereAgeIn(vals ...int) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("age", args...)
+	return common.NewWhereIn("person", "age", args...)
 }
 
 // WhereAgeBetween adds a BETWEEN condition on Age to the WHERE statement
 func WhereAgeBetween(low, high int) common.Where {
-	return common.NewWhereBetween("age", low, high)
+	return common.NewWhereBetween("person", "age", low, high)
 }

@@ -10,12 +10,12 @@ import (
 )
 
 // ColumnsStatement returns the fields parts of SQL CREATE TABLE statement
-func (g *Gen) ColumnsStatement() string {
+func (g *Gen) ColumnsStatement(tp *load.Type) string {
 	var (
 		stmts []string
 		refs  []*load.Field
 	)
-	for _, f := range g.Tp.Fields {
+	for _, f := range tp.Fields {
 		if f.IsReference() {
 			refs = append(refs, &f)
 		} else {
@@ -56,7 +56,7 @@ func (g *Gen) referenceString(f *load.Field) []string {
 	refType := f.Type
 	pk := refType.PrimaryKey
 	if pk == nil {
-		log.Fatalf("type %s referenced by %s does not have primary key defined", refType, g.Tp)
+		log.Fatalf("reference %s does not have primary key defined", refType)
 	}
 	var (
 		columnName = f.Column()

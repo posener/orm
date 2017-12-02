@@ -4,7 +4,11 @@ package employeeorm
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"fmt"
+	"reflect"
+	"unsafe"
+
 	"github.com/posener/orm"
 
 	"github.com/posener/orm/example"
@@ -67,11 +71,11 @@ func (b *SelectBuilder) Query() ([]example.Employee, error) {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		item, err := b.selector.scan(b.conn.dialect.Name(), rows)
+		item, err := b.selector.First(b.conn.dialect.Name(), values(*rows))
 		if err != nil {
 			return nil, err
 		}
-		all = append(all, item.Employee)
+		all = append(all, *item)
 	}
 	return all, rows.Err()
 }
@@ -93,7 +97,7 @@ func (b *SelectBuilder) Count() ([]EmployeeCount, error) {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		item, err := b.selector.scan(b.conn.dialect.Name(), rows)
+		item, err := b.selector.FirstCount(b.conn.dialect.Name(), values(*rows))
 		if err != nil {
 			return nil, err
 		}
@@ -120,11 +124,11 @@ func (b *SelectBuilder) First() (*example.Employee, error) {
 	if !found {
 		return nil, orm.ErrNotFound
 	}
-	item, err := b.selector.scan(b.conn.dialect.Name(), rows)
+	item, err := b.selector.First(b.conn.dialect.Name(), values(*rows))
 	if err != nil {
 		return nil, err
 	}
-	return &item.Employee, rows.Err()
+	return item, rows.Err()
 }
 
 func contextOrBackground(ctx context.Context) context.Context {
@@ -132,4 +136,18 @@ func contextOrBackground(ctx context.Context) context.Context {
 		return context.Background()
 	}
 	return ctx
+}
+
+// values is a hack to the sql.Rows struct
+// since the rows struct does not expose it's lastcols values, or a way to give
+// a custom scanner to the Scan method.
+// See issue https://github.com/golang/go/issues/22544
+func values(r sql.Rows) []driver.Value {
+	// some ugly hack to access lastcols field
+	rs := reflect.ValueOf(&r).Elem()
+	rf := rs.FieldByName("lastcols")
+
+	// overcome panic reflect.Value.Interface: cannot return value obtained from unexported field or method
+	rf = reflect.NewAt(rf.Type(), unsafe.Pointer(rf.UnsafeAddr())).Elem()
+	return rf.Interface().([]driver.Value)
 }
