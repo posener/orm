@@ -32,15 +32,16 @@ type Loaner struct {
 //go:generate orm -type Book
 
 type Book struct {
-	ID   int64 `sql:"primary key;auto increment"`
-	Name string
-	Year int
+	ID       int64 `sql:"primary key;auto increment"`
+	Name     string
+	Year     int
+	AuthorID int64 `sql:"foreign key:./example.Author"`
 }
 
 //go:generate orm -type Author
 
 type Author struct {
-	ID    int `sql:"primary key;auto increment"`
+	ID    int64 `sql:"primary key;auto increment"`
 	Books []*Book
 }
 

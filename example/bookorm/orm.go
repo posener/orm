@@ -16,8 +16,8 @@ const table = "book"
 
 // createColumnsStatements are columns definitions in different dialects
 var createColumnsStatements = map[string]string{
-	"mysql":   "`id` INTEGER PRIMARY KEY AUTO_INCREMENT, `name` TEXT, `year` INTEGER",
-	"sqlite3": "'id' INTEGER PRIMARY KEY AUTOINCREMENT, 'name' TEXT, 'year' INTEGER",
+	"mysql":   "`id` INTEGER PRIMARY KEY AUTO_INCREMENT, `name` TEXT, `year` INTEGER, `authorid` INTEGER",
+	"sqlite3": "'id' INTEGER PRIMARY KEY AUTOINCREMENT, 'name' TEXT, 'year' INTEGER, 'authorid' INTEGER",
 }
 
 // API is the interface of the ORM object
@@ -119,6 +119,7 @@ func (c *conn) Delete() *DeleteBuilder {
 func (b *InsertBuilder) InsertBook(p *example.Book) *InsertBuilder {
 	b.params.Assignments.Add("name", p.Name)
 	b.params.Assignments.Add("year", p.Year)
+	b.params.Assignments.Add("authorid", p.AuthorID)
 	return b
 }
 
@@ -126,6 +127,7 @@ func (b *InsertBuilder) InsertBook(p *example.Book) *InsertBuilder {
 func (b *UpdateBuilder) UpdateBook(p *example.Book) *UpdateBuilder {
 	b.params.Assignments.Add("name", p.Name)
 	b.params.Assignments.Add("year", p.Year)
+	b.params.Assignments.Add("authorid", p.AuthorID)
 	return b
 }
 
@@ -150,5 +152,17 @@ func (b *InsertBuilder) SetYear(value int) *InsertBuilder {
 // SetYear sets value for column year in the UPDATE statement
 func (b *UpdateBuilder) SetYear(value int) *UpdateBuilder {
 	b.params.Assignments.Add("year", value)
+	return b
+}
+
+// SetAuthorID sets value for column authorid in the INSERT statement
+func (b *InsertBuilder) SetAuthorID(value int64) *InsertBuilder {
+	b.params.Assignments.Add("authorid", value)
+	return b
+}
+
+// SetAuthorID sets value for column authorid in the UPDATE statement
+func (b *UpdateBuilder) SetAuthorID(value int64) *UpdateBuilder {
+	b.params.Assignments.Add("authorid", value)
 	return b
 }

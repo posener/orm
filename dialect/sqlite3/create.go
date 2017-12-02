@@ -56,7 +56,7 @@ func (g *Gen) referenceString(f *load.Field) []string {
 	refType := f.Type
 	pk := refType.PrimaryKey
 	if pk == nil {
-		log.Fatalf("reference %s does not have primary key defined", refType)
+		log.Fatalf("Field %s (%s) is reference and does not have primary key defined", f.Name, refType.Name)
 	}
 	var (
 		columnName = f.Column()

@@ -61,3 +61,22 @@ func WhereYearIn(vals ...int) common.Where {
 func WhereYearBetween(low, high int) common.Where {
 	return common.NewWhereBetween("book", "year", low, high)
 }
+
+// WhereAuthorID adds a condition on AuthorID to the WHERE statement
+func WhereAuthorID(op common.Op, val int64) common.Where {
+	return common.NewWhere(op, "book", "authorid", val)
+}
+
+// WhereAuthorIDIn adds an IN condition on AuthorID to the WHERE statement
+func WhereAuthorIDIn(vals ...int64) common.Where {
+	args := make([]interface{}, len(vals))
+	for i := range vals {
+		args[i] = vals[i]
+	}
+	return common.NewWhereIn("book", "authorid", args...)
+}
+
+// WhereAuthorIDBetween adds a BETWEEN condition on AuthorID to the WHERE statement
+func WhereAuthorIDBetween(low, high int64) common.Where {
+	return common.NewWhereBetween("book", "authorid", low, high)
+}

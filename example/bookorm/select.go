@@ -104,6 +104,24 @@ func (b *SelectBuilder) GroupByYear() *SelectBuilder {
 	return b
 }
 
+// SelectAuthorID adds AuthorID to the selected column of a query
+func (b *SelectBuilder) SelectAuthorID() *SelectBuilder {
+	b.selector.SelectAuthorID = true
+	return b
+}
+
+// OrderByAuthorID set order to the query results according to column authorid
+func (b *SelectBuilder) OrderByAuthorID(dir common.OrderDir) *SelectBuilder {
+	b.params.Orders.Add("authorid", dir)
+	return b
+}
+
+// GroupByAuthorID make the query group by column authorid
+func (b *SelectBuilder) GroupByAuthorID() *SelectBuilder {
+	b.params.Groups.Add("authorid")
+	return b
+}
+
 // Context sets the context for the SQL query
 func (b *SelectBuilder) Context(ctx context.Context) *SelectBuilder {
 	b.params.Ctx = ctx

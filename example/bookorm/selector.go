@@ -14,10 +14,11 @@ const errMsg = "converting %s: column %d with value %v (type %T) to %s"
 
 // selector selects columns for SQL queries and for parsing SQL rows
 type selector struct {
-	SelectID   bool
-	SelectName bool
-	SelectYear bool
-	count      bool // used for sql COUNT(*) column
+	SelectID       bool
+	SelectName     bool
+	SelectYear     bool
+	SelectAuthorID bool
+	count          bool // used for sql COUNT(*) column
 }
 
 // Columns are the names of selected columns
@@ -31,6 +32,9 @@ func (s *selector) Columns() []string {
 	}
 	if s.SelectYear {
 		cols = append(cols, "year")
+	}
+	if s.SelectAuthorID {
+		cols = append(cols, "authorid")
 	}
 	return cols
 }
@@ -122,6 +126,22 @@ func (s *selector) scanmysql(vals []driver.Value) (*BookCount, error) {
 		i++
 	}
 
+	if all || s.SelectAuthorID {
+		if vals[i] != nil {
+			switch val := vals[i].(type) {
+			case []byte:
+				tmp := int64(parseInt(val))
+				row.AuthorID = tmp
+			case int64:
+				tmp := int64(val)
+				row.AuthorID = tmp
+			default:
+				return nil, fmt.Errorf(errMsg, "AuthorID", i, vals[i], vals[i], "[]byte, int64")
+			}
+		}
+		i++
+	}
+
 	if s.count {
 		switch val := vals[i].(type) {
 		case int64:
@@ -181,6 +201,18 @@ func (s *selector) scansqlite3(vals []driver.Value) (*BookCount, error) {
 		i++
 	}
 
+	if all || s.SelectAuthorID {
+		if vals[i] != nil {
+			val, ok := vals[i].(int64)
+			if !ok {
+				return nil, fmt.Errorf(errMsg, "AuthorID", i, vals[i], vals[i], "int64")
+			}
+			tmp := int64(val)
+			row.AuthorID = tmp
+		}
+		i++
+	}
+
 	if s.count {
 		switch val := vals[i].(type) {
 		case int64:
@@ -198,5 +230,5 @@ func (s *selector) scansqlite3(vals []driver.Value) (*BookCount, error) {
 
 // selectAll returns true if no column was specifically selected
 func (s *selector) selectAll() bool {
-	return !s.SelectID && !s.SelectName && !s.SelectYear && !s.count
+	return !s.SelectID && !s.SelectName && !s.SelectYear && !s.SelectAuthorID && !s.count
 }

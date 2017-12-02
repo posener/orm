@@ -42,6 +42,11 @@ type Type struct {
 
 // New loads a Type
 func New(fullName string) (*Type, error) {
+	// []byte is different than any other type since it is allowed slice field
+	// which does not actually considered a slice
+	if fullName == "[]byte" || fullName == "*[]byte" {
+		return &Type{Name: strings.TrimLeft(fullName, "*"), Pointer: pointer(fullName)}, nil
+	}
 	t := &Type{
 		Name:       typeName(fullName),
 		ImportPath: importPath(fullName),
@@ -191,6 +196,23 @@ func (t *Type) loadFields(st *types.Struct) error {
 			for _, field := range fieldType.Fields {
 				t.Fields = append(t.Fields, field)
 			}
+		case f.Type.Slice:
+			if f.Type.IsBasic() {
+				log.Printf("Ignoring field %s: slice of a basic type is not supported", f.Name)
+				continue
+			}
+			foundForeignKey := false
+			for _, field := range f.Type.Fields {
+				if fk := field.SQL.ForeignKey; fk != nil && fk.Type == t {
+					foundForeignKey = true
+					break
+				}
+			}
+			if !foundForeignKey {
+				return fmt.Errorf("slice field %s -> %s: did not found foreign key in foreign type %s",
+					t.ExtNaked(), f.Name, f.Type.ExtNaked())
+			}
+
 		default:
 			// Basic type field: just add a field
 			if sql.PrimaryKey {
