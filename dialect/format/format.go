@@ -8,7 +8,7 @@ import (
 )
 
 // Columns extract SQL columns list statement
-func Columns(c common.Columner) string {
+func Columns(table string, c common.Columner) string {
 	if c == nil {
 		return "*"
 	}
@@ -18,7 +18,7 @@ func Columns(c common.Columner) string {
 	}
 	b := bytes.NewBuffer(nil)
 	for i := range cols {
-		b.WriteString("`" + cols[i] + "`, ")
+		b.WriteString(fmt.Sprintf("`%s`.`%s`, ", table, cols[i]))
 	}
 
 	if c.Count() {
@@ -42,13 +42,13 @@ func Where(c common.StatementArger) string {
 }
 
 // GroupBy formats an SQL GROUP BY statement
-func GroupBy(groups []common.Group) string {
+func GroupBy(table string, groups []common.Group) string {
 	if len(groups) == 0 {
 		return ""
 	}
 	b := bytes.NewBufferString("GROUP BY ")
 	for i := range groups {
-		b.WriteString(fmt.Sprintf("`%s`, ", groups[i].Column))
+		b.WriteString(fmt.Sprintf("`%s`.`%s`, ", table, groups[i].Column))
 	}
 
 	s := b.String()
@@ -56,14 +56,14 @@ func GroupBy(groups []common.Group) string {
 }
 
 // OrderBy formats an SQL ORDER BY statement
-func OrderBy(orders []common.Order) string {
+func OrderBy(table string, orders []common.Order) string {
 	if len(orders) == 0 {
 		return ""
 	}
 
 	b := bytes.NewBufferString("ORDER BY ")
 	for i := range orders {
-		b.WriteString(fmt.Sprintf("`%s` %s, ", orders[i].Column, orders[i].Dir))
+		b.WriteString(fmt.Sprintf("`%s`.`%s` %s, ", table, orders[i].Column, orders[i].Dir))
 	}
 
 	s := b.String()
@@ -89,7 +89,7 @@ func AssignSets(a common.Assignments) string {
 	}
 	b := bytes.NewBuffer(nil)
 	for i := range a {
-		b.WriteString("`" + a[i].Column + "` = ?, ")
+		b.WriteString(fmt.Sprintf("`%s` = ?, ", a[i].Column))
 	}
 
 	s := b.String()
@@ -104,7 +104,7 @@ func AssignColumns(a common.Assignments) string {
 	}
 	b := bytes.NewBuffer(nil)
 	for i := range a {
-		b.WriteString("`" + a[i].Column + "`, ")
+		b.WriteString(fmt.Sprintf("`%s`, ", a[i].Column))
 	}
 
 	s := b.String()

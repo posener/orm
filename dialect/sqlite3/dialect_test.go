@@ -37,11 +37,11 @@ func TestSelect(t *testing.T) {
 		},
 		{
 			sel:      common.SelectParams{Columns: &columner{columns: []string{"a", "b", "c"}, count: true}},
-			wantStmt: "SELECT `a`, `b`, `c`, COUNT(*) FROM 'name'",
+			wantStmt: "SELECT `name`.`a`, `name`.`b`, `name`.`c`, COUNT(*) FROM 'name'",
 		},
 		{
 			sel:      common.SelectParams{Columns: &columner{columns: []string{"a", "b", "c"}}},
-			wantStmt: "SELECT `a`, `b`, `c` FROM 'name'",
+			wantStmt: "SELECT `name`.`a`, `name`.`b`, `name`.`c` FROM 'name'",
 		},
 		{
 			sel:      common.SelectParams{Page: common.Page{}},
@@ -64,13 +64,13 @@ func TestSelect(t *testing.T) {
 				Columns: &columner{columns: []string{"a", "b", "c"}, count: true},
 				Page:    common.Page{Limit: 1, Offset: 2},
 			},
-			wantStmt: "SELECT `a`, `b`, `c`, COUNT(*) FROM 'name' LIMIT 1 OFFSET 2",
+			wantStmt: "SELECT `name`.`a`, `name`.`b`, `name`.`c`, COUNT(*) FROM 'name' LIMIT 1 OFFSET 2",
 		},
 		{
 			sel: common.SelectParams{
 				Groups: common.Groups{{Column: "a"}, {Column: "b"}},
 			},
-			wantStmt: "SELECT * FROM 'name' GROUP BY `a`, `b`",
+			wantStmt: "SELECT * FROM 'name' GROUP BY `name`.`a`, `name`.`b`",
 		},
 		{
 			sel: common.SelectParams{
@@ -79,17 +79,17 @@ func TestSelect(t *testing.T) {
 					{Column: "d", Dir: "DESC"},
 				},
 			},
-			wantStmt: "SELECT * FROM 'name' ORDER BY `c` ASC, `d` DESC",
+			wantStmt: "SELECT * FROM 'name' ORDER BY `name`.`c` ASC, `name`.`d` DESC",
 		},
 		{
-			sel:      common.SelectParams{Where: common.NewWhere(orm.OpEq, "k", 3)},
-			wantStmt: "SELECT * FROM 'name' WHERE `k` = ?",
+			sel:      common.SelectParams{Where: common.NewWhere(orm.OpEq, "name", "k", 3)},
+			wantStmt: "SELECT * FROM 'name' WHERE `name`.`k` = ?",
 			wantArgs: []interface{}{3},
 		},
 		{
 			sel: common.SelectParams{
 				Columns: &columner{columns: []string{"a", "b", "c"}, count: true},
-				Where:   common.NewWhere(orm.OpGt, "k", 3),
+				Where:   common.NewWhere(orm.OpGt, "name", "k", 3),
 				Groups:  common.Groups{{Column: "a"}, {Column: "b"}},
 				Orders: common.Orders{
 					{Column: "c", Dir: "ASC"},
@@ -97,7 +97,7 @@ func TestSelect(t *testing.T) {
 				},
 				Page: common.Page{Limit: 1, Offset: 2},
 			},
-			wantStmt: "SELECT `a`, `b`, `c`, COUNT(*) FROM 'name' WHERE `k` > ? GROUP BY `a`, `b` ORDER BY `c` ASC, `d` DESC LIMIT 1 OFFSET 2",
+			wantStmt: "SELECT `name`.`a`, `name`.`b`, `name`.`c`, COUNT(*) FROM 'name' WHERE `name`.`k` > ? GROUP BY `name`.`a`, `name`.`b` ORDER BY `name`.`c` ASC, `name`.`d` DESC LIMIT 1 OFFSET 2",
 			wantArgs: []interface{}{3},
 		},
 	}
@@ -172,8 +172,8 @@ func TestUpdate(t *testing.T) {
 		},
 		{
 			assign:   common.Assignments{{Column: "c1", Value: 1}, {Column: "c2", Value: ""}},
-			where:    common.NewWhere(orm.OpGt, "k", 3),
-			wantStmt: "UPDATE 'name' SET `c1` = ?, `c2` = ? WHERE `k` > ?",
+			where:    common.NewWhere(orm.OpGt, "name", "k", 3),
+			wantStmt: "UPDATE 'name' SET `c1` = ?, `c2` = ? WHERE `name`.`k` > ?",
 			wantArgs: []interface{}{1, "", 3},
 		},
 	}
@@ -201,8 +201,8 @@ func TestDelete(t *testing.T) {
 			wantArgs: []interface{}(nil),
 		},
 		{
-			where:    common.NewWhere(orm.OpGt, "k", 3),
-			wantStmt: "DELETE FROM 'name' WHERE `k` > ?",
+			where:    common.NewWhere(orm.OpGt, "name", "k", 3),
+			wantStmt: "DELETE FROM 'name' WHERE `name`.`k` > ?",
 			wantArgs: []interface{}{3},
 		},
 	}

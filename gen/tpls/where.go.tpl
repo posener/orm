@@ -1,30 +1,29 @@
 package {{.Package}}
 
 import (
-    {{ range $_, $import := .Type.FieldsImports -}}
+    {{ range $_, $import := .Type.Imports -}}
     "{{$import}}"
     {{ end }}
-
 	"github.com/posener/orm/common"
 )
 
 {{range $_, $f := .Type.Fields}}
-// Where{{$f.VarName}} adds a condition on {{$f.VarName}} to the WHERE statement
-func Where{{$f.VarName}}(op common.Op, val {{$f.ExtTypeName}}) common.Where {
-	return common.NewWhere(op, "{{$f.SQL.Column}}", val)
+// Where{{$f.Name}} adds a condition on {{$f.Name}} to the WHERE statement
+func Where{{$f.Name}}(op common.Op, val {{$f.Type.ExtName}}) common.Where {
+	return common.NewWhere(op, "{{$.Type.Table}}", "{{$f.Column}}", val)
 }
 
-// Where{{$f.VarName}}In adds an IN condition on {{$f.VarName}} to the WHERE statement
-func Where{{$f.VarName}}In(vals ...{{$f.ExtTypeName}}) common.Where {
+// Where{{$f.Name}}In adds an IN condition on {{$f.Name}} to the WHERE statement
+func Where{{$f.Name}}In(vals ...{{$f.Type.ExtName}}) common.Where {
 	args := make([]interface{}, len(vals))
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("{{$f.SQL.Column}}", args...)
+	return common.NewWhereIn("{{$.Type.Table}}", "{{$f.Column}}", args...)
 }
 
-// Where{{$f.VarName}}Between adds a BETWEEN condition on {{$f.VarName}} to the WHERE statement
-func Where{{$f.VarName}}Between(low, high {{$f.ExtTypeName}}) common.Where {
-	return common.NewWhereBetween("{{$f.SQL.Column}}", low, high)
+// Where{{$f.Name}}Between adds a BETWEEN condition on {{$f.Name}} to the WHERE statement
+func Where{{$f.Name}}Between(low, high {{$f.Type.ExtName}}) common.Where {
+	return common.NewWhereBetween("{{$.Type.Table}}", "{{$f.Column}}", low, high)
 }
 {{end}}

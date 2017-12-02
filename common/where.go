@@ -21,25 +21,25 @@ type where struct {
 }
 
 // NewWhere returns a new WHERE statement
-func NewWhere(op Op, variable string, value interface{}) Where {
+func NewWhere(op Op, table, variable string, value interface{}) Where {
 	var w where
-	w.stmt = append(w.stmt, fmt.Sprintf("`%s` %s ?", variable, op))
+	w.stmt = append(w.stmt, fmt.Sprintf("`%s`.`%s` %s ?", table, variable, op))
 	w.args = append(w.args, value)
 	return &w
 }
 
 // NewWhereIn returns a new 'WHERE variable IN (...)' statement
-func NewWhereIn(variable string, values ...interface{}) Where {
+func NewWhereIn(table, variable string, values ...interface{}) Where {
 	var w where
-	w.stmt = append(w.stmt, fmt.Sprintf("`%s` IN (%s)", variable, QMarks(len(values))))
+	w.stmt = append(w.stmt, fmt.Sprintf("`%s`.`%s` IN (%s)", table, variable, QMarks(len(values))))
 	w.args = append(w.args, values...)
 	return &w
 }
 
 // NewWhereBetween returns a new 'WHERE variable BETWEEN low AND high' statement
-func NewWhereBetween(variable string, low, high interface{}) Where {
+func NewWhereBetween(table, variable string, low, high interface{}) Where {
 	var w where
-	w.stmt = append(w.stmt, fmt.Sprintf("`%s` BETWEEN ? AND ?", variable))
+	w.stmt = append(w.stmt, fmt.Sprintf("`%s`.`%s` BETWEEN ? AND ?", table, variable))
 	w.args = append(w.args, low, high)
 	return &w
 }

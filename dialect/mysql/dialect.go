@@ -45,11 +45,11 @@ func (d *Dialect) Insert(p *common.InsertParams) (string, []interface{}) {
 // Select returns the SQL SELECT statement and arguments according to the given parameters
 func (d *Dialect) Select(p *common.SelectParams) (string, []interface{}) {
 	stmt := fmt.Sprintf("SELECT %s FROM `%s` %s %s %s %s",
-		format.Columns(p.Columns),
+		format.Columns(p.Table, p.Columns),
 		p.Table,
 		format.Where(p.Where),
-		format.GroupBy(p.Groups),
-		format.OrderBy(p.Orders),
+		format.GroupBy(p.Table, p.Groups),
+		format.OrderBy(p.Table, p.Orders),
 		format.Page(p.Page),
 	)
 

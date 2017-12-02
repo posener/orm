@@ -25,7 +25,7 @@ func BenchmarkORMInsert(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err = orm.InsertPerson(&example.Person{Name: "xxx", Age: i}).Exec()
+		_, err = orm.Insert().InsertPerson(&example.Person{Name: "xxx", Age: i}).Exec()
 		assert.Nil(b, err)
 	}
 }
@@ -75,7 +75,7 @@ func BenchmarkORMQuery(b *testing.B) {
 	require.Nil(b, err)
 
 	for i := 0; i < datasetSize; i++ {
-		_, err = orm.InsertPerson(&example.Person{Name: "xxx", Age: i}).Exec()
+		_, err = orm.Insert().InsertPerson(&example.Person{Name: "xxx", Age: i}).Exec()
 		require.Nil(b, err)
 	}
 
@@ -152,7 +152,7 @@ func BenchmarkORMQueryLargeStruct(b *testing.B) {
 	tm := time.Now().Round(time.Millisecond).UTC()
 
 	for i := 0; i < datasetSize; i++ {
-		_, err = orm.InsertAll(&example.All{String: "xxx", Select: i, Int: i, Time: tm, Bool: true, NotNil: "notnil"}).Exec()
+		_, err = orm.Insert().InsertAll(&example.All{String: "xxx", Select: i, Int: i, Time: tm, Bool: true, NotNil: "notnil"}).Exec()
 		require.Nil(b, err)
 	}
 

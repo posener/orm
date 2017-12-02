@@ -71,7 +71,7 @@ func TestTypes(t *testing.T) {
 		a.PBool = &a.Bool
 		a.PTime = &a.Time
 
-		res, err := db.InsertAll(&a).Exec()
+		res, err := db.Insert().InsertAll(&a).Exec()
 		require.Nil(t, err)
 		affected, err := res.RowsAffected()
 		require.Nil(t, err)
@@ -288,7 +288,7 @@ func TestCRUD(t *testing.T) {
 
 		// prepareAll dataset
 		for _, p := range []example.Person{p1, p2, p3} {
-			res, err := db.InsertPerson(&p).Exec()
+			res, err := db.Insert().InsertPerson(&p).Exec()
 			require.Nil(t, err, "Failed inserting")
 			assertRowsAffected(t, 1, res)
 		}
@@ -398,7 +398,7 @@ func TestFirst(t *testing.T) {
 		assert.Equal(t, orm.ErrNotFound, err)
 
 		smith := example.Person{Name: "Smith", Age: 99}
-		_, err = db.InsertPerson(&smith).Exec()
+		_, err = db.Insert().InsertPerson(&smith).Exec()
 		require.Nil(t, err)
 
 		got, err := db.Select().First()
