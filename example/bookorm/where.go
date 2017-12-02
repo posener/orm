@@ -42,3 +42,22 @@ func WhereNameIn(vals ...string) common.Where {
 func WhereNameBetween(low, high string) common.Where {
 	return common.NewWhereBetween("book", "name", low, high)
 }
+
+// WhereYear adds a condition on Year to the WHERE statement
+func WhereYear(op common.Op, val int) common.Where {
+	return common.NewWhere(op, "book", "year", val)
+}
+
+// WhereYearIn adds an IN condition on Year to the WHERE statement
+func WhereYearIn(vals ...int) common.Where {
+	args := make([]interface{}, len(vals))
+	for i := range vals {
+		args[i] = vals[i]
+	}
+	return common.NewWhereIn("book", "year", args...)
+}
+
+// WhereYearBetween adds a BETWEEN condition on Year to the WHERE statement
+func WhereYearBetween(low, high int) common.Where {
+	return common.NewWhereBetween("book", "year", low, high)
+}

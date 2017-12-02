@@ -18,6 +18,8 @@ type selector struct {
 
 	SelectName bool
 
+	SelectYear bool
+
 	count bool // used for sql COUNT(*) column
 }
 
@@ -30,6 +32,10 @@ func (s *selector) Columns() []string {
 
 	if s.SelectName {
 		cols = append(cols, "name")
+	}
+
+	if s.SelectYear {
+		cols = append(cols, "year")
 	}
 
 	return cols
@@ -106,6 +112,22 @@ func (s *selector) scanmysql(vals []driver.Value) (*BookCount, error) {
 		i++
 	}
 
+	if all || s.SelectYear {
+		if vals[i] != nil {
+			switch val := vals[i].(type) {
+			case []byte:
+				tmp := int(parseInt(val))
+				row.Year = tmp
+			case int64:
+				tmp := int(val)
+				row.Year = tmp
+			default:
+				return nil, fmt.Errorf(errMsg, "Year", i, vals[i], vals[i], "[]byte, int64")
+			}
+		}
+		i++
+	}
+
 	if s.count {
 		switch val := vals[i].(type) {
 		case int64:
@@ -153,6 +175,18 @@ func (s *selector) scansqlite3(vals []driver.Value) (*BookCount, error) {
 		i++
 	}
 
+	if all || s.SelectYear {
+		if vals[i] != nil {
+			val, ok := vals[i].(int64)
+			if !ok {
+				return nil, fmt.Errorf(errMsg, "Year", i, vals[i], vals[i], "int")
+			}
+			tmp := int(val)
+			row.Year = tmp
+		}
+		i++
+	}
+
 	if s.count {
 		switch val := vals[i].(type) {
 		case int64:
@@ -170,5 +204,5 @@ func (s *selector) scansqlite3(vals []driver.Value) (*BookCount, error) {
 
 // selectAll returns true if no column was specifically selected
 func (s *selector) selectAll() bool {
-	return !s.SelectID && !s.SelectName && !s.count
+	return !s.SelectID && !s.SelectName && !s.SelectYear && !s.count
 }

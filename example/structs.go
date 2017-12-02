@@ -33,6 +33,7 @@ type Loaner struct {
 type Book struct {
 	ID   int64 `sql:"primary key;auto increment"`
 	Name string
+	Year int
 }
 
 //type Author struct {

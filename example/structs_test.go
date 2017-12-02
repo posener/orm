@@ -456,23 +456,30 @@ func TestReferences(t *testing.T) {
 		book, loaner := bookDB(t, conn)
 		defer book.Close()
 
-		res, err := book.Insert().InsertBook(&example.Book{Name: "The book of love"}).Exec()
+		if conn.name != "sqlite3" { // this is not enforced in sqlite3
+			_, err := loaner.Insert().InsertLoaner(&example.Loaner{Name: "James", Book: &example.Book{ID: -10}}).Exec()
+			require.NotNil(t, err)
+		}
+
+		b := &example.Book{Name: "The Hitchhiker's Guide to the Galaxy", Year: 1979}
+
+		res, err := book.Insert().InsertBook(b).Exec()
 		require.Nil(t, err)
-		bookID, err := res.LastInsertId()
+		b.ID, err = res.LastInsertId()
 		require.Nil(t, err)
 
-		res, err = loaner.Insert().InsertLoaner(&example.Loaner{Name: "James", Book: &example.Book{ID: bookID}}).Exec()
-		require.Nil(t, err)
-		_, err = res.LastInsertId()
+		l := &example.Loaner{Name: "James", Book: b}
 
-		//res, err = loaner.Insert().InsertLoaner(&example.Loaner{Name: "James", Book: &example.Book{ID: -10}}).Exec()
-		//require.NotNil(t, err)
+		res, err = loaner.Insert().InsertLoaner(l).Exec()
+		require.Nil(t, err)
+		l.ID, err = res.LastInsertId()
+		require.Nil(t, err)
 
 		// query without join, Loaner.Book should be nil
 		ls, err := loaner.Select().Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(ls)) {
-			assert.Equal(t, "James", ls[0].Name)
+			assert.Equal(t, l.Name, ls[0].Name)
 			assert.Nil(t, ls[0].Book)
 		}
 
@@ -480,10 +487,7 @@ func TestReferences(t *testing.T) {
 		ls, err = loaner.Select().JoinBook(book.Select().Scanner()).Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(ls)) {
-			assert.Equal(t, "James", ls[0].Name)
-			if assert.NotNil(t, ls[0].Book) {
-				require.Equal(t, "The book of love", ls[0].Book.Name)
-			}
+			assert.Equal(t, l, &ls[0])
 		}
 	})
 }

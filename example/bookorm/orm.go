@@ -16,8 +16,8 @@ const table = "book"
 
 // createColumnsStatements are columns definitions in different dialects
 var createColumnsStatements = map[string]string{
-	"mysql":   "`id` INTEGER PRIMARY KEY AUTO_INCREMENT, `name` TEXT",
-	"sqlite3": "'id' INTEGER PRIMARY KEY AUTOINCREMENT, 'name' TEXT",
+	"mysql":   "`id` INTEGER PRIMARY KEY AUTO_INCREMENT, `name` TEXT, `year` INTEGER",
+	"sqlite3": "'id' INTEGER PRIMARY KEY AUTOINCREMENT, 'name' TEXT, 'year' INTEGER",
 }
 
 // API is the interface of the ORM object
@@ -118,12 +118,14 @@ func (c *conn) Delete() *DeleteBuilder {
 // InsertBook returns an SQL INSERT statement builder filled with values of a given object
 func (b *InsertBuilder) InsertBook(p *example.Book) *InsertBuilder {
 	b.params.Assignments.Add("name", p.Name)
+	b.params.Assignments.Add("year", p.Year)
 	return b
 }
 
 // UpdateBook update values for all struct fields
 func (b *UpdateBuilder) UpdateBook(p *example.Book) *UpdateBuilder {
 	b.params.Assignments.Add("name", p.Name)
+	b.params.Assignments.Add("year", p.Year)
 	return b
 }
 
@@ -136,5 +138,17 @@ func (b *InsertBuilder) SetName(value string) *InsertBuilder {
 // SetName sets value for column name in the UPDATE statement
 func (b *UpdateBuilder) SetName(value string) *UpdateBuilder {
 	b.params.Assignments.Add("name", value)
+	return b
+}
+
+// SetYear sets value for column year in the INSERT statement
+func (b *InsertBuilder) SetYear(value int) *InsertBuilder {
+	b.params.Assignments.Add("year", value)
+	return b
+}
+
+// SetYear sets value for column year in the UPDATE statement
+func (b *UpdateBuilder) SetYear(value int) *UpdateBuilder {
+	b.params.Assignments.Add("year", value)
 	return b
 }

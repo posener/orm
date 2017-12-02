@@ -85,6 +85,24 @@ func (b *SelectBuilder) GroupByName() *SelectBuilder {
 	return b
 }
 
+// SelectYear adds Year to the selected column of a query
+func (b *SelectBuilder) SelectYear() *SelectBuilder {
+	b.selector.SelectYear = true
+	return b
+}
+
+// OrderByYear set order to the query results according to column year
+func (b *SelectBuilder) OrderByYear(dir common.OrderDir) *SelectBuilder {
+	b.params.Orders.Add("year", dir)
+	return b
+}
+
+// GroupByYear make the query group by column year
+func (b *SelectBuilder) GroupByYear() *SelectBuilder {
+	b.params.Groups.Add("year")
+	return b
+}
+
 // Context sets the context for the SQL query
 func (b *SelectBuilder) Context(ctx context.Context) *SelectBuilder {
 	b.params.Ctx = ctx
