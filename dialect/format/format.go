@@ -9,25 +9,33 @@ import (
 )
 
 // Columns extract SQL columns list statement
-func Columns(table string, c common.Columner) string {
+func Columns(table string, c common.Selector) string {
+	var parts []string
 	if c == nil {
-		return "*"
+		return fmt.Sprintf("`%s`.*", table)
 	}
 	cols := c.Columns()
-	if len(cols) == 0 && !c.Count() {
-		return "*"
+	parts = append(parts, formatColumns(table, cols, c.Count())...)
+	if joins := c.Joins(); joins != nil {
+		for _, join := range joins {
+			parts = append(parts, formatColumns(join.RefTable, join.SelectColumns, c.Count())...)
+		}
 	}
-	b := bytes.NewBuffer(nil)
-	for i := range cols {
-		b.WriteString(fmt.Sprintf("`%s`.`%s`, ", table, cols[i]))
-	}
-
 	if c.Count() {
-		b.WriteString("COUNT(*), ")
+		parts = append(parts, "COUNT(*)")
 	}
+	return strings.Join(parts, ", ")
+}
 
-	s := b.String()
-	return s[:len(s)-2]
+func formatColumns(table string, cols []string, isCount bool) []string {
+	if len(cols) == 0 && !isCount {
+		return []string{fmt.Sprintf("`%s`.*", table)}
+	}
+	var parts []string
+	for _, col := range cols {
+		parts = append(parts, fmt.Sprintf("`%s`.`%s`", table, col))
+	}
+	return parts
 }
 
 // Where formats an SQL WHERE statement
@@ -113,7 +121,7 @@ func AssignColumns(a common.Assignments) string {
 }
 
 // Join extract SQL join list statement
-func Join(table string, c common.Columner) string {
+func Join(table string, c common.Selector) string {
 	if c == nil {
 		return ""
 	}

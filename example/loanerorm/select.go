@@ -10,10 +10,12 @@ import (
 )
 
 type Scanner interface {
+	Columns() []string
 	First(dialect string, values []driver.Value) (*example.Loaner, error)
 }
 
 type BookScanner interface {
+	Columns() []string
 	First(dialect string, values []driver.Value) (*example.Book, error)
 }
 
@@ -86,6 +88,24 @@ func (b *SelectBuilder) OrderByName(dir common.OrderDir) *SelectBuilder {
 // GroupByName make the query group by column name
 func (b *SelectBuilder) GroupByName() *SelectBuilder {
 	b.params.Groups.Add("name")
+	return b
+}
+
+// SelectAge adds Age to the selected column of a query
+func (b *SelectBuilder) SelectAge() *SelectBuilder {
+	b.selector.SelectAge = true
+	return b
+}
+
+// OrderByAge set order to the query results according to column age
+func (b *SelectBuilder) OrderByAge(dir common.OrderDir) *SelectBuilder {
+	b.params.Orders.Add("age", dir)
+	return b
+}
+
+// GroupByAge make the query group by column age
+func (b *SelectBuilder) GroupByAge() *SelectBuilder {
+	b.params.Groups.Add("age")
 	return b
 }
 

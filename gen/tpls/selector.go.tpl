@@ -18,33 +18,34 @@ type selector struct {
     Select{{$f.Name}} bool
     {{ else -}}
     Join{{$f.Name}} {{$f.Name}}Scanner
-    {{ end }}
-    {{ end }}
+    {{ end -}}
+    {{ end -}}
     count bool // used for sql COUNT(*) column
 }
 
 // Columns are the names of selected columns
 func (s *selector) Columns() []string {
 	var cols []string
-    {{ range $i, $f := .Type.Fields -}}
+    {{ range $_, $f := .Type.Fields -}}
     {{ if not $f.IsReference -}}
     if s.Select{{$f.Name}} {
         cols = append(cols, "{{$f.Column}}")
     }
-    {{ end }}
-    {{ end }}
+    {{ end -}}
+    {{ end -}}
 	return cols
 }
 
 // Joins are join options of the query
 func (s *selector) Joins() []common.Join {
 	var joins []common.Join
-    {{ range $i, $f := .Type.References -}}
-    if s.Join{{$f.Name}} != nil {
+    {{ range $_, $f := .Type.References -}}
+    if selector := s.Join{{$f.Name}}; selector != nil {
         joins = append(joins, common.Join{
             Column: "{{$f.Column}}",
             RefTable: "{{$f.Type.Table}}",
             RefColumn: "{{$f.Type.PrimaryKey.Column}}",
+            SelectColumns: selector.Columns(),
         })
     }
     {{ end }}
@@ -93,7 +94,7 @@ func (s *selector) scan{{$dialect.Name}} (vals []driver.Value) (*{{$.Type.Name}}
         i++
     }
     {{ else }}
-    if all || s.Join{{$f.Name}} != nil {
+    if all { // skip foreign key column
         i++
     }
     {{ end }}

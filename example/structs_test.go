@@ -468,7 +468,7 @@ func TestReferences(t *testing.T) {
 		b.ID, err = res.LastInsertId()
 		require.Nil(t, err)
 
-		l := &example.Loaner{Name: "James", Book: b}
+		l := &example.Loaner{Name: "James", Age: 42, Book: b}
 
 		res, err = loaner.Insert().InsertLoaner(l).Exec()
 		require.Nil(t, err)
@@ -488,6 +488,26 @@ func TestReferences(t *testing.T) {
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(ls)) {
 			assert.Equal(t, l, &ls[0])
+		}
+
+		// query with join, Loaner.Book should be filled with book's properties
+		ls, err = loaner.Select().JoinBook(book.Select().SelectName().Scanner()).Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(ls)) {
+			assert.Equal(t, l.Name, ls[0].Name)
+			assert.Equal(t, l.Age, ls[0].Age)
+			assert.Equal(t, l.Book.Name, ls[0].Book.Name)
+			assert.Equal(t, 0, ls[0].Book.Year) // was not selected in query, thus expecting zero value
+		}
+
+		// query with join, Loaner.Book should be filled with book's properties
+		ls, err = loaner.Select().SelectName().JoinBook(book.Select().SelectYear().Scanner()).Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(ls)) {
+			assert.Equal(t, l.Name, ls[0].Name)
+			assert.Equal(t, 0, ls[0].Age)        // was not selected in query, thus expecting zero value
+			assert.Equal(t, "", ls[0].Book.Name) // was not selected in query, thus expecting zero value
+			assert.Equal(t, l.Book.Year, ls[0].Book.Year)
 		}
 	})
 }

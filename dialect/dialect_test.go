@@ -97,18 +97,18 @@ func TestSelect(t *testing.T) {
 		sqlite3WantArgs []interface{}
 	}{
 		{
-			mysqlWantStmt:   "SELECT * FROM `name`",
-			sqlite3WantStmt: "SELECT * FROM 'name'",
+			mysqlWantStmt:   "SELECT `name`.* FROM `name`",
+			sqlite3WantStmt: "SELECT `name`.* FROM 'name'",
 		},
 		{
 			sel:             common.SelectParams{Columns: &columner{}},
-			mysqlWantStmt:   "SELECT * FROM `name`",
-			sqlite3WantStmt: "SELECT * FROM 'name'",
+			mysqlWantStmt:   "SELECT `name`.* FROM `name`",
+			sqlite3WantStmt: "SELECT `name`.* FROM 'name'",
 		},
 		{
 			sel:             common.SelectParams{Columns: &columner{}, Page: common.Page{}},
-			mysqlWantStmt:   "SELECT * FROM `name`",
-			sqlite3WantStmt: "SELECT * FROM 'name'",
+			mysqlWantStmt:   "SELECT `name`.* FROM `name`",
+			sqlite3WantStmt: "SELECT `name`.* FROM 'name'",
 		},
 		{
 			sel:             common.SelectParams{Columns: &columner{count: true}},
@@ -127,23 +127,23 @@ func TestSelect(t *testing.T) {
 		},
 		{
 			sel:             common.SelectParams{Page: common.Page{}},
-			mysqlWantStmt:   "SELECT * FROM `name`",
-			sqlite3WantStmt: "SELECT * FROM 'name'",
+			mysqlWantStmt:   "SELECT `name`.* FROM `name`",
+			sqlite3WantStmt: "SELECT `name`.* FROM 'name'",
 		},
 		{
 			sel:             common.SelectParams{Page: common.Page{Limit: 1}},
-			mysqlWantStmt:   "SELECT * FROM `name` LIMIT 1",
-			sqlite3WantStmt: "SELECT * FROM 'name' LIMIT 1",
+			mysqlWantStmt:   "SELECT `name`.* FROM `name` LIMIT 1",
+			sqlite3WantStmt: "SELECT `name`.* FROM 'name' LIMIT 1",
 		},
 		{
 			sel:             common.SelectParams{Page: common.Page{Limit: 1, Offset: 2}},
-			mysqlWantStmt:   "SELECT * FROM `name` LIMIT 1 OFFSET 2",
-			sqlite3WantStmt: "SELECT * FROM 'name' LIMIT 1 OFFSET 2",
+			mysqlWantStmt:   "SELECT `name`.* FROM `name` LIMIT 1 OFFSET 2",
+			sqlite3WantStmt: "SELECT `name`.* FROM 'name' LIMIT 1 OFFSET 2",
 		},
 		{
 			sel:             common.SelectParams{Page: common.Page{Offset: 1}},
-			mysqlWantStmt:   "SELECT * FROM `name`",
-			sqlite3WantStmt: "SELECT * FROM 'name'",
+			mysqlWantStmt:   "SELECT `name`.* FROM `name`",
+			sqlite3WantStmt: "SELECT `name`.* FROM 'name'",
 		},
 		{
 			sel: common.SelectParams{
@@ -157,8 +157,8 @@ func TestSelect(t *testing.T) {
 			sel: common.SelectParams{
 				Groups: common.Groups{{Column: "a"}, {Column: "b"}},
 			},
-			mysqlWantStmt:   "SELECT * FROM `name` GROUP BY `name`.`a`, `name`.`b`",
-			sqlite3WantStmt: "SELECT * FROM 'name' GROUP BY `name`.`a`, `name`.`b`",
+			mysqlWantStmt:   "SELECT `name`.* FROM `name` GROUP BY `name`.`a`, `name`.`b`",
+			sqlite3WantStmt: "SELECT `name`.* FROM 'name' GROUP BY `name`.`a`, `name`.`b`",
 		},
 		{
 			sel: common.SelectParams{
@@ -167,14 +167,14 @@ func TestSelect(t *testing.T) {
 					{Column: "d", Dir: "DESC"},
 				},
 			},
-			mysqlWantStmt:   "SELECT * FROM `name` ORDER BY `name`.`c` ASC, `name`.`d` DESC",
-			sqlite3WantStmt: "SELECT * FROM 'name' ORDER BY `name`.`c` ASC, `name`.`d` DESC",
+			mysqlWantStmt:   "SELECT `name`.* FROM `name` ORDER BY `name`.`c` ASC, `name`.`d` DESC",
+			sqlite3WantStmt: "SELECT `name`.* FROM 'name' ORDER BY `name`.`c` ASC, `name`.`d` DESC",
 		},
 		{
 			sel:             common.SelectParams{Where: common.NewWhere(orm.OpEq, "name", "k", 3)},
-			mysqlWantStmt:   "SELECT * FROM `name` WHERE `name`.`k` = ?",
+			mysqlWantStmt:   "SELECT `name`.* FROM `name` WHERE `name`.`k` = ?",
 			mysqlWantArgs:   []interface{}{3},
-			sqlite3WantStmt: "SELECT * FROM 'name' WHERE `name`.`k` = ?",
+			sqlite3WantStmt: "SELECT `name`.* FROM 'name' WHERE `name`.`k` = ?",
 			sqlite3WantArgs: []interface{}{3},
 		},
 		{

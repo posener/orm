@@ -3,18 +3,19 @@ package common
 // Op is an SQL comparison operation
 type Op string
 
-// Columner is interface for generating columns of SELECT queries.
+// Selector is interface for generating columns of SELECT queries.
 // With this interface, a dialect talks to struct specific generated implementation.
-type Columner interface {
+type Selector interface {
 	Columns() []string
 	Joins() []Join
 	Count() bool
 }
 
 type Join struct {
-	Column    string
-	RefTable  string
-	RefColumn string
+	Column        string
+	RefTable      string
+	RefColumn     string
+	SelectColumns []string
 }
 
 // StatementArger is interface for queries.

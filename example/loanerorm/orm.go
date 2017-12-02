@@ -16,8 +16,8 @@ const table = "loaner"
 
 // createColumnsStatements are columns definitions in different dialects
 var createColumnsStatements = map[string]string{
-	"mysql":   "`id` INTEGER PRIMARY KEY AUTO_INCREMENT, `name` TEXT, book_id INTEGER, FOREIGN KEY (book_id) REFERENCES book(id)",
-	"sqlite3": "'id' INTEGER PRIMARY KEY AUTOINCREMENT, 'name' TEXT, book_id INTEGER, FOREIGN KEY (book_id) REFERENCES book(id)",
+	"mysql":   "`id` INTEGER PRIMARY KEY AUTO_INCREMENT, `name` TEXT, `age` INTEGER, book_id INTEGER, FOREIGN KEY (book_id) REFERENCES book(id)",
+	"sqlite3": "'id' INTEGER PRIMARY KEY AUTOINCREMENT, 'name' TEXT, 'age' INTEGER, book_id INTEGER, FOREIGN KEY (book_id) REFERENCES book(id)",
 }
 
 // API is the interface of the ORM object
@@ -118,6 +118,7 @@ func (c *conn) Delete() *DeleteBuilder {
 // InsertLoaner returns an SQL INSERT statement builder filled with values of a given object
 func (b *InsertBuilder) InsertLoaner(p *example.Loaner) *InsertBuilder {
 	b.params.Assignments.Add("name", p.Name)
+	b.params.Assignments.Add("age", p.Age)
 	b.params.Assignments.Add("book_id", p.Book.ID)
 	return b
 }
@@ -125,6 +126,7 @@ func (b *InsertBuilder) InsertLoaner(p *example.Loaner) *InsertBuilder {
 // UpdateLoaner update values for all struct fields
 func (b *UpdateBuilder) UpdateLoaner(p *example.Loaner) *UpdateBuilder {
 	b.params.Assignments.Add("name", p.Name)
+	b.params.Assignments.Add("age", p.Age)
 	b.params.Assignments.Add("book_id", p.Book.ID)
 	return b
 }
@@ -138,6 +140,18 @@ func (b *InsertBuilder) SetName(value string) *InsertBuilder {
 // SetName sets value for column name in the UPDATE statement
 func (b *UpdateBuilder) SetName(value string) *UpdateBuilder {
 	b.params.Assignments.Add("name", value)
+	return b
+}
+
+// SetAge sets value for column age in the INSERT statement
+func (b *InsertBuilder) SetAge(value int) *InsertBuilder {
+	b.params.Assignments.Add("age", value)
+	return b
+}
+
+// SetAge sets value for column age in the UPDATE statement
+func (b *UpdateBuilder) SetAge(value int) *UpdateBuilder {
+	b.params.Assignments.Add("age", value)
 	return b
 }
 

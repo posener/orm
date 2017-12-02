@@ -14,13 +14,11 @@ const errMsg = "converting %s: column %d with value %v (type %T) to %s"
 
 // selector selects columns for SQL queries and for parsing SQL rows
 type selector struct {
-	SelectID bool
-
+	SelectID   bool
 	SelectName bool
-
-	JoinBook BookScanner
-
-	count bool // used for sql COUNT(*) column
+	SelectAge  bool
+	JoinBook   BookScanner
+	count      bool // used for sql COUNT(*) column
 }
 
 // Columns are the names of selected columns
@@ -29,22 +27,24 @@ func (s *selector) Columns() []string {
 	if s.SelectID {
 		cols = append(cols, "id")
 	}
-
 	if s.SelectName {
 		cols = append(cols, "name")
 	}
-
+	if s.SelectAge {
+		cols = append(cols, "age")
+	}
 	return cols
 }
 
 // Joins are join options of the query
 func (s *selector) Joins() []common.Join {
 	var joins []common.Join
-	if s.JoinBook != nil {
+	if selector := s.JoinBook; selector != nil {
 		joins = append(joins, common.Join{
-			Column:    "book_id",
-			RefTable:  "book",
-			RefColumn: "id",
+			Column:        "book_id",
+			RefTable:      "book",
+			RefColumn:     "id",
+			SelectColumns: selector.Columns(),
 		})
 	}
 
@@ -115,7 +115,23 @@ func (s *selector) scanmysql(vals []driver.Value) (*LoanerCount, error) {
 		i++
 	}
 
-	if all || s.JoinBook != nil {
+	if all || s.SelectAge {
+		if vals[i] != nil {
+			switch val := vals[i].(type) {
+			case []byte:
+				tmp := int(parseInt(val))
+				row.Age = tmp
+			case int64:
+				tmp := int(val)
+				row.Age = tmp
+			default:
+				return nil, fmt.Errorf(errMsg, "Age", i, vals[i], vals[i], "[]byte, int64")
+			}
+		}
+		i++
+	}
+
+	if all { // skip foreign key column
 		i++
 	}
 
@@ -174,7 +190,19 @@ func (s *selector) scansqlite3(vals []driver.Value) (*LoanerCount, error) {
 		i++
 	}
 
-	if all || s.JoinBook != nil {
+	if all || s.SelectAge {
+		if vals[i] != nil {
+			val, ok := vals[i].(int64)
+			if !ok {
+				return nil, fmt.Errorf(errMsg, "Age", i, vals[i], vals[i], "int")
+			}
+			tmp := int(val)
+			row.Age = tmp
+		}
+		i++
+	}
+
+	if all { // skip foreign key column
 		i++
 	}
 
@@ -203,5 +231,5 @@ func (s *selector) scansqlite3(vals []driver.Value) (*LoanerCount, error) {
 
 // selectAll returns true if no column was specifically selected
 func (s *selector) selectAll() bool {
-	return !s.SelectID && !s.SelectName && !s.count
+	return !s.SelectID && !s.SelectName && !s.SelectAge && !s.count
 }

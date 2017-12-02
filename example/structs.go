@@ -25,6 +25,7 @@ type Employee struct {
 type Loaner struct {
 	ID   int64 `sql:"primary key;auto increment"`
 	Name string
+	Age  int
 	Book *Book
 }
 

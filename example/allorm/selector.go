@@ -15,77 +15,42 @@ const errMsg = "converting %s: column %d with value %v (type %T) to %s"
 
 // selector selects columns for SQL queries and for parsing SQL rows
 type selector struct {
-	SelectAuto bool
-
-	SelectNotNil bool
-
-	SelectInt bool
-
-	SelectInt8 bool
-
-	SelectInt16 bool
-
-	SelectInt32 bool
-
-	SelectInt64 bool
-
-	SelectUInt bool
-
-	SelectUInt8 bool
-
-	SelectUInt16 bool
-
-	SelectUInt32 bool
-
-	SelectUInt64 bool
-
-	SelectTime bool
-
-	SelectVarCharString bool
-
-	SelectVarCharByte bool
-
-	SelectString bool
-
-	SelectBytes bool
-
-	SelectBool bool
-
-	SelectPInt bool
-
-	SelectPInt8 bool
-
-	SelectPInt16 bool
-
-	SelectPInt32 bool
-
-	SelectPInt64 bool
-
-	SelectPUInt bool
-
-	SelectPUInt8 bool
-
-	SelectPUInt16 bool
-
-	SelectPUInt32 bool
-
-	SelectPUInt64 bool
-
-	SelectPTime bool
-
+	SelectAuto           bool
+	SelectNotNil         bool
+	SelectInt            bool
+	SelectInt8           bool
+	SelectInt16          bool
+	SelectInt32          bool
+	SelectInt64          bool
+	SelectUInt           bool
+	SelectUInt8          bool
+	SelectUInt16         bool
+	SelectUInt32         bool
+	SelectUInt64         bool
+	SelectTime           bool
+	SelectVarCharString  bool
+	SelectVarCharByte    bool
+	SelectString         bool
+	SelectBytes          bool
+	SelectBool           bool
+	SelectPInt           bool
+	SelectPInt8          bool
+	SelectPInt16         bool
+	SelectPInt32         bool
+	SelectPInt64         bool
+	SelectPUInt          bool
+	SelectPUInt8         bool
+	SelectPUInt16        bool
+	SelectPUInt32        bool
+	SelectPUInt64        bool
+	SelectPTime          bool
 	SelectPVarCharString bool
-
-	SelectPVarCharByte bool
-
-	SelectPString bool
-
-	SelectPBytes bool
-
-	SelectPBool bool
-
-	SelectSelect bool
-
-	count bool // used for sql COUNT(*) column
+	SelectPVarCharByte   bool
+	SelectPString        bool
+	SelectPBytes         bool
+	SelectPBool          bool
+	SelectSelect         bool
+	count                bool // used for sql COUNT(*) column
 }
 
 // Columns are the names of selected columns
@@ -94,143 +59,108 @@ func (s *selector) Columns() []string {
 	if s.SelectAuto {
 		cols = append(cols, "auto")
 	}
-
 	if s.SelectNotNil {
 		cols = append(cols, "notnil")
 	}
-
 	if s.SelectInt {
 		cols = append(cols, "int")
 	}
-
 	if s.SelectInt8 {
 		cols = append(cols, "int8")
 	}
-
 	if s.SelectInt16 {
 		cols = append(cols, "int16")
 	}
-
 	if s.SelectInt32 {
 		cols = append(cols, "int32")
 	}
-
 	if s.SelectInt64 {
 		cols = append(cols, "int64")
 	}
-
 	if s.SelectUInt {
 		cols = append(cols, "uint")
 	}
-
 	if s.SelectUInt8 {
 		cols = append(cols, "uint8")
 	}
-
 	if s.SelectUInt16 {
 		cols = append(cols, "uint16")
 	}
-
 	if s.SelectUInt32 {
 		cols = append(cols, "uint32")
 	}
-
 	if s.SelectUInt64 {
 		cols = append(cols, "uint64")
 	}
-
 	if s.SelectTime {
 		cols = append(cols, "time")
 	}
-
 	if s.SelectVarCharString {
 		cols = append(cols, "varcharstring")
 	}
-
 	if s.SelectVarCharByte {
 		cols = append(cols, "varcharbyte")
 	}
-
 	if s.SelectString {
 		cols = append(cols, "string")
 	}
-
 	if s.SelectBytes {
 		cols = append(cols, "bytes")
 	}
-
 	if s.SelectBool {
 		cols = append(cols, "bool")
 	}
-
 	if s.SelectPInt {
 		cols = append(cols, "pint")
 	}
-
 	if s.SelectPInt8 {
 		cols = append(cols, "pint8")
 	}
-
 	if s.SelectPInt16 {
 		cols = append(cols, "pint16")
 	}
-
 	if s.SelectPInt32 {
 		cols = append(cols, "pint32")
 	}
-
 	if s.SelectPInt64 {
 		cols = append(cols, "pint64")
 	}
-
 	if s.SelectPUInt {
 		cols = append(cols, "puint")
 	}
-
 	if s.SelectPUInt8 {
 		cols = append(cols, "puint8")
 	}
-
 	if s.SelectPUInt16 {
 		cols = append(cols, "puint16")
 	}
-
 	if s.SelectPUInt32 {
 		cols = append(cols, "puint32")
 	}
-
 	if s.SelectPUInt64 {
 		cols = append(cols, "puint64")
 	}
-
 	if s.SelectPTime {
 		cols = append(cols, "ptime")
 	}
-
 	if s.SelectPVarCharString {
 		cols = append(cols, "pvarcharstring")
 	}
-
 	if s.SelectPVarCharByte {
 		cols = append(cols, "pvarcharbyte")
 	}
-
 	if s.SelectPString {
 		cols = append(cols, "pstring")
 	}
-
 	if s.SelectPBytes {
 		cols = append(cols, "pbytes")
 	}
-
 	if s.SelectPBool {
 		cols = append(cols, "pbool")
 	}
-
 	if s.SelectSelect {
 		cols = append(cols, "select")
 	}
-
 	return cols
 }
 

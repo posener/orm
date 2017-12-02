@@ -10,6 +10,7 @@ import (
 )
 
 type Scanner interface {
+	Columns() []string
 	First(dialect string, values []driver.Value) (*example.Employee, error)
 }
 

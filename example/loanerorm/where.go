@@ -45,6 +45,25 @@ func WhereNameBetween(low, high string) common.Where {
 	return common.NewWhereBetween("loaner", "name", low, high)
 }
 
+// WhereAge adds a condition on Age to the WHERE statement
+func WhereAge(op common.Op, val int) common.Where {
+	return common.NewWhere(op, "loaner", "age", val)
+}
+
+// WhereAgeIn adds an IN condition on Age to the WHERE statement
+func WhereAgeIn(vals ...int) common.Where {
+	args := make([]interface{}, len(vals))
+	for i := range vals {
+		args[i] = vals[i]
+	}
+	return common.NewWhereIn("loaner", "age", args...)
+}
+
+// WhereAgeBetween adds a BETWEEN condition on Age to the WHERE statement
+func WhereAgeBetween(low, high int) common.Where {
+	return common.NewWhereBetween("loaner", "age", low, high)
+}
+
 // WhereBook adds a condition on Book to the WHERE statement
 func WhereBook(op common.Op, val *example.Book) common.Where {
 	return common.NewWhere(op, "loaner", "book_id", val)

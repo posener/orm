@@ -14,13 +14,10 @@ const errMsg = "converting %s: column %d with value %v (type %T) to %s"
 
 // selector selects columns for SQL queries and for parsing SQL rows
 type selector struct {
-	SelectID bool
-
+	SelectID   bool
 	SelectName bool
-
 	SelectYear bool
-
-	count bool // used for sql COUNT(*) column
+	count      bool // used for sql COUNT(*) column
 }
 
 // Columns are the names of selected columns
@@ -29,15 +26,12 @@ func (s *selector) Columns() []string {
 	if s.SelectID {
 		cols = append(cols, "id")
 	}
-
 	if s.SelectName {
 		cols = append(cols, "name")
 	}
-
 	if s.SelectYear {
 		cols = append(cols, "year")
 	}
-
 	return cols
 }
 
