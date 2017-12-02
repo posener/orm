@@ -53,7 +53,7 @@ func cacheGetOrUpdate(tp *Type) (*Type, bool) {
 // loadStruct loads struct information from go package
 func (t *Type) loadStruct() (*types.Struct, *types.Package, error) {
 	log.Printf("Loading struct %s", t)
-	structName := t.nonPointerType()
+	structName := t.Name
 
 	// if import path is not define, try to import from local directory
 	importPath := t.ImportPath

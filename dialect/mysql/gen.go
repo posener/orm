@@ -45,11 +45,11 @@ var tmplt = template.Must(template.New("sqlite3").Parse(`
 				switch val := vals[i].(type) {
 				case []byte:
 					tmp := {{.ConvertFuncString}}
-					row.{{.Field.Name}} = {{if .Field.Type.IsPointer}}&{{end}}tmp
+					row.{{.Field.Name}} = {{if .Field.Type.Pointer}}&{{end}}tmp
 				{{- if ne .ConvertType "[]byte" }}
 				case {{.ConvertType}}:
-					tmp := {{.Field.Type.NonPointer}}(val)
-					row.{{.Field.Name}} = {{if .Field.Type.IsPointer -}}&{{end}}tmp
+					tmp := {{.Field.Type.ExtNonPointer}}(val)
+					row.{{.Field.Name}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
 				{{- end }}
 				default:
 					return nil, fmt.Errorf(errMsg, "{{.Field.Name}}", i, vals[i], vals[i], "[]byte, {{.ConvertType}}")
@@ -87,7 +87,7 @@ func (g *Gen) convertType(f *load.Field) string {
 	case sqltypes.Boolean:
 		return "bool"
 	default:
-		return f.Type.NonPointer()
+		return f.Type.ExtNonPointer()
 	}
 }
 

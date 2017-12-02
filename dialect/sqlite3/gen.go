@@ -43,8 +43,8 @@ var tmplt = template.Must(template.New("sqlite3").Parse(`
 				if !ok {
 					return nil, fmt.Errorf(errMsg, "{{.Field.Name}}", i, vals[i], vals[i], "{{.Field.Type.ExtName}}")
 				}
-				tmp := {{.Field.Type.NonPointer}}(val)
-				row.{{.Field.Name}} = {{if .Field.Type.IsPointer -}}&{{end}}tmp
+				tmp := {{.Field.Type.ExtNonPointer}}(val)
+				row.{{.Field.Name}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
 `))
 
 // ConvertType is the type of the field when returned by sql/driver from database
@@ -59,7 +59,7 @@ func (g *Gen) convertType(f *load.Field) string {
 	case sqltypes.Boolean:
 		return "bool"
 	default:
-		return f.Type.NonPointer()
+		return f.Type.ExtNonPointer()
 	}
 }
 

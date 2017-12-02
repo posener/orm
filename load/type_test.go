@@ -17,7 +17,7 @@ func TestType(t *testing.T) {
 		wantExtName    string
 		wantNonPointer string
 		wantPackage    string
-		wantIsPointer  bool
+		wantPointer    bool
 		wantIsBasic    bool
 	}{
 		{
@@ -34,7 +34,7 @@ func TestType(t *testing.T) {
 			wantString:     "*int64",
 			wantExtName:    "*int64",
 			wantNonPointer: "int64",
-			wantIsPointer:  true,
+			wantPointer:    true,
 			wantIsBasic:    true,
 		},
 		{
@@ -54,7 +54,7 @@ func TestType(t *testing.T) {
 			wantExtName:    "*example.Person",
 			wantNonPointer: "example.Person",
 			wantPackage:    "example",
-			wantIsPointer:  true,
+			wantPointer:    true,
 		},
 	}
 
@@ -66,8 +66,8 @@ func TestType(t *testing.T) {
 			assert.Equal(t, tt.wantExtName, tp.ExtName())
 			assert.Equal(t, tt.wantPackage, tp.Package())
 			assert.Equal(t, tt.wantImportPath, tp.ImportPath)
-			assert.Equal(t, tt.wantNonPointer, tp.NonPointer())
-			assert.Equal(t, tt.wantIsPointer, tp.IsPointer())
+			assert.Equal(t, tt.wantNonPointer, tp.ExtNonPointer())
+			assert.Equal(t, tt.wantPointer, tp.Pointer())
 			assert.Equal(t, tt.wantIsBasic, tp.IsBasic())
 		})
 	}
