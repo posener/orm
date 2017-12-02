@@ -37,6 +37,7 @@ type Type struct {
 	Fields     []Field
 	PrimaryKey *Field
 	Pointer    bool
+	Slice      bool
 }
 
 // New loads a Type
@@ -45,6 +46,7 @@ func New(fullName string) (*Type, error) {
 		Name:       typeName(fullName),
 		ImportPath: importPath(fullName),
 		Pointer:    pointer(fullName),
+		Slice:      slice(fullName),
 	}
 
 	// if type is a basic type, we are done
@@ -74,9 +76,9 @@ func New(fullName string) (*Type, error) {
 
 func (t *Type) String() string {
 	if t.ImportPath != "" {
-		return t.pointerStr() + t.ImportPath + "." + t.Name
+		return t.sliceStr() + t.pointerStr() + t.ImportPath + "." + t.Name
 	}
-	return t.Name
+	return t.sliceStr() + t.pointerStr() + t.Name
 }
 
 // Table is SQL table name of a type
@@ -87,13 +89,13 @@ func (t *Type) Table() string {
 // ExtName is the full type of the imported type, as used in a go code
 // outside the defining package. For example: "example.Person"
 func (t Type) ExtName() string {
-	return t.pointerStr() + t.ExtNonPointer()
+	return t.sliceStr() + t.pointerStr() + t.ExtNaked()
 }
 
-// ExtNonPointer is the full type of the imported type in it's non-pointer form,
+// ExtNaked is the full type of the imported type in it's non-pointer form,
 // as used in a go code outside the defining package.
 // For example: "example.Person"
-func (t Type) ExtNonPointer() string {
+func (t Type) ExtNaked() string {
 	if t.Package() != "" {
 		return t.Package() + "." + t.Name
 	}
@@ -109,7 +111,7 @@ func (t Type) Package() string {
 }
 
 func (t *Type) IsBasic() bool {
-	return basicTypes[t.ExtNonPointer()]
+	return basicTypes[t.ExtNaked()]
 }
 
 // Imports returns a list of all imports for this type's fields
@@ -142,6 +144,13 @@ func (t *Type) References() []Field {
 func (t *Type) pointerStr() string {
 	if t.Pointer {
 		return "*"
+	}
+	return ""
+}
+
+func (t *Type) sliceStr() string {
+	if t.Slice {
+		return "[]"
 	}
 	return ""
 }
@@ -203,7 +212,7 @@ func importPath(fullName string) string {
 	if i == -1 {
 		return ""
 	}
-	return strings.TrimLeft(fullName[:i], "*")
+	return strings.TrimLeft(fullName[:i], "*[]")
 }
 
 // typeName returns the type string from a full type name.
@@ -212,9 +221,13 @@ func importPath(fullName string) string {
 // struct in a go file
 func typeName(fullName string) string {
 	i := strings.LastIndex(fullName, ".")
-	return strings.TrimLeft(fullName[i+1:], "*")
+	return strings.TrimLeft(fullName[i+1:], "*[]")
 }
 
 func pointer(typeName string) bool {
-	return len(typeName) > 0 && typeName[0] == '*'
+	return strings.HasPrefix(strings.TrimPrefix(typeName, "[]"), "*")
+}
+
+func slice(typeName string) bool {
+	return strings.HasPrefix(typeName, "[]")
 }

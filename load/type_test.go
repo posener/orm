@@ -15,27 +15,47 @@ func TestType(t *testing.T) {
 		wantType       string
 		wantImportPath string
 		wantExtName    string
-		wantNonPointer string
+		wantExtNaked   string
 		wantPackage    string
 		wantPointer    bool
+		wantSlice      bool
 		wantIsBasic    bool
 	}{
 		{
-			typeName:       "int64",
-			wantType:       "int64",
-			wantString:     "int64",
-			wantExtName:    "int64",
-			wantNonPointer: "int64",
-			wantIsBasic:    true,
+			typeName:     "int64",
+			wantType:     "int64",
+			wantString:   "int64",
+			wantExtName:  "int64",
+			wantExtNaked: "int64",
+			wantIsBasic:  true,
 		},
 		{
-			typeName:       "*int64",
-			wantType:       "*int64",
-			wantString:     "*int64",
-			wantExtName:    "*int64",
-			wantNonPointer: "int64",
-			wantPointer:    true,
-			wantIsBasic:    true,
+			typeName:     "*int64",
+			wantType:     "*int64",
+			wantString:   "*int64",
+			wantExtName:  "*int64",
+			wantExtNaked: "int64",
+			wantPointer:  true,
+			wantIsBasic:  true,
+		},
+		{
+			typeName:     "[]int64",
+			wantType:     "[]int64",
+			wantString:   "[]int64",
+			wantExtName:  "[]int64",
+			wantExtNaked: "int64",
+			wantSlice:    true,
+			wantIsBasic:  true,
+		},
+		{
+			typeName:     "[]*int64",
+			wantType:     "[]*int64",
+			wantString:   "[]*int64",
+			wantExtName:  "[]*int64",
+			wantExtNaked: "int64",
+			wantPointer:  true,
+			wantSlice:    true,
+			wantIsBasic:  true,
 		},
 		{
 			typeName:       "github.com/posener/orm/example.Person",
@@ -43,7 +63,7 @@ func TestType(t *testing.T) {
 			wantImportPath: "github.com/posener/orm/example",
 			wantString:     "github.com/posener/orm/example.Person",
 			wantExtName:    "example.Person",
-			wantNonPointer: "example.Person",
+			wantExtNaked:   "example.Person",
 			wantPackage:    "example",
 		},
 		{
@@ -52,9 +72,39 @@ func TestType(t *testing.T) {
 			wantImportPath: "github.com/posener/orm/example",
 			wantString:     "*github.com/posener/orm/example.Person",
 			wantExtName:    "*example.Person",
-			wantNonPointer: "example.Person",
+			wantExtNaked:   "example.Person",
 			wantPackage:    "example",
 			wantPointer:    true,
+		},
+		{
+			typeName:       "[]github.com/posener/orm/example.Person",
+			wantType:       "[]Person",
+			wantImportPath: "github.com/posener/orm/example",
+			wantString:     "[]github.com/posener/orm/example.Person",
+			wantExtName:    "[]example.Person",
+			wantExtNaked:   "example.Person",
+			wantPackage:    "example",
+			wantSlice:      true,
+		},
+		{
+			typeName:       "[]*github.com/posener/orm/example.Person",
+			wantType:       "[]*Person",
+			wantImportPath: "github.com/posener/orm/example",
+			wantString:     "[]*github.com/posener/orm/example.Person",
+			wantExtName:    "[]*example.Person",
+			wantExtNaked:   "example.Person",
+			wantPackage:    "example",
+			wantPointer:    true,
+			wantSlice:      true,
+		},
+		{
+			typeName:       "../example.Person",
+			wantType:       "Person",
+			wantImportPath: "github.com/posener/orm/example",
+			wantString:     "github.com/posener/orm/example.Person",
+			wantExtName:    "example.Person",
+			wantExtNaked:   "example.Person",
+			wantPackage:    "example",
 		},
 	}
 
@@ -66,8 +116,9 @@ func TestType(t *testing.T) {
 			assert.Equal(t, tt.wantExtName, tp.ExtName())
 			assert.Equal(t, tt.wantPackage, tp.Package())
 			assert.Equal(t, tt.wantImportPath, tp.ImportPath)
-			assert.Equal(t, tt.wantNonPointer, tp.ExtNonPointer())
-			assert.Equal(t, tt.wantPointer, tp.Pointer())
+			assert.Equal(t, tt.wantExtNaked, tp.ExtNaked())
+			assert.Equal(t, tt.wantPointer, tp.Pointer)
+			assert.Equal(t, tt.wantSlice, tp.Slice)
 			assert.Equal(t, tt.wantIsBasic, tp.IsBasic())
 		})
 	}

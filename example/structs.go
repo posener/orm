@@ -37,12 +37,12 @@ type Book struct {
 	Year int
 }
 
-////go:generate orm -type Author
-//
-//type Author struct {
-//	ID    int `sql:"primary key;auto increment"`
-//	Books []*Book
-//}
+//go:generate orm -type Author
+
+type Author struct {
+	ID    int `sql:"primary key;auto increment"`
+	Books []*Book
+}
 
 //go:generate orm -type All
 

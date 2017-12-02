@@ -10,13 +10,13 @@ import (
 
 type Scanner interface {
     Columns() []string
-    First(dialect string, values []driver.Value) (*{{$.Type.ExtNonPointer}}, error)
+    First(dialect string, values []driver.Value) (*{{$.Type.ExtNaked}}, error)
 }
 
 {{ range $_, $f := $.Type.References }}
 type {{$f.Name}}Scanner interface {
     Columns() []string
-    First(dialect string, values []driver.Value) (*{{$f.Type.ExtNonPointer}}, error)
+    First(dialect string, values []driver.Value) (*{{$f.Type.ExtNaked}}, error)
 }
 {{ end }}
 

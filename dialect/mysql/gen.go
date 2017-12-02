@@ -48,7 +48,7 @@ var tmplt = template.Must(template.New("sqlite3").Parse(`
 					row.{{.Field.Name}} = {{if .Field.Type.Pointer}}&{{end}}tmp
 				{{- if ne .ConvertType "[]byte" }}
 				case {{.ConvertType}}:
-					tmp := {{.Field.Type.ExtNonPointer}}(val)
+					tmp := {{.Field.Type.ExtNaked}}(val)
 					row.{{.Field.Name}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
 				{{- end }}
 				default:
@@ -87,7 +87,7 @@ func (g *Gen) convertType(f *load.Field) string {
 	case sqltypes.Boolean:
 		return "bool"
 	default:
-		return f.Type.ExtNonPointer()
+		return f.Type.ExtNaked()
 	}
 }
 
