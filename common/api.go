@@ -18,6 +18,12 @@ type Join struct {
 	SelectColumns []string
 }
 
+type ForeignKey struct {
+	Column    string
+	RefTable  string
+	RefColumn string
+}
+
 // StatementArger is interface for queries.
 // The statement and the args are given to the SQL query.
 type StatementArger interface {

@@ -5,6 +5,8 @@ import (
 	"log"
 	"strings"
 
+	"github.com/posener/orm/common"
+	"github.com/posener/orm/dialect/format"
 	"github.com/posener/orm/load"
 )
 
@@ -12,18 +14,38 @@ import (
 func (g *Gen) ColumnsStatement(tp *load.Type) string {
 	var (
 		stmts []string
-		refs  []*load.Field
+		refs  []common.ForeignKey
 	)
 	for _, f := range tp.Fields {
-		if f.IsReference() {
-			refs = append(refs, &f)
-		} else {
+		switch {
+		case f.Type.Slice:
+		case f.IsReference():
+			var (
+				refType = f.Type
+				pk      = refType.PrimaryKey
+			)
+			if pk == nil {
+				log.Fatalf("Field %s (%s) is reference and does not have primary key defined", f.Name, refType.Name)
+			}
+			fk := common.ForeignKey{
+				Column:    f.Column(),
+				RefTable:  refType.Table(),
+				RefColumn: pk.Column(),
+			}
+			stmts = append(stmts, fmt.Sprintf("`%s` %s", fk.Column, string(g.sqlType(refType.PrimaryKey))))
+			refs = append(refs, fk)
+		default:
 			stmts = append(stmts, g.fieldCreateString(&f))
+			if fk := f.SQL.ForeignKey; fk != nil {
+				refs = append(refs, common.ForeignKey{
+					Column:    f.Column(),
+					RefTable:  fk.Type.Table(),
+					RefColumn: fk.Field.Column(),
+				})
+			}
 		}
 	}
-	for _, f := range refs {
-		stmts = append(stmts, g.referenceString(f)...)
-	}
+	stmts = append(stmts, format.ForeignKey(refs)...)
 	return strings.Join(stmts, ", ")
 }
 
@@ -32,6 +54,9 @@ func (g *Gen) fieldCreateString(f *load.Field) string {
 	stmt := []string{fmt.Sprintf("`%s` %s", f.Column(), sqlType)}
 	if f.SQL.NotNull {
 		stmt = append(stmt, "NOT NULL")
+	}
+	if f.SQL.Null {
+		stmt = append(stmt, "NULL")
 	}
 	if f.SQL.Default != "" {
 		stmt = append(stmt, "DEFAULT", f.SQL.Default)
@@ -46,22 +71,5 @@ func (g *Gen) fieldCreateString(f *load.Field) string {
 		stmt = append(stmt, " UNIQUE")
 	}
 	return strings.Join(stmt, " ")
-}
 
-func (g *Gen) referenceString(f *load.Field) []string {
-	refType := f.Type
-	pk := refType.PrimaryKey
-	if pk == nil {
-		log.Fatalf("Field %s (%s) is reference and does not have primary key defined", f.Name, refType.Name)
-	}
-	var (
-		columnName = f.Column()
-		columnType = g.sqlType(refType.PrimaryKey)
-		refTable   = refType.Table()
-		refColumn  = pk.Column()
-	)
-	return []string{
-		fmt.Sprintf("%s %s", columnName, columnType),
-		fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s(%s)", columnName, refTable, refColumn),
-	}
 }

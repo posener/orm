@@ -144,9 +144,18 @@ func Join(table string, c common.Selector) string {
 }
 
 // IfNotExists formats an SQL IF NOT EXISTS statement
-func IfNotExists(ifNotExists bool) interface{} {
+func IfNotExists(ifNotExists bool) string {
 	if ifNotExists {
 		return "IF NOT EXISTS"
 	}
 	return ""
+}
+
+func ForeignKey(foreignKeys []common.ForeignKey) []string {
+	var stmts []string
+	for _, fk := range foreignKeys {
+		stmts = append(stmts, fmt.Sprintf("FOREIGN KEY (`%s`) REFERENCES `%s`(`%s`)",
+			fk.Column, fk.RefTable, fk.RefColumn))
+	}
+	return stmts
 }

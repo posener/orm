@@ -1,7 +1,6 @@
 package load
 
 import (
-	"encoding/json"
 	"fmt"
 	"go/types"
 	"strings"
@@ -15,18 +14,20 @@ const tagSQLType = "sql"
 // SQL hold the SQL tags for a field in a struct
 type SQL struct {
 	// CustomType can be defined to a column
-	CustomType sqltypes.Type `json:",omitempty"`
+	CustomType sqltypes.Type
 	// PrimaryKey defines a column as a table's primary key
-	PrimaryKey bool `json:",omitempty"`
+	PrimaryKey bool
 	// NotNull defines that this column value can't be null
-	NotNull bool `json:",omitempty"`
+	NotNull bool
+	// Null defines that this column value can be null
+	Null bool
 	// AutoIncrement defines this column as auto-increment column
-	AutoIncrement bool `json:",omitempty"`
+	AutoIncrement bool
 	// Unique defines that 2 rows can't have the same value of this column
-	Unique bool `json:",omitempty"`
+	Unique bool
 	// Default sets a default value for this column
-	Default    string      `json:",omitempty"`
-	ForeignKey *ForeignKey `json:",omitempty"`
+	Default    string
+	ForeignKey *ForeignKey
 }
 
 type ForeignKey struct {
@@ -55,6 +56,8 @@ func (s *SQL) parseTags(tag string) error {
 			s.PrimaryKey = true
 		case "not null", "not_null":
 			s.NotNull = true
+		case "null":
+			s.Null = true
 		case "auto increment", "auto_increment", "autoincrement":
 			s.AutoIncrement = true
 		case "unique":
@@ -99,12 +102,4 @@ func splitForeignKeyTag(name string) (typeName, fieldName string) {
 		return name, ""
 	}
 	return name[:i], name[i+1:]
-}
-
-func (s *SQL) String() string {
-	b, err := json.Marshal(s)
-	if err != nil {
-		return ""
-	}
-	return string(b)
 }

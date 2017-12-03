@@ -71,6 +71,7 @@ func (b *SelectBuilder) Join{{$f.Name}}(scanner {{$f.Name}}Scanner) *SelectBuild
 }
 {{ end }}
 
+{{ if not $f.Type.Slice -}}
 // OrderBy{{$f.Name}} set order to the query results according to column {{$f.Column}}
 func (b *SelectBuilder) OrderBy{{$f.Name}}(dir common.OrderDir) *SelectBuilder {
     b.params.Orders.Add("{{$f.Column}}", dir)
@@ -82,6 +83,7 @@ func (b *SelectBuilder) GroupBy{{$f.Name}}() *SelectBuilder {
     b.params.Groups.Add("{{$f.Column}}")
     return b
 }
+{{ end -}}
 {{ end -}}
 
 // Context sets the context for the SQL query

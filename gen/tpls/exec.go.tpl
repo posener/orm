@@ -75,6 +75,9 @@ func (b *SelectBuilder) Query() ([]{{.Type.ExtName}}, error) {
 		}
 		all = append(all, *item)
 	}
+    {{ if and .Type.HasOneToManyRelation .Type.PrimaryKey -}}
+    all = b.reduce(all)
+    {{ end -}}
 	return all, rows.Err()
 }
 
@@ -101,6 +104,9 @@ func (b *SelectBuilder) Count() ([]{{.Type.Name}}Count, error) {
 		}
 		all = append(all, *item)
 	}
+    {{ if and .Type.HasOneToManyRelation .Type.PrimaryKey -}}
+    all = b.reduceCount(all)
+    {{ end -}}
 	return all, rows.Err()
 }
 
@@ -128,6 +134,49 @@ func (b *SelectBuilder) First() (*{{.Type.ExtName}}, error) {
     }
 	return item, rows.Err()
 }
+
+
+{{ if .Type.PrimaryKey -}}
+func (b *SelectBuilder) reduce(items []{{.Type.ExtName}}) []{{.Type.ExtName}} {
+	var (
+		exists = make(map[{{.Type.PrimaryKey.Type.ExtName}}]*{{.Type.ExtName}})
+		ret    []{{.Type.ExtName}}
+	)
+	for _, i := range items {
+		if exist := exists[i.{{.Type.PrimaryKey.Name}}]; exist != nil {
+		    {{ range $_, $f := .Type.References -}}
+		    {{ if $f.Type.Slice -}}
+			exist.{{$f.Name}} = append(exist.{{$f.Name}}, i.{{$f.Name}}...)
+			{{ end -}}
+			{{ end -}}
+		} else {
+			ret = append(ret, i)
+			exists[i.{{.Type.PrimaryKey.Name}}] = &ret[len(ret)-1]
+		}
+	}
+	return ret
+}
+
+func (b *SelectBuilder) reduceCount(items []{{.Type.Name}}Count) []{{.Type.Name}}Count {
+	var (
+		exists = make(map[{{.Type.PrimaryKey.Type.ExtName}}]*{{.Type.Name}}Count)
+		ret    []{{.Type.Name}}Count
+	)
+	for _, i := range items {
+		if exist := exists[i.{{.Type.PrimaryKey.Name}}]; exist != nil {
+		    {{ range $_, $f := .Type.References -}}
+		    {{ if $f.Type.Slice -}}
+			exist.{{$.Type.Name}}.{{$f.Name}} = append(exist.{{$f.Name}}, i.{{$f.Name}}...)
+			{{ end -}}
+			{{ end -}}
+		} else {
+			ret = append(ret, i)
+			exists[i.{{.Type.PrimaryKey.Name}}] = &ret[len(ret)-1]
+		}
+	}
+	return ret
+}
+{{ end }}
 
 func contextOrBackground(ctx context.Context) context.Context {
 	if ctx == nil {

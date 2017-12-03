@@ -16,8 +16,8 @@ const table = "book"
 
 // createColumnsStatements are columns definitions in different dialects
 var createColumnsStatements = map[string]string{
-	"mysql":   "`id` INTEGER PRIMARY KEY AUTO_INCREMENT, `name` TEXT, `year` INTEGER, `authorid` INTEGER",
-	"sqlite3": "'id' INTEGER PRIMARY KEY AUTOINCREMENT, 'name' TEXT, 'year' INTEGER, 'authorid' INTEGER",
+	"mysql":   "`id` INTEGER PRIMARY KEY AUTO_INCREMENT, `name` TEXT, `year` INTEGER, `authorid` INTEGER NULL, FOREIGN KEY (`authorid`) REFERENCES `author`(`id`)",
+	"sqlite3": "'id' INTEGER PRIMARY KEY AUTOINCREMENT, 'name' TEXT, 'year' INTEGER, 'authorid' INTEGER NULL, FOREIGN KEY (`authorid`) REFERENCES `author`(`id`)",
 }
 
 // API is the interface of the ORM object

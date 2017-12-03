@@ -40,6 +40,16 @@ func (s *selector) Columns() []string {
 func (s *selector) Joins() []common.Join {
 	var joins []common.Join
     {{ range $_, $f := .Type.References -}}
+    {{ if $f.Type.Slice -}}
+    if selector := s.Join{{$f.Name}}; selector != nil {
+        joins = append(joins, common.Join{
+            Column: "{{$f.ReferencedBy.SQL.ForeignKey.Field.Column}}",
+            RefTable: "{{$f.Type.Table}}",
+            RefColumn: "{{$f.ReferencedBy.Column}}",
+            SelectColumns: selector.Columns(),
+        })
+    }
+    {{ else -}}
     if selector := s.Join{{$f.Name}}; selector != nil {
         joins = append(joins, common.Join{
             Column: "{{$f.Column}}",
@@ -48,6 +58,7 @@ func (s *selector) Joins() []common.Join {
             SelectColumns: selector.Columns(),
         })
     }
+    {{ end }}
     {{ end }}
 	return joins
 }
@@ -93,7 +104,7 @@ func (s *selector) scan{{$dialect.Name}} (vals []driver.Value) (*{{$.Type.Name}}
         }
         i++
     }
-    {{ else }}
+    {{ else if not $f.Type.Slice }}
     if all { // skip foreign key column
         i++
     }
@@ -114,11 +125,15 @@ func (s *selector) scan{{$dialect.Name}} (vals []driver.Value) (*{{$.Type.Name}}
 
     {{ range $_, $f := $.Type.References }}
     if j := s.Join{{$f.Name}}; j != nil {
-        var err error
-        row.{{$f.Name}}, err = j.First("{{$dialect.Name}}", vals[i:])
+        tmp, err := j.First("{{$dialect.Name}}", vals[i:])
         if err != nil {
             return nil, err
         }
+        {{ if $f.Type.Slice -}}
+        row.{{$f.Name}} = append(row.{{$f.Name}}, tmp)
+        {{ else -}}
+        row.{{$f.Name}} = tmp
+        {{ end -}}
     }
     {{ end }}
 

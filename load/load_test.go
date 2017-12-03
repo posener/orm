@@ -8,7 +8,6 @@ import (
 )
 
 func TestLoad(t *testing.T) {
-	t.Parallel()
 	tests := []struct {
 		typeName       string
 		wantName       string

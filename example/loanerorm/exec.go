@@ -131,6 +131,36 @@ func (b *SelectBuilder) First() (*example.Loaner, error) {
 	return item, rows.Err()
 }
 
+func (b *SelectBuilder) reduce(items []example.Loaner) []example.Loaner {
+	var (
+		exists = make(map[int64]*example.Loaner)
+		ret    []example.Loaner
+	)
+	for _, i := range items {
+		if exist := exists[i.ID]; exist != nil {
+		} else {
+			ret = append(ret, i)
+			exists[i.ID] = &ret[len(ret)-1]
+		}
+	}
+	return ret
+}
+
+func (b *SelectBuilder) reduceCount(items []LoanerCount) []LoanerCount {
+	var (
+		exists = make(map[int64]*LoanerCount)
+		ret    []LoanerCount
+	)
+	for _, i := range items {
+		if exist := exists[i.ID]; exist != nil {
+		} else {
+			ret = append(ret, i)
+			exists[i.ID] = &ret[len(ret)-1]
+		}
+	}
+	return ret
+}
+
 func contextOrBackground(ctx context.Context) context.Context {
 	if ctx == nil {
 		return context.Background()

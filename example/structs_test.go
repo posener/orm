@@ -12,6 +12,7 @@ import (
 	"github.com/posener/orm"
 	"github.com/posener/orm/example"
 	"github.com/posener/orm/example/allorm"
+	"github.com/posener/orm/example/authororm"
 	"github.com/posener/orm/example/bookorm"
 	"github.com/posener/orm/example/loanerorm"
 	"github.com/posener/orm/example/personorm"
@@ -451,9 +452,9 @@ func TestNew(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func TestReferences(t *testing.T) {
+func TestRelationOneToOne(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
-		book, loaner := bookDB(t, conn)
+		book, loaner, _ := libraryDB(t, conn)
 		defer book.Close()
 
 		if conn.name != "sqlite3" { // this is not enforced in sqlite3
@@ -463,7 +464,7 @@ func TestReferences(t *testing.T) {
 
 		b := &example.Book{Name: "The Hitchhiker's Guide to the Galaxy", Year: 1979}
 
-		res, err := book.Insert().InsertBook(b).Exec()
+		res, err := book.Insert().SetName(b.Name).SetYear(b.Year).Exec()
 		require.Nil(t, err)
 		b.ID, err = res.LastInsertId()
 		require.Nil(t, err)
@@ -512,6 +513,32 @@ func TestReferences(t *testing.T) {
 	})
 }
 
+func TestRelationOneToMany(t *testing.T) {
+	testDBs(t, func(t *testing.T, conn conn) {
+		book, _, author := libraryDB(t, conn)
+		defer book.Close()
+
+		a := &example.Author{Name: "Marks", Hobbies: "drones"}
+		res, err := author.Insert().InsertAuthor(a).Exec()
+		require.Nil(t, err)
+		a.ID, err = res.LastInsertId()
+		require.Nil(t, err)
+
+		var books []example.Book
+		for i := 0; i < 10; i++ {
+			b := &example.Book{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, AuthorID: a.ID}
+			res, err = book.Insert().InsertBook(b).Exec()
+			require.Nil(t, err)
+			b.ID, err = res.LastInsertId()
+			require.Nil(t, err)
+			books = append(books, *b)
+		}
+		as, err := author.Select().JoinBooks(book.Select().Scanner()).Query()
+		require.Nil(t, err)
+		require.Equal(t, 1, len(as))
+	})
+}
+
 func personDB(t *testing.T, conn conn) personorm.API {
 	t.Helper()
 	db, err := personorm.New(conn.name, conn)
@@ -536,16 +563,22 @@ func allDB(t *testing.T, conn conn) allorm.API {
 	return db
 }
 
-func bookDB(t *testing.T, conn conn) (bookorm.API, loanerorm.API) {
+func libraryDB(t *testing.T, conn conn) (bookorm.API, loanerorm.API, authororm.API) {
 	t.Helper()
 	bookDB, err := bookorm.New(conn.name, conn)
 	require.Nil(t, err)
 	loanerDB, err := loanerorm.New(conn.name, conn)
 	require.Nil(t, err)
+	authorDB, err := authororm.New(conn.name, conn)
+	require.Nil(t, err)
 	if testing.Verbose() {
 		bookDB.Logger(t.Logf)
 		loanerDB.Logger(t.Logf)
+		authorDB.Logger(t.Logf)
 	}
+
+	_, err = authorDB.Create().Exec()
+	require.Nil(t, err)
 
 	_, err = bookDB.Create().Exec()
 	require.Nil(t, err)
@@ -553,7 +586,7 @@ func bookDB(t *testing.T, conn conn) (bookorm.API, loanerorm.API) {
 	_, err = loanerDB.Create().Exec()
 	require.Nil(t, err)
 
-	return bookDB, loanerDB
+	return bookDB, loanerDB, authorDB
 }
 
 type conn struct {
@@ -572,7 +605,7 @@ func testDBs(t *testing.T, testFunc func(t *testing.T, conn conn)) {
 				}
 				s, err := sql.Open(name, mySQLAddr)
 				require.Nil(t, err)
-				for _, table := range []string{"all", "person", "loaner", "book"} {
+				for _, table := range []string{"all", "person", "loaner", "book", "author"} {
 					_, err = s.Exec(fmt.Sprintf("DROP TABLE IF EXISTS `%s`", table))
 					require.Nil(t, err)
 				}

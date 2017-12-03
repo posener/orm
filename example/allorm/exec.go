@@ -131,6 +131,36 @@ func (b *SelectBuilder) First() (*example.All, error) {
 	return item, rows.Err()
 }
 
+func (b *SelectBuilder) reduce(items []example.All) []example.All {
+	var (
+		exists = make(map[int]*example.All)
+		ret    []example.All
+	)
+	for _, i := range items {
+		if exist := exists[i.Auto]; exist != nil {
+		} else {
+			ret = append(ret, i)
+			exists[i.Auto] = &ret[len(ret)-1]
+		}
+	}
+	return ret
+}
+
+func (b *SelectBuilder) reduceCount(items []AllCount) []AllCount {
+	var (
+		exists = make(map[int]*AllCount)
+		ret    []AllCount
+	)
+	for _, i := range items {
+		if exist := exists[i.Auto]; exist != nil {
+		} else {
+			ret = append(ret, i)
+			exists[i.Auto] = &ret[len(ret)-1]
+		}
+	}
+	return ret
+}
+
 func contextOrBackground(ctx context.Context) context.Context {
 	if ctx == nil {
 		return context.Background()

@@ -93,14 +93,14 @@ func (t *Type) Table() string {
 
 // ExtName is the full type of the imported type, as used in a go code
 // outside the defining package. For example: "example.Person"
-func (t Type) ExtName() string {
+func (t *Type) ExtName() string {
 	return t.sliceStr() + t.pointerStr() + t.ExtNaked()
 }
 
 // ExtNaked is the full type of the imported type in it's non-pointer form,
 // as used in a go code outside the defining package.
 // For example: "example.Person"
-func (t Type) ExtNaked() string {
+func (t *Type) ExtNaked() string {
 	if t.Package() != "" {
 		return t.Package() + "." + t.Name
 	}
@@ -144,6 +144,15 @@ func (t *Type) References() []Field {
 		}
 	}
 	return refs
+}
+
+func (t *Type) HasOneToManyRelation() bool {
+	for _, field := range t.Fields {
+		if field.Type.Slice {
+			return true
+		}
+	}
+	return false
 }
 
 func (t *Type) pointerStr() string {
@@ -201,17 +210,19 @@ func (t *Type) loadFields(st *types.Struct) error {
 				log.Printf("Ignoring field %s: slice of a basic type is not supported", f.Name)
 				continue
 			}
-			foundForeignKey := false
+			var fk *Field
 			for _, field := range f.Type.Fields {
-				if fk := field.SQL.ForeignKey; fk != nil && fk.Type == t {
-					foundForeignKey = true
+				if fki := field.SQL.ForeignKey; fki != nil && fki.Type == t {
+					fk = &field
 					break
 				}
 			}
-			if !foundForeignKey {
+			if fk == nil {
 				return fmt.Errorf("slice field %s -> %s: did not found foreign key in foreign type %s",
 					t.ExtNaked(), f.Name, f.Type.ExtNaked())
 			}
+			f.ReferencedBy = fk
+			t.Fields = append(t.Fields, f)
 
 		default:
 			// Basic type field: just add a field

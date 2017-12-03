@@ -12,16 +12,19 @@ type Field struct {
 	Embedded bool
 	// SQL properties of the field
 	SQL SQL
+	// Referenced by is a foreign key that points to this field
+	// this is a field in Type
+	ReferencedBy *Field
 }
 
 // Is reference returns true of the field references another row in a table (another object)
 func (f *Field) IsReference() bool {
-	return !f.Type.IsBasic() && !f.Embedded
+	return !(f.Type.IsBasic() || f.Embedded)
 }
 
 // IsSettable returns whether the column could be set
 func (f *Field) IsSettable() bool {
-	return !f.SQL.PrimaryKey && !f.SQL.AutoIncrement
+	return !(f.SQL.PrimaryKey || f.SQL.AutoIncrement || f.Type.Slice)
 }
 
 func (f *Field) SetType() string {

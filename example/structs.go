@@ -35,14 +35,16 @@ type Book struct {
 	ID       int64 `sql:"primary key;auto increment"`
 	Name     string
 	Year     int
-	AuthorID int64 `sql:"foreign key:./example.Author"`
+	AuthorID int64 `sql:"foreign key:./example.Author;null"`
 }
 
 //go:generate orm -type Author
 
 type Author struct {
-	ID    int64 `sql:"primary key;auto increment"`
-	Books []*Book
+	ID      int64 `sql:"primary key;auto increment"`
+	Name    string
+	Hobbies string
+	Books   []*Book
 }
 
 //go:generate orm -type All
