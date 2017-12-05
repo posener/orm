@@ -141,11 +141,13 @@ func (f *Field) IsSettable() bool {
 	return !(f.PrimaryKey || f.AutoIncrement || f.Type.Slice)
 }
 
-func (f *Field) SetType() string {
+// SetType is the type that is used to set this field.
+// it is usually the actual type, but in case of reference it is the PK of that type.
+func (f *Field) SetType() *Type {
 	if f.IsReference() {
-		return f.Type.PrimaryKey.Type.Name
+		return &f.Type.PrimaryKey.Type
 	}
-	return f.Type.ExtName()
+	return &f.Type
 }
 
 // Column returns the SQL column name of a field

@@ -140,13 +140,13 @@ func (b *UpdateBuilder) Update{{.Type.Name}}(p *{{.Type.ExtName}}) *UpdateBuilde
 
 {{ if $f.IsSettable -}}
 // Set{{$f.Name}} sets value for column {{$f.Column}} in the INSERT statement
-func (b *InsertBuilder) Set{{$f.Name}}(value {{$f.SetType}}) *InsertBuilder {
+func (b *InsertBuilder) Set{{$f.Name}}(value {{$f.SetType.ExtName}}) *InsertBuilder {
 	b.params.Assignments.Add("{{$f.Column}}", value)
 	return b
 }
 
 // Set{{$f.Name}} sets value for column {{$f.Column}} in the UPDATE statement
-func (b *UpdateBuilder) Set{{$f.Name}}(value {{$f.SetType}}) *UpdateBuilder {
+func (b *UpdateBuilder) Set{{$f.Name}}(value {{$f.SetType.ExtName}}) *UpdateBuilder {
 	b.params.Assignments.Add("{{$f.Column}}", value)
 	return b
 }

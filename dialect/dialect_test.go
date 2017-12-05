@@ -78,9 +78,11 @@ func TestCreate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.sqlite3Want, func(t *testing.T) {
 			tp := &load.Type{Name: "name", Fields: tt.fields}
-			got := new(sqlite3.Gen).ColumnsStatement(tp)
+			genSqlite3 := &gen{GenImplementer: new(sqlite3.Gen)}
+			genMysql := &gen{GenImplementer: new(mysql.Gen)}
+			got := genSqlite3.ColumnsStatement(tp)
 			assert.Equal(t, tt.sqlite3Want, got)
-			got = new(mysql.Gen).ColumnsStatement(tp)
+			got = genMysql.ColumnsStatement(tp)
 			assert.Equal(t, tt.mysqlWant, got)
 		})
 	}
