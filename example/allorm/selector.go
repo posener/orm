@@ -201,13 +201,14 @@ func (s *selector) First(dialect string, vals []driver.Value) (*example.All, err
 // scanmysql scans mysql row to a All struct
 func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	var (
-		row AllCount
-		all = s.selectAll()
-		i   int
+		row       AllCount
+		all       = s.selectAll()
+		i         int
+		rowExists bool
 	)
 
 	if all || s.SelectAuto {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int(parseInt(val))
@@ -223,7 +224,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectNotNil {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := string(val)
@@ -236,7 +237,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectInt {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int(parseInt(val))
@@ -252,7 +253,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectInt8 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int8(parseInt(val))
@@ -268,7 +269,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectInt16 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int16(parseInt(val))
@@ -284,7 +285,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectInt32 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int32(parseInt(val))
@@ -300,7 +301,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectInt64 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int64(parseInt(val))
@@ -316,7 +317,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectUInt {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := uint(parseFloat(val))
@@ -332,7 +333,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectUInt8 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := uint8(parseFloat(val))
@@ -348,7 +349,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectUInt16 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := uint16(parseFloat(val))
@@ -364,7 +365,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectUInt32 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := uint32(parseFloat(val))
@@ -380,7 +381,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectUInt64 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := uint64(parseFloat(val))
@@ -396,7 +397,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectTime {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := parseTime(val, 3)
@@ -412,7 +413,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectVarCharString {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := string(val)
@@ -425,7 +426,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectVarCharByte {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := []byte(val)
@@ -438,7 +439,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectString {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := string(val)
@@ -451,7 +452,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectBytes {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := []byte(val)
@@ -464,7 +465,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectBool {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := parseBool(val)
@@ -480,7 +481,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPInt {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int(parseInt(val))
@@ -496,7 +497,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPInt8 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int8(parseInt(val))
@@ -512,7 +513,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPInt16 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int16(parseInt(val))
@@ -528,7 +529,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPInt32 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int32(parseInt(val))
@@ -544,7 +545,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPInt64 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int64(parseInt(val))
@@ -560,7 +561,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPUInt {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := uint(parseFloat(val))
@@ -576,7 +577,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPUInt8 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := uint8(parseFloat(val))
@@ -592,7 +593,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPUInt16 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := uint16(parseFloat(val))
@@ -608,7 +609,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPUInt32 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := uint32(parseFloat(val))
@@ -624,7 +625,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPUInt64 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := uint64(parseFloat(val))
@@ -640,7 +641,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPTime {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := parseTime(val, 3)
@@ -656,7 +657,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPVarCharString {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := string(val)
@@ -669,7 +670,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPVarCharByte {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := []byte(val)
@@ -682,7 +683,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPString {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := string(val)
@@ -695,7 +696,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPBytes {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := []byte(val)
@@ -708,7 +709,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPBool {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := parseBool(val)
@@ -724,7 +725,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectSelect {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int(parseInt(val))
@@ -757,13 +758,14 @@ func (s *selector) scanmysql(vals []driver.Value) (*AllCount, error) {
 // scansqlite3 scans sqlite3 row to a All struct
 func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	var (
-		row AllCount
-		all = s.selectAll()
-		i   int
+		row       AllCount
+		all       = s.selectAll()
+		i         int
+		rowExists bool
 	)
 
 	if all || s.SelectAuto {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "Auto", i, vals[i], vals[i], "int")
@@ -775,7 +777,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectNotNil {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].([]byte)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "NotNil", i, vals[i], vals[i], "string")
@@ -787,7 +789,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectInt {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "Int", i, vals[i], vals[i], "int")
@@ -799,7 +801,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectInt8 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "Int8", i, vals[i], vals[i], "int8")
@@ -811,7 +813,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectInt16 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "Int16", i, vals[i], vals[i], "int16")
@@ -823,7 +825,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectInt32 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "Int32", i, vals[i], vals[i], "int32")
@@ -835,7 +837,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectInt64 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "Int64", i, vals[i], vals[i], "int64")
@@ -847,7 +849,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectUInt {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "UInt", i, vals[i], vals[i], "uint")
@@ -859,7 +861,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectUInt8 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "UInt8", i, vals[i], vals[i], "uint8")
@@ -871,7 +873,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectUInt16 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "UInt16", i, vals[i], vals[i], "uint16")
@@ -883,7 +885,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectUInt32 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "UInt32", i, vals[i], vals[i], "uint32")
@@ -895,7 +897,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectUInt64 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "UInt64", i, vals[i], vals[i], "uint64")
@@ -907,7 +909,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectTime {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(time.Time)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "Time", i, vals[i], vals[i], "time.Time")
@@ -919,7 +921,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectVarCharString {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].([]byte)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "VarCharString", i, vals[i], vals[i], "string")
@@ -931,7 +933,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectVarCharByte {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].([]byte)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "VarCharByte", i, vals[i], vals[i], "[]byte")
@@ -943,7 +945,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectString {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].([]byte)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "String", i, vals[i], vals[i], "string")
@@ -955,7 +957,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectBytes {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].([]byte)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "Bytes", i, vals[i], vals[i], "[]byte")
@@ -967,7 +969,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectBool {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(bool)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "Bool", i, vals[i], vals[i], "bool")
@@ -979,7 +981,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPInt {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "PInt", i, vals[i], vals[i], "*int")
@@ -991,7 +993,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPInt8 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "PInt8", i, vals[i], vals[i], "*int8")
@@ -1003,7 +1005,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPInt16 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "PInt16", i, vals[i], vals[i], "*int16")
@@ -1015,7 +1017,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPInt32 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "PInt32", i, vals[i], vals[i], "*int32")
@@ -1027,7 +1029,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPInt64 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "PInt64", i, vals[i], vals[i], "*int64")
@@ -1039,7 +1041,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPUInt {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "PUInt", i, vals[i], vals[i], "*uint")
@@ -1051,7 +1053,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPUInt8 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "PUInt8", i, vals[i], vals[i], "*uint8")
@@ -1063,7 +1065,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPUInt16 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "PUInt16", i, vals[i], vals[i], "*uint16")
@@ -1075,7 +1077,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPUInt32 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "PUInt32", i, vals[i], vals[i], "*uint32")
@@ -1087,7 +1089,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPUInt64 {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "PUInt64", i, vals[i], vals[i], "*uint64")
@@ -1099,7 +1101,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPTime {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(time.Time)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "PTime", i, vals[i], vals[i], "*time.Time")
@@ -1111,7 +1113,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPVarCharString {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].([]byte)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "PVarCharString", i, vals[i], vals[i], "*string")
@@ -1123,7 +1125,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPVarCharByte {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].([]byte)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "PVarCharByte", i, vals[i], vals[i], "*[]byte")
@@ -1135,7 +1137,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPString {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].([]byte)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "PString", i, vals[i], vals[i], "*string")
@@ -1147,7 +1149,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPBytes {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].([]byte)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "PBytes", i, vals[i], vals[i], "*[]byte")
@@ -1159,7 +1161,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectPBool {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(bool)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "PBool", i, vals[i], vals[i], "*bool")
@@ -1171,7 +1173,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AllCount, error) {
 	}
 
 	if all || s.SelectSelect {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "Select", i, vals[i], vals[i], "int")

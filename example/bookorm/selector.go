@@ -76,13 +76,14 @@ func (s *selector) First(dialect string, vals []driver.Value) (*example.Book, er
 // scanmysql scans mysql row to a Book struct
 func (s *selector) scanmysql(vals []driver.Value) (*BookCount, error) {
 	var (
-		row BookCount
-		all = s.selectAll()
-		i   int
+		row       BookCount
+		all       = s.selectAll()
+		i         int
+		rowExists bool
 	)
 
 	if all || s.SelectID {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int64(parseInt(val))
@@ -98,7 +99,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*BookCount, error) {
 	}
 
 	if all || s.SelectName {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := string(val)
@@ -111,7 +112,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*BookCount, error) {
 	}
 
 	if all || s.SelectYear {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int(parseInt(val))
@@ -127,7 +128,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*BookCount, error) {
 	}
 
 	if all || s.SelectAuthorID {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int64(parseInt(val))
@@ -160,13 +161,14 @@ func (s *selector) scanmysql(vals []driver.Value) (*BookCount, error) {
 // scansqlite3 scans sqlite3 row to a Book struct
 func (s *selector) scansqlite3(vals []driver.Value) (*BookCount, error) {
 	var (
-		row BookCount
-		all = s.selectAll()
-		i   int
+		row       BookCount
+		all       = s.selectAll()
+		i         int
+		rowExists bool
 	)
 
 	if all || s.SelectID {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "ID", i, vals[i], vals[i], "int64")
@@ -178,7 +180,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*BookCount, error) {
 	}
 
 	if all || s.SelectName {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].([]byte)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "Name", i, vals[i], vals[i], "string")
@@ -190,7 +192,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*BookCount, error) {
 	}
 
 	if all || s.SelectYear {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "Year", i, vals[i], vals[i], "int")
@@ -202,7 +204,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*BookCount, error) {
 	}
 
 	if all || s.SelectAuthorID {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "AuthorID", i, vals[i], vals[i], "int64")

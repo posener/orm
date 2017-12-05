@@ -11,7 +11,7 @@ import (
 
 type Scanner interface {
 	Columns() []string
-	First(dialect string, values []driver.Value) (*example.Author, error)
+	First(dialect string, values []driver.Value, exists map[int64]*example.Author) (*example.Author, error)
 }
 
 type BooksScanner interface {

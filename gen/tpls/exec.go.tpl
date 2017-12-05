@@ -74,7 +74,7 @@ func (b *SelectBuilder) Query() ([]{{.Type.ExtName}}, error) {
 	    if err := ctx.Err(); err != nil  {
 	        return nil, err
 	    }
-		item, err := b.selector.First(b.conn.dialect.Name(), values(*rows))
+		item, err := b.selector.First(b.conn.dialect.Name(), values(*rows){{if .Type.HasOneToManyRelation}}, exists{{end}})
         if err != nil {
 			return nil, err
 		}
@@ -119,7 +119,7 @@ func (b *SelectBuilder) Count() ([]{{.Type.Name}}Count, error) {
 	    if err := ctx.Err(); err != nil  {
 	        return nil, err
 	    }
-		item, err := b.selector.FirstCount(b.conn.dialect.Name(), values(*rows))
+		item, err := b.selector.FirstCount(b.conn.dialect.Name(), values(*rows){{if .Type.HasOneToManyRelation}}, exists{{end}})
         if err != nil {
 			return nil, err
 		}
@@ -160,7 +160,7 @@ func (b *SelectBuilder) First() (*{{.Type.ExtName}}, error) {
     if !found {
         return nil, orm.ErrNotFound
     }
-    item, err := b.selector.First(b.conn.dialect.Name(), values(*rows))
+    item, err := b.selector.First(b.conn.dialect.Name(), values(*rows){{if $.Type.HasOneToManyRelation}}, nil{{end}})
     if err != nil {
         return nil, err
     }

@@ -10,13 +10,13 @@ import (
 
 type Scanner interface {
     Columns() []string
-    First(dialect string, values []driver.Value) (*{{$.Type.ExtNaked}}, error)
+    First(dialect string, values []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName}}]*{{.Type.ExtName}}{{end}}) (*{{$.Type.ExtNaked}}, error)
 }
 
 {{ range $_, $f := $.Type.References }}
 type {{$f.Name}}Scanner interface {
     Columns() []string
-    First(dialect string, values []driver.Value) (*{{$f.Type.ExtNaked}}, error)
+    First(dialect string, values []driver.Value{{if $f.Type.HasOneToManyRelation}}, exists map[{{$f.Type.PrimaryKey.Type.ExtName}}]*{{$f.Type.ExtName}}{{end}}) (*{{$f.Type.ExtNaked}}, error)
 }
 {{ end }}
 

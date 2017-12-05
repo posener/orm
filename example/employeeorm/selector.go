@@ -72,13 +72,14 @@ func (s *selector) First(dialect string, vals []driver.Value) (*example.Employee
 // scanmysql scans mysql row to a Employee struct
 func (s *selector) scanmysql(vals []driver.Value) (*EmployeeCount, error) {
 	var (
-		row EmployeeCount
-		all = s.selectAll()
-		i   int
+		row       EmployeeCount
+		all       = s.selectAll()
+		i         int
+		rowExists bool
 	)
 
 	if all || s.SelectName {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := string(val)
@@ -91,7 +92,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*EmployeeCount, error) {
 	}
 
 	if all || s.SelectAge {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int(parseInt(val))
@@ -107,7 +108,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*EmployeeCount, error) {
 	}
 
 	if all || s.SelectSalary {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int(parseInt(val))
@@ -140,13 +141,14 @@ func (s *selector) scanmysql(vals []driver.Value) (*EmployeeCount, error) {
 // scansqlite3 scans sqlite3 row to a Employee struct
 func (s *selector) scansqlite3(vals []driver.Value) (*EmployeeCount, error) {
 	var (
-		row EmployeeCount
-		all = s.selectAll()
-		i   int
+		row       EmployeeCount
+		all       = s.selectAll()
+		i         int
+		rowExists bool
 	)
 
 	if all || s.SelectName {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].([]byte)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "Name", i, vals[i], vals[i], "string")
@@ -158,7 +160,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*EmployeeCount, error) {
 	}
 
 	if all || s.SelectAge {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "Age", i, vals[i], vals[i], "int")
@@ -170,7 +172,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*EmployeeCount, error) {
 	}
 
 	if all || s.SelectSalary {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "Salary", i, vals[i], vals[i], "int")

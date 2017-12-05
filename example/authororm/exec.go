@@ -74,7 +74,7 @@ func (b *SelectBuilder) Query() ([]example.Author, error) {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		item, err := b.selector.First(b.conn.dialect.Name(), values(*rows))
+		item, err := b.selector.First(b.conn.dialect.Name(), values(*rows), exists)
 		if err != nil {
 			return nil, err
 		}
@@ -109,7 +109,7 @@ func (b *SelectBuilder) Count() ([]AuthorCount, error) {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		item, err := b.selector.FirstCount(b.conn.dialect.Name(), values(*rows))
+		item, err := b.selector.FirstCount(b.conn.dialect.Name(), values(*rows), exists)
 		if err != nil {
 			return nil, err
 		}
@@ -142,7 +142,7 @@ func (b *SelectBuilder) First() (*example.Author, error) {
 	if !found {
 		return nil, orm.ErrNotFound
 	}
-	item, err := b.selector.First(b.conn.dialect.Name(), values(*rows))
+	item, err := b.selector.First(b.conn.dialect.Name(), values(*rows), nil)
 	if err != nil {
 		return nil, err
 	}

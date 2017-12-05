@@ -79,19 +79,19 @@ func (s *selector) Count() bool {
 }
 
 // FirstCount scans an SQL row to a {{.Type.Name}}Count struct
-func (s *selector) FirstCount(dialect string, vals []driver.Value) (*{{.Type.Name}}Count, error) {
+func (s *selector) FirstCount(dialect string, vals []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName}}]*{{.Type.ExtName}}{{end}}) (*{{.Type.Name}}Count, error) {
     switch dialect {
     {{- range $_, $dialect := $.Dialects }}
     case "{{$dialect.Name}}":
-        return s.scan{{$dialect.Name}}(vals)
+        return s.scan{{$dialect.Name}}(vals{{if $.Type.HasOneToManyRelation}}, exists{{end}})
     {{ end -}}
     default:
         return nil, fmt.Errorf("unsupported dialect %s", dialect)
     }
 }
 // First scans an SQL row to a {{.Type.Name}} struct
-func (s *selector) First(dialect string, vals []driver.Value) (*{{.Type.ExtName}}, error) {
-    item, err := s.FirstCount(dialect, vals)
+func (s *selector) First(dialect string, vals []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName}}]*{{.Type.ExtName}}{{end}}) (*{{.Type.ExtName}}, error) {
+    item, err := s.FirstCount(dialect, vals{{if .Type.HasOneToManyRelation}}, exists{{end}})
     if err != nil {
         return nil, err
     }
@@ -100,18 +100,29 @@ func (s *selector) First(dialect string, vals []driver.Value) (*{{.Type.ExtName}
 
 {{ range $_, $dialect := $.Dialects }}
 // scan{{$dialect.Name}} scans {{$dialect.Name}} row to a {{$.Type.Name}} struct
-func (s *selector) scan{{$dialect.Name}} (vals []driver.Value) (*{{$.Type.Name}}Count, error) {
+func (s *selector) scan{{$dialect.Name}} (vals []driver.Value{{if $.Type.HasOneToManyRelation}}, exists map[{{$.Type.PrimaryKey.Type.ExtName}}]*{{$.Type.ExtName}}{{end}}) (*{{$.Type.Name}}Count, error) {
     var (
         row {{$.Type.Name}}Count
         all = s.selectAll()
         i int
+        rowExists bool
     )
     {{ range $_, $f := $.Type.Fields }}
     {{ if not $f.IsReference }}
     if all || s.Select{{$f.Name}} {
-        if vals[i] != nil {
+        if vals[i] != nil && !rowExists {
 {{$dialect.ConvertValueCode $f}}
         }
+        {{ if and $.Type.HasOneToManyRelation -}}
+        {{ if eq $f.Name $.Type.PrimaryKey.Name -}}
+        // check if we scanned this item in previous rows. If we did, set `rowExists`,
+        // so other columns in this table won't be evaluated. We only need values
+        // from other tables.
+        if exists[row.{{$.Type.PrimaryKey.Name}}] != nil {
+            rowExists = true
+        }
+        {{ end -}}
+        {{ end -}}
         i++
     }
     {{ else if not $f.Type.Slice }}

@@ -63,21 +63,21 @@ func (s *selector) Count() bool {
 }
 
 // FirstCount scans an SQL row to a AuthorCount struct
-func (s *selector) FirstCount(dialect string, vals []driver.Value) (*AuthorCount, error) {
+func (s *selector) FirstCount(dialect string, vals []driver.Value, exists map[int64]*example.Author) (*AuthorCount, error) {
 	switch dialect {
 	case "mysql":
-		return s.scanmysql(vals)
+		return s.scanmysql(vals, exists)
 
 	case "sqlite3":
-		return s.scansqlite3(vals)
+		return s.scansqlite3(vals, exists)
 	default:
 		return nil, fmt.Errorf("unsupported dialect %s", dialect)
 	}
 }
 
 // First scans an SQL row to a Author struct
-func (s *selector) First(dialect string, vals []driver.Value) (*example.Author, error) {
-	item, err := s.FirstCount(dialect, vals)
+func (s *selector) First(dialect string, vals []driver.Value, exists map[int64]*example.Author) (*example.Author, error) {
+	item, err := s.FirstCount(dialect, vals, exists)
 	if err != nil {
 		return nil, err
 	}
@@ -85,15 +85,16 @@ func (s *selector) First(dialect string, vals []driver.Value) (*example.Author, 
 }
 
 // scanmysql scans mysql row to a Author struct
-func (s *selector) scanmysql(vals []driver.Value) (*AuthorCount, error) {
+func (s *selector) scanmysql(vals []driver.Value, exists map[int64]*example.Author) (*AuthorCount, error) {
 	var (
-		row AuthorCount
-		all = s.selectAll()
-		i   int
+		row       AuthorCount
+		all       = s.selectAll()
+		i         int
+		rowExists bool
 	)
 
 	if all || s.SelectID {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := int64(parseInt(val))
@@ -105,11 +106,14 @@ func (s *selector) scanmysql(vals []driver.Value) (*AuthorCount, error) {
 				return nil, fmt.Errorf(errMsg, "ID", i, vals[i], vals[i], "[]byte, int64")
 			}
 		}
+		if exists[row.ID] != nil {
+			rowExists = true
+		}
 		i++
 	}
 
 	if all || s.SelectName {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := string(val)
@@ -122,7 +126,7 @@ func (s *selector) scanmysql(vals []driver.Value) (*AuthorCount, error) {
 	}
 
 	if all || s.SelectHobbies {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			switch val := vals[i].(type) {
 			case []byte:
 				tmp := string(val)
@@ -158,15 +162,16 @@ func (s *selector) scanmysql(vals []driver.Value) (*AuthorCount, error) {
 }
 
 // scansqlite3 scans sqlite3 row to a Author struct
-func (s *selector) scansqlite3(vals []driver.Value) (*AuthorCount, error) {
+func (s *selector) scansqlite3(vals []driver.Value, exists map[int64]*example.Author) (*AuthorCount, error) {
 	var (
-		row AuthorCount
-		all = s.selectAll()
-		i   int
+		row       AuthorCount
+		all       = s.selectAll()
+		i         int
+		rowExists bool
 	)
 
 	if all || s.SelectID {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].(int64)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "ID", i, vals[i], vals[i], "int64")
@@ -174,11 +179,14 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AuthorCount, error) {
 			tmp := int64(val)
 			row.ID = tmp
 		}
+		if exists[row.ID] != nil {
+			rowExists = true
+		}
 		i++
 	}
 
 	if all || s.SelectName {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].([]byte)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "Name", i, vals[i], vals[i], "string")
@@ -190,7 +198,7 @@ func (s *selector) scansqlite3(vals []driver.Value) (*AuthorCount, error) {
 	}
 
 	if all || s.SelectHobbies {
-		if vals[i] != nil {
+		if vals[i] != nil && !rowExists {
 			val, ok := vals[i].([]byte)
 			if !ok {
 				return nil, fmt.Errorf(errMsg, "Hobbies", i, vals[i], vals[i], "string")
