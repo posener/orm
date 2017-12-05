@@ -42,15 +42,21 @@ func (s *selector) Joins() []common.Join {
     {{ range $_, $f := .Type.References -}}
     {{ if $f.Type.Slice -}}
     if selector := s.Join{{$f.Name}}; selector != nil {
+        // adding join of one to many relation, column in other type points to this type
         joins = append(joins, common.Join{
-            Column: "{{$f.ReferencedBy.ForeignKey.Field.Column}}",
-            RefTable: "{{$f.Type.Table}}",
-            RefColumn: "{{$f.ReferencedBy.Column}}",
+            // column in this type that the other type is pointing on
+            Column: "{{$f.ForeignKey.Column}}",
+            // other type table
+            RefTable: "{{$f.ForeignKey.RefTable}}",
+            // other type column that points to this type
+            RefColumn: "{{$f.ForeignKey.RefColumn}}",
             SelectColumns: selector.Columns(),
         })
     }
     {{ else -}}
     if selector := s.Join{{$f.Name}}; selector != nil {
+        // join that this type points to another type's primary key
+        // this types [Column] points to [RefTable].[RefColumn]
         joins = append(joins, common.Join{
             Column: "{{$f.Column}}",
             RefTable: "{{$f.Type.Table}}",

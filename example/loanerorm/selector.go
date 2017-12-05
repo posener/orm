@@ -40,6 +40,8 @@ func (s *selector) Columns() []string {
 func (s *selector) Joins() []common.Join {
 	var joins []common.Join
 	if selector := s.JoinBook; selector != nil {
+		// join that this type points to another type's primary key
+		// this types [Column] points to [RefTable].[RefColumn]
 		joins = append(joins, common.Join{
 			Column:        "book_id",
 			RefTable:      "book",

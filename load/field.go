@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect/sqltypes"
 	"github.com/posener/orm/tags"
 )
@@ -20,9 +21,6 @@ type Field struct {
 	Name string
 	// Embedded means that the field is embedded in a struct
 	Embedded bool
-	// Referenced by is a foreign key that points to this field
-	// this is a field in Type
-	ReferencedBy *Field
 	// CustomType can be defined to a column
 	CustomType sqltypes.Type
 	// PrimaryKey defines a column as a table's primary key
@@ -37,12 +35,7 @@ type Field struct {
 	Unique bool
 	// Default sets a default value for this column
 	Default    string
-	ForeignKey *ForeignKey
-}
-
-type ForeignKey struct {
-	Type  *Type
-	Field *Field
+	ForeignKey *common.ForeignKey
 }
 
 func newField(st *types.Struct, i int) (*Field, error) {
@@ -92,21 +85,19 @@ func (f *Field) parseTags(tag string) error {
 		case "default":
 			f.Default = value
 		case "foreign key", "foreign_key", "foreignkey":
-			var err error
-			f.ForeignKey, err = newForeignKey(value)
-			if err != nil {
-				return fmt.Errorf("foreign key definition: %f", err)
+			if err := f.setForeignKey(value); err != nil {
+				return fmt.Errorf("foreign key definition: %s", err)
 			}
 		}
 	}
 	return nil
 }
 
-func newForeignKey(name string) (*ForeignKey, error) {
+func (f *Field) setForeignKey(name string) error {
 	typeName, fieldName := splitForeignKeyTag(name)
 	foreignType, err := New(typeName)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	foreignField := foreignType.PrimaryKey
 	if fieldName != "" {
@@ -118,9 +109,14 @@ func newForeignKey(name string) (*ForeignKey, error) {
 		}
 	}
 	if foreignField == nil {
-		return nil, fmt.Errorf("no column to reference in foregin table, table should have a primary key, or foreign key definition should incloud foreign column: <type name>#<field name>")
+		return fmt.Errorf("no column to reference in foregin table, table should have a primary key, or foreign key definition should incloud foreign column: <type name>#<field name>")
 	}
-	return &ForeignKey{Type: foreignType, Field: foreignField}, nil
+	f.ForeignKey = &common.ForeignKey{
+		Column:    f.Column(),
+		RefTable:  foreignType.Table(),
+		RefColumn: foreignField.Column(),
+	}
+	return nil
 }
 
 func splitForeignKeyTag(name string) (typeName, fieldName string) {

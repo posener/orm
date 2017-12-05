@@ -7,6 +7,8 @@ import (
 
 	"fmt"
 	"go/types"
+
+	"github.com/posener/orm/common"
 )
 
 var basicTypes = map[string]bool{
@@ -192,18 +194,20 @@ func (t *Type) loadFields(st *types.Struct) error {
 				log.Printf("Ignoring field %s: slice of a basic type is not supported", field.Name)
 				continue
 			}
-			var fk *Field
-			for _, field := range field.Type.Fields {
-				if fki := field.ForeignKey; fki != nil && fki.Type == t {
-					fk = field
+			for _, other := range field.Type.Fields {
+				if fk := other.ForeignKey; fk != nil && fk.RefTable == t.Table() {
+					field.ForeignKey = &common.ForeignKey{
+						RefTable:  field.Type.Table(),
+						RefColumn: other.Column(),
+						Column:    fk.RefColumn,
+					}
 					break
 				}
 			}
-			if fk == nil {
+			if field.ForeignKey == nil {
 				return fmt.Errorf("slice field %s -> %s: did not found foreign key in foreign type %s",
 					t.ExtNaked(), field.Name, field.Type.ExtNaked())
 			}
-			field.ReferencedBy = fk
 			t.Fields = append(t.Fields, field)
 
 		default:

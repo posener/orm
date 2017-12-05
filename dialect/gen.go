@@ -74,8 +74,8 @@ func (g *gen) ColumnsStatement(tp *load.Type) string {
 			if fk := f.ForeignKey; fk != nil {
 				refs = append(refs, common.ForeignKey{
 					Column:    f.Column(),
-					RefTable:  fk.Type.Table(),
-					RefColumn: fk.Field.Column(),
+					RefTable:  fk.RefTable,
+					RefColumn: fk.RefColumn,
 				})
 			}
 		}
