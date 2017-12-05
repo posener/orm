@@ -373,7 +373,7 @@ func (c *columner) Columns() []string {
 	return c.columns
 }
 
-func (c *columner) Joins() []common.Join {
+func (c *columner) Joins() []common.JoinParams {
 	return nil
 }
 

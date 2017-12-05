@@ -37,15 +37,17 @@ func (s *selector) Columns() []string {
 }
 
 // Joins are join options of the query
-func (s *selector) Joins() []common.Join {
-	var joins []common.Join
+func (s *selector) Joins() []common.JoinParams {
+	var joins []common.JoinParams
 	if selector := s.JoinBook; selector != nil {
 		// join that this type points to another type's primary key
 		// this types [Column] points to [RefTable].[RefColumn]
-		joins = append(joins, common.Join{
-			Column:        "book_id",
-			RefTable:      "book",
-			RefColumn:     "id",
+		joins = append(joins, common.JoinParams{
+			ForeignKey: common.ForeignKey{
+				Column:    "book_id",
+				RefTable:  "book",
+				RefColumn: "id",
+			},
 			SelectColumns: selector.Columns(),
 		})
 	}

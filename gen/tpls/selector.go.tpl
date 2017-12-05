@@ -37,19 +37,21 @@ func (s *selector) Columns() []string {
 }
 
 // Joins are join options of the query
-func (s *selector) Joins() []common.Join {
-	var joins []common.Join
+func (s *selector) Joins() []common.JoinParams {
+	var joins []common.JoinParams
     {{ range $_, $f := .Type.References -}}
     {{ if $f.Type.Slice -}}
     if selector := s.Join{{$f.Name}}; selector != nil {
         // adding join of one to many relation, column in other type points to this type
-        joins = append(joins, common.Join{
-            // column in this type that the other type is pointing on
-            Column: "{{$f.ForeignKey.Column}}",
-            // other type table
-            RefTable: "{{$f.ForeignKey.RefTable}}",
-            // other type column that points to this type
-            RefColumn: "{{$f.ForeignKey.RefColumn}}",
+        joins = append(joins, common.JoinParams{
+            ForeignKey: common.ForeignKey{
+                // column in this type that the other type is pointing on
+                Column: "{{$f.ForeignKey.Column}}",
+                // other type table
+                RefTable: "{{$f.ForeignKey.RefTable}}",
+                // other type column that points to this type
+                RefColumn: "{{$f.ForeignKey.RefColumn}}",
+            },
             SelectColumns: selector.Columns(),
         })
     }
@@ -57,10 +59,12 @@ func (s *selector) Joins() []common.Join {
     if selector := s.Join{{$f.Name}}; selector != nil {
         // join that this type points to another type's primary key
         // this types [Column] points to [RefTable].[RefColumn]
-        joins = append(joins, common.Join{
-            Column: "{{$f.Column}}",
-            RefTable: "{{$f.Type.Table}}",
-            RefColumn: "{{$f.Type.PrimaryKey.Column}}",
+        joins = append(joins, common.JoinParams{
+            ForeignKey: common.ForeignKey{
+                Column: "{{$f.Column}}",
+                RefTable: "{{$f.Type.Table}}",
+                RefColumn: "{{$f.Type.PrimaryKey.Column}}",
+            },
             SelectColumns: selector.Columns(),
         })
     }

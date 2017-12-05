@@ -7,17 +7,21 @@ type Op string
 // With this interface, a dialect talks to struct specific generated implementation.
 type Selector interface {
 	Columns() []string
-	Joins() []Join
+	Joins() []JoinParams
 	Count() bool
 }
 
-type Join struct {
-	Column        string
-	RefTable      string
-	RefColumn     string
+// JoinParams are parameters to perform a join operation:
+// ForeignKey defines on which key to perform the join
+// SelectColumns returns list of columns to select from the joined table, if empty
+// all columns will be selected.
+type JoinParams struct {
+	ForeignKey
 	SelectColumns []string
 }
 
+// ForeignKey is a definition of how a column is a foreign key of another column
+// in a referenced table.
 type ForeignKey struct {
 	Column    string
 	RefTable  string

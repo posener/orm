@@ -37,17 +37,19 @@ func (s *selector) Columns() []string {
 }
 
 // Joins are join options of the query
-func (s *selector) Joins() []common.Join {
-	var joins []common.Join
+func (s *selector) Joins() []common.JoinParams {
+	var joins []common.JoinParams
 	if selector := s.JoinBooks; selector != nil {
 		// adding join of one to many relation, column in other type points to this type
-		joins = append(joins, common.Join{
-			// column in this type that the other type is pointing on
-			Column: "id",
-			// other type table
-			RefTable: "book",
-			// other type column that points to this type
-			RefColumn:     "authorid",
+		joins = append(joins, common.JoinParams{
+			ForeignKey: common.ForeignKey{
+				// column in this type that the other type is pointing on
+				Column: "id",
+				// other type table
+				RefTable: "book",
+				// other type column that points to this type
+				RefColumn: "authorid",
+			},
 			SelectColumns: selector.Columns(),
 		})
 	}

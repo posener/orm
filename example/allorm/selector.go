@@ -165,8 +165,8 @@ func (s *selector) Columns() []string {
 }
 
 // Joins are join options of the query
-func (s *selector) Joins() []common.Join {
-	var joins []common.Join
+func (s *selector) Joins() []common.JoinParams {
+	var joins []common.JoinParams
 
 	return joins
 }
