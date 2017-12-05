@@ -36,8 +36,8 @@ func (g *Gen) ColumnsStatement(tp *load.Type) string {
 			stmts = append(stmts, fmt.Sprintf("`%s` %s", fk.Column, string(g.sqlType(refType.PrimaryKey))))
 			refs = append(refs, fk)
 		default:
-			stmts = append(stmts, g.fieldCreateString(&f))
-			if fk := f.SQL.ForeignKey; fk != nil {
+			stmts = append(stmts, g.fieldCreateString(f))
+			if fk := f.ForeignKey; fk != nil {
 				refs = append(refs, common.ForeignKey{
 					Column:    f.Column(),
 					RefTable:  fk.Type.Table(),
@@ -53,25 +53,25 @@ func (g *Gen) ColumnsStatement(tp *load.Type) string {
 func (g *Gen) fieldCreateString(f *load.Field) string {
 	sqlType := g.sqlType(f)
 	stmt := []string{fmt.Sprintf("'%s' %s", f.Column(), sqlType)}
-	if f.SQL.NotNull {
+	if f.NotNull {
 		stmt = append(stmt, "NOT NULL")
 	}
-	if f.SQL.Null {
+	if f.Null {
 		stmt = append(stmt, "NULL")
 	}
-	if f.SQL.Default != "" {
-		stmt = append(stmt, "DEFAULT", f.SQL.Default)
+	if f.Default != "" {
+		stmt = append(stmt, "DEFAULT", f.Default)
 	}
-	if f.SQL.PrimaryKey || f.SQL.AutoIncrement {
+	if f.PrimaryKey || f.AutoIncrement {
 		stmt = append(stmt, "PRIMARY KEY")
 	}
-	if f.SQL.AutoIncrement {
-		if !f.SQL.PrimaryKey || sqlType != sqltypes.Integer {
+	if f.AutoIncrement {
+		if !f.PrimaryKey || sqlType != sqltypes.Integer {
 			log.Fatalf("Gen supports autoincrement only for 'INTEGER PRIMARY KEY' columns")
 		}
 		stmt = append(stmt, "AUTOINCREMENT")
 	}
-	if f.SQL.Unique {
+	if f.Unique {
 		stmt = append(stmt, " UNIQUE")
 	}
 	return strings.Join(stmt, " ")

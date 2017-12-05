@@ -35,7 +35,7 @@ type Book struct {
 	ID       int64 `sql:"primary key;auto increment"`
 	Name     string
 	Year     int
-	AuthorID int64 `sql:"foreign key:./example.Author;null"`
+	AuthorID int64 `sql:"foreign key:./.Author;null"`
 }
 
 //go:generate orm -type Author

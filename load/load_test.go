@@ -11,7 +11,7 @@ func TestLoad(t *testing.T) {
 	tests := []struct {
 		typeName       string
 		wantName       string
-		wantFields     []Field
+		wantFields     []*Field
 		wantFullName   string
 		wantImportPath string
 		wantErr        bool
@@ -24,7 +24,7 @@ func TestLoad(t *testing.T) {
 			typeName:     "github.com/posener/orm/example.Person",
 			wantName:     "Person",
 			wantFullName: "example.Person",
-			wantFields: []Field{
+			wantFields: []*Field{
 				{Name: "Name", Type: Type{Name: "string"}},
 				{Name: "Age", Type: Type{Name: "int"}},
 			},
@@ -34,7 +34,7 @@ func TestLoad(t *testing.T) {
 			typeName:     "../example.Person",
 			wantName:     "Person",
 			wantFullName: "example.Person",
-			wantFields: []Field{
+			wantFields: []*Field{
 				{Name: "Name", Type: Type{Name: "string"}},
 				{Name: "Age", Type: Type{Name: "int"}},
 			},
@@ -44,7 +44,7 @@ func TestLoad(t *testing.T) {
 			typeName:     "../example.Employee",
 			wantName:     "Employee",
 			wantFullName: "example.Employee",
-			wantFields: []Field{
+			wantFields: []*Field{
 				{Name: "Name", Type: Type{Name: "string"}},
 				{Name: "Age", Type: Type{Name: "int"}},
 				{Name: "Salary", Type: Type{Name: "int"}},

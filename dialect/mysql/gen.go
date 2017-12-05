@@ -92,7 +92,7 @@ func (g *Gen) convertType(f *load.Field) string {
 }
 
 func (Gen) sqlType(f *load.Field) sqltypes.Type {
-	if custom := f.SQL.CustomType; custom != "" {
+	if custom := f.CustomType; custom != "" {
 		return custom
 	}
 	switch typeName := strings.TrimLeft(f.SetType(), "*"); typeName {

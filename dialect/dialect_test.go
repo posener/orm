@@ -19,12 +19,12 @@ func TestCreate(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		fields      []load.Field
+		fields      []*load.Field
 		sqlite3Want string
 		mysqlWant   string
 	}{
 		{
-			fields: []load.Field{
+			fields: []*load.Field{
 				{Name: "Int", Type: load.Type{Name: "int"}},
 				{Name: "String", Type: load.Type{Name: "string"}},
 				{Name: "Bool", Type: load.Type{Name: "bool"}},
@@ -34,41 +34,41 @@ func TestCreate(t *testing.T) {
 			mysqlWant:   "`int` INTEGER, `string` TEXT, `bool` BOOLEAN, `time` DATETIME(3)",
 		},
 		{
-			fields: []load.Field{
-				{Name: "Int", Type: load.Type{Name: "int"}, SQL: load.SQL{PrimaryKey: true}},
+			fields: []*load.Field{
+				{Name: "Int", Type: load.Type{Name: "int"}, PrimaryKey: true},
 				{Name: "String", Type: load.Type{Name: "string"}},
 			},
 			sqlite3Want: "'int' INTEGER PRIMARY KEY, 'string' TEXT",
 			mysqlWant:   "`int` INTEGER PRIMARY KEY, `string` TEXT",
 		},
 		{
-			fields: []load.Field{
-				{Name: "Int", Type: load.Type{Name: "int"}, SQL: load.SQL{PrimaryKey: true, AutoIncrement: true}},
+			fields: []*load.Field{
+				{Name: "Int", Type: load.Type{Name: "int"}, PrimaryKey: true, AutoIncrement: true},
 				{Name: "String", Type: load.Type{Name: "string"}},
 			},
 			sqlite3Want: "'int' INTEGER PRIMARY KEY AUTOINCREMENT, 'string' TEXT",
 			mysqlWant:   "`int` INTEGER PRIMARY KEY AUTO_INCREMENT, `string` TEXT",
 		},
 		{
-			fields: []load.Field{
+			fields: []*load.Field{
 				{Name: "Int", Type: load.Type{Name: "int"}},
-				{Name: "String", Type: load.Type{Name: "string"}, SQL: load.SQL{NotNull: true, Default: "xxx"}},
+				{Name: "String", Type: load.Type{Name: "string"}, NotNull: true, Default: "xxx"},
 			},
 			sqlite3Want: "'int' INTEGER, 'string' TEXT NOT NULL DEFAULT xxx",
 			mysqlWant:   "`int` INTEGER, `string` TEXT NOT NULL DEFAULT xxx",
 		},
 		{
-			fields: []load.Field{
+			fields: []*load.Field{
 				{Name: "Int", Type: load.Type{Name: "int"}},
-				{Name: "String", Type: load.Type{Name: "string"}, SQL: load.SQL{CustomType: "VARCHAR(10)"}},
+				{Name: "String", Type: load.Type{Name: "string"}, CustomType: "VARCHAR(10)"},
 			},
 			sqlite3Want: "'int' INTEGER, 'string' VARCHAR(10)",
 			mysqlWant:   "`int` INTEGER, `string` VARCHAR(10)",
 		},
 		{
-			fields: []load.Field{
+			fields: []*load.Field{
 				{Name: "Int", Type: load.Type{Name: "int"}},
-				{Name: "Time", Type: load.Type{Name: "time.Time"}, SQL: load.SQL{CustomType: "DATETIME"}},
+				{Name: "Time", Type: load.Type{Name: "time.Time"}, CustomType: "DATETIME"},
 			},
 			sqlite3Want: "'int' INTEGER, 'time' DATETIME",
 			mysqlWant:   "`int` INTEGER, `time` DATETIME",

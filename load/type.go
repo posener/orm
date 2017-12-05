@@ -34,7 +34,7 @@ type Type struct {
 	// ImportPath is a path to add to the import section for this type
 	ImportPath string
 	// Fields is the list of exported fields
-	Fields     []Field
+	Fields     []*Field
 	PrimaryKey *Field
 	Pointer    bool
 	Slice      bool
@@ -136,8 +136,8 @@ func (t *Type) Imports() []string {
 }
 
 // References returns all reference fields
-func (t *Type) References() []Field {
-	var refs []Field
+func (t *Type) References() []*Field {
+	var refs []*Field
 	for _, field := range t.Fields {
 		if field.IsReference() {
 			refs = append(refs, field)
@@ -173,63 +173,45 @@ func (t *Type) sliceStr() string {
 // this function might recursively call to the New function
 func (t *Type) loadFields(st *types.Struct) error {
 	for i := 0; i < st.NumFields(); i++ {
-		field := st.Field(i)
-		if !field.Exported() {
+		field, err := newField(st, i)
+		if err != nil {
+			return err
+		}
+		if field == nil {
 			continue
 		}
-
-		log.Printf("%s -> loading %s", t.Name, field.Name())
-
-		fieldType, err := New(field.Type().String())
-		if err != nil {
-			return fmt.Errorf("creating type %s: %s", fieldType, err)
-		}
-		sql, err := newSQL(st, i)
-		if err != nil {
-			return fmt.Errorf("creating SQL properties for type field %s: %s", fieldType, err)
-		}
-
-		f := Field{
-			Name:     field.Name(),
-			Type:     *fieldType,
-			SQL:      *sql,
-			Embedded: field.Anonymous(),
-		}
-
-		log.Printf("%s -> loaded %s (%s): %s", t.Name, field.Name(), fieldType, sql)
-
 		switch {
-		case f.Embedded:
+		case field.Embedded:
 			// Embedded field (aka anonymous)
 			// collect all their fields recursively to the parent fields.
-			for _, field := range fieldType.Fields {
+			for _, field := range field.Type.Fields {
 				t.Fields = append(t.Fields, field)
 			}
-		case f.Type.Slice:
-			if f.Type.IsBasic() {
-				log.Printf("Ignoring field %s: slice of a basic type is not supported", f.Name)
+		case field.Type.Slice:
+			if field.Type.IsBasic() {
+				log.Printf("Ignoring field %s: slice of a basic type is not supported", field.Name)
 				continue
 			}
 			var fk *Field
-			for _, field := range f.Type.Fields {
-				if fki := field.SQL.ForeignKey; fki != nil && fki.Type == t {
-					fk = &field
+			for _, field := range field.Type.Fields {
+				if fki := field.ForeignKey; fki != nil && fki.Type == t {
+					fk = field
 					break
 				}
 			}
 			if fk == nil {
 				return fmt.Errorf("slice field %s -> %s: did not found foreign key in foreign type %s",
-					t.ExtNaked(), f.Name, f.Type.ExtNaked())
+					t.ExtNaked(), field.Name, field.Type.ExtNaked())
 			}
-			f.ReferencedBy = fk
-			t.Fields = append(t.Fields, f)
+			field.ReferencedBy = fk
+			t.Fields = append(t.Fields, field)
 
 		default:
 			// Basic type field: just add a field
-			if sql.PrimaryKey {
-				t.PrimaryKey = &f
+			if field.PrimaryKey {
+				t.PrimaryKey = field
 			}
-			t.Fields = append(t.Fields, f)
+			t.Fields = append(t.Fields, field)
 		}
 
 	}

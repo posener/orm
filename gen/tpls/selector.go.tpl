@@ -43,7 +43,7 @@ func (s *selector) Joins() []common.Join {
     {{ if $f.Type.Slice -}}
     if selector := s.Join{{$f.Name}}; selector != nil {
         joins = append(joins, common.Join{
-            Column: "{{$f.ReferencedBy.SQL.ForeignKey.Field.Column}}",
+            Column: "{{$f.ReferencedBy.ForeignKey.Field.Column}}",
             RefTable: "{{$f.Type.Table}}",
             RefColumn: "{{$f.ReferencedBy.Column}}",
             SelectColumns: selector.Columns(),
