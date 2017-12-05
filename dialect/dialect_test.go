@@ -198,11 +198,11 @@ func TestSelect(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.mysqlWantStmt, func(t *testing.T) {
 			tt.sel.Table = table
-			stmt, args := new(mysql.Dialect).Select(&tt.sel)
+			stmt, args := newMust("mysql").Select(&tt.sel)
 			assert.Equal(t, tt.mysqlWantStmt, reduceSpaces(stmt), " ")
 			assert.Equal(t, tt.mysqlWantArgs, args)
 
-			stmt, args = new(sqlite3.Dialect).Select(&tt.sel)
+			stmt, args = newMust("sqlite3").Select(&tt.sel)
 			assert.Equal(t, tt.sqlite3WantStmt, reduceSpaces(stmt), " ")
 			assert.Equal(t, tt.sqlite3WantArgs, args)
 		})
@@ -244,11 +244,11 @@ func TestInsert(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.mysqlWantStmt, func(t *testing.T) {
 			params := &common.InsertParams{Table: table, Assignments: tt.assign}
-			stmt, args := new(mysql.Dialect).Insert(params)
+			stmt, args := newMust("mysql").Insert(params)
 			assert.Equal(t, tt.mysqlWantStmt, reduceSpaces(stmt), " ")
 			assert.Equal(t, tt.mysqlWantArgs, args, " ")
 
-			stmt, args = new(sqlite3.Dialect).Insert(params)
+			stmt, args = newMust("sqlite3").Insert(params)
 			assert.Equal(t, tt.sqlite3WantStmt, reduceSpaces(stmt), " ")
 			assert.Equal(t, tt.sqlite3WantArgs, args, " ")
 		})
@@ -299,11 +299,11 @@ func TestUpdate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.mysqlWantStmt, func(t *testing.T) {
 			params := &common.UpdateParams{Table: table, Assignments: tt.assign, Where: tt.where}
-			stmt, args := new(mysql.Dialect).Update(params)
+			stmt, args := newMust("mysql").Update(params)
 			assert.Equal(t, tt.mysqlWantStmt, reduceSpaces(stmt), " ")
 			assert.Equal(t, tt.mysqlWantArgs, args)
 
-			stmt, args = new(sqlite3.Dialect).Update(params)
+			stmt, args = newMust("sqlite3").Update(params)
 			assert.Equal(t, tt.sqlite3WantStmt, reduceSpaces(stmt), " ")
 			assert.Equal(t, tt.sqlite3WantArgs, args, " ")
 		})
@@ -338,15 +338,23 @@ func TestDelete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.mysqlWantStmt, func(t *testing.T) {
 			params := &common.DeleteParams{Table: table, Where: tt.where}
-			stmt, args := new(mysql.Dialect).Delete(params)
+			stmt, args := newMust("mysql").Delete(params)
 			assert.Equal(t, tt.mysqlWantStmt, reduceSpaces(stmt), " ")
 			assert.Equal(t, tt.mysqlWantArgs, args)
 
-			stmt, args = new(sqlite3.Dialect).Delete(params)
+			stmt, args = newMust("sqlite3").Delete(params)
 			assert.Equal(t, tt.sqlite3WantStmt, reduceSpaces(stmt), " ")
 			assert.Equal(t, tt.sqlite3WantArgs, args, " ")
 		})
 	}
+}
+
+func newMust(name string) Dialect {
+	d, err := New(name)
+	if err != nil {
+		panic(err)
+	}
+	return d
 }
 
 func reduceSpaces(s string) string {

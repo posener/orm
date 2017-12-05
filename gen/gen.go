@@ -66,7 +66,7 @@ func Gen(tp *load.Type) error {
 		return err
 	}
 
-	dialects := dialect.NewGen(tp)
+	dialects := dialect.NewGen()
 
 	// the new created package name is the name of the struct with "orm" suffix
 	ormPkgName := strings.ToLower(tp.Name + pkgSuffix)
