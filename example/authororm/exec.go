@@ -64,8 +64,11 @@ func (b *SelectBuilder) Query() ([]example.Author, error) {
 	}
 	defer rows.Close()
 
-	// extract rows to structures
-	var all []example.Author
+	var (
+		items []example.Author
+		// exists is a mapping from primary key to already parsed structs
+		exists = make(map[int64]*example.Author)
+	)
 	for rows.Next() {
 		// check context cancellation
 		if err := ctx.Err(); err != nil {
@@ -75,10 +78,15 @@ func (b *SelectBuilder) Query() ([]example.Author, error) {
 		if err != nil {
 			return nil, err
 		}
-		all = append(all, *item)
+
+		if exist := exists[item.ID]; exist != nil {
+			exist.Books = append(exist.Books, item.Books...)
+		} else {
+			items = append(items, *item)
+			exists[item.ID] = &items[len(items)-1]
+		}
 	}
-	all = b.reduce(all)
-	return all, rows.Err()
+	return items, rows.Err()
 }
 
 // Count add a count column to the query
@@ -91,8 +99,11 @@ func (b *SelectBuilder) Count() ([]AuthorCount, error) {
 	}
 	defer rows.Close()
 
-	// extract rows to structures
-	var all []AuthorCount
+	var (
+		items []AuthorCount
+		// exists is a mapping from primary key to already parsed structs
+		exists = make(map[int64]*example.Author)
+	)
 	for rows.Next() {
 		// check context cancellation
 		if err := ctx.Err(); err != nil {
@@ -102,10 +113,15 @@ func (b *SelectBuilder) Count() ([]AuthorCount, error) {
 		if err != nil {
 			return nil, err
 		}
-		all = append(all, *item)
+
+		if exist := exists[item.ID]; exist != nil {
+			exist.Books = append(exist.Books, item.Books...)
+		} else {
+			items = append(items, *item)
+			exists[item.ID] = &items[len(items)-1].Author
+		}
 	}
-	all = b.reduceCount(all)
-	return all, rows.Err()
+	return items, rows.Err()
 }
 
 // First returns the first row that matches the query.
@@ -131,38 +147,6 @@ func (b *SelectBuilder) First() (*example.Author, error) {
 		return nil, err
 	}
 	return item, rows.Err()
-}
-
-func (b *SelectBuilder) reduce(items []example.Author) []example.Author {
-	var (
-		exists = make(map[int64]*example.Author)
-		ret    []example.Author
-	)
-	for _, i := range items {
-		if exist := exists[i.ID]; exist != nil {
-			exist.Books = append(exist.Books, i.Books...)
-		} else {
-			ret = append(ret, i)
-			exists[i.ID] = &ret[len(ret)-1]
-		}
-	}
-	return ret
-}
-
-func (b *SelectBuilder) reduceCount(items []AuthorCount) []AuthorCount {
-	var (
-		exists = make(map[int64]*AuthorCount)
-		ret    []AuthorCount
-	)
-	for _, i := range items {
-		if exist := exists[i.ID]; exist != nil {
-			exist.Author.Books = append(exist.Books, i.Books...)
-		} else {
-			ret = append(ret, i)
-			exists[i.ID] = &ret[len(ret)-1]
-		}
-	}
-	return ret
 }
 
 func contextOrBackground(ctx context.Context) context.Context {

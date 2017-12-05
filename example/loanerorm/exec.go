@@ -64,8 +64,9 @@ func (b *SelectBuilder) Query() ([]example.Loaner, error) {
 	}
 	defer rows.Close()
 
-	// extract rows to structures
-	var all []example.Loaner
+	var (
+		items []example.Loaner
+	)
 	for rows.Next() {
 		// check context cancellation
 		if err := ctx.Err(); err != nil {
@@ -75,9 +76,10 @@ func (b *SelectBuilder) Query() ([]example.Loaner, error) {
 		if err != nil {
 			return nil, err
 		}
-		all = append(all, *item)
+
+		items = append(items, *item)
 	}
-	return all, rows.Err()
+	return items, rows.Err()
 }
 
 // Count add a count column to the query
@@ -90,8 +92,9 @@ func (b *SelectBuilder) Count() ([]LoanerCount, error) {
 	}
 	defer rows.Close()
 
-	// extract rows to structures
-	var all []LoanerCount
+	var (
+		items []LoanerCount
+	)
 	for rows.Next() {
 		// check context cancellation
 		if err := ctx.Err(); err != nil {
@@ -101,9 +104,10 @@ func (b *SelectBuilder) Count() ([]LoanerCount, error) {
 		if err != nil {
 			return nil, err
 		}
-		all = append(all, *item)
+
+		items = append(items, *item)
 	}
-	return all, rows.Err()
+	return items, rows.Err()
 }
 
 // First returns the first row that matches the query.
@@ -129,36 +133,6 @@ func (b *SelectBuilder) First() (*example.Loaner, error) {
 		return nil, err
 	}
 	return item, rows.Err()
-}
-
-func (b *SelectBuilder) reduce(items []example.Loaner) []example.Loaner {
-	var (
-		exists = make(map[int64]*example.Loaner)
-		ret    []example.Loaner
-	)
-	for _, i := range items {
-		if exist := exists[i.ID]; exist != nil {
-		} else {
-			ret = append(ret, i)
-			exists[i.ID] = &ret[len(ret)-1]
-		}
-	}
-	return ret
-}
-
-func (b *SelectBuilder) reduceCount(items []LoanerCount) []LoanerCount {
-	var (
-		exists = make(map[int64]*LoanerCount)
-		ret    []LoanerCount
-	)
-	for _, i := range items {
-		if exist := exists[i.ID]; exist != nil {
-		} else {
-			ret = append(ret, i)
-			exists[i.ID] = &ret[len(ret)-1]
-		}
-	}
-	return ret
 }
 
 func contextOrBackground(ctx context.Context) context.Context {

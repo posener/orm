@@ -64,8 +64,9 @@ func (b *SelectBuilder) Query() ([]example.Book, error) {
 	}
 	defer rows.Close()
 
-	// extract rows to structures
-	var all []example.Book
+	var (
+		items []example.Book
+	)
 	for rows.Next() {
 		// check context cancellation
 		if err := ctx.Err(); err != nil {
@@ -75,9 +76,10 @@ func (b *SelectBuilder) Query() ([]example.Book, error) {
 		if err != nil {
 			return nil, err
 		}
-		all = append(all, *item)
+
+		items = append(items, *item)
 	}
-	return all, rows.Err()
+	return items, rows.Err()
 }
 
 // Count add a count column to the query
@@ -90,8 +92,9 @@ func (b *SelectBuilder) Count() ([]BookCount, error) {
 	}
 	defer rows.Close()
 
-	// extract rows to structures
-	var all []BookCount
+	var (
+		items []BookCount
+	)
 	for rows.Next() {
 		// check context cancellation
 		if err := ctx.Err(); err != nil {
@@ -101,9 +104,10 @@ func (b *SelectBuilder) Count() ([]BookCount, error) {
 		if err != nil {
 			return nil, err
 		}
-		all = append(all, *item)
+
+		items = append(items, *item)
 	}
-	return all, rows.Err()
+	return items, rows.Err()
 }
 
 // First returns the first row that matches the query.
@@ -129,36 +133,6 @@ func (b *SelectBuilder) First() (*example.Book, error) {
 		return nil, err
 	}
 	return item, rows.Err()
-}
-
-func (b *SelectBuilder) reduce(items []example.Book) []example.Book {
-	var (
-		exists = make(map[int64]*example.Book)
-		ret    []example.Book
-	)
-	for _, i := range items {
-		if exist := exists[i.ID]; exist != nil {
-		} else {
-			ret = append(ret, i)
-			exists[i.ID] = &ret[len(ret)-1]
-		}
-	}
-	return ret
-}
-
-func (b *SelectBuilder) reduceCount(items []BookCount) []BookCount {
-	var (
-		exists = make(map[int64]*BookCount)
-		ret    []BookCount
-	)
-	for _, i := range items {
-		if exist := exists[i.ID]; exist != nil {
-		} else {
-			ret = append(ret, i)
-			exists[i.ID] = &ret[len(ret)-1]
-		}
-	}
-	return ret
 }
 
 func contextOrBackground(ctx context.Context) context.Context {

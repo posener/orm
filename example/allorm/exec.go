@@ -64,8 +64,9 @@ func (b *SelectBuilder) Query() ([]example.All, error) {
 	}
 	defer rows.Close()
 
-	// extract rows to structures
-	var all []example.All
+	var (
+		items []example.All
+	)
 	for rows.Next() {
 		// check context cancellation
 		if err := ctx.Err(); err != nil {
@@ -75,9 +76,10 @@ func (b *SelectBuilder) Query() ([]example.All, error) {
 		if err != nil {
 			return nil, err
 		}
-		all = append(all, *item)
+
+		items = append(items, *item)
 	}
-	return all, rows.Err()
+	return items, rows.Err()
 }
 
 // Count add a count column to the query
@@ -90,8 +92,9 @@ func (b *SelectBuilder) Count() ([]AllCount, error) {
 	}
 	defer rows.Close()
 
-	// extract rows to structures
-	var all []AllCount
+	var (
+		items []AllCount
+	)
 	for rows.Next() {
 		// check context cancellation
 		if err := ctx.Err(); err != nil {
@@ -101,9 +104,10 @@ func (b *SelectBuilder) Count() ([]AllCount, error) {
 		if err != nil {
 			return nil, err
 		}
-		all = append(all, *item)
+
+		items = append(items, *item)
 	}
-	return all, rows.Err()
+	return items, rows.Err()
 }
 
 // First returns the first row that matches the query.
@@ -129,36 +133,6 @@ func (b *SelectBuilder) First() (*example.All, error) {
 		return nil, err
 	}
 	return item, rows.Err()
-}
-
-func (b *SelectBuilder) reduce(items []example.All) []example.All {
-	var (
-		exists = make(map[int]*example.All)
-		ret    []example.All
-	)
-	for _, i := range items {
-		if exist := exists[i.Auto]; exist != nil {
-		} else {
-			ret = append(ret, i)
-			exists[i.Auto] = &ret[len(ret)-1]
-		}
-	}
-	return ret
-}
-
-func (b *SelectBuilder) reduceCount(items []AllCount) []AllCount {
-	var (
-		exists = make(map[int]*AllCount)
-		ret    []AllCount
-	)
-	for _, i := range items {
-		if exist := exists[i.Auto]; exist != nil {
-		} else {
-			ret = append(ret, i)
-			exists[i.Auto] = &ret[len(ret)-1]
-		}
-	}
-	return ret
 }
 
 func contextOrBackground(ctx context.Context) context.Context {

@@ -64,8 +64,9 @@ func (b *SelectBuilder) Query() ([]example.Employee, error) {
 	}
 	defer rows.Close()
 
-	// extract rows to structures
-	var all []example.Employee
+	var (
+		items []example.Employee
+	)
 	for rows.Next() {
 		// check context cancellation
 		if err := ctx.Err(); err != nil {
@@ -75,9 +76,10 @@ func (b *SelectBuilder) Query() ([]example.Employee, error) {
 		if err != nil {
 			return nil, err
 		}
-		all = append(all, *item)
+
+		items = append(items, *item)
 	}
-	return all, rows.Err()
+	return items, rows.Err()
 }
 
 // Count add a count column to the query
@@ -90,8 +92,9 @@ func (b *SelectBuilder) Count() ([]EmployeeCount, error) {
 	}
 	defer rows.Close()
 
-	// extract rows to structures
-	var all []EmployeeCount
+	var (
+		items []EmployeeCount
+	)
 	for rows.Next() {
 		// check context cancellation
 		if err := ctx.Err(); err != nil {
@@ -101,9 +104,10 @@ func (b *SelectBuilder) Count() ([]EmployeeCount, error) {
 		if err != nil {
 			return nil, err
 		}
-		all = append(all, *item)
+
+		items = append(items, *item)
 	}
-	return all, rows.Err()
+	return items, rows.Err()
 }
 
 // First returns the first row that matches the query.

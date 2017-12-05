@@ -62,8 +62,13 @@ func (b *SelectBuilder) Query() ([]{{.Type.ExtName}}, error) {
 	}
 	defer rows.Close()
 
-	// extract rows to structures
-	var all []{{.Type.ExtName}}
+	var (
+	    items []{{.Type.ExtName}}
+        {{ if .Type.HasOneToManyRelation -}}
+        // exists is a mapping from primary key to already parsed structs
+        exists = make(map[{{.Type.PrimaryKey.Type.ExtName}}]*{{.Type.ExtName}})
+        {{ end -}}
+    )
 	for rows.Next() {
 	    // check context cancellation
 	    if err := ctx.Err(); err != nil  {
@@ -73,12 +78,23 @@ func (b *SelectBuilder) Query() ([]{{.Type.ExtName}}, error) {
         if err != nil {
 			return nil, err
 		}
-		all = append(all, *item)
+
+        {{ if .Type.HasOneToManyRelation -}}
+		if exist := exists[item.{{.Type.PrimaryKey.Name}}]; exist != nil {
+		    {{ range $_, $f := .Type.References -}}
+		    {{ if $f.Type.Slice -}}
+			exist.{{$f.Name}} = append(exist.{{$f.Name}}, item.{{$f.Name}}...)
+			{{ end -}}
+			{{ end -}}
+		} else {
+			items = append(items, *item)
+			exists[item.{{.Type.PrimaryKey.Name}}] = &items[len(items)-1]
+		}
+		{{ else -}}
+		items = append(items, *item)
+		{{ end -}}
 	}
-    {{ if and .Type.HasOneToManyRelation .Type.PrimaryKey -}}
-    all = b.reduce(all)
-    {{ end -}}
-	return all, rows.Err()
+	return items, rows.Err()
 }
 
 // Count add a count column to the query
@@ -91,8 +107,13 @@ func (b *SelectBuilder) Count() ([]{{.Type.Name}}Count, error) {
 	}
 	defer rows.Close()
 
-	// extract rows to structures
-	var all []{{.Type.Name}}Count
+	var (
+	    items []{{.Type.Name}}Count
+        {{ if .Type.HasOneToManyRelation -}}
+        // exists is a mapping from primary key to already parsed structs
+        exists = make(map[{{.Type.PrimaryKey.Type.ExtName}}]*{{.Type.ExtName}})
+        {{ end -}}
+    )
 	for rows.Next() {
 	    // check context cancellation
 	    if err := ctx.Err(); err != nil  {
@@ -102,12 +123,23 @@ func (b *SelectBuilder) Count() ([]{{.Type.Name}}Count, error) {
         if err != nil {
 			return nil, err
 		}
-		all = append(all, *item)
+
+        {{ if .Type.HasOneToManyRelation -}}
+		if exist := exists[item.{{.Type.PrimaryKey.Name}}]; exist != nil {
+		    {{ range $_, $f := .Type.References -}}
+		    {{ if $f.Type.Slice -}}
+			exist.{{$f.Name}} = append(exist.{{$f.Name}}, item.{{$f.Name}}...)
+			{{ end -}}
+			{{ end -}}
+		} else {
+			items = append(items, *item)
+			exists[item.{{.Type.PrimaryKey.Name}}] = &items[len(items)-1].{{$.Type.Name}}
+		}
+		{{ else -}}
+		items = append(items, *item)
+		{{ end -}}
 	}
-    {{ if and .Type.HasOneToManyRelation .Type.PrimaryKey -}}
-    all = b.reduceCount(all)
-    {{ end -}}
-	return all, rows.Err()
+	return items, rows.Err()
 }
 
 // First returns the first row that matches the query.
@@ -134,49 +166,6 @@ func (b *SelectBuilder) First() (*{{.Type.ExtName}}, error) {
     }
 	return item, rows.Err()
 }
-
-
-{{ if .Type.PrimaryKey -}}
-func (b *SelectBuilder) reduce(items []{{.Type.ExtName}}) []{{.Type.ExtName}} {
-	var (
-		exists = make(map[{{.Type.PrimaryKey.Type.ExtName}}]*{{.Type.ExtName}})
-		ret    []{{.Type.ExtName}}
-	)
-	for _, i := range items {
-		if exist := exists[i.{{.Type.PrimaryKey.Name}}]; exist != nil {
-		    {{ range $_, $f := .Type.References -}}
-		    {{ if $f.Type.Slice -}}
-			exist.{{$f.Name}} = append(exist.{{$f.Name}}, i.{{$f.Name}}...)
-			{{ end -}}
-			{{ end -}}
-		} else {
-			ret = append(ret, i)
-			exists[i.{{.Type.PrimaryKey.Name}}] = &ret[len(ret)-1]
-		}
-	}
-	return ret
-}
-
-func (b *SelectBuilder) reduceCount(items []{{.Type.Name}}Count) []{{.Type.Name}}Count {
-	var (
-		exists = make(map[{{.Type.PrimaryKey.Type.ExtName}}]*{{.Type.Name}}Count)
-		ret    []{{.Type.Name}}Count
-	)
-	for _, i := range items {
-		if exist := exists[i.{{.Type.PrimaryKey.Name}}]; exist != nil {
-		    {{ range $_, $f := .Type.References -}}
-		    {{ if $f.Type.Slice -}}
-			exist.{{$.Type.Name}}.{{$f.Name}} = append(exist.{{$f.Name}}, i.{{$f.Name}}...)
-			{{ end -}}
-			{{ end -}}
-		} else {
-			ret = append(ret, i)
-			exists[i.{{.Type.PrimaryKey.Name}}] = &ret[len(ret)-1]
-		}
-	}
-	return ret
-}
-{{ end }}
 
 func contextOrBackground(ctx context.Context) context.Context {
 	if ctx == nil {
