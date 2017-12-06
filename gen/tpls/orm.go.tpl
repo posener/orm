@@ -117,22 +117,42 @@ func (c *conn) Delete() *DeleteBuilder {
 
 // Insert{{.Type.Name}} returns an SQL INSERT statement builder filled with values of a given object
 func (b *InsertBuilder) Insert{{.Type.Name}}(p *{{.Type.ExtName}}) *InsertBuilder {
-	{{- range $_, $f := .Type.Fields }}
-	{{- if $f.IsSettable }}
-	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}{{if $f.IsReference }}.{{$f.Type.PrimaryKey.Name}}{{end}})
-	{{- end -}}
-	{{- end }}
+	{{ range $_, $f := .Type.Fields -}}
+	{{ if $f.IsSettable -}}
+	{{ if not $f.IsReference -}}
+	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}})
+	{{ else -}}
+	{{ if $f.Type.Pointer -}}
+	if p.{{$f.Name}} != nil {
+	{{ end -}}
+	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}.{{$f.Type.PrimaryKey.Name}})
+	{{ if $f.Type.Pointer -}}
+	}
+	{{ end -}}
+	{{ end -}}
+	{{ end -}}
+	{{ end -}}
 	return b
 }
 
 
 // Update{{.Type.Name}} update values for all struct fields
 func (b *UpdateBuilder) Update{{.Type.Name}}(p *{{.Type.ExtName}}) *UpdateBuilder {
-	{{- range $_, $f := .Type.Fields }}
-    {{- if $f.IsSettable }}
-	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}{{if $f.IsReference }}.{{$f.Type.PrimaryKey.Name}}{{end}})
-	{{- end -}}
-	{{- end }}
+	{{ range $_, $f := .Type.Fields -}}
+    {{ if $f.IsSettable -}}
+	{{ if not $f.IsReference -}}
+	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}})
+	{{ else -}}
+	{{ if $f.Type.Pointer -}}
+	if p.{{$f.Name}} != nil {
+	{{ end -}}
+	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}.{{$f.Type.PrimaryKey.Name}})
+	{{ if $f.Type.Pointer -}}
+	}
+	{{ end -}}
+	{{ end -}}
+	{{ end -}}
+	{{ end -}}
 	return b
 }
 

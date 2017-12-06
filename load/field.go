@@ -148,8 +148,5 @@ func (f *Field) SetType() *Type {
 
 // Column returns the SQL column name of a field
 func (f *Field) Column() string {
-	if f.IsReference() {
-		return f.Type.Table() + "_id"
-	}
 	return strings.ToLower(f.Name)
 }
