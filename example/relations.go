@@ -9,6 +9,13 @@ type A struct {
 	CPointer *C
 }
 
+//go:generate orm -type A2
+
+type A2 struct {
+	ID int64 `sql:"primary key;auto increment"`
+	C  C
+}
+
 //go:generate orm -type B
 
 type B struct {

@@ -480,7 +480,7 @@ func testDBs(t *testing.T, testFunc func(t *testing.T, conn conn)) {
 				}
 				s, err := sql.Open(name, mySQLAddr)
 				require.Nil(t, err)
-				for _, table := range []string{"all", "person", "a", "c", "b"} {
+				for _, table := range []string{"all", "person", "a2", "a", "c", "b"} {
 					t.Logf("Dropping table %s", table)
 					_, err = s.Exec(fmt.Sprintf("DROP TABLE IF EXISTS `%s`", table))
 					require.Nil(t, err)

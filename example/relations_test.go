@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/posener/orm/example"
+	"github.com/posener/orm/example/a2orm"
 	"github.com/posener/orm/example/aorm"
 	"github.com/posener/orm/example/borm"
 	"github.com/posener/orm/example/corm"
@@ -123,6 +124,52 @@ func generateCs(t *testing.T, cORM corm.API, bItem *example.B, count int) {
 		cItems = append(cItems, *cItem)
 		bItem.CsPointer = append(bItem.CsPointer, cItem)
 	}
+}
+
+func TestRelationOneToOneNonPointer(t *testing.T) {
+	testDBs(t, func(t *testing.T, conn conn) {
+		a, err := a2orm.New(conn.name, conn)
+		require.Nil(t, err)
+		c, err := corm.New(conn.name, conn)
+		require.Nil(t, err)
+		if testing.Verbose() {
+			a.Logger(t.Logf)
+			c.Logger(t.Logf)
+		}
+
+		_, err = a.Create().Exec()
+		require.Nil(t, err)
+		_, err = c.Create().Exec()
+		require.Nil(t, err)
+
+		cItem := &example.C{Name: "The Hitchhiker's Guide to the Galaxy", Year: 1979}
+
+		res, err := c.Insert().SetName(cItem.Name).SetYear(cItem.Year).Exec()
+		require.Nil(t, err)
+		cItem.ID, err = res.LastInsertId()
+		require.Nil(t, err)
+
+		aItem := &example.A2{C: *cItem}
+
+		res, err = a.Insert().InsertA2(aItem).Exec()
+		require.Nil(t, err)
+		aItem.ID, err = res.LastInsertId()
+		require.Nil(t, err)
+
+		// query without join, A.CPointer should be nil
+		aItems, err := a.Select().Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(aItems)) {
+			assert.Equal(t, aItem.ID, aItems[0].ID)
+			assert.Equal(t, int64(0), aItems[0].C.ID)
+		}
+
+		aItems, err = a.Select().JoinC(c.Select().Scanner()).Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(aItems)) {
+			assert.Equal(t, aItem, &aItems[0])
+		}
+	})
 }
 
 func orms(t *testing.T, conn conn) (aorm.API, borm.API, corm.API) {
