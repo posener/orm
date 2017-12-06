@@ -11,6 +11,7 @@ import (
 // Columns extract SQL columns list statement
 func Columns(table string, c common.Selector) string {
 	var parts []string
+
 	if c == nil {
 		return fmt.Sprintf("`%s`.*", table)
 	}

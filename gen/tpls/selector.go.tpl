@@ -151,9 +151,9 @@ func (s *selector) scan{{$dialect.Name}} (vals []driver.Value{{if $.Type.HasOneT
             return nil, err
         }
         {{ if $f.Type.Slice -}}
-        row.{{$f.Name}} = append(row.{{$f.Name}}, tmp)
+        row.{{$f.Name}} = append(row.{{$f.Name}}, {{if not $f.Type.Pointer}}*{{end}}tmp)
         {{ else -}}
-        row.{{$f.Name}} = tmp
+        row.{{$f.Name}} = {{ if not $f.Type.Pointer}}*{{end}}tmp
         {{ end -}}
     }
     {{ end }}
