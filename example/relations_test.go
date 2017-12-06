@@ -82,20 +82,47 @@ func TestRelationOneToMany(t *testing.T) {
 		bItem.ID, err = res.LastInsertId()
 		require.Nil(t, err)
 
-		var bItems []example.C
-		for i := 0; i < 10; i++ {
-			cItem := &example.C{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, BID: bItem.ID}
-			res, err = cORM.Insert().InsertC(cItem).Exec()
-			require.Nil(t, err)
-			cItem.ID, err = res.LastInsertId()
-			require.Nil(t, err)
-			bItems = append(bItems, *cItem)
-		}
+		generateCs(t, cORM, bItem, 10)
 
-		as, err := bORM.Select().JoinCsPointer(cORM.Select().Scanner()).Query()
+		bItems, err := bORM.Select().JoinCsPointer(cORM.Select().Scanner()).Query()
 		require.Nil(t, err)
-		require.Equal(t, 1, len(as))
+		require.Equal(t, 1, len(bItems))
+		assert.Equal(t, bItem, &bItems[0])
+
+		bItem2 := &example.B{Name: "Yoko", Hobbies: "music"}
+		res, err = bORM.Insert().InsertB(bItem2).Exec()
+		require.Nil(t, err)
+		bItem2.ID, err = res.LastInsertId()
+		require.Nil(t, err)
+
+		// expect to get only one b, since the second b doesn't have any c related
+		bItems, err = bORM.Select().JoinCsPointer(cORM.Select().Scanner()).Query()
+		require.Nil(t, err)
+		require.Equal(t, 1, len(bItems))
+		assert.Equal(t, bItem, &bItems[0])
+
+		generateCs(t, cORM, bItem2, 5)
+
+		bItems, err = bORM.Select().JoinCsPointer(cORM.Select().Scanner()).Query()
+		require.Nil(t, err)
+		require.Equal(t, 2, len(bItems))
+		assert.Equal(t, bItem, &bItems[0])
+		assert.Equal(t, bItem2, &bItems[1])
 	})
+}
+
+func generateCs(t *testing.T, cORM corm.API, bItem *example.B, count int) {
+	t.Helper()
+	var cItems []example.C
+	for i := 0; i < count; i++ {
+		cItem := &example.C{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, BID: bItem.ID}
+		res, err := cORM.Insert().InsertC(cItem).Exec()
+		require.Nil(t, err)
+		cItem.ID, err = res.LastInsertId()
+		require.Nil(t, err)
+		cItems = append(cItems, *cItem)
+		bItem.CsPointer = append(bItem.CsPointer, cItem)
+	}
 }
 
 func orms(t *testing.T, conn conn) (aorm.API, borm.API, corm.API) {
