@@ -12,9 +12,6 @@ import (
 	"github.com/posener/orm"
 	"github.com/posener/orm/example"
 	"github.com/posener/orm/example/allorm"
-	"github.com/posener/orm/example/authororm"
-	"github.com/posener/orm/example/bookorm"
-	"github.com/posener/orm/example/loanerorm"
 	"github.com/posener/orm/example/personorm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +24,6 @@ var dbNames = []string{"sqlite3", "mysql"}
 func TestTypes(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := allDB(t, conn)
-		defer db.Close()
 
 		a := example.All{
 			Int:   1,
@@ -92,7 +88,6 @@ func TestTypes(t *testing.T) {
 func TestAutoIncrement(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := allDB(t, conn)
-		defer db.Close()
 
 		res, err := db.Insert().SetNotNil("1").Exec()
 		require.Nil(t, err)
@@ -126,7 +121,6 @@ func TestAutoIncrement(t *testing.T) {
 func TestNotNull(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := allDB(t, conn)
-		defer db.Close()
 
 		_, err := db.Insert().SetInt(1).Exec()
 		require.NotNil(t, err)
@@ -136,7 +130,6 @@ func TestNotNull(t *testing.T) {
 func TestFieldReservedName(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := allDB(t, conn)
-		defer db.Close()
 
 		res, err := db.Insert().SetSelect(42).SetNotNil("not-nil").Exec()
 		require.Nil(t, err)
@@ -183,7 +176,6 @@ var (
 func TestPersonSelect(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := personDB(t, conn)
-		defer db.Close()
 
 		res, err := db.Insert().SetName(p1.Name).SetAge(p1.Age).Exec()
 		require.Nil(t, err, "Failed inserting")
@@ -287,7 +279,6 @@ func TestPersonSelect(t *testing.T) {
 func TestCRUD(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := personDB(t, conn)
-		defer db.Close()
 
 		// prepareAll dataset
 		for _, p := range []example.Person{p1, p2, p3} {
@@ -329,7 +320,6 @@ func TestCRUD(t *testing.T) {
 func TestCount(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := personDB(t, conn)
-		defer db.Close()
 
 		for i := 0; i < 100; i++ {
 			res, err := db.Insert().InsertPerson(&example.Person{Name: fmt.Sprintf("Jim %d", i), Age: i / 5}).Exec()
@@ -382,7 +372,6 @@ func TestCount(t *testing.T) {
 func TestCreateIfNotExists(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := personDB(t, conn)
-		defer db.Close()
 
 		_, err := db.Create().IfNotExists().Exec()
 		require.Nil(t, err)
@@ -395,7 +384,6 @@ func TestCreateIfNotExists(t *testing.T) {
 func TestFirst(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := personDB(t, conn)
-		defer db.Close()
 
 		_, err := db.Select().First()
 		assert.Equal(t, orm.ErrNotFound, err)
@@ -452,93 +440,6 @@ func TestNew(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func TestRelationOneToOne(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn conn) {
-		book, loaner, _ := libraryDB(t, conn)
-		defer book.Close()
-
-		if conn.name != "sqlite3" { // this is not enforced in sqlite3
-			_, err := loaner.Insert().InsertLoaner(&example.Loaner{Name: "James", Book: &example.Book{ID: -10}}).Exec()
-			require.NotNil(t, err)
-		}
-
-		b := &example.Book{Name: "The Hitchhiker's Guide to the Galaxy", Year: 1979}
-
-		res, err := book.Insert().SetName(b.Name).SetYear(b.Year).Exec()
-		require.Nil(t, err)
-		b.ID, err = res.LastInsertId()
-		require.Nil(t, err)
-
-		l := &example.Loaner{Name: "James", Age: 42, Book: b}
-
-		res, err = loaner.Insert().InsertLoaner(l).Exec()
-		require.Nil(t, err)
-		l.ID, err = res.LastInsertId()
-		require.Nil(t, err)
-
-		// query without join, Loaner.Book should be nil
-		ls, err := loaner.Select().Query()
-		require.Nil(t, err)
-		if assert.Equal(t, 1, len(ls)) {
-			assert.Equal(t, l.Name, ls[0].Name)
-			assert.Nil(t, ls[0].Book)
-		}
-
-		// query with join, Loaner.Book should be filled with book's properties
-		ls, err = loaner.Select().JoinBook(book.Select().Scanner()).Query()
-		require.Nil(t, err)
-		if assert.Equal(t, 1, len(ls)) {
-			assert.Equal(t, l, &ls[0])
-		}
-
-		// query with join, Loaner.Book should be filled with book's properties
-		ls, err = loaner.Select().JoinBook(book.Select().SelectName().Scanner()).Query()
-		require.Nil(t, err)
-		if assert.Equal(t, 1, len(ls)) {
-			assert.Equal(t, l.Name, ls[0].Name)
-			assert.Equal(t, l.Age, ls[0].Age)
-			assert.Equal(t, l.Book.Name, ls[0].Book.Name)
-			assert.Equal(t, 0, ls[0].Book.Year) // was not selected in query, thus expecting zero value
-		}
-
-		// query with join, Loaner.Book should be filled with book's properties
-		ls, err = loaner.Select().SelectName().JoinBook(book.Select().SelectYear().Scanner()).Query()
-		require.Nil(t, err)
-		if assert.Equal(t, 1, len(ls)) {
-			assert.Equal(t, l.Name, ls[0].Name)
-			assert.Equal(t, 0, ls[0].Age)        // was not selected in query, thus expecting zero value
-			assert.Equal(t, "", ls[0].Book.Name) // was not selected in query, thus expecting zero value
-			assert.Equal(t, l.Book.Year, ls[0].Book.Year)
-		}
-	})
-}
-
-func TestRelationOneToMany(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn conn) {
-		book, _, author := libraryDB(t, conn)
-		defer book.Close()
-
-		a := &example.Author{Name: "Marks", Hobbies: "drones"}
-		res, err := author.Insert().InsertAuthor(a).Exec()
-		require.Nil(t, err)
-		a.ID, err = res.LastInsertId()
-		require.Nil(t, err)
-
-		var books []example.Book
-		for i := 0; i < 10; i++ {
-			b := &example.Book{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, AuthorID: a.ID}
-			res, err = book.Insert().InsertBook(b).Exec()
-			require.Nil(t, err)
-			b.ID, err = res.LastInsertId()
-			require.Nil(t, err)
-			books = append(books, *b)
-		}
-		as, err := author.Select().JoinBooks(book.Select().Scanner()).Query()
-		require.Nil(t, err)
-		require.Equal(t, 1, len(as))
-	})
-}
-
 func personDB(t *testing.T, conn conn) personorm.API {
 	t.Helper()
 	db, err := personorm.New(conn.name, conn)
@@ -563,32 +464,6 @@ func allDB(t *testing.T, conn conn) allorm.API {
 	return db
 }
 
-func libraryDB(t *testing.T, conn conn) (bookorm.API, loanerorm.API, authororm.API) {
-	t.Helper()
-	bookDB, err := bookorm.New(conn.name, conn)
-	require.Nil(t, err)
-	loanerDB, err := loanerorm.New(conn.name, conn)
-	require.Nil(t, err)
-	authorDB, err := authororm.New(conn.name, conn)
-	require.Nil(t, err)
-	if testing.Verbose() {
-		bookDB.Logger(t.Logf)
-		loanerDB.Logger(t.Logf)
-		authorDB.Logger(t.Logf)
-	}
-
-	_, err = authorDB.Create().Exec()
-	require.Nil(t, err)
-
-	_, err = bookDB.Create().Exec()
-	require.Nil(t, err)
-
-	_, err = loanerDB.Create().Exec()
-	require.Nil(t, err)
-
-	return bookDB, loanerDB, authorDB
-}
-
 type conn struct {
 	name string
 	orm.DB
@@ -605,7 +480,8 @@ func testDBs(t *testing.T, testFunc func(t *testing.T, conn conn)) {
 				}
 				s, err := sql.Open(name, mySQLAddr)
 				require.Nil(t, err)
-				for _, table := range []string{"all", "person", "loaner", "book", "author"} {
+				for _, table := range []string{"all", "person", "a", "c", "b"} {
+					t.Logf("Dropping table %s", table)
 					_, err = s.Exec(fmt.Sprintf("DROP TABLE IF EXISTS `%s`", table))
 					require.Nil(t, err)
 				}
@@ -614,6 +490,7 @@ func testDBs(t *testing.T, testFunc func(t *testing.T, conn conn)) {
 			case "sqlite3":
 				s, err := sql.Open(name, ":memory:")
 				require.Nil(t, err)
+				defer s.Close()
 				testFunc(t, conn{name: name, DB: s})
 
 			default:
