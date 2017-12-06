@@ -50,7 +50,7 @@ func main() {
     _, err = db.Insert().SetName("John").SetAge(1).Exec()
 
     // Insert row with a struct:
-    _, err = db.InsertPerson(&example.Person{Name: "Doug", Age: 3}).Exec()
+    _, err = db.Insert().InsertPerson(&example.Person{Name: "Doug", Age: 3}).Exec()
 
     // Select rows from the table:
     ps, err := db.Select().

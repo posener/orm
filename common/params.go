@@ -30,7 +30,7 @@ type InsertParams struct {
 // SelectParams holds parameters for an SQL SELECT statement
 type SelectParams struct {
 	Table   string
-	Columns Columner
+	Columns Selector
 	Where   StatementArger
 	Groups  Groups
 	Orders  Orders

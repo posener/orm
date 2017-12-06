@@ -2,14 +2,27 @@ package {{.Package}}
 
 import (
     "context"
+	"database/sql/driver"
 
 	"github.com/posener/orm/common"
     "{{.Type.ImportPath}}"
 )
 
+type Scanner interface {
+    Columns() []string
+    First(dialect string, values []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName}}]*{{.Type.ExtName}}{{end}}) (*{{$.Type.ExtNaked}}, error)
+}
+
+{{ range $_, $f := $.Type.References }}
+type {{$f.Name}}Scanner interface {
+    Columns() []string
+    First(dialect string, values []driver.Value{{if $f.Type.HasOneToManyRelation}}, exists map[{{$f.Type.PrimaryKey.Type.ExtName}}]*{{$f.Type.ExtName}}{{end}}) (*{{$f.Type.ExtNaked}}, error)
+}
+{{ end }}
+
 // {{.Type.Name}}Count is a struct for counting rows of type {{.Type.Name}}
 type {{.Type.Name}}Count struct {
-    {{.Type.ExtTypeName}}
+    {{.Type.ExtName}}
     Count int64
 }
 
@@ -18,6 +31,10 @@ type SelectBuilder struct {
 	params common.SelectParams
 	conn *conn
 	selector selector
+}
+
+func (b *SelectBuilder) Scanner() Scanner {
+    return b.params.Columns.(*selector)
 }
 
 // Where applies where conditions on the query
@@ -40,23 +57,33 @@ func (b *SelectBuilder) Page(offset, limit int64) *SelectBuilder {
 }
 
 {{ range $_, $f := .Type.Fields -}}
-// Select{{$f.VarName}} adds {{$f.VarName}} to the selected column of a query
-func (b *SelectBuilder) Select{{$f.VarName}}() *SelectBuilder {
-    b.selector.Select{{$f.VarName}} = true
+{{ if not $f.IsReference }}
+// Select{{$f.Name}} adds {{$f.Name}} to the selected column of a query
+func (b *SelectBuilder) Select{{$f.Name}}() *SelectBuilder {
+    b.selector.Select{{$f.Name}} = true
+    return b
+}
+{{ else }}
+// Join{{$f.Name}} add a join query for {{$f.Name}}
+func (b *SelectBuilder) Join{{$f.Name}}(scanner {{$f.Name}}Scanner) *SelectBuilder {
+    b.selector.Join{{$f.Name}} = scanner
+    return b
+}
+{{ end }}
+
+{{ if not $f.Type.Slice -}}
+// OrderBy{{$f.Name}} set order to the query results according to column {{$f.Column}}
+func (b *SelectBuilder) OrderBy{{$f.Name}}(dir common.OrderDir) *SelectBuilder {
+    b.params.Orders.Add("{{$f.Column}}", dir)
     return b
 }
 
-// OrderBy{{$f.VarName}} set order to the query results according to column {{$f.SQL.Column}}
-func (b *SelectBuilder) OrderBy{{$f.VarName}}(dir common.OrderDir) *SelectBuilder {
-    b.params.Orders.Add("{{$f.SQL.Column}}", dir)
+// GroupBy{{$f.Name}} make the query group by column {{$f.Column}}
+func (b *SelectBuilder) GroupBy{{$f.Name}}() *SelectBuilder {
+    b.params.Groups.Add("{{$f.Column}}")
     return b
 }
-
-// GroupBy{{$f.VarName}} make the query group by column {{$f.SQL.Column}}
-func (b *SelectBuilder) GroupBy{{$f.VarName}}() *SelectBuilder {
-    b.params.Groups.Add("{{$f.SQL.Column}}")
-    return b
-}
+{{ end -}}
 {{ end -}}
 
 // Context sets the context for the SQL query

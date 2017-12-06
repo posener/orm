@@ -4,7 +4,11 @@ package personorm
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"fmt"
+	"reflect"
+	"unsafe"
+
 	"github.com/posener/orm"
 
 	"github.com/posener/orm/example"
@@ -60,20 +64,22 @@ func (b *SelectBuilder) Query() ([]example.Person, error) {
 	}
 	defer rows.Close()
 
-	// extract rows to structures
-	var all []example.Person
+	var (
+		items []example.Person
+	)
 	for rows.Next() {
 		// check context cancellation
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		item, err := b.selector.scan(b.conn.dialect.Name(), rows)
+		item, err := b.selector.First(b.conn.dialect.Name(), values(*rows))
 		if err != nil {
 			return nil, err
 		}
-		all = append(all, item.Person)
+
+		items = append(items, *item)
 	}
-	return all, rows.Err()
+	return items, rows.Err()
 }
 
 // Count add a count column to the query
@@ -86,20 +92,22 @@ func (b *SelectBuilder) Count() ([]PersonCount, error) {
 	}
 	defer rows.Close()
 
-	// extract rows to structures
-	var all []PersonCount
+	var (
+		items []PersonCount
+	)
 	for rows.Next() {
 		// check context cancellation
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		item, err := b.selector.scan(b.conn.dialect.Name(), rows)
+		item, err := b.selector.FirstCount(b.conn.dialect.Name(), values(*rows))
 		if err != nil {
 			return nil, err
 		}
-		all = append(all, *item)
+
+		items = append(items, *item)
 	}
-	return all, rows.Err()
+	return items, rows.Err()
 }
 
 // First returns the first row that matches the query.
@@ -120,11 +128,11 @@ func (b *SelectBuilder) First() (*example.Person, error) {
 	if !found {
 		return nil, orm.ErrNotFound
 	}
-	item, err := b.selector.scan(b.conn.dialect.Name(), rows)
+	item, err := b.selector.First(b.conn.dialect.Name(), values(*rows))
 	if err != nil {
 		return nil, err
 	}
-	return &item.Person, rows.Err()
+	return item, rows.Err()
 }
 
 func contextOrBackground(ctx context.Context) context.Context {
@@ -132,4 +140,18 @@ func contextOrBackground(ctx context.Context) context.Context {
 		return context.Background()
 	}
 	return ctx
+}
+
+// values is a hack to the sql.Rows struct
+// since the rows struct does not expose it's lastcols values, or a way to give
+// a custom scanner to the Scan method.
+// See issue https://github.com/golang/go/issues/22544
+func values(r sql.Rows) []driver.Value {
+	// some ugly hack to access lastcols field
+	rs := reflect.ValueOf(&r).Elem()
+	rf := rs.FieldByName("lastcols")
+
+	// overcome panic reflect.Value.Interface: cannot return value obtained from unexported field or method
+	rf = reflect.NewAt(rf.Type(), unsafe.Pointer(rf.UnsafeAddr())).Elem()
+	return rf.Interface().([]driver.Value)
 }

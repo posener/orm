@@ -9,7 +9,7 @@ import (
 
 // WhereAuto adds a condition on Auto to the WHERE statement
 func WhereAuto(op common.Op, val int) common.Where {
-	return common.NewWhere(op, "auto", val)
+	return common.NewWhere(op, "all", "auto", val)
 }
 
 // WhereAutoIn adds an IN condition on Auto to the WHERE statement
@@ -18,17 +18,17 @@ func WhereAutoIn(vals ...int) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("auto", args...)
+	return common.NewWhereIn("all", "auto", args...)
 }
 
 // WhereAutoBetween adds a BETWEEN condition on Auto to the WHERE statement
 func WhereAutoBetween(low, high int) common.Where {
-	return common.NewWhereBetween("auto", low, high)
+	return common.NewWhereBetween("all", "auto", low, high)
 }
 
 // WhereNotNil adds a condition on NotNil to the WHERE statement
 func WhereNotNil(op common.Op, val string) common.Where {
-	return common.NewWhere(op, "notnil", val)
+	return common.NewWhere(op, "all", "notnil", val)
 }
 
 // WhereNotNilIn adds an IN condition on NotNil to the WHERE statement
@@ -37,17 +37,17 @@ func WhereNotNilIn(vals ...string) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("notnil", args...)
+	return common.NewWhereIn("all", "notnil", args...)
 }
 
 // WhereNotNilBetween adds a BETWEEN condition on NotNil to the WHERE statement
 func WhereNotNilBetween(low, high string) common.Where {
-	return common.NewWhereBetween("notnil", low, high)
+	return common.NewWhereBetween("all", "notnil", low, high)
 }
 
 // WhereInt adds a condition on Int to the WHERE statement
 func WhereInt(op common.Op, val int) common.Where {
-	return common.NewWhere(op, "int", val)
+	return common.NewWhere(op, "all", "int", val)
 }
 
 // WhereIntIn adds an IN condition on Int to the WHERE statement
@@ -56,17 +56,17 @@ func WhereIntIn(vals ...int) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("int", args...)
+	return common.NewWhereIn("all", "int", args...)
 }
 
 // WhereIntBetween adds a BETWEEN condition on Int to the WHERE statement
 func WhereIntBetween(low, high int) common.Where {
-	return common.NewWhereBetween("int", low, high)
+	return common.NewWhereBetween("all", "int", low, high)
 }
 
 // WhereInt8 adds a condition on Int8 to the WHERE statement
 func WhereInt8(op common.Op, val int8) common.Where {
-	return common.NewWhere(op, "int8", val)
+	return common.NewWhere(op, "all", "int8", val)
 }
 
 // WhereInt8In adds an IN condition on Int8 to the WHERE statement
@@ -75,17 +75,17 @@ func WhereInt8In(vals ...int8) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("int8", args...)
+	return common.NewWhereIn("all", "int8", args...)
 }
 
 // WhereInt8Between adds a BETWEEN condition on Int8 to the WHERE statement
 func WhereInt8Between(low, high int8) common.Where {
-	return common.NewWhereBetween("int8", low, high)
+	return common.NewWhereBetween("all", "int8", low, high)
 }
 
 // WhereInt16 adds a condition on Int16 to the WHERE statement
 func WhereInt16(op common.Op, val int16) common.Where {
-	return common.NewWhere(op, "int16", val)
+	return common.NewWhere(op, "all", "int16", val)
 }
 
 // WhereInt16In adds an IN condition on Int16 to the WHERE statement
@@ -94,17 +94,17 @@ func WhereInt16In(vals ...int16) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("int16", args...)
+	return common.NewWhereIn("all", "int16", args...)
 }
 
 // WhereInt16Between adds a BETWEEN condition on Int16 to the WHERE statement
 func WhereInt16Between(low, high int16) common.Where {
-	return common.NewWhereBetween("int16", low, high)
+	return common.NewWhereBetween("all", "int16", low, high)
 }
 
 // WhereInt32 adds a condition on Int32 to the WHERE statement
 func WhereInt32(op common.Op, val int32) common.Where {
-	return common.NewWhere(op, "int32", val)
+	return common.NewWhere(op, "all", "int32", val)
 }
 
 // WhereInt32In adds an IN condition on Int32 to the WHERE statement
@@ -113,17 +113,17 @@ func WhereInt32In(vals ...int32) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("int32", args...)
+	return common.NewWhereIn("all", "int32", args...)
 }
 
 // WhereInt32Between adds a BETWEEN condition on Int32 to the WHERE statement
 func WhereInt32Between(low, high int32) common.Where {
-	return common.NewWhereBetween("int32", low, high)
+	return common.NewWhereBetween("all", "int32", low, high)
 }
 
 // WhereInt64 adds a condition on Int64 to the WHERE statement
 func WhereInt64(op common.Op, val int64) common.Where {
-	return common.NewWhere(op, "int64", val)
+	return common.NewWhere(op, "all", "int64", val)
 }
 
 // WhereInt64In adds an IN condition on Int64 to the WHERE statement
@@ -132,17 +132,17 @@ func WhereInt64In(vals ...int64) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("int64", args...)
+	return common.NewWhereIn("all", "int64", args...)
 }
 
 // WhereInt64Between adds a BETWEEN condition on Int64 to the WHERE statement
 func WhereInt64Between(low, high int64) common.Where {
-	return common.NewWhereBetween("int64", low, high)
+	return common.NewWhereBetween("all", "int64", low, high)
 }
 
 // WhereUInt adds a condition on UInt to the WHERE statement
 func WhereUInt(op common.Op, val uint) common.Where {
-	return common.NewWhere(op, "uint", val)
+	return common.NewWhere(op, "all", "uint", val)
 }
 
 // WhereUIntIn adds an IN condition on UInt to the WHERE statement
@@ -151,17 +151,17 @@ func WhereUIntIn(vals ...uint) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("uint", args...)
+	return common.NewWhereIn("all", "uint", args...)
 }
 
 // WhereUIntBetween adds a BETWEEN condition on UInt to the WHERE statement
 func WhereUIntBetween(low, high uint) common.Where {
-	return common.NewWhereBetween("uint", low, high)
+	return common.NewWhereBetween("all", "uint", low, high)
 }
 
 // WhereUInt8 adds a condition on UInt8 to the WHERE statement
 func WhereUInt8(op common.Op, val uint8) common.Where {
-	return common.NewWhere(op, "uint8", val)
+	return common.NewWhere(op, "all", "uint8", val)
 }
 
 // WhereUInt8In adds an IN condition on UInt8 to the WHERE statement
@@ -170,17 +170,17 @@ func WhereUInt8In(vals ...uint8) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("uint8", args...)
+	return common.NewWhereIn("all", "uint8", args...)
 }
 
 // WhereUInt8Between adds a BETWEEN condition on UInt8 to the WHERE statement
 func WhereUInt8Between(low, high uint8) common.Where {
-	return common.NewWhereBetween("uint8", low, high)
+	return common.NewWhereBetween("all", "uint8", low, high)
 }
 
 // WhereUInt16 adds a condition on UInt16 to the WHERE statement
 func WhereUInt16(op common.Op, val uint16) common.Where {
-	return common.NewWhere(op, "uint16", val)
+	return common.NewWhere(op, "all", "uint16", val)
 }
 
 // WhereUInt16In adds an IN condition on UInt16 to the WHERE statement
@@ -189,17 +189,17 @@ func WhereUInt16In(vals ...uint16) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("uint16", args...)
+	return common.NewWhereIn("all", "uint16", args...)
 }
 
 // WhereUInt16Between adds a BETWEEN condition on UInt16 to the WHERE statement
 func WhereUInt16Between(low, high uint16) common.Where {
-	return common.NewWhereBetween("uint16", low, high)
+	return common.NewWhereBetween("all", "uint16", low, high)
 }
 
 // WhereUInt32 adds a condition on UInt32 to the WHERE statement
 func WhereUInt32(op common.Op, val uint32) common.Where {
-	return common.NewWhere(op, "uint32", val)
+	return common.NewWhere(op, "all", "uint32", val)
 }
 
 // WhereUInt32In adds an IN condition on UInt32 to the WHERE statement
@@ -208,17 +208,17 @@ func WhereUInt32In(vals ...uint32) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("uint32", args...)
+	return common.NewWhereIn("all", "uint32", args...)
 }
 
 // WhereUInt32Between adds a BETWEEN condition on UInt32 to the WHERE statement
 func WhereUInt32Between(low, high uint32) common.Where {
-	return common.NewWhereBetween("uint32", low, high)
+	return common.NewWhereBetween("all", "uint32", low, high)
 }
 
 // WhereUInt64 adds a condition on UInt64 to the WHERE statement
 func WhereUInt64(op common.Op, val uint64) common.Where {
-	return common.NewWhere(op, "uint64", val)
+	return common.NewWhere(op, "all", "uint64", val)
 }
 
 // WhereUInt64In adds an IN condition on UInt64 to the WHERE statement
@@ -227,17 +227,17 @@ func WhereUInt64In(vals ...uint64) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("uint64", args...)
+	return common.NewWhereIn("all", "uint64", args...)
 }
 
 // WhereUInt64Between adds a BETWEEN condition on UInt64 to the WHERE statement
 func WhereUInt64Between(low, high uint64) common.Where {
-	return common.NewWhereBetween("uint64", low, high)
+	return common.NewWhereBetween("all", "uint64", low, high)
 }
 
 // WhereTime adds a condition on Time to the WHERE statement
 func WhereTime(op common.Op, val time.Time) common.Where {
-	return common.NewWhere(op, "time", val)
+	return common.NewWhere(op, "all", "time", val)
 }
 
 // WhereTimeIn adds an IN condition on Time to the WHERE statement
@@ -246,17 +246,17 @@ func WhereTimeIn(vals ...time.Time) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("time", args...)
+	return common.NewWhereIn("all", "time", args...)
 }
 
 // WhereTimeBetween adds a BETWEEN condition on Time to the WHERE statement
 func WhereTimeBetween(low, high time.Time) common.Where {
-	return common.NewWhereBetween("time", low, high)
+	return common.NewWhereBetween("all", "time", low, high)
 }
 
 // WhereVarCharString adds a condition on VarCharString to the WHERE statement
 func WhereVarCharString(op common.Op, val string) common.Where {
-	return common.NewWhere(op, "varcharstring", val)
+	return common.NewWhere(op, "all", "varcharstring", val)
 }
 
 // WhereVarCharStringIn adds an IN condition on VarCharString to the WHERE statement
@@ -265,17 +265,17 @@ func WhereVarCharStringIn(vals ...string) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("varcharstring", args...)
+	return common.NewWhereIn("all", "varcharstring", args...)
 }
 
 // WhereVarCharStringBetween adds a BETWEEN condition on VarCharString to the WHERE statement
 func WhereVarCharStringBetween(low, high string) common.Where {
-	return common.NewWhereBetween("varcharstring", low, high)
+	return common.NewWhereBetween("all", "varcharstring", low, high)
 }
 
 // WhereVarCharByte adds a condition on VarCharByte to the WHERE statement
 func WhereVarCharByte(op common.Op, val []byte) common.Where {
-	return common.NewWhere(op, "varcharbyte", val)
+	return common.NewWhere(op, "all", "varcharbyte", val)
 }
 
 // WhereVarCharByteIn adds an IN condition on VarCharByte to the WHERE statement
@@ -284,17 +284,17 @@ func WhereVarCharByteIn(vals ...[]byte) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("varcharbyte", args...)
+	return common.NewWhereIn("all", "varcharbyte", args...)
 }
 
 // WhereVarCharByteBetween adds a BETWEEN condition on VarCharByte to the WHERE statement
 func WhereVarCharByteBetween(low, high []byte) common.Where {
-	return common.NewWhereBetween("varcharbyte", low, high)
+	return common.NewWhereBetween("all", "varcharbyte", low, high)
 }
 
 // WhereString adds a condition on String to the WHERE statement
 func WhereString(op common.Op, val string) common.Where {
-	return common.NewWhere(op, "string", val)
+	return common.NewWhere(op, "all", "string", val)
 }
 
 // WhereStringIn adds an IN condition on String to the WHERE statement
@@ -303,17 +303,17 @@ func WhereStringIn(vals ...string) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("string", args...)
+	return common.NewWhereIn("all", "string", args...)
 }
 
 // WhereStringBetween adds a BETWEEN condition on String to the WHERE statement
 func WhereStringBetween(low, high string) common.Where {
-	return common.NewWhereBetween("string", low, high)
+	return common.NewWhereBetween("all", "string", low, high)
 }
 
 // WhereBytes adds a condition on Bytes to the WHERE statement
 func WhereBytes(op common.Op, val []byte) common.Where {
-	return common.NewWhere(op, "bytes", val)
+	return common.NewWhere(op, "all", "bytes", val)
 }
 
 // WhereBytesIn adds an IN condition on Bytes to the WHERE statement
@@ -322,17 +322,17 @@ func WhereBytesIn(vals ...[]byte) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("bytes", args...)
+	return common.NewWhereIn("all", "bytes", args...)
 }
 
 // WhereBytesBetween adds a BETWEEN condition on Bytes to the WHERE statement
 func WhereBytesBetween(low, high []byte) common.Where {
-	return common.NewWhereBetween("bytes", low, high)
+	return common.NewWhereBetween("all", "bytes", low, high)
 }
 
 // WhereBool adds a condition on Bool to the WHERE statement
 func WhereBool(op common.Op, val bool) common.Where {
-	return common.NewWhere(op, "bool", val)
+	return common.NewWhere(op, "all", "bool", val)
 }
 
 // WhereBoolIn adds an IN condition on Bool to the WHERE statement
@@ -341,17 +341,17 @@ func WhereBoolIn(vals ...bool) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("bool", args...)
+	return common.NewWhereIn("all", "bool", args...)
 }
 
 // WhereBoolBetween adds a BETWEEN condition on Bool to the WHERE statement
 func WhereBoolBetween(low, high bool) common.Where {
-	return common.NewWhereBetween("bool", low, high)
+	return common.NewWhereBetween("all", "bool", low, high)
 }
 
 // WherePInt adds a condition on PInt to the WHERE statement
 func WherePInt(op common.Op, val *int) common.Where {
-	return common.NewWhere(op, "pint", val)
+	return common.NewWhere(op, "all", "pint", val)
 }
 
 // WherePIntIn adds an IN condition on PInt to the WHERE statement
@@ -360,17 +360,17 @@ func WherePIntIn(vals ...*int) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("pint", args...)
+	return common.NewWhereIn("all", "pint", args...)
 }
 
 // WherePIntBetween adds a BETWEEN condition on PInt to the WHERE statement
 func WherePIntBetween(low, high *int) common.Where {
-	return common.NewWhereBetween("pint", low, high)
+	return common.NewWhereBetween("all", "pint", low, high)
 }
 
 // WherePInt8 adds a condition on PInt8 to the WHERE statement
 func WherePInt8(op common.Op, val *int8) common.Where {
-	return common.NewWhere(op, "pint8", val)
+	return common.NewWhere(op, "all", "pint8", val)
 }
 
 // WherePInt8In adds an IN condition on PInt8 to the WHERE statement
@@ -379,17 +379,17 @@ func WherePInt8In(vals ...*int8) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("pint8", args...)
+	return common.NewWhereIn("all", "pint8", args...)
 }
 
 // WherePInt8Between adds a BETWEEN condition on PInt8 to the WHERE statement
 func WherePInt8Between(low, high *int8) common.Where {
-	return common.NewWhereBetween("pint8", low, high)
+	return common.NewWhereBetween("all", "pint8", low, high)
 }
 
 // WherePInt16 adds a condition on PInt16 to the WHERE statement
 func WherePInt16(op common.Op, val *int16) common.Where {
-	return common.NewWhere(op, "pint16", val)
+	return common.NewWhere(op, "all", "pint16", val)
 }
 
 // WherePInt16In adds an IN condition on PInt16 to the WHERE statement
@@ -398,17 +398,17 @@ func WherePInt16In(vals ...*int16) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("pint16", args...)
+	return common.NewWhereIn("all", "pint16", args...)
 }
 
 // WherePInt16Between adds a BETWEEN condition on PInt16 to the WHERE statement
 func WherePInt16Between(low, high *int16) common.Where {
-	return common.NewWhereBetween("pint16", low, high)
+	return common.NewWhereBetween("all", "pint16", low, high)
 }
 
 // WherePInt32 adds a condition on PInt32 to the WHERE statement
 func WherePInt32(op common.Op, val *int32) common.Where {
-	return common.NewWhere(op, "pint32", val)
+	return common.NewWhere(op, "all", "pint32", val)
 }
 
 // WherePInt32In adds an IN condition on PInt32 to the WHERE statement
@@ -417,17 +417,17 @@ func WherePInt32In(vals ...*int32) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("pint32", args...)
+	return common.NewWhereIn("all", "pint32", args...)
 }
 
 // WherePInt32Between adds a BETWEEN condition on PInt32 to the WHERE statement
 func WherePInt32Between(low, high *int32) common.Where {
-	return common.NewWhereBetween("pint32", low, high)
+	return common.NewWhereBetween("all", "pint32", low, high)
 }
 
 // WherePInt64 adds a condition on PInt64 to the WHERE statement
 func WherePInt64(op common.Op, val *int64) common.Where {
-	return common.NewWhere(op, "pint64", val)
+	return common.NewWhere(op, "all", "pint64", val)
 }
 
 // WherePInt64In adds an IN condition on PInt64 to the WHERE statement
@@ -436,17 +436,17 @@ func WherePInt64In(vals ...*int64) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("pint64", args...)
+	return common.NewWhereIn("all", "pint64", args...)
 }
 
 // WherePInt64Between adds a BETWEEN condition on PInt64 to the WHERE statement
 func WherePInt64Between(low, high *int64) common.Where {
-	return common.NewWhereBetween("pint64", low, high)
+	return common.NewWhereBetween("all", "pint64", low, high)
 }
 
 // WherePUInt adds a condition on PUInt to the WHERE statement
 func WherePUInt(op common.Op, val *uint) common.Where {
-	return common.NewWhere(op, "puint", val)
+	return common.NewWhere(op, "all", "puint", val)
 }
 
 // WherePUIntIn adds an IN condition on PUInt to the WHERE statement
@@ -455,17 +455,17 @@ func WherePUIntIn(vals ...*uint) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("puint", args...)
+	return common.NewWhereIn("all", "puint", args...)
 }
 
 // WherePUIntBetween adds a BETWEEN condition on PUInt to the WHERE statement
 func WherePUIntBetween(low, high *uint) common.Where {
-	return common.NewWhereBetween("puint", low, high)
+	return common.NewWhereBetween("all", "puint", low, high)
 }
 
 // WherePUInt8 adds a condition on PUInt8 to the WHERE statement
 func WherePUInt8(op common.Op, val *uint8) common.Where {
-	return common.NewWhere(op, "puint8", val)
+	return common.NewWhere(op, "all", "puint8", val)
 }
 
 // WherePUInt8In adds an IN condition on PUInt8 to the WHERE statement
@@ -474,17 +474,17 @@ func WherePUInt8In(vals ...*uint8) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("puint8", args...)
+	return common.NewWhereIn("all", "puint8", args...)
 }
 
 // WherePUInt8Between adds a BETWEEN condition on PUInt8 to the WHERE statement
 func WherePUInt8Between(low, high *uint8) common.Where {
-	return common.NewWhereBetween("puint8", low, high)
+	return common.NewWhereBetween("all", "puint8", low, high)
 }
 
 // WherePUInt16 adds a condition on PUInt16 to the WHERE statement
 func WherePUInt16(op common.Op, val *uint16) common.Where {
-	return common.NewWhere(op, "puint16", val)
+	return common.NewWhere(op, "all", "puint16", val)
 }
 
 // WherePUInt16In adds an IN condition on PUInt16 to the WHERE statement
@@ -493,17 +493,17 @@ func WherePUInt16In(vals ...*uint16) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("puint16", args...)
+	return common.NewWhereIn("all", "puint16", args...)
 }
 
 // WherePUInt16Between adds a BETWEEN condition on PUInt16 to the WHERE statement
 func WherePUInt16Between(low, high *uint16) common.Where {
-	return common.NewWhereBetween("puint16", low, high)
+	return common.NewWhereBetween("all", "puint16", low, high)
 }
 
 // WherePUInt32 adds a condition on PUInt32 to the WHERE statement
 func WherePUInt32(op common.Op, val *uint32) common.Where {
-	return common.NewWhere(op, "puint32", val)
+	return common.NewWhere(op, "all", "puint32", val)
 }
 
 // WherePUInt32In adds an IN condition on PUInt32 to the WHERE statement
@@ -512,17 +512,17 @@ func WherePUInt32In(vals ...*uint32) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("puint32", args...)
+	return common.NewWhereIn("all", "puint32", args...)
 }
 
 // WherePUInt32Between adds a BETWEEN condition on PUInt32 to the WHERE statement
 func WherePUInt32Between(low, high *uint32) common.Where {
-	return common.NewWhereBetween("puint32", low, high)
+	return common.NewWhereBetween("all", "puint32", low, high)
 }
 
 // WherePUInt64 adds a condition on PUInt64 to the WHERE statement
 func WherePUInt64(op common.Op, val *uint64) common.Where {
-	return common.NewWhere(op, "puint64", val)
+	return common.NewWhere(op, "all", "puint64", val)
 }
 
 // WherePUInt64In adds an IN condition on PUInt64 to the WHERE statement
@@ -531,17 +531,17 @@ func WherePUInt64In(vals ...*uint64) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("puint64", args...)
+	return common.NewWhereIn("all", "puint64", args...)
 }
 
 // WherePUInt64Between adds a BETWEEN condition on PUInt64 to the WHERE statement
 func WherePUInt64Between(low, high *uint64) common.Where {
-	return common.NewWhereBetween("puint64", low, high)
+	return common.NewWhereBetween("all", "puint64", low, high)
 }
 
 // WherePTime adds a condition on PTime to the WHERE statement
 func WherePTime(op common.Op, val *time.Time) common.Where {
-	return common.NewWhere(op, "ptime", val)
+	return common.NewWhere(op, "all", "ptime", val)
 }
 
 // WherePTimeIn adds an IN condition on PTime to the WHERE statement
@@ -550,17 +550,17 @@ func WherePTimeIn(vals ...*time.Time) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("ptime", args...)
+	return common.NewWhereIn("all", "ptime", args...)
 }
 
 // WherePTimeBetween adds a BETWEEN condition on PTime to the WHERE statement
 func WherePTimeBetween(low, high *time.Time) common.Where {
-	return common.NewWhereBetween("ptime", low, high)
+	return common.NewWhereBetween("all", "ptime", low, high)
 }
 
 // WherePVarCharString adds a condition on PVarCharString to the WHERE statement
 func WherePVarCharString(op common.Op, val *string) common.Where {
-	return common.NewWhere(op, "pvarcharstring", val)
+	return common.NewWhere(op, "all", "pvarcharstring", val)
 }
 
 // WherePVarCharStringIn adds an IN condition on PVarCharString to the WHERE statement
@@ -569,17 +569,17 @@ func WherePVarCharStringIn(vals ...*string) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("pvarcharstring", args...)
+	return common.NewWhereIn("all", "pvarcharstring", args...)
 }
 
 // WherePVarCharStringBetween adds a BETWEEN condition on PVarCharString to the WHERE statement
 func WherePVarCharStringBetween(low, high *string) common.Where {
-	return common.NewWhereBetween("pvarcharstring", low, high)
+	return common.NewWhereBetween("all", "pvarcharstring", low, high)
 }
 
 // WherePVarCharByte adds a condition on PVarCharByte to the WHERE statement
 func WherePVarCharByte(op common.Op, val *[]byte) common.Where {
-	return common.NewWhere(op, "pvarcharbyte", val)
+	return common.NewWhere(op, "all", "pvarcharbyte", val)
 }
 
 // WherePVarCharByteIn adds an IN condition on PVarCharByte to the WHERE statement
@@ -588,17 +588,17 @@ func WherePVarCharByteIn(vals ...*[]byte) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("pvarcharbyte", args...)
+	return common.NewWhereIn("all", "pvarcharbyte", args...)
 }
 
 // WherePVarCharByteBetween adds a BETWEEN condition on PVarCharByte to the WHERE statement
 func WherePVarCharByteBetween(low, high *[]byte) common.Where {
-	return common.NewWhereBetween("pvarcharbyte", low, high)
+	return common.NewWhereBetween("all", "pvarcharbyte", low, high)
 }
 
 // WherePString adds a condition on PString to the WHERE statement
 func WherePString(op common.Op, val *string) common.Where {
-	return common.NewWhere(op, "pstring", val)
+	return common.NewWhere(op, "all", "pstring", val)
 }
 
 // WherePStringIn adds an IN condition on PString to the WHERE statement
@@ -607,17 +607,17 @@ func WherePStringIn(vals ...*string) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("pstring", args...)
+	return common.NewWhereIn("all", "pstring", args...)
 }
 
 // WherePStringBetween adds a BETWEEN condition on PString to the WHERE statement
 func WherePStringBetween(low, high *string) common.Where {
-	return common.NewWhereBetween("pstring", low, high)
+	return common.NewWhereBetween("all", "pstring", low, high)
 }
 
 // WherePBytes adds a condition on PBytes to the WHERE statement
 func WherePBytes(op common.Op, val *[]byte) common.Where {
-	return common.NewWhere(op, "pbytes", val)
+	return common.NewWhere(op, "all", "pbytes", val)
 }
 
 // WherePBytesIn adds an IN condition on PBytes to the WHERE statement
@@ -626,17 +626,17 @@ func WherePBytesIn(vals ...*[]byte) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("pbytes", args...)
+	return common.NewWhereIn("all", "pbytes", args...)
 }
 
 // WherePBytesBetween adds a BETWEEN condition on PBytes to the WHERE statement
 func WherePBytesBetween(low, high *[]byte) common.Where {
-	return common.NewWhereBetween("pbytes", low, high)
+	return common.NewWhereBetween("all", "pbytes", low, high)
 }
 
 // WherePBool adds a condition on PBool to the WHERE statement
 func WherePBool(op common.Op, val *bool) common.Where {
-	return common.NewWhere(op, "pbool", val)
+	return common.NewWhere(op, "all", "pbool", val)
 }
 
 // WherePBoolIn adds an IN condition on PBool to the WHERE statement
@@ -645,17 +645,17 @@ func WherePBoolIn(vals ...*bool) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("pbool", args...)
+	return common.NewWhereIn("all", "pbool", args...)
 }
 
 // WherePBoolBetween adds a BETWEEN condition on PBool to the WHERE statement
 func WherePBoolBetween(low, high *bool) common.Where {
-	return common.NewWhereBetween("pbool", low, high)
+	return common.NewWhereBetween("all", "pbool", low, high)
 }
 
 // WhereSelect adds a condition on Select to the WHERE statement
 func WhereSelect(op common.Op, val int) common.Where {
-	return common.NewWhere(op, "select", val)
+	return common.NewWhere(op, "all", "select", val)
 }
 
 // WhereSelectIn adds an IN condition on Select to the WHERE statement
@@ -664,10 +664,10 @@ func WhereSelectIn(vals ...int) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("select", args...)
+	return common.NewWhereIn("all", "select", args...)
 }
 
 // WhereSelectBetween adds a BETWEEN condition on Select to the WHERE statement
 func WhereSelectBetween(low, high int) common.Where {
-	return common.NewWhereBetween("select", low, high)
+	return common.NewWhereBetween("all", "select", low, high)
 }

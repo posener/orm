@@ -3,30 +3,39 @@ package format
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/posener/orm/common"
 )
 
 // Columns extract SQL columns list statement
-func Columns(c common.Columner) string {
+func Columns(table string, c common.Selector) string {
+	var parts []string
 	if c == nil {
-		return "*"
+		return fmt.Sprintf("`%s`.*", table)
 	}
 	cols := c.Columns()
-	if len(cols) == 0 && !c.Count() {
-		return "*"
+	parts = append(parts, formatColumns(table, cols, c.Count())...)
+	if joins := c.Joins(); joins != nil {
+		for _, join := range joins {
+			parts = append(parts, formatColumns(join.RefTable, join.SelectColumns, c.Count())...)
+		}
 	}
-	b := bytes.NewBuffer(nil)
-	for i := range cols {
-		b.WriteString("`" + cols[i] + "`, ")
-	}
-
 	if c.Count() {
-		b.WriteString("COUNT(*), ")
+		parts = append(parts, "COUNT(*)")
 	}
+	return strings.Join(parts, ", ")
+}
 
-	s := b.String()
-	return s[:len(s)-2]
+func formatColumns(table string, cols []string, isCount bool) []string {
+	if len(cols) == 0 && !isCount {
+		return []string{fmt.Sprintf("`%s`.*", table)}
+	}
+	var parts []string
+	for _, col := range cols {
+		parts = append(parts, fmt.Sprintf("`%s`.`%s`", table, col))
+	}
+	return parts
 }
 
 // Where formats an SQL WHERE statement
@@ -42,13 +51,13 @@ func Where(c common.StatementArger) string {
 }
 
 // GroupBy formats an SQL GROUP BY statement
-func GroupBy(groups []common.Group) string {
+func GroupBy(table string, groups []common.Group) string {
 	if len(groups) == 0 {
 		return ""
 	}
 	b := bytes.NewBufferString("GROUP BY ")
 	for i := range groups {
-		b.WriteString(fmt.Sprintf("`%s`, ", groups[i].Column))
+		b.WriteString(fmt.Sprintf("`%s`.`%s`, ", table, groups[i].Column))
 	}
 
 	s := b.String()
@@ -56,14 +65,14 @@ func GroupBy(groups []common.Group) string {
 }
 
 // OrderBy formats an SQL ORDER BY statement
-func OrderBy(orders []common.Order) string {
+func OrderBy(table string, orders []common.Order) string {
 	if len(orders) == 0 {
 		return ""
 	}
 
 	b := bytes.NewBufferString("ORDER BY ")
 	for i := range orders {
-		b.WriteString(fmt.Sprintf("`%s` %s, ", orders[i].Column, orders[i].Dir))
+		b.WriteString(fmt.Sprintf("`%s`.`%s` %s, ", table, orders[i].Column, orders[i].Dir))
 	}
 
 	s := b.String()
@@ -89,7 +98,7 @@ func AssignSets(a common.Assignments) string {
 	}
 	b := bytes.NewBuffer(nil)
 	for i := range a {
-		b.WriteString("`" + a[i].Column + "` = ?, ")
+		b.WriteString(fmt.Sprintf("`%s` = ?, ", a[i].Column))
 	}
 
 	s := b.String()
@@ -104,17 +113,49 @@ func AssignColumns(a common.Assignments) string {
 	}
 	b := bytes.NewBuffer(nil)
 	for i := range a {
-		b.WriteString("`" + a[i].Column + "`, ")
+		b.WriteString(fmt.Sprintf("`%s`, ", a[i].Column))
 	}
 
 	s := b.String()
 	return s[:len(s)-2]
 }
 
+// Join extract SQL join list statement
+func Join(table string, c common.Selector) string {
+	if c == nil {
+		return ""
+	}
+	joins := c.Joins()
+	if len(joins) == 0 {
+		return ""
+	}
+	var (
+		tables []string
+		conds  []string
+	)
+	for _, j := range joins {
+		tables = append(tables, fmt.Sprintf("`%s`", j.RefTable))
+		conds = append(conds, fmt.Sprintf("`%s`.`%s` = `%s`.`%s`", table, j.Column, j.RefTable, j.RefColumn))
+	}
+	return fmt.Sprintf("JOIN (%s) ON (%s)",
+		strings.Join(tables, ", "),
+		strings.Join(conds, " AND "),
+	)
+}
+
 // IfNotExists formats an SQL IF NOT EXISTS statement
-func IfNotExists(ifNotExists bool) interface{} {
+func IfNotExists(ifNotExists bool) string {
 	if ifNotExists {
 		return "IF NOT EXISTS"
 	}
 	return ""
+}
+
+func ForeignKey(foreignKeys []common.ForeignKey) []string {
+	var stmts []string
+	for _, fk := range foreignKeys {
+		stmts = append(stmts, fmt.Sprintf("FOREIGN KEY (`%s`) REFERENCES `%s`(`%s`)",
+			fk.Column, fk.RefTable, fk.RefColumn))
+	}
+	return stmts
 }

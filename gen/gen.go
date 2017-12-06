@@ -66,14 +66,13 @@ func Gen(tp *load.Type) error {
 		return err
 	}
 
-	dialects := dialect.NewGen(tp)
+	dialects := dialect.NewGen()
 
 	// the new created package name is the name of the struct with "orm" suffix
 	ormPkgName := strings.ToLower(tp.Name + pkgSuffix)
 
 	// the files will be generated in a sub package
 	ormDir := filepath.Join(structPkgDir, ormPkgName)
-	log.Printf("Generating code to directory: %s", ormDir)
 	if err = os.MkdirAll(ormDir, 0775); err != nil {
 		return fmt.Errorf("creating directory %s: %s", ormDir, err)
 	}
@@ -83,7 +82,8 @@ func Gen(tp *load.Type) error {
 		Package:  ormPkgName,
 		Dialects: dialects,
 	}
-	log.Printf("Template configuration: %+v", props)
+
+	log.Printf("Generating code for %s to directory: %s", tp, ormDir)
 
 	for _, tpl := range templates.Templates() {
 		err := writeTemplate(tpl, props, ormDir)
@@ -199,7 +199,7 @@ func writePackageLine(w *bufio.Writer, pkgName string) error {
 }
 
 func format(dir string) {
-	_, err := exec.Command("gofmt", "-s", "-w", dir).CombinedOutput()
+	_, err := exec.Command("goimports", "-w", dir).CombinedOutput()
 	if err != nil {
 		log.Printf("Failed formatting package: %s", err)
 	}

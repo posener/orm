@@ -1,16 +1,13 @@
 package {{.Package}}
 
 import (
-    "database/sql"
-    {{ range $_, $import := .Type.FieldsImports -}}
+    {{ range $_, $import := .Type.Imports -}}
     "{{$import}}"
     {{ end }}
-
+    "database/sql"
 	"github.com/posener/orm"
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect"
-
-    "{{.Type.ImportPath}}"
 )
 
 // table is SQL table name
@@ -19,7 +16,7 @@ const table = "{{.Type.Table}}"
 // createColumnsStatements are columns definitions in different dialects
 var createColumnsStatements = map[string]string{
     {{ range $_, $d := .Dialects -}}
-    "{{$d.Name}}": "{{$d.ColumnsStatement}}",
+    "{{$d.Name}}": "{{$d.ColumnsStatement $.Type}}",
     {{ end -}}
 }
 
@@ -31,15 +28,13 @@ type API interface {
     Insert() *InsertBuilder
     Update() *UpdateBuilder
     Delete() *DeleteBuilder
-    Insert{{.Type.Name}}(*{{.Type.ExtTypeName}}) *InsertBuilder
-    Update{{.Type.Name}}(*{{.Type.ExtTypeName}}) *UpdateBuilder
 
     Logger(orm.Logger)
 }
 
 // Querier is the interface for a SELECT SQL statement
 type Querier interface {
-    Query() ([]{{.Type.ExtTypeName}}, error)
+    Query() ([]{{.Type.ExtName}}, error)
 }
 
 // Counter is the interface for a SELECT SQL statement for counting purposes
@@ -50,7 +45,7 @@ type Counter interface {
 // Firster is the interface for a SELECT SQL statement for getting only the
 // first item. if no item matches the query, an `orm.ErrNotFound` will be returned.
 type Firster interface {
-	First() (*{{.Type.ExtTypeName}}, error)
+	First() (*{{.Type.ExtName}}, error)
 }
 
 // Open opens database connection
@@ -104,34 +99,12 @@ func (c *conn) Insert() *InsertBuilder {
 	}
 }
 
-// Insert{{.Type.Name}} returns an SQL INSERT statement builder filled with values of a given object
-func (c *conn) Insert{{.Type.Name}}(p *{{.Type.ExtTypeName}}) *InsertBuilder {
-	i := c.Insert()
-	{{- range $_, $f := .Type.Fields }}
-	{{- if not $f.SQL.Auto }}
-	i.params.Assignments.Add("{{$f.SQL.Column}}", p.{{$f.VarName}})
-	{{- end -}}
-	{{- end }}
-	return i
-}
-
 // Update returns a builder of an SQL UPDATE statement
 func (c *conn) Update() *UpdateBuilder {
 	return &UpdateBuilder{
 		params: common.UpdateParams{Table: table},
 		conn: c,
     }
-}
-
-// Update{{.Type.Name}} returns an SQL UPDATE statement builder filled with values of a given object
-func (c *conn) Update{{.Type.Name}}(p *{{.Type.ExtTypeName}}) *UpdateBuilder {
-	u := c.Update()
-	{{- range $_, $f := .Type.Fields }}
-    {{- if not $f.SQL.Auto }}
-	u.params.Assignments.Add("{{$f.SQL.Column}}", p.{{$f.VarName}})
-	{{- end -}}
-	{{- end }}
-	return u
 }
 
 // Delete returns a builder of an SQL DELETE statement
@@ -142,18 +115,41 @@ func (c *conn) Delete() *DeleteBuilder {
     }
 }
 
-{{- range $_, $f := .Type.Fields }}
-{{ if not $f.SQL.Auto -}}
-// Set{{$f.VarName}} sets value for column {{$f.SQL.Column}} in the INSERT statement
-func (i *InsertBuilder) Set{{$f.VarName}}(value {{$f.ExtTypeName}}) *InsertBuilder {
-	i.params.Assignments.Add("{{$f.SQL.Column}}", value)
-	return i
+// Insert{{.Type.Name}} returns an SQL INSERT statement builder filled with values of a given object
+func (b *InsertBuilder) Insert{{.Type.Name}}(p *{{.Type.ExtName}}) *InsertBuilder {
+	{{- range $_, $f := .Type.Fields }}
+	{{- if $f.IsSettable }}
+	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}{{if $f.IsReference }}.{{$f.Type.PrimaryKey.Name}}{{end}})
+	{{- end -}}
+	{{- end }}
+	return b
 }
 
-// Set{{$f.VarName}} sets value for column {{$f.SQL.Column}} in the UPDATE statement
-func (u *UpdateBuilder) Set{{$f.VarName}}(value {{$f.ExtTypeName}}) *UpdateBuilder {
-	u.params.Assignments.Add("{{$f.SQL.Column}}", value)
-	return u
+
+// Update{{.Type.Name}} update values for all struct fields
+func (b *UpdateBuilder) Update{{.Type.Name}}(p *{{.Type.ExtName}}) *UpdateBuilder {
+	{{- range $_, $f := .Type.Fields }}
+    {{- if $f.IsSettable }}
+	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}{{if $f.IsReference }}.{{$f.Type.PrimaryKey.Name}}{{end}})
+	{{- end -}}
+	{{- end }}
+	return b
 }
+
+{{- range $_, $f := .Type.Fields }}
+
+{{ if $f.IsSettable -}}
+// Set{{$f.Name}} sets value for column {{$f.Column}} in the INSERT statement
+func (b *InsertBuilder) Set{{$f.Name}}(value {{$f.SetType.ExtName}}) *InsertBuilder {
+	b.params.Assignments.Add("{{$f.Column}}", value)
+	return b
+}
+
+// Set{{$f.Name}} sets value for column {{$f.Column}} in the UPDATE statement
+func (b *UpdateBuilder) Set{{$f.Name}}(value {{$f.SetType.ExtName}}) *UpdateBuilder {
+	b.params.Assignments.Add("{{$f.Column}}", value)
+	return b
+}
+
 {{ end -}}
 {{ end -}}

@@ -3,11 +3,29 @@ package common
 // Op is an SQL comparison operation
 type Op string
 
-// Columner is interface for generating columns of SELECT queries.
+// Selector is interface for generating columns of SELECT queries.
 // With this interface, a dialect talks to struct specific generated implementation.
-type Columner interface {
+type Selector interface {
 	Columns() []string
+	Joins() []JoinParams
 	Count() bool
+}
+
+// JoinParams are parameters to perform a join operation:
+// ForeignKey defines on which key to perform the join
+// SelectColumns returns list of columns to select from the joined table, if empty
+// all columns will be selected.
+type JoinParams struct {
+	ForeignKey
+	SelectColumns []string
+}
+
+// ForeignKey is a definition of how a column is a foreign key of another column
+// in a referenced table.
+type ForeignKey struct {
+	Column    string
+	RefTable  string
+	RefColumn string
 }
 
 // StatementArger is interface for queries.

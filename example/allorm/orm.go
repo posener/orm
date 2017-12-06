@@ -2,14 +2,15 @@
 package allorm
 
 import (
-	"database/sql"
 	"time"
+
+	"github.com/posener/orm/example"
+
+	"database/sql"
 
 	"github.com/posener/orm"
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect"
-
-	"github.com/posener/orm/example"
 )
 
 // table is SQL table name
@@ -29,8 +30,6 @@ type API interface {
 	Insert() *InsertBuilder
 	Update() *UpdateBuilder
 	Delete() *DeleteBuilder
-	InsertAll(*example.All) *InsertBuilder
-	UpdateAll(*example.All) *UpdateBuilder
 
 	Logger(orm.Logger)
 }
@@ -102,92 +101,12 @@ func (c *conn) Insert() *InsertBuilder {
 	}
 }
 
-// InsertAll returns an SQL INSERT statement builder filled with values of a given object
-func (c *conn) InsertAll(p *example.All) *InsertBuilder {
-	i := c.Insert()
-	i.params.Assignments.Add("notnil", p.NotNil)
-	i.params.Assignments.Add("int", p.Int)
-	i.params.Assignments.Add("int8", p.Int8)
-	i.params.Assignments.Add("int16", p.Int16)
-	i.params.Assignments.Add("int32", p.Int32)
-	i.params.Assignments.Add("int64", p.Int64)
-	i.params.Assignments.Add("uint", p.UInt)
-	i.params.Assignments.Add("uint8", p.UInt8)
-	i.params.Assignments.Add("uint16", p.UInt16)
-	i.params.Assignments.Add("uint32", p.UInt32)
-	i.params.Assignments.Add("uint64", p.UInt64)
-	i.params.Assignments.Add("time", p.Time)
-	i.params.Assignments.Add("varcharstring", p.VarCharString)
-	i.params.Assignments.Add("varcharbyte", p.VarCharByte)
-	i.params.Assignments.Add("string", p.String)
-	i.params.Assignments.Add("bytes", p.Bytes)
-	i.params.Assignments.Add("bool", p.Bool)
-	i.params.Assignments.Add("pint", p.PInt)
-	i.params.Assignments.Add("pint8", p.PInt8)
-	i.params.Assignments.Add("pint16", p.PInt16)
-	i.params.Assignments.Add("pint32", p.PInt32)
-	i.params.Assignments.Add("pint64", p.PInt64)
-	i.params.Assignments.Add("puint", p.PUInt)
-	i.params.Assignments.Add("puint8", p.PUInt8)
-	i.params.Assignments.Add("puint16", p.PUInt16)
-	i.params.Assignments.Add("puint32", p.PUInt32)
-	i.params.Assignments.Add("puint64", p.PUInt64)
-	i.params.Assignments.Add("ptime", p.PTime)
-	i.params.Assignments.Add("pvarcharstring", p.PVarCharString)
-	i.params.Assignments.Add("pvarcharbyte", p.PVarCharByte)
-	i.params.Assignments.Add("pstring", p.PString)
-	i.params.Assignments.Add("pbytes", p.PBytes)
-	i.params.Assignments.Add("pbool", p.PBool)
-	i.params.Assignments.Add("select", p.Select)
-	return i
-}
-
 // Update returns a builder of an SQL UPDATE statement
 func (c *conn) Update() *UpdateBuilder {
 	return &UpdateBuilder{
 		params: common.UpdateParams{Table: table},
 		conn:   c,
 	}
-}
-
-// UpdateAll returns an SQL UPDATE statement builder filled with values of a given object
-func (c *conn) UpdateAll(p *example.All) *UpdateBuilder {
-	u := c.Update()
-	u.params.Assignments.Add("notnil", p.NotNil)
-	u.params.Assignments.Add("int", p.Int)
-	u.params.Assignments.Add("int8", p.Int8)
-	u.params.Assignments.Add("int16", p.Int16)
-	u.params.Assignments.Add("int32", p.Int32)
-	u.params.Assignments.Add("int64", p.Int64)
-	u.params.Assignments.Add("uint", p.UInt)
-	u.params.Assignments.Add("uint8", p.UInt8)
-	u.params.Assignments.Add("uint16", p.UInt16)
-	u.params.Assignments.Add("uint32", p.UInt32)
-	u.params.Assignments.Add("uint64", p.UInt64)
-	u.params.Assignments.Add("time", p.Time)
-	u.params.Assignments.Add("varcharstring", p.VarCharString)
-	u.params.Assignments.Add("varcharbyte", p.VarCharByte)
-	u.params.Assignments.Add("string", p.String)
-	u.params.Assignments.Add("bytes", p.Bytes)
-	u.params.Assignments.Add("bool", p.Bool)
-	u.params.Assignments.Add("pint", p.PInt)
-	u.params.Assignments.Add("pint8", p.PInt8)
-	u.params.Assignments.Add("pint16", p.PInt16)
-	u.params.Assignments.Add("pint32", p.PInt32)
-	u.params.Assignments.Add("pint64", p.PInt64)
-	u.params.Assignments.Add("puint", p.PUInt)
-	u.params.Assignments.Add("puint8", p.PUInt8)
-	u.params.Assignments.Add("puint16", p.PUInt16)
-	u.params.Assignments.Add("puint32", p.PUInt32)
-	u.params.Assignments.Add("puint64", p.PUInt64)
-	u.params.Assignments.Add("ptime", p.PTime)
-	u.params.Assignments.Add("pvarcharstring", p.PVarCharString)
-	u.params.Assignments.Add("pvarcharbyte", p.PVarCharByte)
-	u.params.Assignments.Add("pstring", p.PString)
-	u.params.Assignments.Add("pbytes", p.PBytes)
-	u.params.Assignments.Add("pbool", p.PBool)
-	u.params.Assignments.Add("select", p.Select)
-	return u
 }
 
 // Delete returns a builder of an SQL DELETE statement
@@ -198,410 +117,488 @@ func (c *conn) Delete() *DeleteBuilder {
 	}
 }
 
+// InsertAll returns an SQL INSERT statement builder filled with values of a given object
+func (b *InsertBuilder) InsertAll(p *example.All) *InsertBuilder {
+	b.params.Assignments.Add("notnil", p.NotNil)
+	b.params.Assignments.Add("int", p.Int)
+	b.params.Assignments.Add("int8", p.Int8)
+	b.params.Assignments.Add("int16", p.Int16)
+	b.params.Assignments.Add("int32", p.Int32)
+	b.params.Assignments.Add("int64", p.Int64)
+	b.params.Assignments.Add("uint", p.UInt)
+	b.params.Assignments.Add("uint8", p.UInt8)
+	b.params.Assignments.Add("uint16", p.UInt16)
+	b.params.Assignments.Add("uint32", p.UInt32)
+	b.params.Assignments.Add("uint64", p.UInt64)
+	b.params.Assignments.Add("time", p.Time)
+	b.params.Assignments.Add("varcharstring", p.VarCharString)
+	b.params.Assignments.Add("varcharbyte", p.VarCharByte)
+	b.params.Assignments.Add("string", p.String)
+	b.params.Assignments.Add("bytes", p.Bytes)
+	b.params.Assignments.Add("bool", p.Bool)
+	b.params.Assignments.Add("pint", p.PInt)
+	b.params.Assignments.Add("pint8", p.PInt8)
+	b.params.Assignments.Add("pint16", p.PInt16)
+	b.params.Assignments.Add("pint32", p.PInt32)
+	b.params.Assignments.Add("pint64", p.PInt64)
+	b.params.Assignments.Add("puint", p.PUInt)
+	b.params.Assignments.Add("puint8", p.PUInt8)
+	b.params.Assignments.Add("puint16", p.PUInt16)
+	b.params.Assignments.Add("puint32", p.PUInt32)
+	b.params.Assignments.Add("puint64", p.PUInt64)
+	b.params.Assignments.Add("ptime", p.PTime)
+	b.params.Assignments.Add("pvarcharstring", p.PVarCharString)
+	b.params.Assignments.Add("pvarcharbyte", p.PVarCharByte)
+	b.params.Assignments.Add("pstring", p.PString)
+	b.params.Assignments.Add("pbytes", p.PBytes)
+	b.params.Assignments.Add("pbool", p.PBool)
+	b.params.Assignments.Add("select", p.Select)
+	return b
+}
+
+// UpdateAll update values for all struct fields
+func (b *UpdateBuilder) UpdateAll(p *example.All) *UpdateBuilder {
+	b.params.Assignments.Add("notnil", p.NotNil)
+	b.params.Assignments.Add("int", p.Int)
+	b.params.Assignments.Add("int8", p.Int8)
+	b.params.Assignments.Add("int16", p.Int16)
+	b.params.Assignments.Add("int32", p.Int32)
+	b.params.Assignments.Add("int64", p.Int64)
+	b.params.Assignments.Add("uint", p.UInt)
+	b.params.Assignments.Add("uint8", p.UInt8)
+	b.params.Assignments.Add("uint16", p.UInt16)
+	b.params.Assignments.Add("uint32", p.UInt32)
+	b.params.Assignments.Add("uint64", p.UInt64)
+	b.params.Assignments.Add("time", p.Time)
+	b.params.Assignments.Add("varcharstring", p.VarCharString)
+	b.params.Assignments.Add("varcharbyte", p.VarCharByte)
+	b.params.Assignments.Add("string", p.String)
+	b.params.Assignments.Add("bytes", p.Bytes)
+	b.params.Assignments.Add("bool", p.Bool)
+	b.params.Assignments.Add("pint", p.PInt)
+	b.params.Assignments.Add("pint8", p.PInt8)
+	b.params.Assignments.Add("pint16", p.PInt16)
+	b.params.Assignments.Add("pint32", p.PInt32)
+	b.params.Assignments.Add("pint64", p.PInt64)
+	b.params.Assignments.Add("puint", p.PUInt)
+	b.params.Assignments.Add("puint8", p.PUInt8)
+	b.params.Assignments.Add("puint16", p.PUInt16)
+	b.params.Assignments.Add("puint32", p.PUInt32)
+	b.params.Assignments.Add("puint64", p.PUInt64)
+	b.params.Assignments.Add("ptime", p.PTime)
+	b.params.Assignments.Add("pvarcharstring", p.PVarCharString)
+	b.params.Assignments.Add("pvarcharbyte", p.PVarCharByte)
+	b.params.Assignments.Add("pstring", p.PString)
+	b.params.Assignments.Add("pbytes", p.PBytes)
+	b.params.Assignments.Add("pbool", p.PBool)
+	b.params.Assignments.Add("select", p.Select)
+	return b
+}
+
 // SetNotNil sets value for column notnil in the INSERT statement
-func (i *InsertBuilder) SetNotNil(value string) *InsertBuilder {
-	i.params.Assignments.Add("notnil", value)
-	return i
+func (b *InsertBuilder) SetNotNil(value string) *InsertBuilder {
+	b.params.Assignments.Add("notnil", value)
+	return b
 }
 
 // SetNotNil sets value for column notnil in the UPDATE statement
-func (u *UpdateBuilder) SetNotNil(value string) *UpdateBuilder {
-	u.params.Assignments.Add("notnil", value)
-	return u
+func (b *UpdateBuilder) SetNotNil(value string) *UpdateBuilder {
+	b.params.Assignments.Add("notnil", value)
+	return b
 }
 
 // SetInt sets value for column int in the INSERT statement
-func (i *InsertBuilder) SetInt(value int) *InsertBuilder {
-	i.params.Assignments.Add("int", value)
-	return i
+func (b *InsertBuilder) SetInt(value int) *InsertBuilder {
+	b.params.Assignments.Add("int", value)
+	return b
 }
 
 // SetInt sets value for column int in the UPDATE statement
-func (u *UpdateBuilder) SetInt(value int) *UpdateBuilder {
-	u.params.Assignments.Add("int", value)
-	return u
+func (b *UpdateBuilder) SetInt(value int) *UpdateBuilder {
+	b.params.Assignments.Add("int", value)
+	return b
 }
 
 // SetInt8 sets value for column int8 in the INSERT statement
-func (i *InsertBuilder) SetInt8(value int8) *InsertBuilder {
-	i.params.Assignments.Add("int8", value)
-	return i
+func (b *InsertBuilder) SetInt8(value int8) *InsertBuilder {
+	b.params.Assignments.Add("int8", value)
+	return b
 }
 
 // SetInt8 sets value for column int8 in the UPDATE statement
-func (u *UpdateBuilder) SetInt8(value int8) *UpdateBuilder {
-	u.params.Assignments.Add("int8", value)
-	return u
+func (b *UpdateBuilder) SetInt8(value int8) *UpdateBuilder {
+	b.params.Assignments.Add("int8", value)
+	return b
 }
 
 // SetInt16 sets value for column int16 in the INSERT statement
-func (i *InsertBuilder) SetInt16(value int16) *InsertBuilder {
-	i.params.Assignments.Add("int16", value)
-	return i
+func (b *InsertBuilder) SetInt16(value int16) *InsertBuilder {
+	b.params.Assignments.Add("int16", value)
+	return b
 }
 
 // SetInt16 sets value for column int16 in the UPDATE statement
-func (u *UpdateBuilder) SetInt16(value int16) *UpdateBuilder {
-	u.params.Assignments.Add("int16", value)
-	return u
+func (b *UpdateBuilder) SetInt16(value int16) *UpdateBuilder {
+	b.params.Assignments.Add("int16", value)
+	return b
 }
 
 // SetInt32 sets value for column int32 in the INSERT statement
-func (i *InsertBuilder) SetInt32(value int32) *InsertBuilder {
-	i.params.Assignments.Add("int32", value)
-	return i
+func (b *InsertBuilder) SetInt32(value int32) *InsertBuilder {
+	b.params.Assignments.Add("int32", value)
+	return b
 }
 
 // SetInt32 sets value for column int32 in the UPDATE statement
-func (u *UpdateBuilder) SetInt32(value int32) *UpdateBuilder {
-	u.params.Assignments.Add("int32", value)
-	return u
+func (b *UpdateBuilder) SetInt32(value int32) *UpdateBuilder {
+	b.params.Assignments.Add("int32", value)
+	return b
 }
 
 // SetInt64 sets value for column int64 in the INSERT statement
-func (i *InsertBuilder) SetInt64(value int64) *InsertBuilder {
-	i.params.Assignments.Add("int64", value)
-	return i
+func (b *InsertBuilder) SetInt64(value int64) *InsertBuilder {
+	b.params.Assignments.Add("int64", value)
+	return b
 }
 
 // SetInt64 sets value for column int64 in the UPDATE statement
-func (u *UpdateBuilder) SetInt64(value int64) *UpdateBuilder {
-	u.params.Assignments.Add("int64", value)
-	return u
+func (b *UpdateBuilder) SetInt64(value int64) *UpdateBuilder {
+	b.params.Assignments.Add("int64", value)
+	return b
 }
 
 // SetUInt sets value for column uint in the INSERT statement
-func (i *InsertBuilder) SetUInt(value uint) *InsertBuilder {
-	i.params.Assignments.Add("uint", value)
-	return i
+func (b *InsertBuilder) SetUInt(value uint) *InsertBuilder {
+	b.params.Assignments.Add("uint", value)
+	return b
 }
 
 // SetUInt sets value for column uint in the UPDATE statement
-func (u *UpdateBuilder) SetUInt(value uint) *UpdateBuilder {
-	u.params.Assignments.Add("uint", value)
-	return u
+func (b *UpdateBuilder) SetUInt(value uint) *UpdateBuilder {
+	b.params.Assignments.Add("uint", value)
+	return b
 }
 
 // SetUInt8 sets value for column uint8 in the INSERT statement
-func (i *InsertBuilder) SetUInt8(value uint8) *InsertBuilder {
-	i.params.Assignments.Add("uint8", value)
-	return i
+func (b *InsertBuilder) SetUInt8(value uint8) *InsertBuilder {
+	b.params.Assignments.Add("uint8", value)
+	return b
 }
 
 // SetUInt8 sets value for column uint8 in the UPDATE statement
-func (u *UpdateBuilder) SetUInt8(value uint8) *UpdateBuilder {
-	u.params.Assignments.Add("uint8", value)
-	return u
+func (b *UpdateBuilder) SetUInt8(value uint8) *UpdateBuilder {
+	b.params.Assignments.Add("uint8", value)
+	return b
 }
 
 // SetUInt16 sets value for column uint16 in the INSERT statement
-func (i *InsertBuilder) SetUInt16(value uint16) *InsertBuilder {
-	i.params.Assignments.Add("uint16", value)
-	return i
+func (b *InsertBuilder) SetUInt16(value uint16) *InsertBuilder {
+	b.params.Assignments.Add("uint16", value)
+	return b
 }
 
 // SetUInt16 sets value for column uint16 in the UPDATE statement
-func (u *UpdateBuilder) SetUInt16(value uint16) *UpdateBuilder {
-	u.params.Assignments.Add("uint16", value)
-	return u
+func (b *UpdateBuilder) SetUInt16(value uint16) *UpdateBuilder {
+	b.params.Assignments.Add("uint16", value)
+	return b
 }
 
 // SetUInt32 sets value for column uint32 in the INSERT statement
-func (i *InsertBuilder) SetUInt32(value uint32) *InsertBuilder {
-	i.params.Assignments.Add("uint32", value)
-	return i
+func (b *InsertBuilder) SetUInt32(value uint32) *InsertBuilder {
+	b.params.Assignments.Add("uint32", value)
+	return b
 }
 
 // SetUInt32 sets value for column uint32 in the UPDATE statement
-func (u *UpdateBuilder) SetUInt32(value uint32) *UpdateBuilder {
-	u.params.Assignments.Add("uint32", value)
-	return u
+func (b *UpdateBuilder) SetUInt32(value uint32) *UpdateBuilder {
+	b.params.Assignments.Add("uint32", value)
+	return b
 }
 
 // SetUInt64 sets value for column uint64 in the INSERT statement
-func (i *InsertBuilder) SetUInt64(value uint64) *InsertBuilder {
-	i.params.Assignments.Add("uint64", value)
-	return i
+func (b *InsertBuilder) SetUInt64(value uint64) *InsertBuilder {
+	b.params.Assignments.Add("uint64", value)
+	return b
 }
 
 // SetUInt64 sets value for column uint64 in the UPDATE statement
-func (u *UpdateBuilder) SetUInt64(value uint64) *UpdateBuilder {
-	u.params.Assignments.Add("uint64", value)
-	return u
+func (b *UpdateBuilder) SetUInt64(value uint64) *UpdateBuilder {
+	b.params.Assignments.Add("uint64", value)
+	return b
 }
 
 // SetTime sets value for column time in the INSERT statement
-func (i *InsertBuilder) SetTime(value time.Time) *InsertBuilder {
-	i.params.Assignments.Add("time", value)
-	return i
+func (b *InsertBuilder) SetTime(value time.Time) *InsertBuilder {
+	b.params.Assignments.Add("time", value)
+	return b
 }
 
 // SetTime sets value for column time in the UPDATE statement
-func (u *UpdateBuilder) SetTime(value time.Time) *UpdateBuilder {
-	u.params.Assignments.Add("time", value)
-	return u
+func (b *UpdateBuilder) SetTime(value time.Time) *UpdateBuilder {
+	b.params.Assignments.Add("time", value)
+	return b
 }
 
 // SetVarCharString sets value for column varcharstring in the INSERT statement
-func (i *InsertBuilder) SetVarCharString(value string) *InsertBuilder {
-	i.params.Assignments.Add("varcharstring", value)
-	return i
+func (b *InsertBuilder) SetVarCharString(value string) *InsertBuilder {
+	b.params.Assignments.Add("varcharstring", value)
+	return b
 }
 
 // SetVarCharString sets value for column varcharstring in the UPDATE statement
-func (u *UpdateBuilder) SetVarCharString(value string) *UpdateBuilder {
-	u.params.Assignments.Add("varcharstring", value)
-	return u
+func (b *UpdateBuilder) SetVarCharString(value string) *UpdateBuilder {
+	b.params.Assignments.Add("varcharstring", value)
+	return b
 }
 
 // SetVarCharByte sets value for column varcharbyte in the INSERT statement
-func (i *InsertBuilder) SetVarCharByte(value []byte) *InsertBuilder {
-	i.params.Assignments.Add("varcharbyte", value)
-	return i
+func (b *InsertBuilder) SetVarCharByte(value []byte) *InsertBuilder {
+	b.params.Assignments.Add("varcharbyte", value)
+	return b
 }
 
 // SetVarCharByte sets value for column varcharbyte in the UPDATE statement
-func (u *UpdateBuilder) SetVarCharByte(value []byte) *UpdateBuilder {
-	u.params.Assignments.Add("varcharbyte", value)
-	return u
+func (b *UpdateBuilder) SetVarCharByte(value []byte) *UpdateBuilder {
+	b.params.Assignments.Add("varcharbyte", value)
+	return b
 }
 
 // SetString sets value for column string in the INSERT statement
-func (i *InsertBuilder) SetString(value string) *InsertBuilder {
-	i.params.Assignments.Add("string", value)
-	return i
+func (b *InsertBuilder) SetString(value string) *InsertBuilder {
+	b.params.Assignments.Add("string", value)
+	return b
 }
 
 // SetString sets value for column string in the UPDATE statement
-func (u *UpdateBuilder) SetString(value string) *UpdateBuilder {
-	u.params.Assignments.Add("string", value)
-	return u
+func (b *UpdateBuilder) SetString(value string) *UpdateBuilder {
+	b.params.Assignments.Add("string", value)
+	return b
 }
 
 // SetBytes sets value for column bytes in the INSERT statement
-func (i *InsertBuilder) SetBytes(value []byte) *InsertBuilder {
-	i.params.Assignments.Add("bytes", value)
-	return i
+func (b *InsertBuilder) SetBytes(value []byte) *InsertBuilder {
+	b.params.Assignments.Add("bytes", value)
+	return b
 }
 
 // SetBytes sets value for column bytes in the UPDATE statement
-func (u *UpdateBuilder) SetBytes(value []byte) *UpdateBuilder {
-	u.params.Assignments.Add("bytes", value)
-	return u
+func (b *UpdateBuilder) SetBytes(value []byte) *UpdateBuilder {
+	b.params.Assignments.Add("bytes", value)
+	return b
 }
 
 // SetBool sets value for column bool in the INSERT statement
-func (i *InsertBuilder) SetBool(value bool) *InsertBuilder {
-	i.params.Assignments.Add("bool", value)
-	return i
+func (b *InsertBuilder) SetBool(value bool) *InsertBuilder {
+	b.params.Assignments.Add("bool", value)
+	return b
 }
 
 // SetBool sets value for column bool in the UPDATE statement
-func (u *UpdateBuilder) SetBool(value bool) *UpdateBuilder {
-	u.params.Assignments.Add("bool", value)
-	return u
+func (b *UpdateBuilder) SetBool(value bool) *UpdateBuilder {
+	b.params.Assignments.Add("bool", value)
+	return b
 }
 
 // SetPInt sets value for column pint in the INSERT statement
-func (i *InsertBuilder) SetPInt(value *int) *InsertBuilder {
-	i.params.Assignments.Add("pint", value)
-	return i
+func (b *InsertBuilder) SetPInt(value *int) *InsertBuilder {
+	b.params.Assignments.Add("pint", value)
+	return b
 }
 
 // SetPInt sets value for column pint in the UPDATE statement
-func (u *UpdateBuilder) SetPInt(value *int) *UpdateBuilder {
-	u.params.Assignments.Add("pint", value)
-	return u
+func (b *UpdateBuilder) SetPInt(value *int) *UpdateBuilder {
+	b.params.Assignments.Add("pint", value)
+	return b
 }
 
 // SetPInt8 sets value for column pint8 in the INSERT statement
-func (i *InsertBuilder) SetPInt8(value *int8) *InsertBuilder {
-	i.params.Assignments.Add("pint8", value)
-	return i
+func (b *InsertBuilder) SetPInt8(value *int8) *InsertBuilder {
+	b.params.Assignments.Add("pint8", value)
+	return b
 }
 
 // SetPInt8 sets value for column pint8 in the UPDATE statement
-func (u *UpdateBuilder) SetPInt8(value *int8) *UpdateBuilder {
-	u.params.Assignments.Add("pint8", value)
-	return u
+func (b *UpdateBuilder) SetPInt8(value *int8) *UpdateBuilder {
+	b.params.Assignments.Add("pint8", value)
+	return b
 }
 
 // SetPInt16 sets value for column pint16 in the INSERT statement
-func (i *InsertBuilder) SetPInt16(value *int16) *InsertBuilder {
-	i.params.Assignments.Add("pint16", value)
-	return i
+func (b *InsertBuilder) SetPInt16(value *int16) *InsertBuilder {
+	b.params.Assignments.Add("pint16", value)
+	return b
 }
 
 // SetPInt16 sets value for column pint16 in the UPDATE statement
-func (u *UpdateBuilder) SetPInt16(value *int16) *UpdateBuilder {
-	u.params.Assignments.Add("pint16", value)
-	return u
+func (b *UpdateBuilder) SetPInt16(value *int16) *UpdateBuilder {
+	b.params.Assignments.Add("pint16", value)
+	return b
 }
 
 // SetPInt32 sets value for column pint32 in the INSERT statement
-func (i *InsertBuilder) SetPInt32(value *int32) *InsertBuilder {
-	i.params.Assignments.Add("pint32", value)
-	return i
+func (b *InsertBuilder) SetPInt32(value *int32) *InsertBuilder {
+	b.params.Assignments.Add("pint32", value)
+	return b
 }
 
 // SetPInt32 sets value for column pint32 in the UPDATE statement
-func (u *UpdateBuilder) SetPInt32(value *int32) *UpdateBuilder {
-	u.params.Assignments.Add("pint32", value)
-	return u
+func (b *UpdateBuilder) SetPInt32(value *int32) *UpdateBuilder {
+	b.params.Assignments.Add("pint32", value)
+	return b
 }
 
 // SetPInt64 sets value for column pint64 in the INSERT statement
-func (i *InsertBuilder) SetPInt64(value *int64) *InsertBuilder {
-	i.params.Assignments.Add("pint64", value)
-	return i
+func (b *InsertBuilder) SetPInt64(value *int64) *InsertBuilder {
+	b.params.Assignments.Add("pint64", value)
+	return b
 }
 
 // SetPInt64 sets value for column pint64 in the UPDATE statement
-func (u *UpdateBuilder) SetPInt64(value *int64) *UpdateBuilder {
-	u.params.Assignments.Add("pint64", value)
-	return u
+func (b *UpdateBuilder) SetPInt64(value *int64) *UpdateBuilder {
+	b.params.Assignments.Add("pint64", value)
+	return b
 }
 
 // SetPUInt sets value for column puint in the INSERT statement
-func (i *InsertBuilder) SetPUInt(value *uint) *InsertBuilder {
-	i.params.Assignments.Add("puint", value)
-	return i
+func (b *InsertBuilder) SetPUInt(value *uint) *InsertBuilder {
+	b.params.Assignments.Add("puint", value)
+	return b
 }
 
 // SetPUInt sets value for column puint in the UPDATE statement
-func (u *UpdateBuilder) SetPUInt(value *uint) *UpdateBuilder {
-	u.params.Assignments.Add("puint", value)
-	return u
+func (b *UpdateBuilder) SetPUInt(value *uint) *UpdateBuilder {
+	b.params.Assignments.Add("puint", value)
+	return b
 }
 
 // SetPUInt8 sets value for column puint8 in the INSERT statement
-func (i *InsertBuilder) SetPUInt8(value *uint8) *InsertBuilder {
-	i.params.Assignments.Add("puint8", value)
-	return i
+func (b *InsertBuilder) SetPUInt8(value *uint8) *InsertBuilder {
+	b.params.Assignments.Add("puint8", value)
+	return b
 }
 
 // SetPUInt8 sets value for column puint8 in the UPDATE statement
-func (u *UpdateBuilder) SetPUInt8(value *uint8) *UpdateBuilder {
-	u.params.Assignments.Add("puint8", value)
-	return u
+func (b *UpdateBuilder) SetPUInt8(value *uint8) *UpdateBuilder {
+	b.params.Assignments.Add("puint8", value)
+	return b
 }
 
 // SetPUInt16 sets value for column puint16 in the INSERT statement
-func (i *InsertBuilder) SetPUInt16(value *uint16) *InsertBuilder {
-	i.params.Assignments.Add("puint16", value)
-	return i
+func (b *InsertBuilder) SetPUInt16(value *uint16) *InsertBuilder {
+	b.params.Assignments.Add("puint16", value)
+	return b
 }
 
 // SetPUInt16 sets value for column puint16 in the UPDATE statement
-func (u *UpdateBuilder) SetPUInt16(value *uint16) *UpdateBuilder {
-	u.params.Assignments.Add("puint16", value)
-	return u
+func (b *UpdateBuilder) SetPUInt16(value *uint16) *UpdateBuilder {
+	b.params.Assignments.Add("puint16", value)
+	return b
 }
 
 // SetPUInt32 sets value for column puint32 in the INSERT statement
-func (i *InsertBuilder) SetPUInt32(value *uint32) *InsertBuilder {
-	i.params.Assignments.Add("puint32", value)
-	return i
+func (b *InsertBuilder) SetPUInt32(value *uint32) *InsertBuilder {
+	b.params.Assignments.Add("puint32", value)
+	return b
 }
 
 // SetPUInt32 sets value for column puint32 in the UPDATE statement
-func (u *UpdateBuilder) SetPUInt32(value *uint32) *UpdateBuilder {
-	u.params.Assignments.Add("puint32", value)
-	return u
+func (b *UpdateBuilder) SetPUInt32(value *uint32) *UpdateBuilder {
+	b.params.Assignments.Add("puint32", value)
+	return b
 }
 
 // SetPUInt64 sets value for column puint64 in the INSERT statement
-func (i *InsertBuilder) SetPUInt64(value *uint64) *InsertBuilder {
-	i.params.Assignments.Add("puint64", value)
-	return i
+func (b *InsertBuilder) SetPUInt64(value *uint64) *InsertBuilder {
+	b.params.Assignments.Add("puint64", value)
+	return b
 }
 
 // SetPUInt64 sets value for column puint64 in the UPDATE statement
-func (u *UpdateBuilder) SetPUInt64(value *uint64) *UpdateBuilder {
-	u.params.Assignments.Add("puint64", value)
-	return u
+func (b *UpdateBuilder) SetPUInt64(value *uint64) *UpdateBuilder {
+	b.params.Assignments.Add("puint64", value)
+	return b
 }
 
 // SetPTime sets value for column ptime in the INSERT statement
-func (i *InsertBuilder) SetPTime(value *time.Time) *InsertBuilder {
-	i.params.Assignments.Add("ptime", value)
-	return i
+func (b *InsertBuilder) SetPTime(value *time.Time) *InsertBuilder {
+	b.params.Assignments.Add("ptime", value)
+	return b
 }
 
 // SetPTime sets value for column ptime in the UPDATE statement
-func (u *UpdateBuilder) SetPTime(value *time.Time) *UpdateBuilder {
-	u.params.Assignments.Add("ptime", value)
-	return u
+func (b *UpdateBuilder) SetPTime(value *time.Time) *UpdateBuilder {
+	b.params.Assignments.Add("ptime", value)
+	return b
 }
 
 // SetPVarCharString sets value for column pvarcharstring in the INSERT statement
-func (i *InsertBuilder) SetPVarCharString(value *string) *InsertBuilder {
-	i.params.Assignments.Add("pvarcharstring", value)
-	return i
+func (b *InsertBuilder) SetPVarCharString(value *string) *InsertBuilder {
+	b.params.Assignments.Add("pvarcharstring", value)
+	return b
 }
 
 // SetPVarCharString sets value for column pvarcharstring in the UPDATE statement
-func (u *UpdateBuilder) SetPVarCharString(value *string) *UpdateBuilder {
-	u.params.Assignments.Add("pvarcharstring", value)
-	return u
+func (b *UpdateBuilder) SetPVarCharString(value *string) *UpdateBuilder {
+	b.params.Assignments.Add("pvarcharstring", value)
+	return b
 }
 
 // SetPVarCharByte sets value for column pvarcharbyte in the INSERT statement
-func (i *InsertBuilder) SetPVarCharByte(value *[]byte) *InsertBuilder {
-	i.params.Assignments.Add("pvarcharbyte", value)
-	return i
+func (b *InsertBuilder) SetPVarCharByte(value *[]byte) *InsertBuilder {
+	b.params.Assignments.Add("pvarcharbyte", value)
+	return b
 }
 
 // SetPVarCharByte sets value for column pvarcharbyte in the UPDATE statement
-func (u *UpdateBuilder) SetPVarCharByte(value *[]byte) *UpdateBuilder {
-	u.params.Assignments.Add("pvarcharbyte", value)
-	return u
+func (b *UpdateBuilder) SetPVarCharByte(value *[]byte) *UpdateBuilder {
+	b.params.Assignments.Add("pvarcharbyte", value)
+	return b
 }
 
 // SetPString sets value for column pstring in the INSERT statement
-func (i *InsertBuilder) SetPString(value *string) *InsertBuilder {
-	i.params.Assignments.Add("pstring", value)
-	return i
+func (b *InsertBuilder) SetPString(value *string) *InsertBuilder {
+	b.params.Assignments.Add("pstring", value)
+	return b
 }
 
 // SetPString sets value for column pstring in the UPDATE statement
-func (u *UpdateBuilder) SetPString(value *string) *UpdateBuilder {
-	u.params.Assignments.Add("pstring", value)
-	return u
+func (b *UpdateBuilder) SetPString(value *string) *UpdateBuilder {
+	b.params.Assignments.Add("pstring", value)
+	return b
 }
 
 // SetPBytes sets value for column pbytes in the INSERT statement
-func (i *InsertBuilder) SetPBytes(value *[]byte) *InsertBuilder {
-	i.params.Assignments.Add("pbytes", value)
-	return i
+func (b *InsertBuilder) SetPBytes(value *[]byte) *InsertBuilder {
+	b.params.Assignments.Add("pbytes", value)
+	return b
 }
 
 // SetPBytes sets value for column pbytes in the UPDATE statement
-func (u *UpdateBuilder) SetPBytes(value *[]byte) *UpdateBuilder {
-	u.params.Assignments.Add("pbytes", value)
-	return u
+func (b *UpdateBuilder) SetPBytes(value *[]byte) *UpdateBuilder {
+	b.params.Assignments.Add("pbytes", value)
+	return b
 }
 
 // SetPBool sets value for column pbool in the INSERT statement
-func (i *InsertBuilder) SetPBool(value *bool) *InsertBuilder {
-	i.params.Assignments.Add("pbool", value)
-	return i
+func (b *InsertBuilder) SetPBool(value *bool) *InsertBuilder {
+	b.params.Assignments.Add("pbool", value)
+	return b
 }
 
 // SetPBool sets value for column pbool in the UPDATE statement
-func (u *UpdateBuilder) SetPBool(value *bool) *UpdateBuilder {
-	u.params.Assignments.Add("pbool", value)
-	return u
+func (b *UpdateBuilder) SetPBool(value *bool) *UpdateBuilder {
+	b.params.Assignments.Add("pbool", value)
+	return b
 }
 
 // SetSelect sets value for column select in the INSERT statement
-func (i *InsertBuilder) SetSelect(value int) *InsertBuilder {
-	i.params.Assignments.Add("select", value)
-	return i
+func (b *InsertBuilder) SetSelect(value int) *InsertBuilder {
+	b.params.Assignments.Add("select", value)
+	return b
 }
 
 // SetSelect sets value for column select in the UPDATE statement
-func (u *UpdateBuilder) SetSelect(value int) *UpdateBuilder {
-	u.params.Assignments.Add("select", value)
-	return u
+func (b *UpdateBuilder) SetSelect(value int) *UpdateBuilder {
+	b.params.Assignments.Add("select", value)
+	return b
 }

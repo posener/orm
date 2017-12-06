@@ -3,10 +3,16 @@ package personorm
 
 import (
 	"context"
+	"database/sql/driver"
 
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/example"
 )
+
+type Scanner interface {
+	Columns() []string
+	First(dialect string, values []driver.Value) (*example.Person, error)
+}
 
 // PersonCount is a struct for counting rows of type Person
 type PersonCount struct {
@@ -19,6 +25,10 @@ type SelectBuilder struct {
 	params   common.SelectParams
 	conn     *conn
 	selector selector
+}
+
+func (b *SelectBuilder) Scanner() Scanner {
+	return b.params.Columns.(*selector)
 }
 
 // Where applies where conditions on the query

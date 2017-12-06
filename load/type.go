@@ -7,6 +7,8 @@ import (
 
 	"fmt"
 	"go/types"
+
+	"github.com/posener/orm/common"
 )
 
 var basicTypes = map[string]bool{
@@ -34,21 +36,24 @@ type Type struct {
 	// ImportPath is a path to add to the import section for this type
 	ImportPath string
 	// Fields is the list of exported fields
-	Fields []Field
-}
-
-// Field is a struct that represents type's field
-type Field struct {
-	Type
-	VarName string
-	SQL     SQL
+	Fields     []*Field
+	PrimaryKey *Field
+	Pointer    bool
+	Slice      bool
 }
 
 // New loads a Type
 func New(fullName string) (*Type, error) {
+	// []byte is different than any other type since it is allowed slice field
+	// which does not actually considered a slice
+	if fullName == "[]byte" || fullName == "*[]byte" {
+		return &Type{Name: strings.TrimLeft(fullName, "*"), Pointer: pointer(fullName)}, nil
+	}
 	t := &Type{
 		Name:       typeName(fullName),
 		ImportPath: importPath(fullName),
+		Pointer:    pointer(fullName),
+		Slice:      slice(fullName),
 	}
 
 	// if type is a basic type, we are done
@@ -65,15 +70,22 @@ func New(fullName string) (*Type, error) {
 	// update the import path to the full package path
 	t.ImportPath = pkg.Path()
 
-	// populate all the struct fields
-	return t, t.loadFields(st)
+	// now that we have the type's full name...
+	// before loading the fields, check if the type cached in the cache already
+	t, cached := cacheGetOrUpdate(t)
+	if !cached {
+		// the type was not in the cache, we should load all it's fields, which might lead
+		// to recursive calls to New function
+		err = t.loadFields(st)
+	}
+	return t, err
 }
 
 func (t *Type) String() string {
 	if t.ImportPath != "" {
-		return pointer(t.Name) + t.ImportPath + "." + t.nonPointerType()
+		return t.sliceStr() + t.pointerStr() + t.ImportPath + "." + t.Name
 	}
-	return t.Name
+	return t.sliceStr() + t.pointerStr() + t.Name
 }
 
 // Table is SQL table name of a type
@@ -81,23 +93,20 @@ func (t *Type) Table() string {
 	return strings.ToLower(t.Name)
 }
 
-// ExtTypeName is the full type of the imported type, as used in a go code
+// ExtName is the full type of the imported type, as used in a go code
 // outside the defining package. For example: "example.Person"
-func (t Type) ExtTypeName() string {
-	if t.Package() != "" {
-		return pointer(t.Name) + t.Package() + "." + t.nonPointerType()
-	}
-	return t.Name
+func (t *Type) ExtName() string {
+	return t.sliceStr() + t.pointerStr() + t.ExtNaked()
 }
 
-// NonPointer is the full type of the imported type in it's non-pointer form,
+// ExtNaked is the full type of the imported type in it's non-pointer form,
 // as used in a go code outside the defining package.
 // For example: "example.Person"
-func (t Type) NonPointer() string {
+func (t *Type) ExtNaked() string {
 	if t.Package() != "" {
-		return t.Package() + "." + t.nonPointerType()
+		return t.Package() + "." + t.Name
 	}
-	return t.nonPointerType()
+	return t.Name
 }
 
 // Package is the package name of the type
@@ -108,23 +117,19 @@ func (t Type) Package() string {
 	return pkg
 }
 
-// IsPointer returns true if field is a pointer
-func (t *Type) IsPointer() bool {
-	return len(t.Name) > 0 && t.Name[0] == '*'
-}
-
 func (t *Type) IsBasic() bool {
-	return basicTypes[t.NonPointer()]
+	return basicTypes[t.ExtNaked()]
 }
 
-// FieldsImports returns a list of all imports for this type's fields
-func (t *Type) FieldsImports() []string {
+// Imports returns a list of all imports for this type's fields
+func (t *Type) Imports() []string {
 	impsMap := map[string]bool{}
 	for _, f := range t.Fields {
-		if f.ImportPath != "" {
-			impsMap[f.ImportPath] = true
+		if f.Type.ImportPath != "" {
+			impsMap[f.Type.ImportPath] = true
 		}
 	}
+	impsMap[t.ImportPath] = true
 	imps := make([]string, 0, len(impsMap))
 	for imp := range impsMap {
 		imps = append(imps, imp)
@@ -132,50 +137,87 @@ func (t *Type) FieldsImports() []string {
 	return imps
 }
 
-// nonPointerType returns the non-pointer type of a filed.
-// ex, if the type is `*int`, this function will return `int`
-func (t *Type) nonPointerType() string {
-	if t.IsPointer() {
-		return t.Name[1:]
+// References returns all reference fields
+func (t *Type) References() []*Field {
+	var refs []*Field
+	for _, field := range t.Fields {
+		if field.IsReference() {
+			refs = append(refs, field)
+		}
 	}
-	return t.Name
+	return refs
+}
+
+func (t *Type) HasOneToManyRelation() bool {
+	for _, field := range t.Fields {
+		if field.Type.Slice {
+			return true
+		}
+	}
+	return false
+}
+
+func (t *Type) pointerStr() string {
+	if t.Pointer {
+		return "*"
+	}
+	return ""
+}
+
+func (t *Type) sliceStr() string {
+	if t.Slice {
+		return "[]"
+	}
+	return ""
 }
 
 // loadFields iterate over the type's data structure and load all it's fields
 // this function might recursively call to the New function
 func (t *Type) loadFields(st *types.Struct) error {
 	for i := 0; i < st.NumFields(); i++ {
-		field := st.Field(i)
-		if !field.Exported() {
+		field, err := newField(st, i)
+		if err != nil {
+			return err
+		}
+		if field == nil {
 			continue
 		}
-
-		fieldType, err := New(field.Type().String())
-		if err != nil {
-			return fmt.Errorf("creating type %s: %s", fieldType, err)
-		}
-		sql, err := newSQL(field.Name(), st, i)
-		if err != nil {
-			return fmt.Errorf("creating SQL properties for type field %s: %s", fieldType, err)
-		}
-
 		switch {
-
-		case field.Anonymous():
-			// For embedded fields (aka anonymous) we collect all their fields recursively
-			// to the parent fields.
-			for _, field := range fieldType.Fields {
+		case field.Embedded:
+			// Embedded field (aka anonymous)
+			// collect all their fields recursively to the parent fields.
+			for _, field := range field.Type.Fields {
 				t.Fields = append(t.Fields, field)
 			}
+		case field.Type.Slice:
+			if field.Type.IsBasic() {
+				log.Printf("Ignoring field %s: slice of a basic type is not supported", field.Name)
+				continue
+			}
+			for _, other := range field.Type.Fields {
+				if fk := other.ForeignKey; fk != nil && fk.RefTable == t.Table() {
+					field.ForeignKey = &common.ForeignKey{
+						RefTable:  field.Type.Table(),
+						RefColumn: other.Column(),
+						Column:    fk.RefColumn,
+					}
+					break
+				}
+			}
+			if field.ForeignKey == nil {
+				return fmt.Errorf("slice field %s -> %s: did not found foreign key in foreign type %s",
+					t.ExtNaked(), field.Name, field.Type.ExtNaked())
+			}
+			t.Fields = append(t.Fields, field)
 
 		default:
-			log.Printf("Field '%s(%s)': '%+v'", field.Name(), fieldType, sql)
-			t.Fields = append(t.Fields, Field{
-				VarName: field.Name(),
-				Type:    *fieldType,
-				SQL:     *sql,
-			})
+			// Basic type field: just add a field
+			if field.PrimaryKey {
+				t.PrimaryKey = field
+			}
+			t.Fields = append(t.Fields, field)
 		}
+
 	}
 	return nil
 }
@@ -185,12 +227,11 @@ func (t *Type) loadFields(st *types.Struct) error {
 // function will return 'github.com/posener/orm/example' which is what you
 // would write in the `import` statement.
 func importPath(fullName string) string {
-	fullName = strings.TrimLeft(fullName, "*")
 	i := strings.LastIndex(fullName, ".")
 	if i == -1 {
 		return ""
 	}
-	return fullName[:i]
+	return strings.TrimLeft(fullName[:i], "*[]")
 }
 
 // typeName returns the type string from a full type name.
@@ -199,15 +240,13 @@ func importPath(fullName string) string {
 // struct in a go file
 func typeName(fullName string) string {
 	i := strings.LastIndex(fullName, ".")
-	if i == -1 {
-		return fullName
-	}
-	return pointer(fullName) + fullName[i+1:]
+	return strings.TrimLeft(fullName[i+1:], "*[]")
 }
 
-func pointer(typeName string) string {
-	if len(typeName) > 0 && typeName[0] == '*' {
-		return "*"
-	}
-	return ""
+func pointer(typeName string) bool {
+	return strings.HasPrefix(strings.TrimPrefix(typeName, "[]"), "*")
+}
+
+func slice(typeName string) bool {
+	return strings.HasPrefix(typeName, "[]")
 }

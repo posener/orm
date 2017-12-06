@@ -20,6 +20,33 @@ type Employee struct {
 	Salary int
 }
 
+//go:generate orm -type Loaner
+
+type Loaner struct {
+	ID   int64 `sql:"primary key;auto increment"`
+	Name string
+	Age  int
+	Book *Book
+}
+
+//go:generate orm -type Book
+
+type Book struct {
+	ID       int64 `sql:"primary key;auto increment"`
+	Name     string
+	Year     int
+	AuthorID int64 `sql:"foreign key:./.Author;null"`
+}
+
+//go:generate orm -type Author
+
+type Author struct {
+	ID      int64 `sql:"primary key;auto increment"`
+	Name    string
+	Hobbies string
+	Books   []*Book
+}
+
 //go:generate orm -type All
 
 // All is to test generation of variant fields and types

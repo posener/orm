@@ -7,7 +7,7 @@ import (
 
 // WhereName adds a condition on Name to the WHERE statement
 func WhereName(op common.Op, val string) common.Where {
-	return common.NewWhere(op, "name", val)
+	return common.NewWhere(op, "employee", "name", val)
 }
 
 // WhereNameIn adds an IN condition on Name to the WHERE statement
@@ -16,17 +16,17 @@ func WhereNameIn(vals ...string) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("name", args...)
+	return common.NewWhereIn("employee", "name", args...)
 }
 
 // WhereNameBetween adds a BETWEEN condition on Name to the WHERE statement
 func WhereNameBetween(low, high string) common.Where {
-	return common.NewWhereBetween("name", low, high)
+	return common.NewWhereBetween("employee", "name", low, high)
 }
 
 // WhereAge adds a condition on Age to the WHERE statement
 func WhereAge(op common.Op, val int) common.Where {
-	return common.NewWhere(op, "age", val)
+	return common.NewWhere(op, "employee", "age", val)
 }
 
 // WhereAgeIn adds an IN condition on Age to the WHERE statement
@@ -35,17 +35,17 @@ func WhereAgeIn(vals ...int) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("age", args...)
+	return common.NewWhereIn("employee", "age", args...)
 }
 
 // WhereAgeBetween adds a BETWEEN condition on Age to the WHERE statement
 func WhereAgeBetween(low, high int) common.Where {
-	return common.NewWhereBetween("age", low, high)
+	return common.NewWhereBetween("employee", "age", low, high)
 }
 
 // WhereSalary adds a condition on Salary to the WHERE statement
 func WhereSalary(op common.Op, val int) common.Where {
-	return common.NewWhere(op, "salary", val)
+	return common.NewWhere(op, "employee", "salary", val)
 }
 
 // WhereSalaryIn adds an IN condition on Salary to the WHERE statement
@@ -54,10 +54,10 @@ func WhereSalaryIn(vals ...int) common.Where {
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("salary", args...)
+	return common.NewWhereIn("employee", "salary", args...)
 }
 
 // WhereSalaryBetween adds a BETWEEN condition on Salary to the WHERE statement
 func WhereSalaryBetween(low, high int) common.Where {
-	return common.NewWhereBetween("salary", low, high)
+	return common.NewWhereBetween("employee", "salary", low, high)
 }

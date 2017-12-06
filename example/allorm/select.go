@@ -3,10 +3,16 @@ package allorm
 
 import (
 	"context"
+	"database/sql/driver"
 
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/example"
 )
+
+type Scanner interface {
+	Columns() []string
+	First(dialect string, values []driver.Value) (*example.All, error)
+}
 
 // AllCount is a struct for counting rows of type All
 type AllCount struct {
@@ -19,6 +25,10 @@ type SelectBuilder struct {
 	params   common.SelectParams
 	conn     *conn
 	selector selector
+}
+
+func (b *SelectBuilder) Scanner() Scanner {
+	return b.params.Columns.(*selector)
 }
 
 // Where applies where conditions on the query
