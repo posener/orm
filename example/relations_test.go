@@ -7,6 +7,7 @@ import (
 	"github.com/posener/orm/example"
 	"github.com/posener/orm/example/a2orm"
 	"github.com/posener/orm/example/aorm"
+	"github.com/posener/orm/example/b2orm"
 	"github.com/posener/orm/example/borm"
 	"github.com/posener/orm/example/corm"
 	"github.com/stretchr/testify/assert"
@@ -130,26 +131,26 @@ func TestRelationOneToOneNonPointer(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		a, err := a2orm.New(conn.name, conn)
 		require.Nil(t, err)
-		c, err := corm.New(conn.name, conn)
+		b, err := b2orm.New(conn.name, conn)
 		require.Nil(t, err)
 		if testing.Verbose() {
 			a.Logger(t.Logf)
-			c.Logger(t.Logf)
+			b.Logger(t.Logf)
 		}
 
+		_, err = b.Create().Exec()
+		require.Nil(t, err)
 		_, err = a.Create().Exec()
 		require.Nil(t, err)
-		_, err = c.Create().Exec()
+
+		bItem := &example.B2{Name: "The Hitchhiker's Guide to the Galaxy"}
+
+		res, err := b.Insert().InsertB2(bItem).Exec()
+		require.Nil(t, err)
+		bItem.ID, err = res.LastInsertId()
 		require.Nil(t, err)
 
-		cItem := &example.C{Name: "The Hitchhiker's Guide to the Galaxy", Year: 1979}
-
-		res, err := c.Insert().SetName(cItem.Name).SetYear(cItem.Year).Exec()
-		require.Nil(t, err)
-		cItem.ID, err = res.LastInsertId()
-		require.Nil(t, err)
-
-		aItem := &example.A2{C: *cItem}
+		aItem := &example.A2{B: *bItem}
 
 		res, err = a.Insert().InsertA2(aItem).Exec()
 		require.Nil(t, err)
@@ -161,10 +162,10 @@ func TestRelationOneToOneNonPointer(t *testing.T) {
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
 			assert.Equal(t, aItem.ID, aItems[0].ID)
-			assert.Equal(t, int64(0), aItems[0].C.ID)
+			assert.Equal(t, int64(0), aItems[0].B.ID)
 		}
 
-		aItems, err = a.Select().JoinC(c.Select().Scanner()).Query()
+		aItems, err = a.Select().JoinB(b.Select().Scanner()).Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
 			assert.Equal(t, aItem, &aItems[0])
