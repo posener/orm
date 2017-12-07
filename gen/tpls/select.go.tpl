@@ -1,28 +1,18 @@
-package {{.Package}}
-
-import (
-    "context"
-	"database/sql/driver"
-
-	"github.com/posener/orm/common"
-    "{{.Type.ImportPath}}"
-)
-
 type Scanner interface {
     Columns() []string
-    First(dialect string, values []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName}}]*{{.Type.ExtName}}{{end}}) (*{{$.Type.ExtNaked}}, error)
+    First(dialect string, values []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{.Type.ExtName $.Type.Package}}{{end}}) (*{{$.Type.ExtNaked $.Type.Package}}, error)
 }
 
 {{ range $_, $f := $.Type.References }}
 type {{$f.Name}}Scanner interface {
     Columns() []string
-    First(dialect string, values []driver.Value{{if $f.Type.HasOneToManyRelation}}, exists map[{{$f.Type.PrimaryKey.Type.ExtName}}]*{{$f.Type.ExtName}}{{end}}) (*{{$f.Type.ExtNaked}}, error)
+    First(dialect string, values []driver.Value{{if $f.Type.HasOneToManyRelation}}, exists map[{{$f.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{$f.Type.ExtName $.Type.Package}}{{end}}) (*{{$f.Type.ExtNaked $.Type.Package}}, error)
 }
 {{ end }}
 
 // {{.Type.Name}}Count is a struct for counting rows of type {{.Type.Name}}
 type {{.Type.Name}}Count struct {
-    {{.Type.ExtName}}
+    {{.Type.ExtName $.Type.Package}}
     Count int64
 }
 

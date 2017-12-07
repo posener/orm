@@ -95,15 +95,15 @@ func (t *Type) Table() string {
 
 // ExtName is the full type of the imported type, as used in a go code
 // outside the defining package. For example: "example.Person"
-func (t *Type) ExtName() string {
-	return t.sliceStr() + t.pointerStr() + t.ExtNaked()
+func (t *Type) ExtName(curPkg string) string {
+	return t.sliceStr() + t.pointerStr() + t.ExtNaked(curPkg)
 }
 
 // ExtNaked is the full type of the imported type in it's non-pointer form,
 // as used in a go code outside the defining package.
 // For example: "example.Person"
-func (t *Type) ExtNaked() string {
-	if t.Package() != "" {
+func (t *Type) ExtNaked(curPkg string) string {
+	if t.Package() != "" && t.Package() != curPkg {
 		return t.Package() + "." + t.Name
 	}
 	return t.Name
@@ -118,18 +118,17 @@ func (t Type) Package() string {
 }
 
 func (t *Type) IsBasic() bool {
-	return basicTypes[t.ExtNaked()]
+	return basicTypes[t.ExtNaked(t.Package())]
 }
 
 // Imports returns a list of all imports for this type's fields
 func (t *Type) Imports() []string {
 	impsMap := map[string]bool{}
 	for _, f := range t.Fields {
-		if f.Type.ImportPath != "" {
+		if f.Type.ImportPath != "" && f.Type.ImportPath != t.ImportPath {
 			impsMap[f.Type.ImportPath] = true
 		}
 	}
-	impsMap[t.ImportPath] = true
 	imps := make([]string, 0, len(impsMap))
 	for imp := range impsMap {
 		imps = append(imps, imp)
@@ -206,7 +205,7 @@ func (t *Type) loadFields(st *types.Struct) error {
 			}
 			if field.ForeignKey == nil {
 				return fmt.Errorf("slice field %s -> %s: did not found foreign key in foreign type %s",
-					t.ExtNaked(), field.Name, field.Type.ExtNaked())
+					t.ExtNaked(t.Package()), field.Name, field.Type.ExtNaked(t.Package()))
 			}
 			t.Fields = append(t.Fields, field)
 

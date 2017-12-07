@@ -1,17 +1,3 @@
-package {{.Package}}
-
-import (
-	"context"
-	"database/sql"
-	"database/sql/driver"
-	"fmt"
-	"reflect"
-	"unsafe"
-	"github.com/posener/orm"
-
-    "{{.Type.ImportPath}}"
-)
-
 // Exec creates a table for the given struct
 func (b *CreateBuilder) Exec() (sql.Result, error) {
 	stmt, args := b.conn.dialect.Create(&b.params)
@@ -54,7 +40,7 @@ func (b *DeleteBuilder) Exec() (sql.Result, error) {
 }
 
 // Query the database
-func (b *SelectBuilder) Query() ([]{{.Type.ExtName}}, error) {
+func (b *SelectBuilder) Query() ([]{{$.Type.ExtName $.Type.Package}}, error) {
     ctx := contextOrBackground(b.params.Ctx)
     rows, err := b.query(ctx)
 	if err != nil {
@@ -63,10 +49,10 @@ func (b *SelectBuilder) Query() ([]{{.Type.ExtName}}, error) {
 	defer rows.Close()
 
 	var (
-	    items []{{.Type.ExtName}}
+	    items []{{$.Type.ExtName $.Type.Package}}
         {{ if .Type.HasOneToManyRelation -}}
         // exists is a mapping from primary key to already parsed structs
-        exists = make(map[{{.Type.PrimaryKey.Type.ExtName}}]*{{.Type.ExtName}})
+        exists = make(map[{{.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{.Type.ExtName $.Type.Package}})
         {{ end -}}
     )
 	for rows.Next() {
@@ -111,7 +97,7 @@ func (b *SelectBuilder) Count() ([]{{.Type.Name}}Count, error) {
 	    items []{{.Type.Name}}Count
         {{ if .Type.HasOneToManyRelation -}}
         // exists is a mapping from primary key to already parsed structs
-        exists = make(map[{{.Type.PrimaryKey.Type.ExtName}}]*{{.Type.ExtName}})
+        exists = make(map[{{.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{.Type.ExtName $.Type.Package}})
         {{ end -}}
     )
 	for rows.Next() {
@@ -146,7 +132,7 @@ func (b *SelectBuilder) Count() ([]{{.Type.Name}}Count, error) {
 // If no row matches the query, an ErrNotFound will be returned.
 // This call cancels any paging that was set with the
 // SelectBuilder previously.
-func (b *SelectBuilder) First() (*{{.Type.ExtName}}, error) {
+func (b *SelectBuilder) First() (*{{.Type.ExtName $.Type.Package}}, error) {
     ctx := contextOrBackground(b.params.Ctx)
     b.params.Page.Limit = 1
     b.params.Page.Offset = 0

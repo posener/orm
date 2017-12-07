@@ -1,14 +1,3 @@
-package {{.Package}}
-
-import (
-	"database/sql/driver"
-	"fmt"
-    {{ range $_, $import := .Type.Imports -}}
-    "{{$import}}"
-    {{ end }}
-    "github.com/posener/orm/common"
-)
-
 const errMsg = "converting %s: column %d with value %v (type %T) to %s"
 
 // selector selects columns for SQL queries and for parsing SQL rows
@@ -79,7 +68,7 @@ func (s *selector) Count() bool {
 }
 
 // FirstCount scans an SQL row to a {{.Type.Name}}Count struct
-func (s *selector) FirstCount(dialect string, vals []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName}}]*{{.Type.ExtName}}{{end}}) (*{{.Type.Name}}Count, error) {
+func (s *selector) FirstCount(dialect string, vals []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{.Type.ExtName $.Type.Package}}{{end}}) (*{{.Type.Name}}Count, error) {
     switch dialect {
     {{- range $_, $dialect := $.Dialects }}
     case "{{$dialect.Name}}":
@@ -90,7 +79,7 @@ func (s *selector) FirstCount(dialect string, vals []driver.Value{{if .Type.HasO
     }
 }
 // First scans an SQL row to a {{.Type.Name}} struct
-func (s *selector) First(dialect string, vals []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName}}]*{{.Type.ExtName}}{{end}}) (*{{.Type.ExtName}}, error) {
+func (s *selector) First(dialect string, vals []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{.Type.ExtName $.Type.Package}}{{end}}) (*{{.Type.ExtName $.Type.Package}}, error) {
     item, err := s.FirstCount(dialect, vals{{if .Type.HasOneToManyRelation}}, exists{{end}})
     if err != nil {
         return nil, err
@@ -100,7 +89,7 @@ func (s *selector) First(dialect string, vals []driver.Value{{if .Type.HasOneToM
 
 {{ range $_, $dialect := $.Dialects }}
 // scan{{$dialect.Name}} scans {{$dialect.Name}} row to a {{$.Type.Name}} struct
-func (s *selector) scan{{$dialect.Name}} (vals []driver.Value{{if $.Type.HasOneToManyRelation}}, exists map[{{$.Type.PrimaryKey.Type.ExtName}}]*{{$.Type.ExtName}}{{end}}) (*{{$.Type.Name}}Count, error) {
+func (s *selector) scan{{$dialect.Name}} (vals []driver.Value{{if $.Type.HasOneToManyRelation}}, exists map[{{$.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{$.Type.ExtName $.Type.Package}}{{end}}) (*{{$.Type.Name}}Count, error) {
     var (
         row {{$.Type.Name}}Count
         all = s.selectAll()

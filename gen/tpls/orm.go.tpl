@@ -1,15 +1,3 @@
-package {{.Package}}
-
-import (
-    {{ range $_, $import := .Type.Imports -}}
-    "{{$import}}"
-    {{ end }}
-    "database/sql"
-	"github.com/posener/orm"
-	"github.com/posener/orm/common"
-	"github.com/posener/orm/dialect"
-)
-
 // table is SQL table name
 const table = "{{.Type.Table}}"
 
@@ -34,7 +22,7 @@ type API interface {
 
 // Querier is the interface for a SELECT SQL statement
 type Querier interface {
-    Query() ([]{{.Type.ExtName}}, error)
+    Query() ([]{{.Type.Name}}, error)
 }
 
 // Counter is the interface for a SELECT SQL statement for counting purposes
@@ -45,7 +33,7 @@ type Counter interface {
 // Firster is the interface for a SELECT SQL statement for getting only the
 // first item. if no item matches the query, an `orm.ErrNotFound` will be returned.
 type Firster interface {
-	First() (*{{.Type.ExtName}}, error)
+	First() (*{{.Type.ExtName $.Type.Package}}, error)
 }
 
 // Open opens database connection
@@ -116,7 +104,7 @@ func (c *conn) Delete() *DeleteBuilder {
 }
 
 // Insert{{.Type.Name}} returns an SQL INSERT statement builder filled with values of a given object
-func (b *InsertBuilder) Insert{{.Type.Name}}(p *{{.Type.ExtName}}) *InsertBuilder {
+func (b *InsertBuilder) Insert{{.Type.Name}}(p *{{.Type.ExtName $.Type.Package}}) *InsertBuilder {
 	{{ range $_, $f := .Type.Fields -}}
 	{{ if $f.IsSettable -}}
 	{{ if not $f.IsReference -}}
@@ -137,7 +125,7 @@ func (b *InsertBuilder) Insert{{.Type.Name}}(p *{{.Type.ExtName}}) *InsertBuilde
 
 
 // Update{{.Type.Name}} update values for all struct fields
-func (b *UpdateBuilder) Update{{.Type.Name}}(p *{{.Type.ExtName}}) *UpdateBuilder {
+func (b *UpdateBuilder) Update{{.Type.Name}}(p *{{.Type.ExtName $.Type.Package}}) *UpdateBuilder {
 	{{ range $_, $f := .Type.Fields -}}
     {{ if $f.IsSettable -}}
 	{{ if not $f.IsReference -}}
@@ -160,13 +148,13 @@ func (b *UpdateBuilder) Update{{.Type.Name}}(p *{{.Type.ExtName}}) *UpdateBuilde
 
 {{ if $f.IsSettable -}}
 // Set{{$f.Name}} sets value for column {{$f.Column}} in the INSERT statement
-func (b *InsertBuilder) Set{{$f.Name}}(value {{$f.SetType.ExtName}}) *InsertBuilder {
+func (b *InsertBuilder) Set{{$f.Name}}(value {{$f.SetType.ExtName $.Type.Package}}) *InsertBuilder {
 	b.params.Assignments.Add("{{$f.Column}}", value)
 	return b
 }
 
 // Set{{$f.Name}} sets value for column {{$f.Column}} in the UPDATE statement
-func (b *UpdateBuilder) Set{{$f.Name}}(value {{$f.SetType.ExtName}}) *UpdateBuilder {
+func (b *UpdateBuilder) Set{{$f.Name}}(value {{$f.SetType.ExtName $.Type.Package}}) *UpdateBuilder {
 	b.params.Assignments.Add("{{$f.Column}}", value)
 	return b
 }

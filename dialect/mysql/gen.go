@@ -44,7 +44,7 @@ func (g *Gen) ColumnCreateString(f *load.Field, sqlType sqltypes.Type) string {
 }
 
 func (Gen) GoTypeToColumnType(t *load.Type) sqltypes.Type {
-	switch typeName := t.ExtNaked(); typeName {
+	switch typeName := t.ExtNaked(""); typeName {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
 		return sqltypes.Integer
 	case "float", "float8", "float16", "float32", "float64":
@@ -92,7 +92,7 @@ var tmplt = template.Must(template.New("sqlite3").Parse(`
 					row.{{.Field.Name}} = {{if .Field.Type.Pointer}}&{{end}}tmp
 				{{- if ne .ConvertType "[]byte" }}
 				case {{.ConvertType}}:
-					tmp := {{.Field.Type.ExtNaked}}(val)
+					tmp := {{.Field.Type.ExtNaked .Field.Type.Package}}(val)
 					row.{{.Field.Name}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
 				{{- end }}
 				default:
@@ -102,7 +102,7 @@ var tmplt = template.Must(template.New("sqlite3").Parse(`
 
 // convertFuncString is a function for converting the data from SQL to the right type
 func (g *Gen) convertFuncString(f *load.Field, sqlType sqltypes.Type) string {
-	switch tp := f.SetType().ExtNaked(); tp {
+	switch tp := f.SetType().ExtNaked(""); tp {
 	case "string":
 		return "string(val)"
 	case "[]byte":
@@ -131,6 +131,6 @@ func (g *Gen) convertType(f *load.Field, sqlType sqltypes.Type) string {
 	case sqltypes.Boolean:
 		return "bool"
 	default:
-		return f.Type.ExtNaked()
+		return f.Type.ExtNaked("")
 	}
 }

@@ -2,11 +2,17 @@ package tpls
 
 import (
 	"context"
+	"log"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/posener/orm"
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect"
 )
+
+// BEGIN - the generator will drop everything above this line
 
 // conn represents a DB connection for manipulating a given struct.
 // All functions available to interact with an SQL table that is related
@@ -99,4 +105,44 @@ func (c *conn) log(s string, args ...interface{}) {
 		return
 	}
 	c.logger(s, args...)
+}
+
+func parseInt(s []byte) int64 {
+	i, err := strconv.ParseInt(string(s), 10, 64)
+	if err != nil {
+		log.Printf("Failed parsing %s to int", string(s))
+	}
+	return i
+}
+
+func parseUInt(s []byte) uint64 {
+	i, err := strconv.ParseUint(string(s), 10, 64)
+	if err != nil {
+		log.Printf("Failed parsing %s to uint", string(s))
+	}
+	return i
+}
+
+func parseFloat(s []byte) float64 {
+	i, err := strconv.ParseFloat(string(s), 64)
+	if err != nil {
+		log.Printf("Failed parsing %s to float", string(s))
+	}
+	return i
+}
+
+func parseTime(s []byte, precision int) time.Time {
+	format := "2006-01-02 15:04:05"
+	if precision > 0 {
+		format += "." + strings.Repeat("0", precision)
+	}
+	t, err := time.Parse(format, string(s))
+	if err != nil {
+		log.Printf("Failed parsing '%s' to time.Time", string(s))
+	}
+	return t
+}
+
+func parseBool(s []byte) bool {
+	return s[0] != 0
 }
