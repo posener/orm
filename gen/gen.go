@@ -53,7 +53,6 @@ func init() {
 			panic(err)
 		}
 		templates.New(file).Parse(string(data))
-		log.Printf("loaded template %s", file)
 	}
 }
 
