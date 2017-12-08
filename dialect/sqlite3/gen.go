@@ -90,7 +90,7 @@ type tmpltType struct {
 var tmplt = template.Must(template.New("sqlite3").Parse(`
 				val, ok := vals[i].({{.ConvertType}})
 				if !ok {
-					return nil, fmt.Errorf({{.Type.PrefixPrivate}}ErrMsg, "{{.Field.Name}}", i, vals[i], vals[i], "{{.Field.Type.ExtName .Type.Package}}")
+					return nil, common.ErrConvert("{{.Field.Name}}", i, vals[i], "{{.Field.Type.ExtName .Type.Package}}")
 				}
 				tmp := {{.Field.Type.ExtNaked .Type.Package}}(val)
 				row.{{.Field.Name}} = {{if .Field.Type.Pointer -}}&{{end}}tmp

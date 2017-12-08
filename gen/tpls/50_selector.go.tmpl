@@ -1,19 +1,17 @@
-const {{$.Type.PrefixPrivate}}ErrMsg = "converting %s: column %d with value %v (type %T) to %s"
-
-// {{$.Type.PrefixPrivate}}Selector selects columns for SQL queries and for parsing SQL rows
-type {{$.Type.PrefixPrivate}}Selector struct {
+// {{$.Private}}Selector selects columns for SQL queries and for parsing SQL rows
+type {{$.Private}}Selector struct {
     {{ range $i, $f := .Type.Fields -}}
     {{ if not $f.IsReference -}}
     Select{{$f.Name}} bool
     {{ else -}}
-    Join{{$f.Name}} {{$.Type.PrefixPrivate}}{{$f.Name}}Scanner
+    Join{{$f.Name}} {{$.Private}}{{$f.Name}}Scanner
     {{ end -}}
     {{ end -}}
     count bool // used for sql COUNT(*) column
 }
 
 // Columns are the names of selected columns
-func (s *{{$.Type.PrefixPrivate}}Selector) Columns() []string {
+func (s *{{$.Private}}Selector) Columns() []string {
 	var cols []string
     {{ range $_, $f := .Type.Fields -}}
     {{ if not $f.IsReference -}}
@@ -26,7 +24,7 @@ func (s *{{$.Type.PrefixPrivate}}Selector) Columns() []string {
 }
 
 // Joins are join options of the query
-func (s *{{$.Type.PrefixPrivate}}Selector) Joins() []common.JoinParams {
+func (s *{{$.Private}}Selector) Joins() []common.JoinParams {
 	var joins []common.JoinParams
     {{ range $_, $f := .Type.References -}}
     {{ if $f.Type.Slice -}}
@@ -63,12 +61,12 @@ func (s *{{$.Type.PrefixPrivate}}Selector) Joins() []common.JoinParams {
 }
 
 // Count is true when a COUNT(*) column should be added to the query
-func (s *{{$.Type.PrefixPrivate}}Selector) Count() bool {
+func (s *{{$.Private}}Selector) Count() bool {
     return s.count
 }
 
 // FirstCount scans an SQL row to a {{.Type.Name}}Count struct
-func (s *{{$.Type.PrefixPrivate}}Selector) FirstCount(dialect string, vals []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{.Type.ExtName $.Type.Package}}{{end}}) (*{{.Type.Name}}Count, error) {
+func (s *{{$.Private}}Selector) FirstCount(dialect string, vals []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{.Type.ExtName $.Type.Package}}{{end}}) (*{{.Type.Name}}Count, error) {
     switch dialect {
     {{- range $_, $dialect := $.Dialects }}
     case "{{$dialect.Name}}":
@@ -79,7 +77,7 @@ func (s *{{$.Type.PrefixPrivate}}Selector) FirstCount(dialect string, vals []dri
     }
 }
 // First scans an SQL row to a {{.Type.Name}} struct
-func (s *{{$.Type.PrefixPrivate}}Selector) First(dialect string, vals []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{.Type.ExtName $.Type.Package}}{{end}}) (*{{.Type.ExtName $.Type.Package}}, error) {
+func (s *{{$.Private}}Selector) First(dialect string, vals []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{.Type.ExtName $.Type.Package}}{{end}}) (*{{.Type.ExtName $.Type.Package}}, error) {
     item, err := s.FirstCount(dialect, vals{{if .Type.HasOneToManyRelation}}, exists{{end}})
     if err != nil {
         return nil, err
@@ -89,7 +87,7 @@ func (s *{{$.Type.PrefixPrivate}}Selector) First(dialect string, vals []driver.V
 
 {{ range $_, $dialect := $.Dialects }}
 // scan{{$dialect.Name}} scans {{$dialect.Name}} row to a {{$.Type.Name}} struct
-func (s *{{$.Type.PrefixPrivate}}Selector) scan{{$dialect.Name}} (vals []driver.Value{{if $.Type.HasOneToManyRelation}}, exists map[{{$.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{$.Type.ExtName $.Type.Package}}{{end}}) (*{{$.Type.Name}}Count, error) {
+func (s *{{$.Private}}Selector) scan{{$dialect.Name}} (vals []driver.Value{{if $.Type.HasOneToManyRelation}}, exists map[{{$.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{$.Type.ExtName $.Type.Package}}{{end}}) (*{{$.Type.Name}}Count, error) {
     var (
         row {{$.Type.Name}}Count
         all = s.selectAll()
@@ -128,7 +126,7 @@ func (s *{{$.Type.PrefixPrivate}}Selector) scan{{$dialect.Name}} (vals []driver.
         case []byte:
             row.Count = common.ParseInt(val)
         default:
-            return nil, fmt.Errorf({{$.Type.PrefixPrivate}}ErrMsg, "COUNT(*)", i, vals[i], vals[i], "int64, []byte")
+            return nil, common.ErrConvert("COUNT(*)", i, vals[i], "int64, []byte")
         }
         i++
     }
@@ -152,6 +150,6 @@ func (s *{{$.Type.PrefixPrivate}}Selector) scan{{$dialect.Name}} (vals []driver.
 {{ end }}
 
 // selectAll returns true if no column was specifically selected
-func (s *{{$.Type.PrefixPrivate}}Selector) selectAll() bool {
+func (s *{{$.Private}}Selector) selectAll() bool {
     return {{ range $i, $f := .Type.Fields -}}{{if not $f.IsReference }} !s.Select{{$f.Name}} && {{end}}{{end}} !s.count
 }

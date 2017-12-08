@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"log"
 	"reflect"
 	"strconv"
@@ -11,6 +12,12 @@ import (
 	"time"
 	"unsafe"
 )
+
+const errConvert = "converting %s: column %d with value %v (type %T) to %s"
+
+func ErrConvert(field string, index int, value interface{}, to string) error {
+	return fmt.Errorf(errConvert, field, index, value, value, to)
+}
 
 // QMarks is a helper function for concatenating question mark for an SQL statement
 func QMarks(n int) string {

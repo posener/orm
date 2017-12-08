@@ -98,7 +98,7 @@ var tmplt = template.Must(template.New("mysql").Parse(`
 					row.{{.Field.Name}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
 				{{- end }}
 				default:
-					return nil, fmt.Errorf({{.Type.PrefixPrivate}}ErrMsg, "{{.Field.Name}}", i, vals[i], vals[i], "[]byte, {{.ConvertType}}")
+					return nil, common.ErrConvert("{{.Field.Name}}", i, vals[i], "[]byte, {{.ConvertType}}")
 				}
 `))
 

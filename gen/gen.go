@@ -31,6 +31,8 @@ type TemplateData struct {
 	// The name	of the new created package
 	Type     *load.Type
 	Dialects []dialect.Generator
+	Public   string
+	Private  string
 }
 
 var templates = template.New("").Funcs(template.FuncMap{
@@ -66,7 +68,12 @@ func Gen(tp *load.Type) error {
 
 	dialects := dialect.NewGen()
 
-	data := TemplateData{Type: tp, Dialects: dialects}
+	data := TemplateData{
+		Type:     tp,
+		Dialects: dialects,
+		Public:   tp.Name,
+		Private:  strings.ToLower(tp.Name),
+	}
 
 	ormFileName := strings.ToLower(tp.Name + "_orm.go")
 	ormFilePath := filepath.Join(structPkgDir, ormFileName)

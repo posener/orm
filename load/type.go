@@ -81,14 +81,6 @@ func New(fullName string) (*Type, error) {
 	return t, err
 }
 
-func (t *Type) PrefixPublic() string {
-	return t.Name
-}
-
-func (t *Type) PrefixPrivate() string {
-	return strings.ToLower(t.Name)
-}
-
 func (t *Type) String() string {
 	if t.ImportPath != "" {
 		return t.sliceStr() + t.pointerStr() + t.ImportPath + "." + t.Name
