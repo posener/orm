@@ -23,7 +23,7 @@ type Generator interface {
 	ColumnsStatement(tp *load.Type) string
 	// ConvertValueCode returns go code for converting value returned from the
 	// database to the given field.
-	ConvertValueCode(field *load.Field) string
+	ConvertValueCode(tp *load.Type, field *load.Field) string
 }
 
 // NewGen returns all known Generators
@@ -42,7 +42,7 @@ type GenImplementer interface {
 	Name() string
 	GoTypeToColumnType(*load.Type) sqltypes.Type
 	ColumnCreateString(*load.Field, sqltypes.Type) string
-	ConvertValueCode(*load.Field, sqltypes.Type) string
+	ConvertValueCode(*load.Type, *load.Field, sqltypes.Type) string
 }
 
 // ColumnsStatement returns the fields parts of SQL CREATE TABLE statement
@@ -84,8 +84,8 @@ func (g *gen) ColumnsStatement(tp *load.Type) string {
 	return strings.Join(stmts, ", ")
 }
 
-func (g *gen) ConvertValueCode(field *load.Field) string {
-	return g.GenImplementer.ConvertValueCode(field, g.columnType(field))
+func (g *gen) ConvertValueCode(tp *load.Type, field *load.Field) string {
+	return g.GenImplementer.ConvertValueCode(tp, field, g.columnType(field))
 }
 
 func (g *gen) columnType(field *load.Field) sqltypes.Type {

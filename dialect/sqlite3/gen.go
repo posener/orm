@@ -67,8 +67,9 @@ func (*Gen) GoTypeToColumnType(t *load.Type) sqltypes.Type {
 
 // ConvertValueCode returns go code for converting value returned from the
 // database to the given field.
-func (g *Gen) ConvertValueCode(field *load.Field, sqlType sqltypes.Type) string {
+func (g *Gen) ConvertValueCode(tp *load.Type, field *load.Field, sqlType sqltypes.Type) string {
 	s := tmpltType{
+		Type:        tp,
 		Field:       field,
 		ConvertType: g.convertType(field, sqlType),
 	}
@@ -82,15 +83,16 @@ func (g *Gen) ConvertValueCode(field *load.Field, sqlType sqltypes.Type) string 
 
 type tmpltType struct {
 	ConvertType string
+	Type        *load.Type
 	Field       *load.Field
 }
 
 var tmplt = template.Must(template.New("sqlite3").Parse(`
 				val, ok := vals[i].({{.ConvertType}})
 				if !ok {
-					return nil, fmt.Errorf(errMsg, "{{.Field.Name}}", i, vals[i], vals[i], "{{.Field.Type.ExtName .Field.Type.Package}}")
+					return nil, fmt.Errorf({{.Type.PrefixPrivate}}ErrMsg, "{{.Field.Name}}", i, vals[i], vals[i], "{{.Field.Type.ExtName .Type.Package}}")
 				}
-				tmp := {{.Field.Type.ExtNaked .Field.Type.Package}}(val)
+				tmp := {{.Field.Type.ExtNaked .Type.Package}}(val)
 				row.{{.Field.Name}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
 `))
 

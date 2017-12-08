@@ -1,10 +1,10 @@
-type Scanner interface {
+type {{$.Type.PrefixPublic}}Scanner interface {
     Columns() []string
     First(dialect string, values []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{.Type.ExtName $.Type.Package}}{{end}}) (*{{$.Type.ExtNaked $.Type.Package}}, error)
 }
 
 {{ range $_, $f := $.Type.References }}
-type {{$f.Name}}Scanner interface {
+type {{$.Type.PrefixPrivate}}{{$f.Name}}Scanner interface {
     Columns() []string
     First(dialect string, values []driver.Value{{if $f.Type.HasOneToManyRelation}}, exists map[{{$f.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{$f.Type.ExtName $.Type.Package}}{{end}}) (*{{$f.Type.ExtNaked $.Type.Package}}, error)
 }
@@ -16,31 +16,31 @@ type {{.Type.Name}}Count struct {
     Count int64
 }
 
-// SelectBuilder builds an SQL SELECT statement parameters
-type SelectBuilder struct {
+// {{$.Type.PrefixPublic}}SelectBuilder builds an SQL SELECT statement parameters
+type {{$.Type.PrefixPublic}}SelectBuilder struct {
 	params common.SelectParams
-	conn *conn
-	selector selector
+	conn *{{.Type.PrefixPrivate}}Conn
+	selector {{$.Type.PrefixPrivate}}Selector
 }
 
-func (b *SelectBuilder) Scanner() Scanner {
-    return b.params.Columns.(*selector)
+func (b *{{$.Type.PrefixPublic}}SelectBuilder) Scanner() {{$.Type.PrefixPublic}}Scanner {
+    return b.params.Columns.(*{{$.Type.PrefixPrivate}}Selector)
 }
 
 // Where applies where conditions on the query
-func (b *SelectBuilder) Where(where common.Where) *SelectBuilder {
+func (b *{{$.Type.PrefixPublic}}SelectBuilder) Where(where common.Where) *{{$.Type.PrefixPublic}}SelectBuilder {
 	b.params.Where = where
 	return b
 }
 
 // Limit applies rows limit on the query response
-func (b *SelectBuilder) Limit(limit int64) *SelectBuilder {
+func (b *{{$.Type.PrefixPublic}}SelectBuilder) Limit(limit int64) *{{$.Type.PrefixPublic}}SelectBuilder {
 	b.params.Page.Limit = limit
 	return b
 }
 
 // Page applies rows offset and limit on the query response
-func (b *SelectBuilder) Page(offset, limit int64) *SelectBuilder {
+func (b *{{$.Type.PrefixPublic}}SelectBuilder) Page(offset, limit int64) *{{$.Type.PrefixPublic}}SelectBuilder {
 	b.params.Page.Offset = offset
 	b.params.Page.Limit = limit
 	return b
@@ -49,13 +49,13 @@ func (b *SelectBuilder) Page(offset, limit int64) *SelectBuilder {
 {{ range $_, $f := .Type.Fields -}}
 {{ if not $f.IsReference }}
 // Select{{$f.Name}} adds {{$f.Name}} to the selected column of a query
-func (b *SelectBuilder) Select{{$f.Name}}() *SelectBuilder {
+func (b *{{$.Type.PrefixPublic}}SelectBuilder) Select{{$f.Name}}() *{{$.Type.PrefixPublic}}SelectBuilder {
     b.selector.Select{{$f.Name}} = true
     return b
 }
 {{ else }}
 // Join{{$f.Name}} add a join query for {{$f.Name}}
-func (b *SelectBuilder) Join{{$f.Name}}(scanner {{$f.Name}}Scanner) *SelectBuilder {
+func (b *{{$.Type.PrefixPublic}}SelectBuilder) Join{{$f.Name}}(scanner {{$.Type.PrefixPrivate}}{{$f.Name}}Scanner) *{{$.Type.PrefixPublic}}SelectBuilder {
     b.selector.Join{{$f.Name}} = scanner
     return b
 }
@@ -63,13 +63,13 @@ func (b *SelectBuilder) Join{{$f.Name}}(scanner {{$f.Name}}Scanner) *SelectBuild
 
 {{ if not $f.Type.Slice -}}
 // OrderBy{{$f.Name}} set order to the query results according to column {{$f.Column}}
-func (b *SelectBuilder) OrderBy{{$f.Name}}(dir common.OrderDir) *SelectBuilder {
+func (b *{{$.Type.PrefixPublic}}SelectBuilder) OrderBy{{$f.Name}}(dir common.OrderDir) *{{$.Type.PrefixPublic}}SelectBuilder {
     b.params.Orders.Add("{{$f.Column}}", dir)
     return b
 }
 
 // GroupBy{{$f.Name}} make the query group by column {{$f.Column}}
-func (b *SelectBuilder) GroupBy{{$f.Name}}() *SelectBuilder {
+func (b *{{$.Type.PrefixPublic}}SelectBuilder) GroupBy{{$f.Name}}() *{{$.Type.PrefixPublic}}SelectBuilder {
     b.params.Groups.Add("{{$f.Column}}")
     return b
 }
@@ -77,7 +77,7 @@ func (b *SelectBuilder) GroupBy{{$f.Name}}() *SelectBuilder {
 {{ end -}}
 
 // Context sets the context for the SQL query
-func (b *SelectBuilder) Context(ctx context.Context) *SelectBuilder {
+func (b *{{$.Type.PrefixPublic}}SelectBuilder) Context(ctx context.Context) *{{$.Type.PrefixPublic}}SelectBuilder {
 	b.params.Ctx = ctx
 	return b
 }

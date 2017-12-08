@@ -1,78 +1,58 @@
-// table is SQL table name
-const table = "{{.Type.Table}}"
+// {{$.Type.PrefixPrivate}}Table is SQL table name
+const {{$.Type.PrefixPrivate}}Table = "{{.Type.Table}}"
 
-// createColumnsStatements are columns definitions in different dialects
-var createColumnsStatements = map[string]string{
+// {{$.Type.PrefixPrivate}}CreateColumnsStatements are columns definitions in different dialects
+var {{$.Type.PrefixPrivate}}CreateColumnsStatements = map[string]string{
     {{ range $_, $d := .Dialects -}}
     "{{$d.Name}}": "{{$d.ColumnsStatement $.Type}}",
     {{ end -}}
 }
 
-// API is the interface of the ORM object
-type API interface {
+// {{$.Type.PrefixPublic}}API is the interface of the ORM object
+type {{$.Type.PrefixPublic}}API interface {
     Close() error
-    Create() *CreateBuilder
-    Select() *SelectBuilder
-    Insert() *InsertBuilder
-    Update() *UpdateBuilder
-    Delete() *DeleteBuilder
+    Create() *{{$.Type.PrefixPublic}}CreateBuilder
+    Select() *{{$.Type.PrefixPublic}}SelectBuilder
+    Insert() *{{$.Type.PrefixPublic}}InsertBuilder
+    Update() *{{$.Type.PrefixPublic}}UpdateBuilder
+    Delete() *{{$.Type.PrefixPublic}}DeleteBuilder
 
     Logger(orm.Logger)
 }
 
-// Querier is the interface for a SELECT SQL statement
-type Querier interface {
-    Query() ([]{{.Type.Name}}, error)
-}
-
-// Counter is the interface for a SELECT SQL statement for counting purposes
-type Counter interface {
-    Count() ([]{{.Type.Name}}Count, error)
-}
-
-// Firster is the interface for a SELECT SQL statement for getting only the
-// first item. if no item matches the query, an `orm.ErrNotFound` will be returned.
-type Firster interface {
-	First() (*{{.Type.ExtName $.Type.Package}}, error)
-}
-
-// Open opens database connection
-func Open(driverName, dataSourceName string) (API, error) {
+// {{$.Type.PrefixPublic}}Open opens database connection
+func {{$.Type.PrefixPublic}}Open(driverName, dataSourceName string) ({{$.Type.PrefixPublic}}API, error) {
 	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return nil, err
 	}
-	d, err := dialect.New(driverName)
-	if err != nil {
-		return nil, err
-	}
-	return &conn{dialect: d, db: db}, nil
+	return {{$.Type.PrefixPublic}}New(driverName, db)
 }
 
-// New returns an conn object from a db instance
-func New(driverName string, db orm.DB) (API, error) {
+// {{$.Type.PrefixPublic}}New returns an conn object from a db instance
+func {{$.Type.PrefixPublic}}New(driverName string, db orm.DB) ({{$.Type.PrefixPublic}}API, error) {
 	d, err := dialect.New(driverName)
 	if err != nil {
 		return nil, err
 	}
-    return &conn{dialect: d, db: db}, nil
+    return &{{.Type.PrefixPrivate}}Conn{dialect: d, db: db}, nil
 }
 
 // Create returns a builder of an SQL CREATE statement
-func (c *conn) Create() *CreateBuilder {
-	return &CreateBuilder{
+func (c *{{.Type.PrefixPrivate}}Conn) Create() *{{$.Type.PrefixPublic}}CreateBuilder {
+	return &{{$.Type.PrefixPublic}}CreateBuilder{
 		params: common.CreateParams{
-		    Table: table,
-		    ColumnsStatement: createColumnsStatements[c.dialect.Name()],
+		    Table: {{$.Type.PrefixPrivate}}Table,
+		    ColumnsStatement: {{$.Type.PrefixPrivate}}CreateColumnsStatements[c.dialect.Name()],
         },
 	    conn: c,
     }
 }
 
 // Select returns a builder of an SQL SELECT statement
-func (c *conn) Select() *SelectBuilder {
-	s := &SelectBuilder{
-		params: common.SelectParams{Table: table},
+func (c *{{.Type.PrefixPrivate}}Conn) Select() *{{$.Type.PrefixPublic}}SelectBuilder {
+	s := &{{$.Type.PrefixPublic}}SelectBuilder{
+		params: common.SelectParams{Table: {{$.Type.PrefixPrivate}}Table},
 		conn: c,
 	}
     s.params.Columns = &s.selector
@@ -80,31 +60,31 @@ func (c *conn) Select() *SelectBuilder {
 }
 
 // Insert returns a builder of an SQL INSERT statement
-func (c *conn) Insert() *InsertBuilder {
-	return &InsertBuilder{
-		params: common.InsertParams{Table: table},
+func (c *{{.Type.PrefixPrivate}}Conn) Insert() *{{$.Type.PrefixPublic}}InsertBuilder {
+	return &{{$.Type.PrefixPublic}}InsertBuilder{
+		params: common.InsertParams{Table: {{$.Type.PrefixPrivate}}Table},
 		conn: c,
 	}
 }
 
 // Update returns a builder of an SQL UPDATE statement
-func (c *conn) Update() *UpdateBuilder {
-	return &UpdateBuilder{
-		params: common.UpdateParams{Table: table},
+func (c *{{.Type.PrefixPrivate}}Conn) Update() *{{$.Type.PrefixPublic}}UpdateBuilder {
+	return &{{$.Type.PrefixPublic}}UpdateBuilder{
+		params: common.UpdateParams{Table: {{$.Type.PrefixPrivate}}Table},
 		conn: c,
     }
 }
 
 // Delete returns a builder of an SQL DELETE statement
-func (c *conn) Delete() *DeleteBuilder {
-	return &DeleteBuilder{
-		params: common.DeleteParams{Table: table},
+func (c *{{.Type.PrefixPrivate}}Conn) Delete() *{{$.Type.PrefixPublic}}DeleteBuilder {
+	return &{{$.Type.PrefixPublic}}DeleteBuilder{
+		params: common.DeleteParams{Table: {{$.Type.PrefixPrivate}}Table},
 		conn: c,
     }
 }
 
 // Insert{{.Type.Name}} returns an SQL INSERT statement builder filled with values of a given object
-func (b *InsertBuilder) Insert{{.Type.Name}}(p *{{.Type.ExtName $.Type.Package}}) *InsertBuilder {
+func (b *{{$.Type.PrefixPublic}}InsertBuilder) Insert{{.Type.Name}}(p *{{.Type.ExtName $.Type.Package}}) *{{$.Type.PrefixPublic}}InsertBuilder {
 	{{ range $_, $f := .Type.Fields -}}
 	{{ if $f.IsSettable -}}
 	{{ if not $f.IsReference -}}
@@ -125,7 +105,7 @@ func (b *InsertBuilder) Insert{{.Type.Name}}(p *{{.Type.ExtName $.Type.Package}}
 
 
 // Update{{.Type.Name}} update values for all struct fields
-func (b *UpdateBuilder) Update{{.Type.Name}}(p *{{.Type.ExtName $.Type.Package}}) *UpdateBuilder {
+func (b *{{$.Type.PrefixPublic}}UpdateBuilder) Update{{.Type.Name}}(p *{{.Type.ExtName $.Type.Package}}) *{{$.Type.PrefixPublic}}UpdateBuilder {
 	{{ range $_, $f := .Type.Fields -}}
     {{ if $f.IsSettable -}}
 	{{ if not $f.IsReference -}}
@@ -148,13 +128,13 @@ func (b *UpdateBuilder) Update{{.Type.Name}}(p *{{.Type.ExtName $.Type.Package}}
 
 {{ if $f.IsSettable -}}
 // Set{{$f.Name}} sets value for column {{$f.Column}} in the INSERT statement
-func (b *InsertBuilder) Set{{$f.Name}}(value {{$f.SetType.ExtName $.Type.Package}}) *InsertBuilder {
+func (b *{{$.Type.PrefixPublic}}InsertBuilder) Set{{$f.Name}}(value {{$f.SetType.ExtName $.Type.Package}}) *{{$.Type.PrefixPublic}}InsertBuilder {
 	b.params.Assignments.Add("{{$f.Column}}", value)
 	return b
 }
 
 // Set{{$f.Name}} sets value for column {{$f.Column}} in the UPDATE statement
-func (b *UpdateBuilder) Set{{$f.Name}}(value {{$f.SetType.ExtName $.Type.Package}}) *UpdateBuilder {
+func (b *{{$.Type.PrefixPublic}}UpdateBuilder) Set{{$f.Name}}(value {{$f.SetType.ExtName $.Type.Package}}) *{{$.Type.PrefixPublic}}UpdateBuilder {
 	b.params.Assignments.Add("{{$f.Column}}", value)
 	return b
 }

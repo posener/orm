@@ -1,8 +1,6 @@
 package gen
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -10,8 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
-
-	"io/ioutil"
 
 	"github.com/posener/orm/dialect"
 	"github.com/posener/orm/gen/b0x"
@@ -83,15 +79,6 @@ func Gen(tp *load.Type) error {
 		return err
 	}
 
-	ormDotGo, err := ormDotGoFile()
-	if err != nil {
-		return err
-	}
-	_, err = ormFile.Write(ormDotGo)
-	if err != nil {
-		return err
-	}
-
 	for _, tpl := range templates.Templates() {
 		if tpl.Name() == "import.go.tpl" {
 			continue
@@ -114,25 +101,6 @@ func packagePath(pkg string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("package path was not found: %s", pkg)
-}
-
-func ormDotGoFile() ([]byte, error) {
-	data, err := b0x.ReadFile("orm.go")
-	if err != nil {
-		return nil, err
-	}
-
-	b := bufio.NewReader(bytes.NewBuffer(data))
-	for {
-		b, _, err := b.ReadLine()
-		if err != nil {
-			return nil, err
-		}
-		if bytes.HasPrefix(b, []byte("// BEGIN ")) {
-			break
-		}
-	}
-	return ioutil.ReadAll(b)
 }
 
 func format(path string) {

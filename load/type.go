@@ -81,6 +81,14 @@ func New(fullName string) (*Type, error) {
 	return t, err
 }
 
+func (t *Type) PrefixPublic() string {
+	return t.Name
+}
+
+func (t *Type) PrefixPrivate() string {
+	return strings.ToLower(t.Name)
+}
+
 func (t *Type) String() string {
 	if t.ImportPath != "" {
 		return t.sliceStr() + t.pointerStr() + t.ImportPath + "." + t.Name
@@ -118,7 +126,7 @@ func (t Type) Package() string {
 }
 
 func (t *Type) IsBasic() bool {
-	return basicTypes[t.ExtNaked(t.Package())]
+	return basicTypes[t.ExtNaked("")]
 }
 
 // Imports returns a list of all imports for this type's fields
