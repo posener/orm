@@ -1,0 +1,250 @@
+// {{$.Private}}Table is SQL table name
+const {{$.Private}}Table = "{{.Type.Table}}"
+
+// {{$.Private}}CreateColumnsStatements are columns definitions in different dialects
+var {{$.Private}}CreateColumnsStatements = map[string]string{
+    {{ range $_, $d := .Dialects -}}
+    "{{$d.Name}}": "{{$d.ColumnsStatement $.Type}}",
+    {{ end -}}
+}
+
+// {{$.Type.Name}}ORM is the interface of the ORM object
+type {{$.Type.Name}}ORM interface {
+    Close() error
+    Create() *{{$.Public}}CreateBuilder
+    Select() *{{$.Public}}SelectBuilder
+    Insert() *{{$.Public}}InsertBuilder
+    Update() *{{$.Public}}UpdateBuilder
+    Delete() *{{$.Public}}DeleteBuilder
+    Where() *{{$.Public}}WhereBuilder
+    Logger(orm.Logger)
+}
+
+// Open{{$.Type.Name}}ORM opens database connection
+func Open{{$.Type.Name}}ORM(driverName, dataSourceName string) ({{$.Type.Name}}ORM, error) {
+	db, err := sql.Open(driverName, dataSourceName)
+	if err != nil {
+		return nil, err
+	}
+	return New{{$.Type.Name}}ORM(driverName, db)
+}
+
+// New{{$.Type.Name}}ORM returns an conn object from a db instance
+func New{{$.Type.Name}}ORM(driverName string, db orm.DB) ({{$.Type.Name}}ORM, error) {
+	d, err := dialect.New(driverName)
+	if err != nil {
+		return nil, err
+	}
+    return &{{.Private}}Conn{dialect: d, db: db}, nil
+}
+
+// {{.Private}}Conn represents a DB connection for manipulating a given struct.
+// All functions available to interact with an SQL table that is related
+// to this struct, are done by an instance of this object.
+// To get an instance of orm use Open or New functions.
+type {{.Private}}Conn struct {
+	dialect dialect.Dialect
+	db      orm.DB
+	logger  orm.Logger
+}
+
+func (c *{{.Private}}Conn) Close() error {
+	return c.db.Close()
+}
+
+// Logger sets a logger to the conn package
+func (c *{{.Private}}Conn) Logger(logger orm.Logger) {
+	c.logger = logger
+}
+
+// Create returns a builder of an SQL CREATE statement
+func (c *{{.Private}}Conn) Create() *{{$.Public}}CreateBuilder {
+	return &{{$.Public}}CreateBuilder{
+		params: common.CreateParams{
+		    Table: {{$.Private}}Table,
+		    ColumnsStatement: {{$.Private}}CreateColumnsStatements[c.dialect.Name()],
+        },
+	    conn: c,
+    }
+}
+
+// Select returns a builder of an SQL SELECT statement
+func (c *{{.Private}}Conn) Select() *{{$.Public}}SelectBuilder {
+	s := &{{$.Public}}SelectBuilder{
+		params: common.SelectParams{Table: {{$.Private}}Table},
+		conn: c,
+	}
+    s.params.Columns = &s.selector
+    return s
+}
+
+// Insert returns a builder of an SQL INSERT statement
+func (c *{{.Private}}Conn) Insert() *{{$.Public}}InsertBuilder {
+	return &{{$.Public}}InsertBuilder{
+		params: common.InsertParams{Table: {{$.Private}}Table},
+		conn: c,
+	}
+}
+
+// Update returns a builder of an SQL UPDATE statement
+func (c *{{.Private}}Conn) Update() *{{$.Public}}UpdateBuilder {
+	return &{{$.Public}}UpdateBuilder{
+		params: common.UpdateParams{Table: {{$.Private}}Table},
+		conn: c,
+    }
+}
+
+// Delete returns a builder of an SQL DELETE statement
+func (c *{{.Private}}Conn) Delete() *{{$.Public}}DeleteBuilder {
+	return &{{$.Public}}DeleteBuilder{
+		params: common.DeleteParams{Table: {{$.Private}}Table},
+		conn: c,
+    }
+}
+
+// Where returns a builder of an SQL WHERE statement
+func (c *{{.Private}}Conn) Where() *{{$.Public}}WhereBuilder {
+	return &{{$.Public}}WhereBuilder{}
+}
+
+// log if a logger was set
+func (c *{{.Private}}Conn) log(s string, args ...interface{}) {
+	if c.logger == nil {
+		return
+	}
+	c.logger(s, args...)
+}
+
+// === CreateBuilder ===
+
+// {{$.Public}}CreateBuilder builds an SQL CREATE statement parameters
+type {{$.Public}}CreateBuilder struct {
+	params common.CreateParams
+	conn   *{{.Private}}Conn
+}
+
+// IfNotExists sets IF NOT EXISTS for the CREATE SQL statement
+func (b *{{$.Public}}CreateBuilder) IfNotExists() *{{$.Public}}CreateBuilder {
+	b.params.IfNotExists = true
+	return b
+}
+
+// Context sets the context for the SQL query
+func (b *{{$.Public}}CreateBuilder) Context(ctx context.Context) *{{$.Public}}CreateBuilder {
+	b.params.Ctx = ctx
+	return b
+}
+
+// === InsertBuilder ===
+
+// {{$.Public}}InsertBuilder builds an INSERT statement parameters
+type {{$.Public}}InsertBuilder struct {
+	params common.InsertParams
+	conn   *{{.Private}}Conn
+}
+
+// Context sets the context for the SQL query
+func (b *{{$.Public}}InsertBuilder) Context(ctx context.Context) *{{$.Public}}InsertBuilder {
+	b.params.Ctx = ctx
+	return b
+}
+
+// Insert{{.Type.Name}} returns an SQL INSERT statement builder filled with values of a given object
+func (b *{{$.Public}}InsertBuilder) Insert{{.Type.Name}}(p *{{.Type.ExtName $.Type.Package}}) *{{$.Public}}InsertBuilder {
+	{{ range $_, $f := .Type.Fields -}}
+	{{ if $f.IsSettable -}}
+	{{ if not $f.IsReference -}}
+	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}})
+	{{ else -}}
+	{{ if $f.Type.Pointer -}}
+	if p.{{$f.Name}} != nil {
+	{{ end -}}
+	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}.{{$f.Type.PrimaryKey.Name}})
+	{{ if $f.Type.Pointer -}}
+	}
+	{{ end -}}
+	{{ end -}}
+	{{ end -}}
+	{{ end -}}
+	return b
+}
+
+// === UpdateBuilder ===
+
+// {{$.Public}}UpdateBuilder builds SQL INSERT statement parameters
+type {{$.Public}}UpdateBuilder struct {
+	params common.UpdateParams
+	conn   *{{.Private}}Conn
+}
+
+// Where sets the WHERE statement to the SQL query
+func (b *{{$.Public}}UpdateBuilder) Where(where common.Where) *{{$.Public}}UpdateBuilder {
+	b.params.Where = where
+	return b
+}
+
+// Context sets the context for the SQL query
+func (b *{{$.Public}}UpdateBuilder) Context(ctx context.Context) *{{$.Public}}UpdateBuilder {
+	b.params.Ctx = ctx
+	return b
+}
+
+// Update{{.Type.Name}} update values for all struct fields
+func (b *{{$.Public}}UpdateBuilder) Update{{.Type.Name}}(p *{{.Type.ExtName $.Type.Package}}) *{{$.Public}}UpdateBuilder {
+	{{ range $_, $f := .Type.Fields -}}
+    {{ if $f.IsSettable -}}
+	{{ if not $f.IsReference -}}
+	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}})
+	{{ else -}}
+	{{ if $f.Type.Pointer -}}
+	if p.{{$f.Name}} != nil {
+	{{ end -}}
+	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}.{{$f.Type.PrimaryKey.Name}})
+	{{ if $f.Type.Pointer -}}
+	}
+	{{ end -}}
+	{{ end -}}
+	{{ end -}}
+	{{ end -}}
+	return b
+}
+
+// === DeleteBuilder ===
+
+// {{$.Public}}DeleteBuilder builds SQL DELETE statement parameters
+type {{$.Public}}DeleteBuilder struct {
+	params common.DeleteParams
+	conn   *{{.Private}}Conn
+}
+
+// Where applies where conditions on the SQL query
+func (b *{{$.Public}}DeleteBuilder) Where(w common.Where) *{{$.Public}}DeleteBuilder {
+	b.params.Where = w
+	return b
+}
+
+// Context sets the context for the SQL query
+func (b *{{$.Public}}DeleteBuilder) Context(ctx context.Context) *{{$.Public}}DeleteBuilder {
+	b.params.Ctx = ctx
+	return b
+}
+
+// === Update/Insert fields ===
+
+{{- range $_, $f := .Type.Fields }}
+
+{{ if $f.IsSettable -}}
+// Set{{$f.Name}} sets value for column {{$f.Column}} in the INSERT statement
+func (b *{{$.Public}}InsertBuilder) Set{{$f.Name}}(value {{$f.SetType.ExtName $.Type.Package}}) *{{$.Public}}InsertBuilder {
+	b.params.Assignments.Add("{{$f.Column}}", value)
+	return b
+}
+
+// Set{{$f.Name}} sets value for column {{$f.Column}} in the UPDATE statement
+func (b *{{$.Public}}UpdateBuilder) Set{{$f.Name}}(value {{$f.SetType.ExtName $.Type.Package}}) *{{$.Public}}UpdateBuilder {
+	b.params.Assignments.Add("{{$f.Column}}", value)
+	return b
+}
+
+{{ end -}}
+{{ end -}}

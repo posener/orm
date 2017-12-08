@@ -1,4 +1,4 @@
-package example_test
+package example
 
 import (
 	"database/sql"
@@ -10,9 +10,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm"
-	"github.com/posener/orm/example"
-	"github.com/posener/orm/example/allorm"
-	"github.com/posener/orm/example/personorm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +22,7 @@ func TestTypes(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := allDB(t, conn)
 
-		a := example.All{
+		a := All{
 			Int:   1,
 			Int8:  int8(2),
 			Int16: int16(3),
@@ -137,9 +134,9 @@ func TestFieldReservedName(t *testing.T) {
 
 		query := db.Select().
 			SelectSelect().
-			Where(allorm.WhereSelect(orm.OpEq, 42).
-				Or(allorm.WhereSelectBetween(10, 50)).
-				Or(allorm.WhereSelectIn(11, 12))).
+			Where(db.Where().Select(orm.OpEq, 42).
+				Or(db.Where().SelectBetween(10, 50)).
+				Or(db.Where().SelectIn(11, 12))).
 			OrderBySelect(orm.Desc).
 			GroupBySelect()
 
@@ -148,7 +145,7 @@ func TestFieldReservedName(t *testing.T) {
 		require.Equal(t, 1, len(alls))
 		assert.Equal(t, 42, alls[0].Select)
 
-		res, err = db.Update().SetSelect(11).Where(allorm.WhereSelect(orm.OpEq, 42)).Exec()
+		res, err = db.Update().SetSelect(11).Where(db.Where().Select(orm.OpEq, 42)).Exec()
 		require.Nil(t, err)
 		assertRowsAffected(t, 1, res)
 
@@ -168,9 +165,9 @@ func TestFieldReservedName(t *testing.T) {
 }
 
 var (
-	p1 = example.Person{Name: "moshe", Age: 1}
-	p2 = example.Person{Name: "haim", Age: 2}
-	p3 = example.Person{Name: "zvika", Age: 3}
+	p1 = Person{Name: "moshe", Age: 1}
+	p2 = Person{Name: "haim", Age: 2}
+	p3 = Person{Name: "zvika", Age: 3}
 )
 
 func TestPersonSelect(t *testing.T) {
@@ -188,79 +185,79 @@ func TestPersonSelect(t *testing.T) {
 		assertRowsAffected(t, 1, res)
 
 		tests := []struct {
-			q    personorm.Querier
-			want []example.Person
+			q    *PersonSelectBuilder
+			want []Person
 		}{
 			{
 				q:    db.Select(),
-				want: []example.Person{p1, p2, p3},
+				want: []Person{p1, p2, p3},
 			},
 			{
 				q:    db.Select().SelectName(),
-				want: []example.Person{{Name: "moshe"}, {Name: "haim"}, {Name: "zvika"}},
+				want: []Person{{Name: "moshe"}, {Name: "haim"}, {Name: "zvika"}},
 			},
 			{
 				q:    db.Select().SelectAge(),
-				want: []example.Person{{Age: 1}, {Age: 2}, {Age: 3}},
+				want: []Person{{Age: 1}, {Age: 2}, {Age: 3}},
 			},
 			{
 				q:    db.Select().SelectAge().SelectName(),
-				want: []example.Person{p1, p2, p3},
+				want: []Person{p1, p2, p3},
 			},
 			{
 				q:    db.Select().SelectName().SelectAge(),
-				want: []example.Person{p1, p2, p3},
+				want: []Person{p1, p2, p3},
 			},
 			{
-				q:    db.Select().Where(personorm.WhereName(orm.OpEq, "moshe")),
-				want: []example.Person{p1},
+				q:    db.Select().Where(db.Where().Name(orm.OpEq, "moshe")),
+				want: []Person{p1},
 			},
 			{
-				q:    db.Select().Where(personorm.WhereName(orm.OpEq, "moshe").Or(personorm.WhereAge(orm.OpEq, 2))),
-				want: []example.Person{p1, p2},
+				q:    db.Select().Where(db.Where().Name(orm.OpEq, "moshe").Or(db.Where().Age(orm.OpEq, 2))),
+				want: []Person{p1, p2},
 			},
 			{
-				q:    db.Select().Where(personorm.WhereName(orm.OpEq, "moshe").And(personorm.WhereAge(orm.OpEq, 1))),
-				want: []example.Person{p1},
+				q:    db.Select().Where(db.Where().Name(orm.OpEq, "moshe").And(db.Where().Age(orm.OpEq, 1))),
+				want: []Person{p1},
 			},
 			{
-				q: db.Select().Where(personorm.WhereName(orm.OpEq, "moshe").And(personorm.WhereAge(orm.OpEq, 2))),
+				q: db.Select().Where(db.Where().Name(orm.OpEq, "moshe").And(db.Where().Age(orm.OpEq, 2))),
 			},
 			{
-				q:    db.Select().Where(personorm.WhereAge(orm.OpGE, 2)),
-				want: []example.Person{p2, p3},
+				q:    db.Select().Where(db.Where().Age(orm.OpGE, 2)),
+				want: []Person{p2, p3},
 			},
 			{
-				q:    db.Select().Where(personorm.WhereAge(orm.OpGt, 2)),
-				want: []example.Person{p3},
+				q:    db.Select().Where(db.Where().Age(orm.OpGt, 2)),
+				want: []Person{p3},
 			},
 			{
-				q:    db.Select().Where(personorm.WhereAge(orm.OpLE, 2)),
-				want: []example.Person{p1, p2},
+				q:    db.Select().Where(db.Where().Age(orm.OpLE, 2)),
+				want: []Person{p1, p2},
 			},
 			{
-				q:    db.Select().Where(personorm.WhereAge(orm.OpLt, 2)),
-				want: []example.Person{p1},
+				q:    db.Select().Where(db.Where().Age(orm.OpLt, 2)),
+				want: []Person{p1},
 			},
 			{
-				q:    db.Select().Where(personorm.WhereName(orm.OpNe, "moshe")),
-				want: []example.Person{p2, p3},
+				q:    db.Select().Where(db.Where().Name(orm.OpNe, "moshe")),
+				want: []Person{p2, p3},
 			},
 			{
-				q:    db.Select().Where(personorm.WhereNameIn("moshe", "haim")),
-				want: []example.Person{p1, p2},
+				q:    db.Select().Where(db.Where().NameIn("moshe", "haim")),
+				want: []Person{p1, p2},
 			},
 			{
-				q:    db.Select().Where(personorm.WhereAgeBetween(0, 2)),
-				want: []example.Person{p1, p2},
+				q:    db.Select().Where(db.Where().AgeBetween(0, 2)),
+				want: []Person{p1, p2},
 			},
 			{
 				q:    db.Select().Limit(2),
-				want: []example.Person{p1, p2},
+				want: []Person{p1, p2},
 			},
 			{
 				q:    db.Select().Page(1, 1),
-				want: []example.Person{p2},
+				want: []Person{p2},
 			},
 		}
 
@@ -281,7 +278,7 @@ func TestCRUD(t *testing.T) {
 		db := personDB(t, conn)
 
 		// prepareAll dataset
-		for _, p := range []example.Person{p1, p2, p3} {
+		for _, p := range []Person{p1, p2, p3} {
 			res, err := db.Insert().InsertPerson(&p).Exec()
 			require.Nil(t, err, "Failed inserting")
 			assertRowsAffected(t, 1, res)
@@ -289,10 +286,10 @@ func TestCRUD(t *testing.T) {
 
 		ps, err := db.Select().Query()
 		require.Nil(t, err)
-		assert.Equal(t, []example.Person{p1, p2, p3}, ps)
+		assert.Equal(t, []Person{p1, p2, p3}, ps)
 
 		// Test delete
-		delete := db.Delete().Where(personorm.WhereName(orm.OpEq, "moshe"))
+		delete := db.Delete().Where(db.Where().Name(orm.OpEq, "moshe"))
 		res, err := delete.Exec()
 		require.Nil(t, err)
 		assertRowsAffected(t, 1, res)
@@ -300,20 +297,20 @@ func TestCRUD(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		assert.Equal(t, []example.Person{p2, p3}, ps)
-		ps, err = db.Select().Where(personorm.WhereName(orm.OpEq, "moshe")).Query()
+		assert.Equal(t, []Person{p2, p3}, ps)
+		ps, err = db.Select().Where(db.Where().Name(orm.OpEq, "moshe")).Query()
 		require.Nil(t, err)
-		assert.Equal(t, []example.Person(nil), ps)
+		assert.Equal(t, []Person(nil), ps)
 
 		// Test Update
-		update := db.Update().SetName("Jonney").Where(personorm.WhereName(orm.OpEq, "zvika"))
+		update := db.Update().SetName("Jonney").Where(db.Where().Name(orm.OpEq, "zvika"))
 		res, err = update.Exec()
 		require.Nil(t, err)
 		assertRowsAffected(t, 1, res)
 
-		ps, err = db.Select().Where(personorm.WhereName(orm.OpEq, "Jonney")).Query()
+		ps, err = db.Select().Where(db.Where().Name(orm.OpEq, "Jonney")).Query()
 		require.Nil(t, err)
-		assert.Equal(t, []example.Person{{Name: "Jonney", Age: 3}}, ps)
+		assert.Equal(t, []Person{{Name: "Jonney", Age: 3}}, ps)
 	})
 }
 
@@ -322,37 +319,37 @@ func TestCount(t *testing.T) {
 		db := personDB(t, conn)
 
 		for i := 0; i < 100; i++ {
-			res, err := db.Insert().InsertPerson(&example.Person{Name: fmt.Sprintf("Jim %d", i), Age: i / 5}).Exec()
+			res, err := db.Insert().InsertPerson(&Person{Name: fmt.Sprintf("Jim %d", i), Age: i / 5}).Exec()
 			require.Nil(t, err, "Failed inserting")
 			assertRowsAffected(t, 1, res)
 		}
 
 		tests := []struct {
-			q    personorm.Counter
-			want []personorm.PersonCount
+			q    *PersonSelectBuilder
+			want []PersonCount
 		}{
 			{
 				q:    db.Select(),
-				want: []personorm.PersonCount{{Count: 100}},
+				want: []PersonCount{{Count: 100}},
 			},
 			{
-				q:    db.Select().Where(personorm.WhereAge(orm.OpLt, 10)),
-				want: []personorm.PersonCount{{Count: 50}},
+				q:    db.Select().Where(db.Where().Age(orm.OpLt, 10)),
+				want: []PersonCount{{Count: 50}},
 			},
 			{
-				q: db.Select().SelectAge().GroupByAge().Where(personorm.WhereAgeIn(1, 3, 12)),
-				want: []personorm.PersonCount{
-					{Person: example.Person{Age: 1}, Count: 5},
-					{Person: example.Person{Age: 3}, Count: 5},
-					{Person: example.Person{Age: 12}, Count: 5},
+				q: db.Select().SelectAge().GroupByAge().Where(db.Where().AgeIn(1, 3, 12)),
+				want: []PersonCount{
+					{Person: Person{Age: 1}, Count: 5},
+					{Person: Person{Age: 3}, Count: 5},
+					{Person: Person{Age: 12}, Count: 5},
 				},
 			},
 			{
-				q: db.Select().SelectAge().GroupByAge().Where(personorm.WhereAgeIn(1, 3, 12)).OrderByAge(orm.Desc),
-				want: []personorm.PersonCount{
-					{Person: example.Person{Age: 12}, Count: 5},
-					{Person: example.Person{Age: 3}, Count: 5},
-					{Person: example.Person{Age: 1}, Count: 5},
+				q: db.Select().SelectAge().GroupByAge().Where(db.Where().AgeIn(1, 3, 12)).OrderByAge(orm.Desc),
+				want: []PersonCount{
+					{Person: Person{Age: 12}, Count: 5},
+					{Person: Person{Age: 3}, Count: 5},
+					{Person: Person{Age: 1}, Count: 5},
 				},
 			},
 		}
@@ -388,7 +385,7 @@ func TestFirst(t *testing.T) {
 		_, err := db.Select().First()
 		assert.Equal(t, orm.ErrNotFound, err)
 
-		smith := example.Person{Name: "Smith", Age: 99}
+		smith := Person{Name: "Smith", Age: 99}
 		_, err = db.Insert().InsertPerson(&smith).Exec()
 		require.Nil(t, err)
 
@@ -396,7 +393,7 @@ func TestFirst(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, &smith, got)
 
-		john := example.Person{Name: "John", Age: 12}
+		john := Person{Name: "John", Age: 12}
 		_, err = db.Insert().InsertPerson(&john).Exec()
 		require.Nil(t, err)
 
@@ -404,7 +401,7 @@ func TestFirst(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, &smith, got)
 
-		got, err = db.Select().Where(personorm.WhereAge(orm.OpEq, 12)).First()
+		got, err = db.Select().Where(db.Where().Age(orm.OpEq, 12)).First()
 		assert.Nil(t, err)
 		assert.Equal(t, &john, got)
 
@@ -430,7 +427,7 @@ func TestNew(t *testing.T) {
 	require.Nil(t, err)
 	defer db.Close()
 
-	orm, err := personorm.New("sqlite3", db)
+	orm, err := NewPersonORM("sqlite3", db)
 	require.Nil(t, err)
 
 	if testing.Verbose() {
@@ -440,9 +437,9 @@ func TestNew(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func personDB(t *testing.T, conn conn) personorm.API {
+func personDB(t *testing.T, conn conn) PersonORM {
 	t.Helper()
-	db, err := personorm.New(conn.name, conn)
+	db, err := NewPersonORM(conn.name, conn)
 	require.Nil(t, err)
 	if testing.Verbose() {
 		db.Logger(t.Logf)
@@ -452,9 +449,9 @@ func personDB(t *testing.T, conn conn) personorm.API {
 	return db
 }
 
-func allDB(t *testing.T, conn conn) allorm.API {
+func allDB(t *testing.T, conn conn) AllORM {
 	t.Helper()
-	db, err := allorm.New(conn.name, conn)
+	db, err := NewAllORM(conn.name, conn)
 	require.Nil(t, err)
 	if testing.Verbose() {
 		db.Logger(t.Logf)
@@ -480,11 +477,12 @@ func testDBs(t *testing.T, testFunc func(t *testing.T, conn conn)) {
 				}
 				s, err := sql.Open(name, mySQLAddr)
 				require.Nil(t, err)
-				for _, table := range []string{"all", "person", "a2", "a", "c", "b"} {
-					t.Logf("Dropping table %s", table)
-					_, err = s.Exec(fmt.Sprintf("DROP TABLE IF EXISTS `%s`", table))
-					require.Nil(t, err)
-				}
+				_, err = s.Exec("DROP DATABASE IF EXISTS test")
+				require.Nil(t, err)
+				_, err = s.Exec("CREATE DATABASE test")
+				require.Nil(t, err)
+				_, err = s.Exec("USE test")
+				require.Nil(t, err)
 				testFunc(t, conn{name: name, DB: s})
 
 			case "sqlite3":

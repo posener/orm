@@ -46,7 +46,7 @@ func (g *Gen) ColumnCreateString(f *load.Field, sqlType sqltypes.Type) string {
 }
 
 func (*Gen) GoTypeToColumnType(t *load.Type) sqltypes.Type {
-	switch typeName := t.ExtNaked(); typeName {
+	switch typeName := t.ExtNaked(""); typeName {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
 		return sqltypes.Integer
 	case "float", "float8", "float16", "float32", "float64":
@@ -67,8 +67,9 @@ func (*Gen) GoTypeToColumnType(t *load.Type) sqltypes.Type {
 
 // ConvertValueCode returns go code for converting value returned from the
 // database to the given field.
-func (g *Gen) ConvertValueCode(field *load.Field, sqlType sqltypes.Type) string {
+func (g *Gen) ConvertValueCode(tp *load.Type, field *load.Field, sqlType sqltypes.Type) string {
 	s := tmpltType{
+		Type:        tp,
 		Field:       field,
 		ConvertType: g.convertType(field, sqlType),
 	}
@@ -82,15 +83,16 @@ func (g *Gen) ConvertValueCode(field *load.Field, sqlType sqltypes.Type) string 
 
 type tmpltType struct {
 	ConvertType string
+	Type        *load.Type
 	Field       *load.Field
 }
 
 var tmplt = template.Must(template.New("sqlite3").Parse(`
 				val, ok := vals[i].({{.ConvertType}})
 				if !ok {
-					return nil, fmt.Errorf(errMsg, "{{.Field.Name}}", i, vals[i], vals[i], "{{.Field.Type.ExtName}}")
+					return nil, common.ErrConvert("{{.Field.Name}}", i, vals[i], "{{.Field.Type.ExtName .Type.Package}}")
 				}
-				tmp := {{.Field.Type.ExtNaked}}(val)
+				tmp := {{.Field.Type.ExtNaked .Type.Package}}(val)
 				row.{{.Field.Name}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
 `))
 
@@ -106,6 +108,6 @@ func (g *Gen) convertType(f *load.Field, sqlType sqltypes.Type) string {
 	case sqltypes.Boolean:
 		return "bool"
 	default:
-		return f.Type.ExtNaked()
+		return f.Type.ExtNaked("")
 	}
 }
