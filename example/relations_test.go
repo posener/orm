@@ -1,15 +1,9 @@
-package example_test
+package example
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/posener/orm/example"
-	"github.com/posener/orm/example/a2orm"
-	"github.com/posener/orm/example/aorm"
-	"github.com/posener/orm/example/b2orm"
-	"github.com/posener/orm/example/borm"
-	"github.com/posener/orm/example/corm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,18 +13,18 @@ func TestRelationOneToOne(t *testing.T) {
 		aORM, _, cORM := orms(t, conn)
 
 		if conn.name != "sqlite3" { // this is not enforced in sqlite3
-			_, err := aORM.Insert().InsertA(&example.A{Name: "James", CPointer: &example.C{ID: -10}}).Exec()
+			_, err := aORM.Insert().InsertA(&A{Name: "James", CPointer: &C{ID: -10}}).Exec()
 			require.NotNil(t, err)
 		}
 
-		cItem := &example.C{Name: "The Hitchhiker's Guide to the Galaxy", Year: 1979}
+		cItem := &C{Name: "The Hitchhiker's Guide to the Galaxy", Year: 1979}
 
 		res, err := cORM.Insert().SetName(cItem.Name).SetYear(cItem.Year).Exec()
 		require.Nil(t, err)
 		cItem.ID, err = res.LastInsertId()
 		require.Nil(t, err)
 
-		aItem := &example.A{Name: "James", Age: 42, CPointer: cItem}
+		aItem := &A{Name: "James", Age: 42, CPointer: cItem}
 
 		res, err = aORM.Insert().InsertA(aItem).Exec()
 		require.Nil(t, err)
@@ -78,7 +72,7 @@ func TestRelationOneToMany(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		_, bORM, cORM := orms(t, conn)
 
-		bItem := &example.B{Name: "Marks", Hobbies: "drones"}
+		bItem := &B{Name: "Marks", Hobbies: "drones"}
 		res, err := bORM.Insert().InsertB(bItem).Exec()
 		require.Nil(t, err)
 		bItem.ID, err = res.LastInsertId()
@@ -91,7 +85,7 @@ func TestRelationOneToMany(t *testing.T) {
 		require.Equal(t, 1, len(bItems))
 		assert.Equal(t, bItem, &bItems[0])
 
-		bItem2 := &example.B{Name: "Yoko", Hobbies: "music"}
+		bItem2 := &B{Name: "Yoko", Hobbies: "music"}
 		res, err = bORM.Insert().InsertB(bItem2).Exec()
 		require.Nil(t, err)
 		bItem2.ID, err = res.LastInsertId()
@@ -113,11 +107,11 @@ func TestRelationOneToMany(t *testing.T) {
 	})
 }
 
-func generateCs(t *testing.T, cORM corm.API, bItem *example.B, count int) {
+func generateCs(t *testing.T, cORM CORM, bItem *B, count int) {
 	t.Helper()
-	var cItems []example.C
+	var cItems []C
 	for i := 0; i < count; i++ {
-		cItem := &example.C{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, BID: bItem.ID}
+		cItem := &C{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, BID: bItem.ID}
 		res, err := cORM.Insert().InsertC(cItem).Exec()
 		require.Nil(t, err)
 		cItem.ID, err = res.LastInsertId()
@@ -129,9 +123,9 @@ func generateCs(t *testing.T, cORM corm.API, bItem *example.B, count int) {
 
 func TestRelationOneToOneNonPointer(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
-		a, err := a2orm.New(conn.name, conn)
+		a, err := NewA2ORM(conn.name, conn)
 		require.Nil(t, err)
-		b, err := b2orm.New(conn.name, conn)
+		b, err := NewB2ORM(conn.name, conn)
 		require.Nil(t, err)
 		if testing.Verbose() {
 			a.Logger(t.Logf)
@@ -143,14 +137,14 @@ func TestRelationOneToOneNonPointer(t *testing.T) {
 		_, err = a.Create().Exec()
 		require.Nil(t, err)
 
-		bItem := &example.B2{Name: "The Hitchhiker's Guide to the Galaxy"}
+		bItem := &B2{Name: "The Hitchhiker's Guide to the Galaxy"}
 
 		res, err := b.Insert().InsertB2(bItem).Exec()
 		require.Nil(t, err)
 		bItem.ID, err = res.LastInsertId()
 		require.Nil(t, err)
 
-		aItem := &example.A2{B: *bItem}
+		aItem := &A2{B: *bItem}
 
 		res, err = a.Insert().InsertA2(aItem).Exec()
 		require.Nil(t, err)
@@ -173,13 +167,13 @@ func TestRelationOneToOneNonPointer(t *testing.T) {
 	})
 }
 
-func orms(t *testing.T, conn conn) (aorm.API, borm.API, corm.API) {
+func orms(t *testing.T, conn conn) (AORM, BORM, CORM) {
 	t.Helper()
-	a, err := aorm.New(conn.name, conn)
+	a, err := NewAORM(conn.name, conn)
 	require.Nil(t, err)
-	b, err := borm.New(conn.name, conn)
+	b, err := NewBORM(conn.name, conn)
 	require.Nil(t, err)
-	c, err := corm.New(conn.name, conn)
+	c, err := NewCORM(conn.name, conn)
 	require.Nil(t, err)
 	if testing.Verbose() {
 		a.Logger(t.Logf)

@@ -8,8 +8,8 @@ var {{$.Type.PrefixPrivate}}CreateColumnsStatements = map[string]string{
     {{ end -}}
 }
 
-// {{$.Type.PrefixPublic}}API is the interface of the ORM object
-type {{$.Type.PrefixPublic}}API interface {
+// {{$.Type.Name}}ORM is the interface of the ORM object
+type {{$.Type.Name}}ORM interface {
     Close() error
     Create() *{{$.Type.PrefixPublic}}CreateBuilder
     Select() *{{$.Type.PrefixPublic}}SelectBuilder
@@ -17,20 +17,22 @@ type {{$.Type.PrefixPublic}}API interface {
     Update() *{{$.Type.PrefixPublic}}UpdateBuilder
     Delete() *{{$.Type.PrefixPublic}}DeleteBuilder
 
+    Where() *{{$.Type.PrefixPublic}}WhereBuilder
+
     Logger(orm.Logger)
 }
 
-// {{$.Type.PrefixPublic}}Open opens database connection
-func {{$.Type.PrefixPublic}}Open(driverName, dataSourceName string) ({{$.Type.PrefixPublic}}API, error) {
+// Open{{$.Type.Name}}ORM opens database connection
+func Open{{$.Type.Name}}ORM(driverName, dataSourceName string) ({{$.Type.Name}}ORM, error) {
 	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return nil, err
 	}
-	return {{$.Type.PrefixPublic}}New(driverName, db)
+	return New{{$.Type.Name}}ORM(driverName, db)
 }
 
-// {{$.Type.PrefixPublic}}New returns an conn object from a db instance
-func {{$.Type.PrefixPublic}}New(driverName string, db orm.DB) ({{$.Type.PrefixPublic}}API, error) {
+// New{{$.Type.Name}}ORM returns an conn object from a db instance
+func New{{$.Type.Name}}ORM(driverName string, db orm.DB) ({{$.Type.Name}}ORM, error) {
 	d, err := dialect.New(driverName)
 	if err != nil {
 		return nil, err
@@ -81,6 +83,10 @@ func (c *{{.Type.PrefixPrivate}}Conn) Delete() *{{$.Type.PrefixPublic}}DeleteBui
 		params: common.DeleteParams{Table: {{$.Type.PrefixPrivate}}Table},
 		conn: c,
     }
+}
+
+func (c *{{.Type.PrefixPrivate}}Conn) Where() *{{$.Type.PrefixPublic}}WhereBuilder {
+	return &{{$.Type.PrefixPublic}}WhereBuilder{}
 }
 
 // Insert{{.Type.Name}} returns an SQL INSERT statement builder filled with values of a given object
