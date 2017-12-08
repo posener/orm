@@ -33,11 +33,10 @@ import (
 	
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm"
-	porm "package/personorm"
 )
 
 func main() {
-    db, err := porm.Open(dialect, source)
+    db, err := OpenPersonORM(dialect, source)
     defer db.Close()
     
     // Set a logger to log SQL commands
@@ -55,7 +54,7 @@ func main() {
     // Select rows from the table:
     ps, err := db.Select().
     	SelectAge().
-        Where(porm.WhereName(orm.OpNe, "John")).
+        Where(db.Where().Name(orm.OpNe, "John")).
         Query() // returns []example.Person, typed return value.
 
     println(ps[0].Age) // Output: 1
@@ -64,7 +63,7 @@ func main() {
     p, err := db.Select().First()
     
     // Delete row
-    _, err = db.Delete().Where(porm.WhereName(orm.Eq, "John")).Exec()
+    _, err = db.Delete().Where(db.Where().Name(orm.Eq, "John")).Exec()
 }
 ```
 
