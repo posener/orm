@@ -67,6 +67,9 @@ func TestLoad(t *testing.T) {
 				assert.Equal(t, tt.wantName, tp.Name)
 				assert.Equal(t, tt.wantFullName, tp.ExtName(""))
 				assert.Equal(t, tt.wantLocalName, tp.ExtName(tp.Package()))
+				for _, f := range tp.Fields {
+					f.ParentType = nil
+				}
 				assert.Equal(t, tt.wantFields, tp.Fields)
 				assert.Equal(t, tt.wantImportPath, tp.ImportPath)
 			}

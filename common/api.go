@@ -11,21 +11,18 @@ type Selector interface {
 	Count() bool
 }
 
-// JoinParams are parameters to perform a join operation:
-// ForeignKey defines on which key to perform the join
-// SelectColumns returns list of columns to select from the joined table, if empty
-// all columns will be selected.
+// JoinParams are parameters to perform a join operation
+// Field SelectParams is used to perform select operations on the join struct's field.
+// Pairings describe the relation between the join's fields
 type JoinParams struct {
-	ForeignKey
-	SelectColumns []string
+	SelectParams
+	Pairings []Pairing
 }
 
-// ForeignKey is a definition of how a column is a foreign key of another column
-// in a referenced table.
-type ForeignKey struct {
-	Column    string
-	RefTable  string
-	RefColumn string
+// Pairing describe a join relation
+type Pairing struct {
+	Column       string
+	JoinedColumn string
 }
 
 // StatementArger is interface for queries.

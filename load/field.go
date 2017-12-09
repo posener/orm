@@ -6,7 +6,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect/sqltypes"
 	"github.com/posener/orm/tags"
 )
@@ -15,6 +14,7 @@ const tagSQLType = "sql"
 
 // Field is a struct that represents type's field
 type Field struct {
+	ParentType *Type
 	// Type is the type of the field
 	Type Type
 	// Name is the field name
@@ -35,10 +35,16 @@ type Field struct {
 	Unique bool
 	// Default sets a default value for this column
 	Default    string
-	ForeignKey *common.ForeignKey
+	ForeignKey *ForeignKey
 }
 
-func newField(st *types.Struct, i int) (*Field, error) {
+// ForeignKey is a definition of how a column is a foreign key of another column
+// in a referenced table.
+type ForeignKey struct {
+	Src, Dst *Field
+}
+
+func newField(parent *Type, st *types.Struct, i int) (*Field, error) {
 	field := st.Field(i)
 	if !field.Exported() {
 		return nil, nil
@@ -52,12 +58,37 @@ func newField(st *types.Struct, i int) (*Field, error) {
 	}
 
 	f := &Field{
-		Name:     field.Name(),
-		Type:     *fieldType,
-		Embedded: field.Anonymous(),
+		ParentType: parent,
+		Name:       field.Name(),
+		Type:       *fieldType,
+		Embedded:   field.Anonymous(),
 	}
 
 	err = f.parseTags(st.Tag(i))
+
+	// if a slice of type 'A', find field in type 'A' that points to the type that the field belongs to.
+	switch {
+	case f.Type.Slice:
+		if f.Type.IsBasic() {
+			log.Printf("Ignoring field %s: slice of a basic type is not supported", f.Name)
+			return nil, nil
+		}
+		err = f.findExternalForeignKey()
+		if err != nil {
+			return nil, err
+		}
+	case f.IsReference():
+		err = f.findForeignKey()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// set primary key for parent type
+	if f.PrimaryKey {
+		f.ParentType.PrimaryKey = f
+	}
+
 	return f, err
 }
 
@@ -111,11 +142,34 @@ func (f *Field) setForeignKey(name string) error {
 	if foreignField == nil {
 		return fmt.Errorf("no column to reference in foregin table, table should have a primary key, or foreign key definition should incloud foreign column: <type name>#<field name>")
 	}
-	f.ForeignKey = &common.ForeignKey{
-		Column:    f.Column(),
-		RefTable:  foreignType.Table(),
-		RefColumn: foreignField.Column(),
+	f.ForeignKey = &ForeignKey{Src: f, Dst: foreignField}
+	return nil
+}
+
+// findExternalForeignKey looks for foreign key in type that points to this type
+// this is useful for slices of one-to-many relation
+func (f *Field) findExternalForeignKey() error {
+	for _, other := range f.Type.Fields {
+		if fk := other.ForeignKey; fk != nil && fk.Dst.ParentType.Table() == f.ParentType.Table() {
+			f.ForeignKey = &ForeignKey{Src: fk.Dst, Dst: fk.Src}
+			break
+		}
 	}
+	if f.ForeignKey == nil {
+		return fmt.Errorf("slice field %s -> %s: did not found foreign key in foreign type %s",
+			f.ParentType.ExtNaked(""), f.Name, f.Type.ExtNaked(""))
+	}
+	return nil
+}
+
+// findForeignKey finds the type that this field points to
+func (f *Field) findForeignKey() error {
+	pk := f.Type.PrimaryKey
+	if pk == nil {
+		return fmt.Errorf("field %s -> %s: points to type %s which does not have a primary key",
+			f.ParentType.ExtNaked(""), f.Name, f.Type.ExtNaked(""))
+	}
+	f.ForeignKey = &ForeignKey{Src: f, Dst: pk}
 	return nil
 }
 

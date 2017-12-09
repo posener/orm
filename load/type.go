@@ -1,14 +1,10 @@
 package load
 
 import (
-	"log"
 	"path/filepath"
 	"strings"
 
-	"fmt"
 	"go/types"
-
-	"github.com/posener/orm/common"
 )
 
 var basicTypes = map[string]bool{
@@ -174,49 +170,22 @@ func (t *Type) sliceStr() string {
 // this function might recursively call to the New function
 func (t *Type) loadFields(st *types.Struct) error {
 	for i := 0; i < st.NumFields(); i++ {
-		field, err := newField(st, i)
+		field, err := newField(t, st, i)
 		if err != nil {
 			return err
 		}
-		if field == nil {
-			continue
-		}
 		switch {
+		case field == nil:
 		case field.Embedded:
 			// Embedded field (aka anonymous)
 			// collect all their fields recursively to the parent fields.
 			for _, field := range field.Type.Fields {
 				t.Fields = append(t.Fields, field)
 			}
-		case field.Type.Slice:
-			if field.Type.IsBasic() {
-				log.Printf("Ignoring field %s: slice of a basic type is not supported", field.Name)
-				continue
-			}
-			for _, other := range field.Type.Fields {
-				if fk := other.ForeignKey; fk != nil && fk.RefTable == t.Table() {
-					field.ForeignKey = &common.ForeignKey{
-						RefTable:  field.Type.Table(),
-						RefColumn: other.Column(),
-						Column:    fk.RefColumn,
-					}
-					break
-				}
-			}
-			if field.ForeignKey == nil {
-				return fmt.Errorf("slice field %s -> %s: did not found foreign key in foreign type %s",
-					t.ExtNaked(t.Package()), field.Name, field.Type.ExtNaked(t.Package()))
-			}
-			t.Fields = append(t.Fields, field)
-
 		default:
 			// Basic type field: just add a field
-			if field.PrimaryKey {
-				t.PrimaryKey = field
-			}
 			t.Fields = append(t.Fields, field)
 		}
-
 	}
 	return nil
 }

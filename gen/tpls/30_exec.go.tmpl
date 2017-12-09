@@ -60,7 +60,7 @@ func (b *{{$.Public}}SelectBuilder) Query() ([]{{$.Type.ExtName $.Type.Package}}
 	    if err := ctx.Err(); err != nil  {
 	        return nil, err
 	    }
-		item, err := b.selector.First(b.conn.dialect.Name(), common.Values(*rows){{if .Type.HasOneToManyRelation}}, exists{{end}})
+		item, err := b.selector.Scan(b.conn.dialect.Name(), common.Values(*rows){{if .Type.HasOneToManyRelation}}, exists{{end}})
         if err != nil {
 			return nil, err
 		}
@@ -105,7 +105,7 @@ func (b *{{$.Public}}SelectBuilder) Count() ([]{{.Type.Name}}Count, error) {
 	    if err := ctx.Err(); err != nil  {
 	        return nil, err
 	    }
-		item, err := b.selector.FirstCount(b.conn.dialect.Name(), common.Values(*rows){{if .Type.HasOneToManyRelation}}, exists{{end}})
+		item, err := b.selector.ScanCount(b.conn.dialect.Name(), common.Values(*rows){{if .Type.HasOneToManyRelation}}, exists{{end}})
         if err != nil {
 			return nil, err
 		}
@@ -146,7 +146,7 @@ func (b *{{$.Public}}SelectBuilder) First() (*{{.Type.ExtName $.Type.Package}}, 
     if !found {
         return nil, orm.ErrNotFound
     }
-    item, err := b.selector.First(b.conn.dialect.Name(), common.Values(*rows){{if $.Type.HasOneToManyRelation}}, nil{{end}})
+    item, err := b.selector.Scan(b.conn.dialect.Name(), common.Values(*rows){{if $.Type.HasOneToManyRelation}}, nil{{end}})
     if err != nil {
         return nil, err
     }

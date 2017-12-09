@@ -2,11 +2,8 @@ package dialect
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
-	"github.com/posener/orm/common"
-	"github.com/posener/orm/dialect/format"
 	"github.com/posener/orm/dialect/mysql"
 	"github.com/posener/orm/dialect/sqlite3"
 	"github.com/posener/orm/dialect/sqltypes"
@@ -49,38 +46,17 @@ type GenImplementer interface {
 func (g *gen) ColumnsStatement(tp *load.Type) string {
 	var (
 		stmts []string
-		refs  []common.ForeignKey
+		refs  []*load.ForeignKey
 	)
 	for _, f := range tp.Fields {
-		switch {
-		case f.Type.Slice:
-		case f.IsReference():
-			var (
-				refType = f.Type
-				pk      = refType.PrimaryKey
-			)
-			if pk == nil {
-				log.Fatalf("Field %s (%s) is reference and does not have primary key defined", f.Name, refType.Name)
-			}
-			fk := common.ForeignKey{
-				Column:    f.Column(),
-				RefTable:  refType.Table(),
-				RefColumn: pk.Column(),
-			}
-			stmts = append(stmts, fmt.Sprintf("`%s` %s", fk.Column, string(g.columnType(refType.PrimaryKey))))
-			refs = append(refs, fk)
-		default:
+		if !f.Type.Slice {
 			stmts = append(stmts, g.ColumnCreateString(f, g.columnType(f)))
 			if fk := f.ForeignKey; fk != nil {
-				refs = append(refs, common.ForeignKey{
-					Column:    f.Column(),
-					RefTable:  fk.RefTable,
-					RefColumn: fk.RefColumn,
-				})
+				refs = append(refs, fk)
 			}
 		}
 	}
-	stmts = append(stmts, format.ForeignKey(refs)...)
+	stmts = append(stmts, foreignKeys(refs)...)
 	return strings.Join(stmts, ", ")
 }
 
@@ -93,4 +69,13 @@ func (g *gen) columnType(field *load.Field) sqltypes.Type {
 		return custom
 	}
 	return g.GoTypeToColumnType(field.SetType())
+}
+
+func foreignKeys(foreignKeys []*load.ForeignKey) []string {
+	var stmts []string
+	for _, fk := range foreignKeys {
+		stmts = append(stmts, fmt.Sprintf("FOREIGN KEY (`%s`) REFERENCES `%s`(`%s`)",
+			fk.Src.Column(), fk.Dst.ParentType.Table(), fk.Dst.ParentType.PrimaryKey.Column()))
+	}
+	return stmts
 }

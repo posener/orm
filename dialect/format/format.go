@@ -8,27 +8,39 @@ import (
 	"github.com/posener/orm/common"
 )
 
-// Columns extract SQL columns list statement
-func Columns(table string, c common.Selector) string {
-	var parts []string
+// Columns extract SQL wantCols list statement
+func Columns(p *common.SelectParams) string {
+	parts := columns(p)
 
-	if c == nil {
-		return fmt.Sprintf("`%s`.*", table)
-	}
-	cols := c.Columns()
-	parts = append(parts, formatColumns(table, cols, c.Count())...)
-	if joins := c.Joins(); joins != nil {
-		for _, join := range joins {
-			parts = append(parts, formatColumns(join.RefTable, join.SelectColumns, c.Count())...)
-		}
-	}
-	if c.Count() {
+	// we can add COUNT(*) only once and it work only on the most upper level
+	if p.Columns.Count() {
 		parts = append(parts, "COUNT(*)")
 	}
+
 	return strings.Join(parts, ", ")
 }
 
-func formatColumns(table string, cols []string, isCount bool) []string {
+func columns(p *common.SelectParams) []string {
+	var (
+		parts  []string
+		exists = make(map[string]bool)
+	)
+
+	parts = append(parts, collectColumns(p.Table, p.Columns.Columns(), p.Columns.Count())...)
+
+	for _, join := range p.Columns.Joins() {
+		for _, part := range columns(&join.SelectParams) {
+			if exists[part] {
+				continue
+			}
+			parts = append(parts, part)
+			exists[part] = true
+		}
+	}
+	return parts
+}
+
+func collectColumns(table string, cols []string, isCount bool) []string {
 	if len(cols) == 0 && !isCount {
 		return []string{fmt.Sprintf("`%s`.*", table)}
 	}
@@ -122,26 +134,34 @@ func AssignColumns(a common.Assignments) string {
 }
 
 // Join extract SQL join list statement
-func Join(table string, c common.Selector) string {
-	if c == nil {
-		return ""
-	}
-	joins := c.Joins()
+func Join(p *common.SelectParams) string {
+	return strings.Join(join(p), " ")
+}
+
+func join(p *common.SelectParams) []string {
+	joins := p.Columns.Joins()
 	if len(joins) == 0 {
-		return ""
+		return nil
 	}
 	var (
-		tables []string
-		conds  []string
+		tables    []string
+		conds     []string
+		recursive []string
 	)
 	for _, j := range joins {
-		tables = append(tables, fmt.Sprintf("`%s`", j.RefTable))
-		conds = append(conds, fmt.Sprintf("`%s`.`%s` = `%s`.`%s`", table, j.Column, j.RefTable, j.RefColumn))
+		tables = append(tables, fmt.Sprintf("`%s`", j.Table))
+		for _, pairing := range j.Pairings {
+			conds = append(conds, fmt.Sprintf("`%s`.`%s` = `%s`.`%s`", p.Table, pairing.Column, j.Table, pairing.JoinedColumn))
+		}
+		recursive = append(recursive, Join(&j.SelectParams))
 	}
-	return fmt.Sprintf("JOIN (%s) ON (%s)",
+
+	joinStmt := fmt.Sprintf("JOIN (%s) ON (%s)",
 		strings.Join(tables, ", "),
 		strings.Join(conds, " AND "),
 	)
+
+	return append([]string{joinStmt}, recursive...)
 }
 
 // IfNotExists formats an SQL IF NOT EXISTS statement
@@ -150,13 +170,4 @@ func IfNotExists(ifNotExists bool) string {
 		return "IF NOT EXISTS"
 	}
 	return ""
-}
-
-func ForeignKey(foreignKeys []common.ForeignKey) []string {
-	var stmts []string
-	for _, fk := range foreignKeys {
-		stmts = append(stmts, fmt.Sprintf("FOREIGN KEY (`%s`) REFERENCES `%s`(`%s`)",
-			fk.Column, fk.RefTable, fk.RefColumn))
-	}
-	return stmts
 }
