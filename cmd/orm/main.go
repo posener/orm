@@ -3,6 +3,9 @@ package main
 import (
 	"flag"
 	"log"
+	"strings"
+
+	"fmt"
 
 	"github.com/posener/orm/gen"
 	"github.com/posener/orm/load"
@@ -10,31 +13,51 @@ import (
 
 var (
 	options struct {
-		typeName string
+		types stringSlice
 	}
 )
 
+type stringSlice []string
+
+func (s *stringSlice) String() string {
+	return strings.Join(*s, ",")
+}
+
+func (s *stringSlice) Set(val string) error {
+	*s = append(*s, val)
+	return nil
+}
+
 func init() {
-	flag.StringVar(&options.typeName, "type", "", `Type name.
-	Might be of the form '<pkg>.<type>' or just '<type>'. Where:
-	- <pkg> can be either package name (e.x 'github.com/repository/project/package')
-	  or relative path (e.x './' or '../package').
-	- <type> should be the type name.`)
+	flag.Var(&options.types, "type", `Type name.
+        Might be of the form '<pkg>.<type>' or just '<type>'. Where:
+        - <pkg> can be either package name (e.x 'github.com/repository/project/package')
+          or relative path (e.x './' or '../package').
+        - <type> should be the type name.`)
 	flag.Parse()
 }
 
 func main() {
-	if options.typeName == "" {
+	if len(options.types) == 0 {
 		log.Fatal("Must give type full name")
 	}
-	tp, err := load.New(options.typeName)
-	failOnErr(err, "load type")
-	failOnErr(gen.Gen(tp), "generating")
-}
 
-func failOnErr(err error, msg string) {
-	if err == nil {
-		return
+	var errors []string
+
+	for _, typeName := range options.types {
+		tp, err := load.New(typeName)
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("[%s] load type: %s", typeName, err))
+			continue
+		}
+		err = gen.Gen(tp)
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("[%s] generate code: %s", typeName, err))
+		}
 	}
-	log.Fatal(msg + ": " + err.Error())
+	if len(errors) != 0 {
+		log.Fatalf("Failed:\n%s", strings.Join(errors, "\n"))
+	} else {
+		log.Printf("Finished successfully!")
+	}
 }
