@@ -1,4 +1,4 @@
-package format
+package dialect
 
 import (
 	"strings"
@@ -186,8 +186,8 @@ func TestColumnsJoin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.wantCols, func(t *testing.T) {
-			assert.Equal(t, tt.wantCols, Columns(&tt.p))
-			assert.Equal(t, tt.wantJoin, strings.Trim(Join(&tt.p), " "))
+			assert.Equal(t, tt.wantCols, columns(&tt.p))
+			assert.Equal(t, tt.wantJoin, strings.Trim(join(&tt.p), " "))
 		})
 	}
 }

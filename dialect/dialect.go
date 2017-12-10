@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/posener/orm/common"
-	"github.com/posener/orm/dialect/format"
 	"github.com/posener/orm/dialect/mysql"
 	"github.com/posener/orm/dialect/sqlite3"
 )
@@ -56,7 +55,7 @@ type dialect struct {
 // Create returns the SQL CREATE statement and arguments according to the given parameters
 func (d *dialect) Create(p *common.CreateParams) (string, []interface{}) {
 	stmt := fmt.Sprintf(`CREATE TABLE %s %s ( %s )`,
-		format.IfNotExists(p.IfNotExists),
+		IfNotExists(p.IfNotExists),
 		d.TableQuote(p.Table),
 		p.ColumnsStatement,
 	)
@@ -68,7 +67,7 @@ func (d *dialect) Create(p *common.CreateParams) (string, []interface{}) {
 func (d *dialect) Insert(p *common.InsertParams) (string, []interface{}) {
 	stmt := fmt.Sprintf(`INSERT INTO %s (%s) VALUES (%s)`,
 		d.TableQuote(p.Table),
-		format.AssignColumns(p.Assignments),
+		assignColumns(p.Assignments),
 		common.QMarks(len(p.Assignments)),
 	)
 
@@ -84,13 +83,13 @@ func (d *dialect) Insert(p *common.InsertParams) (string, []interface{}) {
 func (d *dialect) Select(p *common.SelectParams) (string, []interface{}) {
 
 	stmt := fmt.Sprintf("SELECT %s FROM %s %s %s %s %s %s",
-		format.Columns(p),
+		columns(p),
 		d.TableQuote(p.Table),
-		format.Join(p),
-		format.Where(p.Where),
-		format.GroupBy(p.Table, p.Groups),
-		format.OrderBy(p.Table, p.Orders),
-		format.Page(p.Page),
+		join(p),
+		where(p.Where),
+		groupBy(p.Table, p.Groups),
+		orderBy(p.Table, p.Orders),
+		page(p.Page),
 	)
 
 	var args []interface{}
@@ -105,7 +104,7 @@ func (d *dialect) Select(p *common.SelectParams) (string, []interface{}) {
 func (d *dialect) Delete(p *common.DeleteParams) (string, []interface{}) {
 	stmt := fmt.Sprintf("DELETE FROM %s %s",
 		d.TableQuote(p.Table),
-		format.Where(p.Where),
+		where(p.Where),
 	)
 
 	var args []interface{}
@@ -120,8 +119,8 @@ func (d *dialect) Delete(p *common.DeleteParams) (string, []interface{}) {
 func (d *dialect) Update(p *common.UpdateParams) (string, []interface{}) {
 	stmt := fmt.Sprintf(`UPDATE %s SET %s %s`,
 		d.TableQuote(p.Table),
-		format.AssignSets(p.Assignments),
-		format.Where(p.Where),
+		assignSets(p.Assignments),
+		where(p.Where),
 	)
 
 	var args []interface{}

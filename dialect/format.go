@@ -1,4 +1,4 @@
-package format
+package dialect
 
 import (
 	"bytes"
@@ -8,9 +8,9 @@ import (
 	"github.com/posener/orm/common"
 )
 
-// Columns extract SQL wantCols list statement
-func Columns(p *common.SelectParams) string {
-	parts := columns(p)
+// columns extract SQL wantCols list statement
+func columns(p *common.SelectParams) string {
+	parts := columnsParts(p)
 
 	// we can add COUNT(*) only once and it work only on the most upper level
 	if p.Columns.Count() {
@@ -20,16 +20,16 @@ func Columns(p *common.SelectParams) string {
 	return strings.Join(parts, ", ")
 }
 
-func columns(p *common.SelectParams) []string {
+func columnsParts(p *common.SelectParams) []string {
 	var (
 		parts  []string
 		exists = make(map[string]bool)
 	)
 
-	parts = append(parts, collectColumns(p.Table, p.Columns.Columns(), p.Columns.Count())...)
+	parts = append(parts, columnsCollect(p.Table, p.Columns.Columns(), p.Columns.Count())...)
 
 	for _, join := range p.Columns.Joins() {
-		for _, part := range columns(&join.SelectParams) {
+		for _, part := range columnsParts(&join.SelectParams) {
 			if exists[part] {
 				continue
 			}
@@ -40,7 +40,7 @@ func columns(p *common.SelectParams) []string {
 	return parts
 }
 
-func collectColumns(table string, cols []string, isCount bool) []string {
+func columnsCollect(table string, cols []string, isCount bool) []string {
 	if len(cols) == 0 && !isCount {
 		return []string{fmt.Sprintf("`%s`.*", table)}
 	}
@@ -51,8 +51,8 @@ func collectColumns(table string, cols []string, isCount bool) []string {
 	return parts
 }
 
-// Where formats an SQL WHERE statement
-func Where(c common.StatementArger) string {
+// where formats an SQL WHERE statement
+func where(c common.StatementArger) string {
 	if c == nil {
 		return ""
 	}
@@ -63,8 +63,8 @@ func Where(c common.StatementArger) string {
 	return "WHERE " + where
 }
 
-// GroupBy formats an SQL GROUP BY statement
-func GroupBy(table string, groups []common.Group) string {
+// groupBy formats an SQL GROUP BY statement
+func groupBy(table string, groups []common.Group) string {
 	if len(groups) == 0 {
 		return ""
 	}
@@ -77,8 +77,8 @@ func GroupBy(table string, groups []common.Group) string {
 	return s[:len(s)-2]
 }
 
-// OrderBy formats an SQL ORDER BY statement
-func OrderBy(table string, orders []common.Order) string {
+// orderBy formats an SQL ORDER BY statement
+func orderBy(table string, orders []common.Order) string {
 	if len(orders) == 0 {
 		return ""
 	}
@@ -92,8 +92,8 @@ func OrderBy(table string, orders []common.Order) string {
 	return s[:len(s)-2]
 }
 
-// Page formats an SQL LIMIT...OFFSET statement
-func Page(p common.Page) string {
+// page formats an SQL LIMIT...OFFSET statement
+func page(p common.Page) string {
 	if p.Limit == 0 { // why would someone ask for a page of zero size?
 		return ""
 	}
@@ -104,8 +104,8 @@ func Page(p common.Page) string {
 	return stmt
 }
 
-// AssignSets formats a list of assignments for SQL UPDATE SET statements
-func AssignSets(a common.Assignments) string {
+// assignSets formats a list of assignments for SQL UPDATE SET statements
+func assignSets(a common.Assignments) string {
 	if len(a) == 0 {
 		return ""
 	}
@@ -118,9 +118,9 @@ func AssignSets(a common.Assignments) string {
 	return s[:len(s)-2]
 }
 
-// AssignColumns gets an assignment list and formats the assign column names
+// assignColumns gets an assignment list and formats the assign column names
 // for an SQL INSERT STATEMENT
-func AssignColumns(a common.Assignments) string {
+func assignColumns(a common.Assignments) string {
 	if len(a) == 0 {
 		return ""
 	}
@@ -133,12 +133,12 @@ func AssignColumns(a common.Assignments) string {
 	return s[:len(s)-2]
 }
 
-// Join extract SQL join list statement
-func Join(p *common.SelectParams) string {
-	return strings.Join(join(p), " ")
+// join extract SQL join list statement
+func join(p *common.SelectParams) string {
+	return strings.Join(joinParts(p), " ")
 }
 
-func join(p *common.SelectParams) []string {
+func joinParts(p *common.SelectParams) []string {
 	joins := p.Columns.Joins()
 	if len(joins) == 0 {
 		return nil
@@ -153,7 +153,7 @@ func join(p *common.SelectParams) []string {
 		for _, pairing := range j.Pairings {
 			conds = append(conds, fmt.Sprintf("`%s`.`%s` = `%s`.`%s`", p.Table, pairing.Column, j.Table, pairing.JoinedColumn))
 		}
-		recursive = append(recursive, Join(&j.SelectParams))
+		recursive = append(recursive, joinParts(&j.SelectParams)...)
 	}
 
 	joinStmt := fmt.Sprintf("JOIN (%s) ON (%s)",
