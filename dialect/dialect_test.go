@@ -25,50 +25,50 @@ func TestCreate(t *testing.T) {
 	}{
 		{
 			fields: []*load.Field{
-				{Name: "Int", Type: load.Type{Name: "int"}},
-				{Name: "String", Type: load.Type{Name: "string"}},
-				{Name: "Bool", Type: load.Type{Name: "bool"}},
-				{Name: "Time", Type: load.Type{Name: "time.Time"}},
+				{Name: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}},
+				{Name: "String", Type: load.Type{Naked: &load.Naked{Name: "string"}}},
+				{Name: "Bool", Type: load.Type{Naked: &load.Naked{Name: "bool"}}},
+				{Name: "Time", Type: load.Type{Naked: &load.Naked{Name: "time.Time"}}},
 			},
 			sqlite3Want: "'int' INTEGER, 'string' TEXT, 'bool' BOOLEAN, 'time' TIMESTAMP",
 			mysqlWant:   "`int` INTEGER, `string` TEXT, `bool` BOOLEAN, `time` DATETIME(3)",
 		},
 		{
 			fields: []*load.Field{
-				{Name: "Int", Type: load.Type{Name: "int"}, PrimaryKey: true},
-				{Name: "String", Type: load.Type{Name: "string"}},
+				{Name: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}, PrimaryKey: true},
+				{Name: "String", Type: load.Type{Naked: &load.Naked{Name: "string"}}},
 			},
 			sqlite3Want: "'int' INTEGER PRIMARY KEY, 'string' TEXT",
 			mysqlWant:   "`int` INTEGER PRIMARY KEY, `string` TEXT",
 		},
 		{
 			fields: []*load.Field{
-				{Name: "Int", Type: load.Type{Name: "int"}, PrimaryKey: true, AutoIncrement: true},
-				{Name: "String", Type: load.Type{Name: "string"}},
+				{Name: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}, PrimaryKey: true, AutoIncrement: true},
+				{Name: "String", Type: load.Type{Naked: &load.Naked{Name: "string"}}},
 			},
 			sqlite3Want: "'int' INTEGER PRIMARY KEY AUTOINCREMENT, 'string' TEXT",
 			mysqlWant:   "`int` INTEGER PRIMARY KEY AUTO_INCREMENT, `string` TEXT",
 		},
 		{
 			fields: []*load.Field{
-				{Name: "Int", Type: load.Type{Name: "int"}},
-				{Name: "String", Type: load.Type{Name: "string"}, NotNull: true, Default: "xxx"},
+				{Name: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}},
+				{Name: "String", Type: load.Type{Naked: &load.Naked{Name: "string"}}, NotNull: true, Default: "xxx"},
 			},
 			sqlite3Want: "'int' INTEGER, 'string' TEXT NOT NULL DEFAULT xxx",
 			mysqlWant:   "`int` INTEGER, `string` TEXT NOT NULL DEFAULT xxx",
 		},
 		{
 			fields: []*load.Field{
-				{Name: "Int", Type: load.Type{Name: "int"}},
-				{Name: "String", Type: load.Type{Name: "string"}, CustomType: "VARCHAR(10)"},
+				{Name: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}},
+				{Name: "String", Type: load.Type{Naked: &load.Naked{Name: "string"}}, CustomType: "VARCHAR(10)"},
 			},
 			sqlite3Want: "'int' INTEGER, 'string' VARCHAR(10)",
 			mysqlWant:   "`int` INTEGER, `string` VARCHAR(10)",
 		},
 		{
 			fields: []*load.Field{
-				{Name: "Int", Type: load.Type{Name: "int"}},
-				{Name: "Time", Type: load.Type{Name: "time.Time"}, CustomType: "DATETIME"},
+				{Name: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}},
+				{Name: "Time", Type: load.Type{Naked: &load.Naked{Name: "time.Time"}}, CustomType: "DATETIME"},
 			},
 			sqlite3Want: "'int' INTEGER, 'time' DATETIME",
 			mysqlWant:   "`int` INTEGER, `time` DATETIME",
@@ -77,7 +77,7 @@ func TestCreate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.sqlite3Want, func(t *testing.T) {
-			tp := &load.Type{Name: "name", Fields: tt.fields}
+			tp := &load.Type{Naked: &load.Naked{Name: "name", Fields: tt.fields}}
 			genSqlite3 := &gen{GenImplementer: new(sqlite3.Gen)}
 			genMysql := &gen{GenImplementer: new(mysql.Gen)}
 			got := genSqlite3.ColumnsStatement(tp)

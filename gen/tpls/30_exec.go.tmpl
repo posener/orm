@@ -40,7 +40,7 @@ func (b *{{$.Public}}DeleteBuilder) Exec() (sql.Result, error) {
 }
 
 // Query the database
-func (b *{{$.Public}}SelectBuilder) Query() ([]{{$.Type.ExtName $.Type.Package}}, error) {
+func (b *{{$.Public}}SelectBuilder) Query() ([]{{$.Type.Ext $.Type.Package}}, error) {
     ctx := common.ContextOrBackground(b.params.Ctx)
     rows, err := b.query(ctx)
 	if err != nil {
@@ -49,10 +49,10 @@ func (b *{{$.Public}}SelectBuilder) Query() ([]{{$.Type.ExtName $.Type.Package}}
 	defer rows.Close()
 
 	var (
-	    items []{{$.Type.ExtName $.Type.Package}}
+	    items []{{$.Type.Ext $.Type.Package}}
         {{ if .Type.HasOneToManyRelation -}}
         // exists is a mapping from primary key to already parsed structs
-        exists = make(map[{{.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{.Type.ExtName $.Type.Package}})
+        exists = make(map[{{.Type.PrimaryKey.Type.Ext $.Type.Package}}]*{{.Type.Ext $.Type.Package}})
         {{ end -}}
     )
 	for rows.Next() {
@@ -97,7 +97,7 @@ func (b *{{$.Public}}SelectBuilder) Count() ([]{{.Type.Name}}Count, error) {
 	    items []{{.Type.Name}}Count
         {{ if .Type.HasOneToManyRelation -}}
         // exists is a mapping from primary key to already parsed structs
-        exists = make(map[{{.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{.Type.ExtName $.Type.Package}})
+        exists = make(map[{{.Type.PrimaryKey.Type.Ext $.Type.Package}}]*{{.Type.Ext $.Type.Package}})
         {{ end -}}
     )
 	for rows.Next() {
@@ -132,7 +132,7 @@ func (b *{{$.Public}}SelectBuilder) Count() ([]{{.Type.Name}}Count, error) {
 // If no row matches the query, an ErrNotFound will be returned.
 // This call cancels any paging that was set with the
 // {{$.Public}}SelectBuilder previously.
-func (b *{{$.Public}}SelectBuilder) First() (*{{.Type.ExtName $.Type.Package}}, error) {
+func (b *{{$.Public}}SelectBuilder) First() (*{{.Type.Ext $.Type.Package}}, error) {
     ctx := common.ContextOrBackground(b.params.Ctx)
     b.params.Page.Limit = 1
     b.params.Page.Offset = 0

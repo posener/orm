@@ -24,7 +24,7 @@ func (s *stringSlice) String() string {
 }
 
 func (s *stringSlice) Set(val string) error {
-	*s = append(*s, val)
+	*s = strings.Split(val, ",")
 	return nil
 }
 
@@ -48,6 +48,11 @@ func main() {
 		tp, err := load.New(typeName)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("[%s] load type: %s", typeName, err))
+			continue
+		}
+		err = tp.SetRelations()
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("[%s] setting relations: %s", typeName, err))
 			continue
 		}
 		err = gen.Gen(tp)

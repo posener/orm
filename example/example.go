@@ -2,7 +2,7 @@ package example
 
 import "time"
 
-//go:generate ../orm -type Person -type Employee -type All
+//go:generate ../orm -type Person,Employee,All
 
 // Person is en example struct for the ORM package
 type Person struct {

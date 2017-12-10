@@ -24,7 +24,7 @@ var (
 		},
 	}
 	importCache = map[string]*loader.Program{}
-	typeCache   = map[string]*Type{}
+	typeCache   = map[string]*Naked{}
 	cacheLock   sync.Mutex
 )
 
@@ -48,7 +48,7 @@ func loadProgram(importPath string) (*loader.Program, error) {
 // - if the type exists in the cache, it return the full type and true value
 // - if it does not exists, it sets it in the cache, return it and false value
 // the bool return value means 'exists in cache'
-func cacheGetOrUpdate(tp *Type) (*Type, bool) {
+func cacheGetOrUpdate(tp *Naked) (*Naked, bool) {
 	cacheLock.Lock()
 	defer cacheLock.Unlock()
 	fullName := tp.String()

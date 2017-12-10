@@ -150,7 +150,7 @@ func (b *{{$.Public}}InsertBuilder) Context(ctx context.Context) *{{$.Public}}In
 }
 
 // Insert{{.Type.Name}} returns an SQL INSERT statement builder filled with values of a given object
-func (b *{{$.Public}}InsertBuilder) Insert{{.Type.Name}}(p *{{.Type.ExtName $.Type.Package}}) *{{$.Public}}InsertBuilder {
+func (b *{{$.Public}}InsertBuilder) Insert{{.Type.Name}}(p *{{.Type.Ext $.Type.Package}}) *{{$.Public}}InsertBuilder {
 	{{ range $_, $f := .Type.Fields -}}
 	{{ if $f.IsSettable -}}
 	{{ if not $f.IsReference -}}
@@ -190,7 +190,7 @@ func (b *{{$.Public}}UpdateBuilder) Context(ctx context.Context) *{{$.Public}}Up
 }
 
 // Update{{.Type.Name}} update values for all struct fields
-func (b *{{$.Public}}UpdateBuilder) Update{{.Type.Name}}(p *{{.Type.ExtName $.Type.Package}}) *{{$.Public}}UpdateBuilder {
+func (b *{{$.Public}}UpdateBuilder) Update{{.Type.Name}}(p *{{.Type.Ext $.Type.Package}}) *{{$.Public}}UpdateBuilder {
 	{{ range $_, $f := .Type.Fields -}}
     {{ if $f.IsSettable -}}
 	{{ if not $f.IsReference -}}
@@ -235,13 +235,13 @@ func (b *{{$.Public}}DeleteBuilder) Context(ctx context.Context) *{{$.Public}}De
 
 {{ if $f.IsSettable -}}
 // Set{{$f.Name}} sets value for column {{$f.Column}} in the INSERT statement
-func (b *{{$.Public}}InsertBuilder) Set{{$f.Name}}(value {{$f.SetType.ExtName $.Type.Package}}) *{{$.Public}}InsertBuilder {
+func (b *{{$.Public}}InsertBuilder) Set{{$f.Name}}(value {{$f.SetType.Ext $.Type.Package}}) *{{$.Public}}InsertBuilder {
 	b.params.Assignments.Add("{{$f.Column}}", value)
 	return b
 }
 
 // Set{{$f.Name}} sets value for column {{$f.Column}} in the UPDATE statement
-func (b *{{$.Public}}UpdateBuilder) Set{{$f.Name}}(value {{$f.SetType.ExtName $.Type.Package}}) *{{$.Public}}UpdateBuilder {
+func (b *{{$.Public}}UpdateBuilder) Set{{$f.Name}}(value {{$f.SetType.Ext $.Type.Package}}) *{{$.Public}}UpdateBuilder {
 	b.params.Assignments.Add("{{$f.Column}}", value)
 	return b
 }
