@@ -1,18 +1,11 @@
 type {{$.Public}}Scanner interface {
-    Columns() []string
-    First(dialect string, values []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{.Type.ExtName $.Type.Package}}{{end}}) (*{{$.Type.ExtNaked $.Type.Package}}, error)
+    Params() common.SelectParams
+    Scan(dialect string, values []driver.Value{{if $.Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.Ext $.Type.Package}}]*{{.Type.Naked.Ext $.Type.Package}}{{end}}) (*{{$.Type.Naked.Ext $.Type.Package}}, int, error)
 }
-
-{{ range $_, $f := $.Type.References }}
-type {{$.Private}}{{$f.Name}}Scanner interface {
-    Columns() []string
-    First(dialect string, values []driver.Value{{if $f.Type.HasOneToManyRelation}}, exists map[{{$f.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{$f.Type.ExtName $.Type.Package}}{{end}}) (*{{$f.Type.ExtNaked $.Type.Package}}, error)
-}
-{{ end }}
 
 // {{.Type.Name}}Count is a struct for counting rows of type {{.Type.Name}}
 type {{.Type.Name}}Count struct {
-    {{.Type.ExtName $.Type.Package}}
+    {{.Type.Ext $.Type.Package}}
     Count int64
 }
 
@@ -23,8 +16,22 @@ type {{$.Public}}SelectBuilder struct {
 	selector {{$.Private}}Selector
 }
 
+// {{$.Private}}Scanner represents a builder that exposes only Params and Scan method
+type {{$.Private}}Scanner struct {
+    builder *{{$.Public}}SelectBuilder
+}
+
+func (s *{{$.Private}}Scanner) Params() common.SelectParams {
+    return s.builder.params
+}
+
+func (s *{{$.Private}}Scanner) Scan(dialect string, values []driver.Value{{if $.Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.Ext $.Type.Package}}]*{{$.Type.Naked.Ext $.Type.Package}}{{end}}) (*{{$.Type.Naked.Ext $.Type.Package}}, int, error) {
+    return s.builder.selector.Scan(dialect, values{{if $.Type.HasOneToManyRelation}}, exists{{end}})
+}
+
+// Scanner returns an object to be used in a join operation with {{$.Type.Name}}
 func (b *{{$.Public}}SelectBuilder) Scanner() {{$.Public}}Scanner {
-    return b.params.Columns.(*{{$.Private}}Selector)
+    return &{{$.Private}}Scanner{builder: b}
 }
 
 // Where applies where conditions on the query
@@ -54,8 +61,16 @@ func (b *{{$.Public}}SelectBuilder) Select{{$f.Name}}() *{{$.Public}}SelectBuild
     return b
 }
 {{ else }}
+
+// {{$.Private}}{{$f.Type.Name}}Scanner is a scanner that defined by .Select().Scanner()
+// of an ORM object for type {{$f.Type.Name}}
+type {{$.Private}}{{$f.Type.Name}}Scanner interface {
+    Params() common.SelectParams
+    Scan(dialect string, values []driver.Value{{if $f.Type.HasOneToManyRelation}}, exists map[{{$f.Type.PrimaryKey.Type.Ext $.Type.Package}}]*{{$f.Type.Naked.Ext $.Type.Package}}{{end}}) (*{{$f.Type.Naked.Ext $.Type.Package}}, int, error)
+}
+
 // Join{{$f.Name}} add a join query for {{$f.Name}}
-func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(scanner {{$.Private}}{{$f.Name}}Scanner) *{{$.Public}}SelectBuilder {
+func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(scanner {{$.Private}}{{$f.Type.Name}}Scanner) *{{$.Public}}SelectBuilder {
     b.selector.Join{{$f.Name}} = scanner
     return b
 }

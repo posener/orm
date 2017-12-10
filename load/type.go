@@ -1,14 +1,11 @@
 package load
 
 import (
+	"fmt"
+	"go/types"
 	"log"
 	"path/filepath"
 	"strings"
-
-	"fmt"
-	"go/types"
-
-	"github.com/posener/orm/common"
 )
 
 var basicTypes = map[string]bool{
@@ -32,14 +29,19 @@ var basicTypes = map[string]bool{
 
 // Type represents a go type attributes by it's name
 type Type struct {
+	*Naked
+	Pointer bool
+	Slice   bool
+}
+
+// Naked is a type definition without it's specific usage information
+type Naked struct {
 	Name string
 	// ImportPath is a path to add to the import section for this type
 	ImportPath string
 	// Fields is the list of exported fields
 	Fields     []*Field
 	PrimaryKey *Field
-	Pointer    bool
-	Slice      bool
 }
 
 // New loads a Type
@@ -47,13 +49,18 @@ func New(fullName string) (*Type, error) {
 	// []byte is different than any other type since it is allowed slice field
 	// which does not actually considered a slice
 	if fullName == "[]byte" || fullName == "*[]byte" {
-		return &Type{Name: strings.TrimLeft(fullName, "*"), Pointer: pointer(fullName)}, nil
+		return &Type{
+			Naked:   &Naked{Name: strings.TrimLeft(fullName, "*")},
+			Pointer: pointer(fullName),
+		}, nil
 	}
 	t := &Type{
-		Name:       typeName(fullName),
-		ImportPath: importPath(fullName),
-		Pointer:    pointer(fullName),
-		Slice:      slice(fullName),
+		Naked: &Naked{
+			Name:       typeName(fullName),
+			ImportPath: importPath(fullName),
+		},
+		Pointer: pointer(fullName),
+		Slice:   slice(fullName),
 	}
 
 	// if type is a basic type, we are done
@@ -72,37 +79,93 @@ func New(fullName string) (*Type, error) {
 
 	// now that we have the type's full name...
 	// before loading the fields, check if the type cached in the cache already
-	t, cached := cacheGetOrUpdate(t)
-	if !cached {
-		// the type was not in the cache, we should load all it's fields, which might lead
-		// to recursive calls to New function
-		err = t.loadFields(st)
+	var cached bool
+	t.Naked, cached = cacheGetOrUpdate(t.Naked)
+	if cached {
+		return t, err
 	}
-	return t, err
+	// the type was not in the cache, we should load all it's fields, which might lead
+	// to recursive calls to New function
+	err = t.loadFields(st)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("%s: creating graph", t.Naked)
+	for _, f := range t.Fields {
+		err := f.SetRefType()
+		if err != nil {
+			return nil, fmt.Errorf("set relation for field '%s': %s", f, err)
+		}
+		if f.RefType != nil {
+			log.Printf("Edge: %s -> %s", f, f.RefType)
+		}
+	}
+	return t, nil
+}
+
+func (t *Type) SetRelations() error {
+	log.Printf("%s: calculating foreign keys", t)
+	for _, f := range t.Fields {
+		err := f.SetForeignKey()
+		if err != nil {
+			return fmt.Errorf("set foreign key for field '%s': %s", f, err)
+		}
+	}
+	return nil
+}
+
+// loadFields iterate over the type's data structure and load all it's fields
+// this function might recursively call to the New function
+func (t *Naked) loadFields(st *types.Struct) error {
+	for i := 0; i < st.NumFields(); i++ {
+		field, err := newField(t, st, i)
+		if err != nil {
+			return err
+		}
+		switch {
+		case field == nil:
+		case field.Embedded:
+			// Embedded field (aka anonymous)
+			// collect all their fields recursively to the parent fields.
+			for _, field := range field.Type.Fields {
+				t.Fields = append(t.Fields, field)
+			}
+		default:
+			// Basic type field: just add a field
+			t.Fields = append(t.Fields, field)
+		}
+	}
+	return nil
+}
+
+func (t *Naked) String() string {
+	if t.ImportPath != "" {
+		return t.ImportPath + "." + t.Name
+	}
+	return t.Name
 }
 
 func (t *Type) String() string {
-	if t.ImportPath != "" {
-		return t.sliceStr() + t.pointerStr() + t.ImportPath + "." + t.Name
-	}
-	return t.sliceStr() + t.pointerStr() + t.Name
+	return t.sliceStr() + t.pointerStr() + t.Naked.String()
 }
 
 // Table is SQL table name of a type
-func (t *Type) Table() string {
+func (t *Naked) Table() string {
 	return strings.ToLower(t.Name)
 }
 
-// ExtName is the full type of the imported type, as used in a go code
-// outside the defining package. For example: "example.Person"
-func (t *Type) ExtName(curPkg string) string {
-	return t.sliceStr() + t.pointerStr() + t.ExtNaked(curPkg)
+// Ext return the type representation depending on the given package,
+// if it is the same package as the type's, it will return only it's
+// name. Otherwise, it will return the full "package.Name" semantic
+func (t *Type) Ext(curPkg string) string {
+	return t.sliceStr() + t.pointerStr() + t.Naked.Ext(curPkg)
 }
 
-// ExtNaked is the full type of the imported type in it's non-pointer form,
-// as used in a go code outside the defining package.
-// For example: "example.Person"
-func (t *Type) ExtNaked(curPkg string) string {
+// Ext return the type representation depending on the given package,
+// if it is the same package as the type's, it will return only it's
+// name. Otherwise, it will return the full "package.Name" semantic.
+func (t *Naked) Ext(curPkg string) string {
 	if t.Package() != "" && t.Package() != curPkg {
 		return t.Package() + "." + t.Name
 	}
@@ -112,13 +175,13 @@ func (t *Type) ExtNaked(curPkg string) string {
 // Package is the package name of the type
 // for example, type in "github.com/posener/orm/example" has the package
 // name: "example"
-func (t Type) Package() string {
+func (t *Naked) Package() string {
 	_, pkg := filepath.Split(t.ImportPath)
 	return pkg
 }
 
 func (t *Type) IsBasic() bool {
-	return basicTypes[t.ExtNaked("")]
+	return basicTypes[t.Naked.Ext("")]
 }
 
 // Imports returns a list of all imports for this type's fields
@@ -168,57 +231,6 @@ func (t *Type) sliceStr() string {
 		return "[]"
 	}
 	return ""
-}
-
-// loadFields iterate over the type's data structure and load all it's fields
-// this function might recursively call to the New function
-func (t *Type) loadFields(st *types.Struct) error {
-	for i := 0; i < st.NumFields(); i++ {
-		field, err := newField(st, i)
-		if err != nil {
-			return err
-		}
-		if field == nil {
-			continue
-		}
-		switch {
-		case field.Embedded:
-			// Embedded field (aka anonymous)
-			// collect all their fields recursively to the parent fields.
-			for _, field := range field.Type.Fields {
-				t.Fields = append(t.Fields, field)
-			}
-		case field.Type.Slice:
-			if field.Type.IsBasic() {
-				log.Printf("Ignoring field %s: slice of a basic type is not supported", field.Name)
-				continue
-			}
-			for _, other := range field.Type.Fields {
-				if fk := other.ForeignKey; fk != nil && fk.RefTable == t.Table() {
-					field.ForeignKey = &common.ForeignKey{
-						RefTable:  field.Type.Table(),
-						RefColumn: other.Column(),
-						Column:    fk.RefColumn,
-					}
-					break
-				}
-			}
-			if field.ForeignKey == nil {
-				return fmt.Errorf("slice field %s -> %s: did not found foreign key in foreign type %s",
-					t.ExtNaked(t.Package()), field.Name, field.Type.ExtNaked(t.Package()))
-			}
-			t.Fields = append(t.Fields, field)
-
-		default:
-			// Basic type field: just add a field
-			if field.PrimaryKey {
-				t.PrimaryKey = field
-			}
-			t.Fields = append(t.Fields, field)
-		}
-
-	}
-	return nil
 }
 
 // import path returns the import statement of a type

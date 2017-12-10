@@ -4,7 +4,7 @@ type {{$.Private}}Selector struct {
     {{ if not $f.IsReference -}}
     Select{{$f.Name}} bool
     {{ else -}}
-    Join{{$f.Name}} {{$.Private}}{{$f.Name}}Scanner
+    Join{{$f.Name}} {{$.Private}}{{$f.Type.Name}}Scanner
     {{ end -}}
     {{ end -}}
     count bool // used for sql COUNT(*) column
@@ -27,35 +27,18 @@ func (s *{{$.Private}}Selector) Columns() []string {
 func (s *{{$.Private}}Selector) Joins() []common.JoinParams {
 	var joins []common.JoinParams
     {{ range $_, $f := .Type.References -}}
-    {{ if $f.Type.Slice -}}
     if selector := s.Join{{$f.Name}}; selector != nil {
         // adding join of one to many relation, column in other type points to this type
         joins = append(joins, common.JoinParams{
-            ForeignKey: common.ForeignKey{
-                // column in this type that the other type is pointing on
-                Column: "{{$f.ForeignKey.Column}}",
-                // other type table
-                RefTable: "{{$f.ForeignKey.RefTable}}",
-                // other type column that points to this type
-                RefColumn: "{{$f.ForeignKey.RefColumn}}",
+            Pairings: []common.Pairing{
+                {
+                    Column: "{{$f.ForeignKey.Src.Column}}",
+                    JoinedColumn: "{{$f.ForeignKey.Dst.Column}}",
+                },
             },
-            SelectColumns: selector.Columns(),
+            SelectParams: selector.Params(),
         })
     }
-    {{ else -}}
-    if selector := s.Join{{$f.Name}}; selector != nil {
-        // join that this type points to another type's primary key
-        // this types [Column] points to [RefTable].[RefColumn]
-        joins = append(joins, common.JoinParams{
-            ForeignKey: common.ForeignKey{
-                Column: "{{$f.Column}}",
-                RefTable: "{{$f.Type.Table}}",
-                RefColumn: "{{$f.Type.PrimaryKey.Column}}",
-            },
-            SelectColumns: selector.Columns(),
-        })
-    }
-    {{ end }}
     {{ end }}
 	return joins
 }
@@ -65,29 +48,32 @@ func (s *{{$.Private}}Selector) Count() bool {
     return s.count
 }
 
-// FirstCount scans an SQL row to a {{.Type.Name}}Count struct
-func (s *{{$.Private}}Selector) FirstCount(dialect string, vals []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{.Type.ExtName $.Type.Package}}{{end}}) (*{{.Type.Name}}Count, error) {
+// Scan scans an SQL row to a {{.Type.Name}} struct
+// It returns the scanned {{.Type.Ext $.Type.Package}} and the number of scanned fields,
+// and an error in case of failure.
+func (s *{{$.Private}}Selector) Scan(dialect string, vals []driver.Value{{if $.Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.Ext $.Type.Package}}]*{{.Type.Ext $.Type.Package}}{{end}}) (*{{.Type.Ext $.Type.Package}}, int, error) {
+    item, n, err := s.ScanCount(dialect, vals{{if $.Type.HasOneToManyRelation}}, exists{{end}})
+    if err != nil {
+        return nil, n, err
+    }
+    return &item.{{.Type.Name}}, n, nil
+}
+
+// ScanCount scans an SQL row to a {{.Type.Name}}Count struct
+func (s *{{$.Private}}Selector) ScanCount(dialect string, vals []driver.Value{{if $.Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.Ext $.Type.Package}}]*{{.Type.Ext $.Type.Package}}{{end}}) (*{{.Type.Name}}Count, int, error) {
     switch dialect {
     {{- range $_, $dialect := $.Dialects }}
     case "{{$dialect.Name}}":
         return s.scan{{$dialect.Name}}(vals{{if $.Type.HasOneToManyRelation}}, exists{{end}})
     {{ end -}}
     default:
-        return nil, fmt.Errorf("unsupported dialect %s", dialect)
+        return nil, 0, fmt.Errorf("unsupported dialect %s", dialect)
     }
-}
-// First scans an SQL row to a {{.Type.Name}} struct
-func (s *{{$.Private}}Selector) First(dialect string, vals []driver.Value{{if .Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{.Type.ExtName $.Type.Package}}{{end}}) (*{{.Type.ExtName $.Type.Package}}, error) {
-    item, err := s.FirstCount(dialect, vals{{if .Type.HasOneToManyRelation}}, exists{{end}})
-    if err != nil {
-        return nil, err
-    }
-    return &item.{{.Type.Name}}, nil
 }
 
 {{ range $_, $dialect := $.Dialects }}
 // scan{{$dialect.Name}} scans {{$dialect.Name}} row to a {{$.Type.Name}} struct
-func (s *{{$.Private}}Selector) scan{{$dialect.Name}} (vals []driver.Value{{if $.Type.HasOneToManyRelation}}, exists map[{{$.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{$.Type.ExtName $.Type.Package}}{{end}}) (*{{$.Type.Name}}Count, error) {
+func (s *{{$.Private}}Selector) scan{{$dialect.Name}} (vals []driver.Value{{if $.Type.HasOneToManyRelation}}, exists map[{{$.Type.PrimaryKey.Type.Ext $.Type.Package}}]*{{$.Type.Ext $.Type.Package}}{{end}}) (*{{$.Type.Name}}Count, int, error) {
     var (
         row {{$.Type.Name}}Count
         all = s.selectAll()
@@ -97,6 +83,9 @@ func (s *{{$.Private}}Selector) scan{{$dialect.Name}} (vals []driver.Value{{if $
     {{ range $_, $f := $.Type.Fields }}
     {{ if not $f.IsReference }}
     if all || s.Select{{$f.Name}} {
+        if i >= len(vals) {
+            return nil, 0, fmt.Errorf("not enough columns returned: %d", len(vals))
+        }
         if vals[i] != nil && !rowExists {
 {{$dialect.ConvertValueCode $.Type $f}}
         }
@@ -126,26 +115,27 @@ func (s *{{$.Private}}Selector) scan{{$dialect.Name}} (vals []driver.Value{{if $
         case []byte:
             row.Count = common.ParseInt(val)
         default:
-            return nil, common.ErrConvert("COUNT(*)", i, vals[i], "int64, []byte")
+            return nil, 0, common.ErrConvert("COUNT(*)", i, vals[i], "int64, []byte")
         }
         i++
     }
 
     {{ range $_, $f := $.Type.References }}
     if j := s.Join{{$f.Name}}; j != nil {
-        tmp, err := j.First("{{$dialect.Name}}", vals[i:])
+        tmp, n, err := j.Scan("{{$dialect.Name}}", vals[i:]{{if $f.Type.HasOneToManyRelation}}, nil{{end}})
         if err != nil {
-            return nil, err
+            return nil, 0, fmt.Errorf("sub scanning {{$f.Name}}, cols [%d:%d]: %s", i, len(vals), err)
         }
         {{ if $f.Type.Slice -}}
         row.{{$f.Name}} = append(row.{{$f.Name}}, {{if not $f.Type.Pointer}}*{{end}}tmp)
         {{ else -}}
         row.{{$f.Name}} = {{ if not $f.Type.Pointer}}*{{end}}tmp
         {{ end -}}
+        i += n
     }
     {{ end }}
 
-    return &row, nil
+    return &row, i, nil
 }
 {{ end }}
 

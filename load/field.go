@@ -6,7 +6,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect/sqltypes"
 	"github.com/posener/orm/tags"
 )
@@ -15,6 +14,7 @@ const tagSQLType = "sql"
 
 // Field is a struct that represents type's field
 type Field struct {
+	ParentType *Naked
 	// Type is the type of the field
 	Type Type
 	// Name is the field name
@@ -34,31 +34,80 @@ type Field struct {
 	// Unique defines that 2 rows can't have the same value of this column
 	Unique bool
 	// Default sets a default value for this column
-	Default    string
-	ForeignKey *common.ForeignKey
+	Default         string
+	ForeignKeyValue string
+	RefType         *Naked
+	ForeignKey      *ForeignKey
 }
 
-func newField(st *types.Struct, i int) (*Field, error) {
-	field := st.Field(i)
-	if !field.Exported() {
+// ForeignKey is a definition of how a column is a foreign key of another column
+// in a referenced table.
+type ForeignKey struct {
+	Src, Dst *Field
+}
+
+func newField(parent *Naked, st *types.Struct, i int) (*Field, error) {
+	stField := st.Field(i)
+	if !stField.Exported() {
 		return nil, nil
 	}
 
-	log.Printf("loading field %s", field.Name())
+	log.Printf("loading field %s", stField.Name())
 
-	fieldType, err := New(field.Type().String())
+	fieldType, err := New(stField.Type().String())
 	if err != nil {
-		return nil, fmt.Errorf("creating type %s: %s", fieldType, err)
+		return nil, fmt.Errorf("creating type %s: %s", stField.Type().String(), err)
 	}
 
 	f := &Field{
-		Name:     field.Name(),
-		Type:     *fieldType,
-		Embedded: field.Anonymous(),
+		ParentType: parent,
+		Name:       stField.Name(),
+		Type:       *fieldType,
+		Embedded:   stField.Anonymous(),
+	}
+
+	// ignore slice of basic type - not supported
+	if f.Type.Slice && f.Type.IsBasic() {
+		log.Printf("Ignoring field %s: slice of a basic type is not supported", f.Name)
+		return nil, nil
 	}
 
 	err = f.parseTags(st.Tag(i))
+
+	// set primary key for parent type
+	if f.PrimaryKey {
+		log.Printf("Field %s: set as primary key", f)
+		f.ParentType.PrimaryKey = f
+	}
+
 	return f, err
+}
+
+func (f *Field) SetRefType() error {
+	switch {
+	case f.ForeignKeyValue != "":
+		return f.parseForeignKeyType(f.ForeignKeyValue)
+	case f.Type.Slice || f.IsReference():
+		f.RefType = f.Type.Naked
+		return nil
+	default:
+		return nil
+	}
+}
+
+func (f *Field) SetForeignKey() error {
+	switch {
+	case f.ForeignKeyValue != "":
+		return f.parseForeignKey(f.ForeignKeyValue)
+	case f.Type.Slice:
+		f.RefType = f.Type.Naked
+		return f.findExternalForeignKey()
+	case f.IsReference():
+		f.RefType = f.Type.Naked
+		return f.findForeignKey()
+	default:
+		return nil
+	}
 }
 
 // parseTags parses tags from a struct tags into a SQL struct.
@@ -85,23 +134,62 @@ func (f *Field) parseTags(tag string) error {
 		case "default":
 			f.Default = value
 		case "foreign key", "foreign_key", "foreignkey":
-			if err := f.setForeignKey(value); err != nil {
-				return fmt.Errorf("foreign key definition: %s", err)
-			}
+			f.ForeignKeyValue = value
 		}
 	}
 	return nil
 }
 
-func (f *Field) setForeignKey(name string) error {
-	typeName, fieldName := splitForeignKeyTag(name)
+// findExternalForeignKey looks for foreign key in type that points to this type
+// this is useful for slices of one-to-many relation
+func (f *Field) findExternalForeignKey() error {
+	log.Printf("%s: finding external fields", f)
+	for _, other := range f.RefType.Fields {
+		if other.RefType == nil {
+			continue
+		}
+		log.Printf("%s: looking at %s", f, other)
+		if other.RefType.Table() == f.ParentType.Table() {
+			f.ForeignKey = &ForeignKey{Src: f.ParentType.PrimaryKey, Dst: other}
+			break
+		}
+	}
+	if f.ForeignKey == nil {
+		return fmt.Errorf(
+			"slice field %s: did not found foreign key in foreign type %s",
+			f, f.RefType.Ext(""))
+	}
+	return nil
+}
+
+// findForeignKey finds the type that this field points to
+func (f *Field) findForeignKey() error {
+	pk := f.RefType.PrimaryKey
+	if pk == nil {
+		return fmt.Errorf(
+			"field %s: points to type %s which does not have a primary key",
+			f, f.RefType.Ext(""))
+	}
+	f.ForeignKey = &ForeignKey{Src: f, Dst: pk}
+	return nil
+}
+
+// parseForeignKey parses a foreign key tag
+func (f *Field) parseForeignKeyType(name string) error {
+	typeName, _ := splitForeignKeyTag(name)
 	foreignType, err := New(typeName)
 	if err != nil {
-		return err
+		return fmt.Errorf("load foregin key type '%s': %s", typeName, err)
 	}
-	foreignField := foreignType.PrimaryKey
+	f.RefType = foreignType.Naked
+	return nil
+}
+
+func (f *Field) parseForeignKey(name string) error {
+	_, fieldName := splitForeignKeyTag(name)
+	foreignField := f.RefType.PrimaryKey
 	if fieldName != "" {
-		for _, field := range foreignType.Fields {
+		for _, field := range f.RefType.Fields {
 			if field.Name == fieldName {
 				foreignField = field
 				break
@@ -109,13 +197,12 @@ func (f *Field) setForeignKey(name string) error {
 		}
 	}
 	if foreignField == nil {
-		return fmt.Errorf("no column to reference in foregin table, table should have a primary key, or foreign key definition should incloud foreign column: <type name>#<field name>")
+		return fmt.Errorf(
+			"field %s: no column to reference in foregin table, table should have a primary key, or foreign key definition should incloud foreign column: <type name>#<field name>",
+			f,
+		)
 	}
-	f.ForeignKey = &common.ForeignKey{
-		Column:    f.Column(),
-		RefTable:  foreignType.Table(),
-		RefColumn: foreignField.Column(),
-	}
+	f.ForeignKey = &ForeignKey{Src: f, Dst: foreignField}
 	return nil
 }
 
@@ -149,4 +236,8 @@ func (f *Field) SetType() *Type {
 // Column returns the SQL column name of a field
 func (f *Field) Column() string {
 	return strings.ToLower(f.Name)
+}
+
+func (f *Field) String() string {
+	return fmt.Sprintf("%s#%s", f.ParentType.Ext(""), f.Name)
 }

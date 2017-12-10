@@ -44,7 +44,7 @@ func (g *Gen) ColumnCreateString(f *load.Field, sqlType sqltypes.Type) string {
 }
 
 func (Gen) GoTypeToColumnType(t *load.Type) sqltypes.Type {
-	switch typeName := t.ExtNaked(""); typeName {
+	switch typeName := t.Naked.Ext(""); typeName {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
 		return sqltypes.Integer
 	case "float", "float8", "float16", "float32", "float64":
@@ -94,17 +94,17 @@ var tmplt = template.Must(template.New("mysql").Parse(`
 					row.{{.Field.Name}} = {{if .Field.Type.Pointer}}&{{end}}tmp
 				{{- if ne .ConvertType "[]byte" }}
 				case {{.ConvertType}}:
-					tmp := {{.Field.Type.ExtNaked .Type.Package}}(val)
+					tmp := {{.Field.Type.Naked.Ext .Type.Package}}(val)
 					row.{{.Field.Name}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
 				{{- end }}
 				default:
-					return nil, common.ErrConvert("{{.Field.Name}}", i, vals[i], "[]byte, {{.ConvertType}}")
+					return nil, 0, common.ErrConvert("{{.Field.Name}}", i, vals[i], "[]byte, {{.ConvertType}}")
 				}
 `))
 
 // convertFuncString is a function for converting the data from SQL to the right type
 func (g *Gen) convertFuncString(t *load.Type, f *load.Field, sqlType sqltypes.Type) string {
-	switch tp := f.SetType().ExtNaked(""); tp {
+	switch tp := f.SetType().Naked.Ext(""); tp {
 	case "string":
 		return "string(val)"
 	case "[]byte":
@@ -133,6 +133,6 @@ func (g *Gen) convertType(f *load.Field, sqlType sqltypes.Type) string {
 	case sqltypes.Boolean:
 		return "bool"
 	default:
-		return f.Type.ExtNaked("")
+		return f.Type.Naked.Ext("")
 	}
 }

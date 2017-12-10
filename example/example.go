@@ -2,7 +2,7 @@ package example
 
 import "time"
 
-//go:generate orm -type Person
+//go:generate ../orm -type Person,Employee,All
 
 // Person is en example struct for the ORM package
 type Person struct {
@@ -11,16 +11,12 @@ type Person struct {
 	unexported bool
 }
 
-//go:generate orm -type Employee
-
 // Employee is a person who works
 // This is a test case for struct embedding
 type Employee struct {
 	Person
 	Salary int
 }
-
-//go:generate orm -type All
 
 // All is to test generation of variant fields and types
 type All struct {

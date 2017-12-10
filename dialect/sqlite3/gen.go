@@ -46,7 +46,7 @@ func (g *Gen) ColumnCreateString(f *load.Field, sqlType sqltypes.Type) string {
 }
 
 func (*Gen) GoTypeToColumnType(t *load.Type) sqltypes.Type {
-	switch typeName := t.ExtNaked(""); typeName {
+	switch typeName := t.Naked.Ext(""); typeName {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
 		return sqltypes.Integer
 	case "float", "float8", "float16", "float32", "float64":
@@ -90,9 +90,9 @@ type tmpltType struct {
 var tmplt = template.Must(template.New("sqlite3").Parse(`
 				val, ok := vals[i].({{.ConvertType}})
 				if !ok {
-					return nil, common.ErrConvert("{{.Field.Name}}", i, vals[i], "{{.Field.Type.ExtName .Type.Package}}")
+					return nil, 0, common.ErrConvert("{{.Field.Name}}", i, vals[i], "{{.Field.Type.Ext .Type.Package}}")
 				}
-				tmp := {{.Field.Type.ExtNaked .Type.Package}}(val)
+				tmp := {{.Field.Type.Naked.Ext .Type.Package}}(val)
 				row.{{.Field.Name}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
 `))
 
@@ -108,6 +108,6 @@ func (g *Gen) convertType(f *load.Field, sqlType sqltypes.Type) string {
 	case sqltypes.Boolean:
 		return "bool"
 	default:
-		return f.Type.ExtNaked("")
+		return f.Type.Naked.Ext("")
 	}
 }

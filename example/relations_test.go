@@ -121,25 +121,46 @@ func generateCs(t *testing.T, cORM CORM, bItem *B, count int) {
 	}
 }
 
-func TestRelationOneToOneNonPointer(t *testing.T) {
+func TestRelationOneToOneNonPointerNested(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		a, err := NewA2ORM(conn.name, conn)
 		require.Nil(t, err)
 		b, err := NewB2ORM(conn.name, conn)
 		require.Nil(t, err)
+		c, err := NewC2ORM(conn.name, conn)
+		require.Nil(t, err)
+		d, err := NewD2ORM(conn.name, conn)
+		require.Nil(t, err)
 		if testing.Verbose() {
 			a.Logger(t.Logf)
 			b.Logger(t.Logf)
+			c.Logger(t.Logf)
+			d.Logger(t.Logf)
 		}
 
+		_, err = d.Create().Exec()
+		require.Nil(t, err)
+		_, err = c.Create().Exec()
+		require.Nil(t, err)
 		_, err = b.Create().Exec()
 		require.Nil(t, err)
 		_, err = a.Create().Exec()
 		require.Nil(t, err)
 
-		bItem := &B2{Name: "The Hitchhiker's Guide to the Galaxy"}
+		dItem := &D2{Name: "D"}
+		res, err := d.Insert().InsertD2(dItem).Exec()
+		require.Nil(t, err)
+		dItem.ID, err = res.LastInsertId()
+		require.Nil(t, err)
 
-		res, err := b.Insert().InsertB2(bItem).Exec()
+		cItem := &C2{Name: "C"}
+		res, err = c.Insert().InsertC2(cItem).Exec()
+		require.Nil(t, err)
+		cItem.ID, err = res.LastInsertId()
+		require.Nil(t, err)
+
+		bItem := &B2{Name: "B", C: cItem, D: dItem}
+		res, err = b.Insert().InsertB2(bItem).Exec()
 		require.Nil(t, err)
 		bItem.ID, err = res.LastInsertId()
 		require.Nil(t, err)
@@ -159,10 +180,99 @@ func TestRelationOneToOneNonPointer(t *testing.T) {
 			assert.Equal(t, int64(0), aItems[0].B.ID)
 		}
 
-		aItems, err = a.Select().JoinB(b.Select().Scanner()).Query()
+		// test nested join
+		aItems, err = a.Select().
+			JoinB(b.Select().
+				JoinC(c.Select().Scanner()).
+				JoinD(d.Select().Scanner()).
+				Scanner()).
+			Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
 			assert.Equal(t, aItem, &aItems[0])
+		}
+
+		// test nested join only one side
+		aItems, err = a.Select().
+			JoinB(b.Select().
+				JoinC(c.Select().Scanner()).
+				Scanner()).
+			Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(aItems)) {
+			aItem.B.D = nil
+			assert.Equal(t, aItem, &aItems[0])
+		}
+
+		// test one level join
+		aItems, err = a.Select().JoinB(b.Select().Scanner()).Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(aItems)) {
+			aItem.B.C = nil
+			assert.Equal(t, aItem, &aItems[0])
+		}
+
+	})
+}
+
+func TestBidirectionalOneToManyRelationship(t *testing.T) {
+	testDBs(t, func(t *testing.T, conn conn) {
+		a, err := NewA3ORM(conn.name, conn)
+		require.Nil(t, err)
+		b, err := NewB3ORM(conn.name, conn)
+		require.Nil(t, err)
+		if testing.Verbose() {
+			a.Logger(t.Logf)
+			b.Logger(t.Logf)
+		}
+
+		_, err = a.Create().Exec()
+		require.Nil(t, err)
+		_, err = b.Create().Exec()
+		require.Nil(t, err)
+
+		aItem := &A3{Name: "A"}
+		res, err := a.Insert().InsertA3(aItem).Exec()
+		require.Nil(t, err)
+		aItem.ID, err = res.LastInsertId()
+		require.Nil(t, err)
+
+		for i := 0; i < 10; i++ {
+			bItem := &B3{Name: fmt.Sprintf("B%d", i), A: aItem}
+			res, err := b.Insert().InsertB3(bItem).Exec()
+			require.Nil(t, err)
+			bItem.ID, err = res.LastInsertId()
+			require.Nil(t, err)
+			aItem.B = append(aItem.B, bItem)
+			bItem.A = nil // for later query comparison
+		}
+
+		aList, err := a.Select().Query()
+		require.Nil(t, err)
+		assert.Equal(t, 1, len(aList))
+		assert.Equal(t, "A", aList[0].Name)
+		assert.Equal(t, 0, len(aList[0].B))
+
+		aList, err = a.Select().JoinB(b.Select().Scanner()).Query()
+		require.Nil(t, err)
+		assert.Equal(t, 1, len(aList))
+		assert.Equal(t, aItem, &aList[0])
+
+		bList, err := b.Select().Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 10, len(bList)) {
+			assert.Equal(t, "B0", bList[0].Name)
+			assert.Nil(t, bList[0].A)
+		}
+
+		bList, err = b.Select().JoinA(a.Select().Scanner()).Query()
+		require.Nil(t, err)
+		assert.Equal(t, 10, len(bList))
+		for i, bItem := range bList {
+			assert.Equal(t, fmt.Sprintf("B%d", i), bItem.Name)
+			if assert.NotNil(t, bItem.A) {
+				assert.Equal(t, "A", bItem.A.Name)
+			}
 		}
 	})
 }

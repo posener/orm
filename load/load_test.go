@@ -27,8 +27,8 @@ func TestLoad(t *testing.T) {
 			wantFullName:  "example.Person",
 			wantLocalName: "Person",
 			wantFields: []*Field{
-				{Name: "Name", Type: Type{Name: "string"}},
-				{Name: "Age", Type: Type{Name: "int"}},
+				{Name: "Name", Type: Type{Naked: &Naked{Name: "string"}}},
+				{Name: "Age", Type: Type{Naked: &Naked{Name: "int"}}},
 			},
 			wantImportPath: "github.com/posener/orm/example",
 		},
@@ -38,8 +38,8 @@ func TestLoad(t *testing.T) {
 			wantFullName:  "example.Person",
 			wantLocalName: "Person",
 			wantFields: []*Field{
-				{Name: "Name", Type: Type{Name: "string"}},
-				{Name: "Age", Type: Type{Name: "int"}},
+				{Name: "Name", Type: Type{Naked: &Naked{Name: "string"}}},
+				{Name: "Age", Type: Type{Naked: &Naked{Name: "int"}}},
 			},
 			wantImportPath: "github.com/posener/orm/example",
 		},
@@ -49,9 +49,9 @@ func TestLoad(t *testing.T) {
 			wantFullName:  "example.Employee",
 			wantLocalName: "Employee",
 			wantFields: []*Field{
-				{Name: "Name", Type: Type{Name: "string"}},
-				{Name: "Age", Type: Type{Name: "int"}},
-				{Name: "Salary", Type: Type{Name: "int"}},
+				{Name: "Name", Type: Type{Naked: &Naked{Name: "string"}}},
+				{Name: "Age", Type: Type{Naked: &Naked{Name: "int"}}},
+				{Name: "Salary", Type: Type{Naked: &Naked{Name: "int"}}},
 			},
 			wantImportPath: "github.com/posener/orm/example",
 		},
@@ -65,8 +65,11 @@ func TestLoad(t *testing.T) {
 			} else {
 				require.Nil(t, err)
 				assert.Equal(t, tt.wantName, tp.Name)
-				assert.Equal(t, tt.wantFullName, tp.ExtName(""))
-				assert.Equal(t, tt.wantLocalName, tp.ExtName(tp.Package()))
+				assert.Equal(t, tt.wantFullName, tp.Ext(""))
+				assert.Equal(t, tt.wantLocalName, tp.Ext(tp.Package()))
+				for _, f := range tp.Fields {
+					f.ParentType = nil
+				}
 				assert.Equal(t, tt.wantFields, tp.Fields)
 				assert.Equal(t, tt.wantImportPath, tp.ImportPath)
 			}

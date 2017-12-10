@@ -20,14 +20,12 @@ before_install:
   - go get -u ./...
   - go get -u github.com/UnnoTed/fileb0x
   - go get -u golang.org/x/tools/cmd/goimports
-  - go generate ./gen/...
-  - go install ./cmd/orm
-  - go generate ./example/...
+  - make example
   - go get -t ./...
   - ./scripts/start-mysql.sh
 
 script:
-  - ./test.sh
+  - make test
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
