@@ -2,10 +2,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"strings"
-
-	"fmt"
 
 	"github.com/posener/orm/gen"
 	"github.com/posener/orm/load"

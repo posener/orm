@@ -53,7 +53,6 @@ func newField(parent *Naked, st *types.Struct, i int) (*Field, error) {
 	}
 
 	log.Printf("loading field %s", stField.Name())
-	defer log.Printf("loaded field %s", stField.Name())
 
 	fieldType, err := New(stField.Type().String())
 	if err != nil {

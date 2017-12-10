@@ -91,7 +91,7 @@ func New(fullName string) (*Type, error) {
 		return nil, err
 	}
 
-	log.Printf("%s: Creating types graph", t.Naked)
+	log.Printf("%s: creating graph", t.Naked)
 	for _, f := range t.Fields {
 		err := f.SetRefType()
 		if err != nil {
@@ -105,7 +105,7 @@ func New(fullName string) (*Type, error) {
 }
 
 func (t *Type) SetRelations() error {
-	log.Printf("%s: Calculating foreign keys", t)
+	log.Printf("%s: calculating foreign keys", t)
 	for _, f := range t.Fields {
 		err := f.SetForeignKey()
 		if err != nil {
