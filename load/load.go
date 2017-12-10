@@ -23,15 +23,24 @@ var (
 			Importer:                 importer.Default(),
 		},
 	}
-	loadCache = map[string]*Type{}
-	loadMu    sync.Mutex
+	importCache = map[string]*loader.Program{}
+	typeCache   = map[string]*Type{}
+	cacheLock   sync.Mutex
 )
 
 func loadProgram(importPath string) (*loader.Program, error) {
-	loadMu.Lock()
-	defer loadMu.Unlock()
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if p := importCache[importPath]; p != nil {
+		return p, nil
+	}
 	loadConfig.Import(importPath)
-	return loadConfig.Load()
+	p, err := loadConfig.Load()
+	if err != nil {
+		return nil, err
+	}
+	importCache[importPath] = p
+	return p, err
 }
 
 // cacheGetOrUpdate get or updates the cache.
@@ -40,13 +49,13 @@ func loadProgram(importPath string) (*loader.Program, error) {
 // - if it does not exists, it sets it in the cache, return it and false value
 // the bool return value means 'exists in cache'
 func cacheGetOrUpdate(tp *Type) (*Type, bool) {
-	loadMu.Lock()
-	defer loadMu.Unlock()
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	fullName := tp.String()
-	if loaded := loadCache[fullName]; loaded != nil {
+	if loaded := typeCache[fullName]; loaded != nil {
 		return loaded, true
 	}
-	loadCache[fullName] = tp
+	typeCache[fullName] = tp
 	return tp, false
 }
 
