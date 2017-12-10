@@ -61,13 +61,15 @@ func (b *{{$.Public}}SelectBuilder) Select{{$f.Name}}() *{{$.Public}}SelectBuild
 }
 {{ else }}
 
-type {{$.Private}}{{$f.Name}}Scanner interface {
+// {{$.Private}}{{$f.Type.Name}}Scanner is a scanner that defined by .Select().Scanner()
+// of an ORM object for type {{$f.Type.Name}}
+type {{$.Private}}{{$f.Type.Name}}Scanner interface {
     Params() common.SelectParams
     Scan(dialect string, values []driver.Value{{if $f.Type.HasOneToManyRelation}}, exists map[{{$f.Type.PrimaryKey.Type.ExtName $.Type.Package}}]*{{$f.Type.ExtName $.Type.Package}}{{end}}) (*{{$f.Type.ExtNaked $.Type.Package}}, error)
 }
 
 // Join{{$f.Name}} add a join query for {{$f.Name}}
-func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(scanner {{$.Private}}{{$f.Name}}Scanner) *{{$.Public}}SelectBuilder {
+func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(scanner {{$.Private}}{{$f.Type.Name}}Scanner) *{{$.Public}}SelectBuilder {
     b.selector.Join{{$f.Name}} = scanner
     return b
 }
