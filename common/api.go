@@ -21,7 +21,9 @@ type JoinParams struct {
 
 // Pairing describe a join relation
 type Pairing struct {
-	Column       string
+	// Column is the column in the current table for the JOIN statement
+	Column string
+	// JoinedColumn is the column in the referenced table for the JOIN statement
 	JoinedColumn string
 }
 

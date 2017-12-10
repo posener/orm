@@ -1,9 +1,8 @@
 package format
 
 import (
-	"testing"
-
 	"strings"
+	"testing"
 
 	"github.com/posener/orm/common"
 	"github.com/stretchr/testify/assert"

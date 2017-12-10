@@ -29,6 +29,7 @@ func (s *{{$.Private}}Scanner) Scan(dialect string, values []driver.Value{{if .T
     return  s.builder.selector.Scan(dialect, values{{if .Type.HasOneToManyRelation}}, exists{{end}})
 }
 
+// Scanner returns an object to be used in a join operation with {{$.Type.Name}}
 func (b *{{$.Public}}SelectBuilder) Scanner() {{$.Public}}Scanner {
     return &{{$.Private}}Scanner{builder: b}
 }
