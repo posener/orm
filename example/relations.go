@@ -1,6 +1,6 @@
 package example
 
-//go:generate ../orm -type A -type B -type C -type A2 -type B2
+//go:generate ../orm -type A -type B -type C -type A2 -type B2 -type C2 -type D2
 
 type A struct {
 	ID       int64 `sql:"primary key;auto increment"`
@@ -29,6 +29,18 @@ type A2 struct {
 }
 
 type B2 struct {
+	ID   int64 `sql:"primary key;auto increment"`
+	Name string
+	C    *C2
+	D    *D2
+}
+
+type C2 struct {
+	ID   int64 `sql:"primary key;auto increment"`
+	Name string
+}
+
+type D2 struct {
 	ID   int64 `sql:"primary key;auto increment"`
 	Name string
 }

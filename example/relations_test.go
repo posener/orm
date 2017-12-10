@@ -121,25 +121,46 @@ func generateCs(t *testing.T, cORM CORM, bItem *B, count int) {
 	}
 }
 
-func TestRelationOneToOneNonPointer(t *testing.T) {
+func TestRelationOneToOneNonPointerNested(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		a, err := NewA2ORM(conn.name, conn)
 		require.Nil(t, err)
 		b, err := NewB2ORM(conn.name, conn)
 		require.Nil(t, err)
+		c, err := NewC2ORM(conn.name, conn)
+		require.Nil(t, err)
+		d, err := NewD2ORM(conn.name, conn)
+		require.Nil(t, err)
 		if testing.Verbose() {
 			a.Logger(t.Logf)
 			b.Logger(t.Logf)
+			c.Logger(t.Logf)
+			d.Logger(t.Logf)
 		}
 
+		_, err = d.Create().Exec()
+		require.Nil(t, err)
+		_, err = c.Create().Exec()
+		require.Nil(t, err)
 		_, err = b.Create().Exec()
 		require.Nil(t, err)
 		_, err = a.Create().Exec()
 		require.Nil(t, err)
 
-		bItem := &B2{Name: "The Hitchhiker's Guide to the Galaxy"}
+		dItem := &D2{Name: "D"}
+		res, err := d.Insert().InsertD2(dItem).Exec()
+		require.Nil(t, err)
+		dItem.ID, err = res.LastInsertId()
+		require.Nil(t, err)
 
-		res, err := b.Insert().InsertB2(bItem).Exec()
+		cItem := &C2{Name: "C"}
+		res, err = c.Insert().InsertC2(cItem).Exec()
+		require.Nil(t, err)
+		cItem.ID, err = res.LastInsertId()
+		require.Nil(t, err)
+
+		bItem := &B2{Name: "B", C: cItem, D: dItem}
+		res, err = b.Insert().InsertB2(bItem).Exec()
 		require.Nil(t, err)
 		bItem.ID, err = res.LastInsertId()
 		require.Nil(t, err)
@@ -159,11 +180,27 @@ func TestRelationOneToOneNonPointer(t *testing.T) {
 			assert.Equal(t, int64(0), aItems[0].B.ID)
 		}
 
-		aItems, err = a.Select().JoinB(b.Select().Scanner()).Query()
+		// test nested join
+		aItems, err = a.Select().
+			JoinB(b.Select().
+				JoinC(c.Select().Scanner()).
+				JoinD(d.Select().Scanner()).
+				Scanner()).
+			Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
 			assert.Equal(t, aItem, &aItems[0])
 		}
+
+		// test one level join
+		aItems, err = a.Select().JoinB(b.Select().Scanner()).Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(aItems)) {
+			aItem.B.C = nil
+			aItem.B.D = nil
+			assert.Equal(t, aItem, &aItems[0])
+		}
+
 	})
 }
 
