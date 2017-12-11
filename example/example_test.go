@@ -470,12 +470,16 @@ func testDBs(t *testing.T, testFunc func(t *testing.T, conn conn)) {
 	t.Helper()
 	for _, name := range dbNames {
 		t.Run(name, func(t *testing.T) {
+			var (
+				s   *sql.DB
+				err error
+			)
 			switch name {
 			case "mysql":
 				if mySQLAddr == "" {
 					t.Skipf("mysql environment is not set")
 				}
-				s, err := sql.Open(name, mySQLAddr)
+				s, err = sql.Open(name, mySQLAddr)
 				require.Nil(t, err)
 				_, err = s.Exec("DROP DATABASE IF EXISTS test")
 				require.Nil(t, err)
@@ -483,17 +487,18 @@ func testDBs(t *testing.T, testFunc func(t *testing.T, conn conn)) {
 				require.Nil(t, err)
 				_, err = s.Exec("USE test")
 				require.Nil(t, err)
-				testFunc(t, conn{name: name, DB: s})
 
 			case "sqlite3":
-				s, err := sql.Open(name, ":memory:")
+				os.Remove("test.db")
+				s, err = sql.Open(name, "test.db")
 				require.Nil(t, err)
-				defer s.Close()
-				testFunc(t, conn{name: name, DB: s})
 
 			default:
 				panic("unknown db")
 			}
+
+			defer s.Close()
+			testFunc(t, conn{name: name, DB: s})
 
 		})
 	}

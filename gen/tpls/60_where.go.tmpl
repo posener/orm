@@ -3,7 +3,7 @@ type {{$.Public}}WhereBuilder struct {}
 {{range $_, $f := .Type.Fields}}
 // {{$.Public}}Where{{$f.Name}} adds a condition on {{$f.Name}} to the WHERE statement
 func (*{{$.Public}}WhereBuilder) {{$f.Name}}(op common.Op, val {{$f.Type.Ext $.Type.Package}}) common.Where {
-	return common.NewWhere(op, "{{$.Type.Table}}", "{{$f.Column}}", val)
+	return common.NewWhere(op, "{{$f.Column}}", val)
 }
 
 // {{$.Public}}Where{{$f.Name}}In adds an IN condition on {{$f.Name}} to the WHERE statement
@@ -12,11 +12,11 @@ func (*{{$.Public}}WhereBuilder) {{$f.Name}}In(vals ...{{$f.Type.Ext $.Type.Pack
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("{{$.Type.Table}}", "{{$f.Column}}", args...)
+	return common.NewWhereIn("{{$f.Column}}", args...)
 }
 
 // {{$.Public}}Where{{$f.Name}}Between adds a BETWEEN condition on {{$f.Name}} to the WHERE statement
 func (*{{$.Public}}WhereBuilder) {{$f.Name}}Between(low, high {{$f.Type.Ext $.Type.Package}}) common.Where {
-	return common.NewWhereBetween("{{$.Type.Table}}", "{{$f.Column}}", low, high)
+	return common.NewWhereBetween("{{$f.Column}}", low, high)
 }
 {{end}}

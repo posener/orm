@@ -10,7 +10,7 @@ import (
 
 // columns extract SQL wantCols list statement
 func columns(p *common.SelectParams) string {
-	parts := columnsParts(p)
+	parts := columnsParts(p.Table, p)
 
 	// we can add COUNT(*) only once and it work only on the most upper level
 	if p.Columns.Count() {
@@ -20,16 +20,16 @@ func columns(p *common.SelectParams) string {
 	return strings.Join(parts, ", ")
 }
 
-func columnsParts(p *common.SelectParams) []string {
+func columnsParts(table string, p *common.SelectParams) []string {
 	var (
 		parts  []string
 		exists = make(map[string]bool)
 	)
 
-	parts = append(parts, columnsCollect(p.Table, p.Columns.Columns(), p.Columns.Count())...)
+	parts = append(parts, columnsCollect(table, p.Columns.Columns(), p.Columns.Count())...)
 
 	for _, join := range p.Columns.Joins() {
-		for _, part := range columnsParts(&join.SelectParams) {
+		for _, part := range columnsParts(join.TableName(p.Table), &join.SelectParams) {
 			if exists[part] {
 				continue
 			}
@@ -53,23 +53,35 @@ func columnsCollect(table string, cols []string, isCount bool) []string {
 
 // whereJoin takes SelectParams and traverse all the join options
 // it concat all the conditions with an AND operator
-func whereJoin(p *common.SelectParams) common.Where {
-	w := p.Where
-	for _, join := range p.Columns.Joins() {
-		if w != nil {
-			w = w.And(whereJoin(&join.SelectParams))
-		} else {
-			w = join.SelectParams.Where
-		}
+func whereJoin(table string, p *common.SelectParams) string {
+	stmt := whereJoinRec(table, p)
+	if stmt == "" {
+		return ""
 	}
-	return w
+	return "WHERE " + stmt
 }
 
-func where(c common.StatementArger) string {
+func whereJoinRec(table string, p *common.SelectParams) string {
+	var parts []string
+	if p.Where != nil {
+		if w := p.Where.Statement(table); w != "" {
+			parts = append(parts, w)
+		}
+	}
+	for _, join := range p.Columns.Joins() {
+		joinCond := whereJoinRec(join.TableName(table), &join.SelectParams)
+		if joinCond != "" {
+			parts = append(parts, joinCond)
+		}
+	}
+	return strings.Join(parts, " AND ")
+}
+
+func where(table string, c common.StatementArger) string {
 	if c == nil {
 		return ""
 	}
-	where := c.Statement()
+	where := c.Statement(table)
 	if len(where) == 0 {
 		return ""
 	}
@@ -144,37 +156,6 @@ func assignColumns(a common.Assignments) string {
 
 	s := b.String()
 	return s[:len(s)-2]
-}
-
-// join extract SQL join list statement
-func join(p *common.SelectParams) string {
-	return strings.Join(joinParts(p), " ")
-}
-
-func joinParts(p *common.SelectParams) []string {
-	joins := p.Columns.Joins()
-	if len(joins) == 0 {
-		return nil
-	}
-	var (
-		tables    []string
-		conds     []string
-		recursive []string
-	)
-	for _, j := range joins {
-		tables = append(tables, fmt.Sprintf("`%s`", j.Table))
-		for _, pairing := range j.Pairings {
-			conds = append(conds, fmt.Sprintf("`%s`.`%s` = `%s`.`%s`", p.Table, pairing.Column, j.Table, pairing.JoinedColumn))
-		}
-		recursive = append(recursive, joinParts(&j.SelectParams)...)
-	}
-
-	joinStmt := fmt.Sprintf("JOIN (%s) ON (%s)",
-		strings.Join(tables, ", "),
-		strings.Join(conds, " AND "),
-	)
-
-	return append([]string{joinStmt}, recursive...)
 }
 
 // IfNotExists formats an SQL IF NOT EXISTS statement

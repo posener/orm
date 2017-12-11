@@ -1,6 +1,6 @@
 package example
 
-//go:generate ../orm -type A,B,C,A2,B2,C2,D2,A3,B3
+//go:generate ../orm -type A,B,C,A2,B2,C2,D2,A3,B3,A4,B4
 
 // A, B, C test simple one-to-one (A->C) and one-to-many(B->C) relationships
 type A struct {
@@ -59,4 +59,16 @@ type B3 struct {
 	ID   int64 `sql:"primary key;auto increment"`
 	Name string
 	A    *A3 `sql:"foreign key:./.A3;null"`
+}
+
+// A4, B4 test multiple fields with the same reference type
+type A4 struct {
+	ID     int64 `sql:"primary key;auto increment"`
+	Name   string
+	B1, B2 *B4
+}
+
+type B4 struct {
+	ID   int64 `sql:"primary key;auto increment"`
+	Name string
 }

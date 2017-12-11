@@ -1,5 +1,7 @@
 package common
 
+import "strings"
+
 // Op is an SQL comparison operation
 type Op string
 
@@ -27,10 +29,21 @@ type Pairing struct {
 	JoinedColumn string
 }
 
+// TableName creates a table name for a join operation
+// this is useful in case several fields referencing the same table
+func (j *JoinParams) TableName(parentTable string) string {
+	parts := make([]string, 0, len(j.Pairings)+1)
+	parts = append(parts, parentTable)
+	for _, pairing := range j.Pairings {
+		parts = append(parts, pairing.Column)
+	}
+	return strings.Join(parts, "_")
+}
+
 // StatementArger is interface for queries.
 // The statement and the args are given to the SQL query.
 type StatementArger interface {
-	Statement() string
+	Statement(string) string
 	Args() []interface{}
 }
 

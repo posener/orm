@@ -41,14 +41,14 @@ func TestRelationOneToOne(t *testing.T) {
 		}
 
 		// query with join, A.CPointer should be filled with aORM's properties
-		aItems, err = aORM.Select().JoinCPointer(cORM.Select().Scanner()).Query()
+		aItems, err = aORM.Select().JoinCPointer(cORM.Select().Joiner()).Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
 			assert.Equal(t, aItem, &aItems[0])
 		}
 
 		// query with join, A.CPointer should be filled with aORM's properties
-		aItems, err = aORM.Select().JoinCPointer(cORM.Select().SelectName().Scanner()).Query()
+		aItems, err = aORM.Select().JoinCPointer(cORM.Select().SelectName().Joiner()).Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
 			assert.Equal(t, aItem.Name, aItems[0].Name)
@@ -58,7 +58,7 @@ func TestRelationOneToOne(t *testing.T) {
 		}
 
 		// query with join, A.CPointer should be filled with aORM's properties
-		aItems, err = aORM.Select().SelectName().JoinCPointer(cORM.Select().SelectYear().Scanner()).Query()
+		aItems, err = aORM.Select().SelectName().JoinCPointer(cORM.Select().SelectYear().Joiner()).Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
 			assert.Equal(t, aItem.Name, aItems[0].Name)
@@ -81,7 +81,7 @@ func TestRelationOneToMany(t *testing.T) {
 
 		generateCs(t, cORM, bItem, 10)
 
-		bItems, err := bORM.Select().JoinCsPointer(cORM.Select().Scanner()).Query()
+		bItems, err := bORM.Select().JoinCsPointer(cORM.Select().Joiner()).Query()
 		require.Nil(t, err)
 		require.Equal(t, 1, len(bItems))
 		assert.Equal(t, bItem, &bItems[0])
@@ -93,14 +93,14 @@ func TestRelationOneToMany(t *testing.T) {
 		require.Nil(t, err)
 
 		// expect to get only one b, since the second b doesn't have any c related
-		bItems, err = bORM.Select().JoinCsPointer(cORM.Select().Scanner()).Query()
+		bItems, err = bORM.Select().JoinCsPointer(cORM.Select().Joiner()).Query()
 		require.Nil(t, err)
 		require.Equal(t, 1, len(bItems))
 		assert.Equal(t, bItem, &bItems[0])
 
 		generateCs(t, cORM, bItem2, 5)
 
-		bItems, err = bORM.Select().JoinCsPointer(cORM.Select().Scanner()).Query()
+		bItems, err = bORM.Select().JoinCsPointer(cORM.Select().Joiner()).Query()
 		require.Nil(t, err)
 		require.Equal(t, 2, len(bItems))
 		assert.Equal(t, bItem, &bItems[0])
@@ -111,14 +111,13 @@ func TestRelationOneToMany(t *testing.T) {
 			JoinCsPointer(
 				cORM.Select().
 					Where(cORM.Where().Year(orm.OpGt, 1996).And(cORM.Where().Year(orm.OpLt, 1999))).
-					Scanner(),
+					Joiner(),
 			).Query()
 
 		require.Nil(t, err)
 		require.Equal(t, 1, len(bItems))
 		bItem2.CsPointer = bItem2.CsPointer[2:4]
 		assert.Equal(t, bItem2, &bItems[0])
-
 	})
 }
 
@@ -198,9 +197,9 @@ func TestRelationOneToOneNonPointerNested(t *testing.T) {
 		// test nested join
 		aItems, err = a.Select().
 			JoinB(b.Select().
-				JoinC(c.Select().Scanner()).
-				JoinD(d.Select().Scanner()).
-				Scanner()).
+				JoinC(c.Select().Joiner()).
+				JoinD(d.Select().Joiner()).
+				Joiner()).
 			Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
@@ -210,8 +209,8 @@ func TestRelationOneToOneNonPointerNested(t *testing.T) {
 		// test nested join only one side
 		aItems, err = a.Select().
 			JoinB(b.Select().
-				JoinC(c.Select().Scanner()).
-				Scanner()).
+				JoinC(c.Select().Joiner()).
+				Joiner()).
 			Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
@@ -220,13 +219,12 @@ func TestRelationOneToOneNonPointerNested(t *testing.T) {
 		}
 
 		// test one level join
-		aItems, err = a.Select().JoinB(b.Select().Scanner()).Query()
+		aItems, err = a.Select().JoinB(b.Select().Joiner()).Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
 			aItem.B.C = nil
 			assert.Equal(t, aItem, &aItems[0])
 		}
-
 	})
 }
 
@@ -268,7 +266,7 @@ func TestBidirectionalOneToManyRelationship(t *testing.T) {
 		assert.Equal(t, "A", aList[0].Name)
 		assert.Equal(t, 0, len(aList[0].B))
 
-		aList, err = a.Select().JoinB(b.Select().Scanner()).Query()
+		aList, err = a.Select().JoinB(b.Select().Joiner()).Query()
 		require.Nil(t, err)
 		assert.Equal(t, 1, len(aList))
 		assert.Equal(t, aItem, &aList[0])
@@ -280,7 +278,7 @@ func TestBidirectionalOneToManyRelationship(t *testing.T) {
 			assert.Nil(t, bList[0].A)
 		}
 
-		bList, err = b.Select().JoinA(a.Select().Scanner()).Query()
+		bList, err = b.Select().JoinA(a.Select().Joiner()).Query()
 		require.Nil(t, err)
 		assert.Equal(t, 10, len(bList))
 		for i, bItem := range bList {
@@ -288,6 +286,66 @@ func TestBidirectionalOneToManyRelationship(t *testing.T) {
 			if assert.NotNil(t, bItem.A) {
 				assert.Equal(t, "A", bItem.A.Name)
 			}
+		}
+	})
+}
+
+func TestFieldsWithTheSameType(t *testing.T) {
+	testDBs(t, func(t *testing.T, conn conn) {
+		a, err := NewA4ORM(conn.name, conn)
+		require.Nil(t, err)
+		b, err := NewB4ORM(conn.name, conn)
+		require.Nil(t, err)
+		if testing.Verbose() {
+			a.Logger(t.Logf)
+			b.Logger(t.Logf)
+		}
+
+		_, err = b.Create().Exec()
+		require.Nil(t, err)
+		_, err = a.Create().Exec()
+		require.Nil(t, err)
+
+		b1 := &B4{Name: "B1"}
+		res, err := b.Insert().InsertB4(b1).Exec()
+		require.Nil(t, err)
+		b1.ID, err = res.LastInsertId()
+		require.Nil(t, err)
+
+		b2 := &B4{Name: "B2"}
+		res, err = b.Insert().InsertB4(b2).Exec()
+		require.Nil(t, err)
+		b2.ID, err = res.LastInsertId()
+		require.Nil(t, err)
+
+		aItem := &A4{Name: "A", B1: b1, B2: b2}
+		res, err = a.Insert().InsertA4(aItem).Exec()
+		require.Nil(t, err)
+		aItem.ID, err = res.LastInsertId()
+		require.Nil(t, err)
+
+		aList, err := a.Select().Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(aList)) {
+			assert.Equal(t, "A", aList[0].Name)
+			assert.Nil(t, aList[0].B1)
+			assert.Nil(t, aList[0].B2)
+		}
+
+		aList, err = a.Select().JoinB1(b.Select().Joiner()).Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(aList)) {
+			assert.Equal(t, "A", aList[0].Name)
+			assert.Equal(t, b1, aList[0].B1)
+			assert.Nil(t, aList[0].B2)
+		}
+
+		aList, err = a.Select().JoinB1(b.Select().Joiner()).JoinB2(b.Select().Joiner()).Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(aList)) {
+			assert.Equal(t, "A", aList[0].Name)
+			assert.Equal(t, b1, aList[0].B1)
+			assert.Equal(t, b2, aList[0].B2)
 		}
 	})
 }
