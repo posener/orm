@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/posener/orm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -104,6 +105,20 @@ func TestRelationOneToMany(t *testing.T) {
 		require.Equal(t, 2, len(bItems))
 		assert.Equal(t, bItem, &bItems[0])
 		assert.Equal(t, bItem2, &bItems[1])
+
+		bItems, err = bORM.Select().
+			Where(bORM.Where().Name(orm.OpEq, "Yoko")).
+			JoinCsPointer(
+				cORM.Select().
+					Where(cORM.Where().Year(orm.OpGt, 1996).And(cORM.Where().Year(orm.OpLt, 1999))).
+					Scanner(),
+			).Query()
+
+		require.Nil(t, err)
+		require.Equal(t, 1, len(bItems))
+		bItem2.CsPointer = bItem2.CsPointer[2:4]
+		assert.Equal(t, bItem2, &bItems[0])
+
 	})
 }
 

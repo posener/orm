@@ -51,7 +51,20 @@ func columnsCollect(table string, cols []string, isCount bool) []string {
 	return parts
 }
 
-// where formats an SQL WHERE statement
+// whereJoin takes SelectParams and traverse all the join options
+// it concat all the conditions with an AND operator
+func whereJoin(p *common.SelectParams) common.Where {
+	w := p.Where
+	for _, join := range p.Columns.Joins() {
+		if w != nil {
+			w = w.And(whereJoin(&join.SelectParams))
+		} else {
+			w = join.SelectParams.Where
+		}
+	}
+	return w
+}
+
 func where(c common.StatementArger) string {
 	if c == nil {
 		return ""
