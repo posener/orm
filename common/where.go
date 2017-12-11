@@ -21,35 +21,39 @@ type where struct {
 }
 
 // NewWhere returns a new WHERE statement
-func NewWhere(op Op, table, variable string, value interface{}) Where {
+func NewWhere(op Op, variable string, value interface{}) Where {
 	var w where
-	w.stmt = append(w.stmt, fmt.Sprintf("`%s`.`%s` %s ?", table, variable, op))
+	w.stmt = append(w.stmt, fmt.Sprintf("`{{.Table}}`.`%s` %s ?", variable, op))
 	w.args = append(w.args, value)
 	return &w
 }
 
 // NewWhereIn returns a new 'WHERE variable IN (...)' statement
-func NewWhereIn(table, variable string, values ...interface{}) Where {
+func NewWhereIn(variable string, values ...interface{}) Where {
 	var w where
-	w.stmt = append(w.stmt, fmt.Sprintf("`%s`.`%s` IN (%s)", table, variable, QMarks(len(values))))
+	w.stmt = append(w.stmt, fmt.Sprintf("`{{.Table}}`.`%s` IN (%s)", variable, QMarks(len(values))))
 	w.args = append(w.args, values...)
 	return &w
 }
 
 // NewWhereBetween returns a new 'WHERE variable BETWEEN low AND high' statement
-func NewWhereBetween(table, variable string, low, high interface{}) Where {
+func NewWhereBetween(variable string, low, high interface{}) Where {
 	var w where
-	w.stmt = append(w.stmt, fmt.Sprintf("`%s`.`%s` BETWEEN ? AND ?", table, variable))
+	w.stmt = append(w.stmt, fmt.Sprintf("`{{.Table}}`.`%s` BETWEEN ? AND ?", variable))
 	w.args = append(w.args, low, high)
 	return &w
 }
 
 // String returns the WHERE SQL statement
-func (w *where) Statement() string {
+func (w *where) Statement(table string) string {
 	if w == nil || len(w.stmt) == 0 {
 		return ""
 	}
-	return strings.Join(w.stmt, " ")
+	ret := strings.Join(w.stmt, " ")
+	if table != "" {
+		ret = strings.Replace(ret, "{{.Table}}", table, -1)
+	}
+	return ret
 }
 
 // Or applies an or condition between two where conditions
@@ -77,7 +81,7 @@ func (w *where) Args() []interface{} {
 }
 
 func binary(l *where, r Where, op string) Where {
-	l.stmt = []string{"(", l.Statement(), ")", op, "(", r.Statement(), ")"}
+	l.stmt = []string{"(", l.Statement(""), ")", op, "(", r.Statement(""), ")"}
 	l.args = append(l.args, r.Args()...)
 	return l
 }

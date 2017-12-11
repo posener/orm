@@ -53,6 +53,15 @@ func (b *{{$.Public}}SelectBuilder) Page(offset, limit int64) *{{$.Public}}Selec
 	return b
 }
 
+{{ range $_, $refType := .Type.ReferencedTypes -}}
+// {{$.Private}}{{$refType.Name}}Scanner is a scanner that defined by .Select().Scanner()
+// of an ORM object for type {{$refType.Name}}
+type {{$.Private}}{{$refType.Name}}Scanner interface {
+    Params() common.SelectParams
+    Scan(dialect string, values []driver.Value{{if $refType.HasOneToManyRelation}}, exists map[{{$refType.PrimaryKey.Type.Ext $.Type.Package}}]*{{$refType.Ext $.Type.Package}}{{end}}) (*{{$refType.Ext $.Type.Package}}, int, error)
+}
+{{ end -}}
+
 {{ range $_, $f := .Type.Fields -}}
 {{ if not $f.IsReference }}
 // Select{{$f.Name}} adds {{$f.Name}} to the selected column of a query
@@ -61,14 +70,6 @@ func (b *{{$.Public}}SelectBuilder) Select{{$f.Name}}() *{{$.Public}}SelectBuild
     return b
 }
 {{ else }}
-
-// {{$.Private}}{{$f.Type.Name}}Scanner is a scanner that defined by .Select().Scanner()
-// of an ORM object for type {{$f.Type.Name}}
-type {{$.Private}}{{$f.Type.Name}}Scanner interface {
-    Params() common.SelectParams
-    Scan(dialect string, values []driver.Value{{if $f.Type.HasOneToManyRelation}}, exists map[{{$f.Type.PrimaryKey.Type.Ext $.Type.Package}}]*{{$f.Type.Naked.Ext $.Type.Package}}{{end}}) (*{{$f.Type.Naked.Ext $.Type.Package}}, int, error)
-}
-
 // Join{{$f.Name}} add a join query for {{$f.Name}}
 func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(scanner {{$.Private}}{{$f.Type.Name}}Scanner) *{{$.Public}}SelectBuilder {
     b.selector.Join{{$f.Name}} = scanner

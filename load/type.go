@@ -180,12 +180,12 @@ func (t *Naked) Package() string {
 	return pkg
 }
 
-func (t *Type) IsBasic() bool {
-	return basicTypes[t.Naked.Ext("")]
+func (t *Naked) IsBasic() bool {
+	return basicTypes[t.Ext("")]
 }
 
 // Imports returns a list of all imports for this type's fields
-func (t *Type) Imports() []string {
+func (t *Naked) Imports() []string {
 	impsMap := map[string]bool{}
 	for _, f := range t.Fields {
 		if f.Type.ImportPath != "" && f.Type.ImportPath != t.ImportPath {
@@ -200,7 +200,7 @@ func (t *Type) Imports() []string {
 }
 
 // References returns all reference fields
-func (t *Type) References() []*Field {
+func (t *Naked) References() []*Field {
 	var refs []*Field
 	for _, field := range t.Fields {
 		if field.IsReference() {
@@ -210,7 +210,22 @@ func (t *Type) References() []*Field {
 	return refs
 }
 
-func (t *Type) HasOneToManyRelation() bool {
+// ReferencedTypes returns a list of all referenced types from this type
+func (t *Naked) ReferencedTypes() []*Naked {
+	var m = map[string]*Naked{}
+	for _, field := range t.Fields {
+		if field.IsReference() {
+			m[field.Type.Naked.String()] = field.Type.Naked
+		}
+	}
+	l := make([]*Naked, 0, len(m))
+	for _, t := range m {
+		l = append(l, t)
+	}
+	return l
+}
+
+func (t *Naked) HasOneToManyRelation() bool {
 	for _, field := range t.Fields {
 		if field.Type.Slice {
 			return true

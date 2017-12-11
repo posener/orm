@@ -50,8 +50,8 @@ func TestColumnsJoin(t *testing.T) {
 					},
 				},
 			},
-			wantCols: "`A`.*, `B`.*",
-			wantJoin: "JOIN (`B`) ON (`A`.`B_id` = `B`.`id`)",
+			wantCols: "`A`.*, `A_B_id`.*",
+			wantJoin: "JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
 		},
 		{
 			p: common.SelectParams{
@@ -66,8 +66,8 @@ func TestColumnsJoin(t *testing.T) {
 					},
 				},
 			},
-			wantCols: "`B`.*, COUNT(*)",
-			wantJoin: "JOIN (`B`) ON (`A`.`B_id` = `B`.`id`)",
+			wantCols: "`A_B_id`.*, COUNT(*)",
+			wantJoin: "JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
 		},
 		{
 			p: common.SelectParams{
@@ -82,8 +82,8 @@ func TestColumnsJoin(t *testing.T) {
 					},
 				},
 			},
-			wantCols: "`A`.`a`, `A`.`b`, `B`.*",
-			wantJoin: "JOIN (`B`) ON (`A`.`B_id` = `B`.`id`)",
+			wantCols: "`A`.`a`, `A`.`b`, `A_B_id`.*",
+			wantJoin: "JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
 		},
 		{
 			p: common.SelectParams{
@@ -97,8 +97,8 @@ func TestColumnsJoin(t *testing.T) {
 					},
 				},
 			},
-			wantCols: "`A`.*, `B`.`c`, `B`.`d`",
-			wantJoin: "JOIN (`B`) ON (`A`.`B_id` = `B`.`id`)",
+			wantCols: "`A`.*, `A_B_id`.`c`, `A_B_id`.`d`",
+			wantJoin: "JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
 		},
 		{
 			p: common.SelectParams{
@@ -116,8 +116,8 @@ func TestColumnsJoin(t *testing.T) {
 					},
 				},
 			},
-			wantCols: "`A`.`a`, `A`.`b`, `B`.`c`, `B`.`d`",
-			wantJoin: "JOIN (`B`) ON (`A`.`B_id` = `B`.`id`)",
+			wantCols: "`A`.`a`, `A`.`b`, `A_B_id`.`c`, `A_B_id`.`d`",
+			wantJoin: "JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
 		},
 		{
 			p: common.SelectParams{
@@ -142,8 +142,8 @@ func TestColumnsJoin(t *testing.T) {
 					},
 				},
 			},
-			wantCols: "`A`.`a`, `A`.`b`, `B`.`c`, `B`.`d`, `C`.`e`, `C`.`f`",
-			wantJoin: "JOIN (`B`, `C`) ON (`A`.`B_id` = `B`.`id` AND `A`.`C_id` = `C`.`id`)",
+			wantCols: "`A`.`a`, `A`.`b`, `A_B_id`.`c`, `A_B_id`.`d`, `A_C_id`.`e`, `A_C_id`.`f`",
+			wantJoin: "JOIN (`B` AS `A_B_id`, `C` AS `A_C_id`) ON (`A`.`B_id` = `A_B_id`.`id` AND `A`.`C_id` = `A_C_id`.`id`)",
 		},
 		{
 			p: common.SelectParams{
@@ -179,15 +179,16 @@ func TestColumnsJoin(t *testing.T) {
 					},
 				},
 			},
-			wantCols: "`A`.`a`, `A`.`b`, `B`.`c`, `B`.`d`, `D`.`g`, `D`.`h`, `C`.`e`, `C`.`f`",
-			wantJoin: "JOIN (`B`, `C`) ON (`A`.`B_id` = `B`.`id` AND `A`.`C_id` = `C`.`id`) JOIN (`D`) ON (`B`.`D_id` = `D`.`id`)",
+			wantCols: "`A`.`a`, `A`.`b`, `A_B_id`.`c`, `A_B_id`.`d`, `B_D_id`.`g`, `B_D_id`.`h`, `A_C_id`.`e`, `A_C_id`.`f`",
+			wantJoin: "JOIN (`B` AS `A_B_id`, `C` AS `A_C_id`) ON (`A`.`B_id` = `A_B_id`.`id` AND `A`.`C_id` = `A_C_id`.`id`) JOIN (`D` AS `B_D_id`) ON (`A_B_id`.`D_id` = `B_D_id`.`id`)",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.wantCols, func(t *testing.T) {
+			d := &dialect{"mysql"}
 			assert.Equal(t, tt.wantCols, columns(&tt.p))
-			assert.Equal(t, tt.wantJoin, strings.Trim(join(&tt.p), " "))
+			assert.Equal(t, tt.wantJoin, strings.Trim(d.join(&tt.p), " "))
 		})
 	}
 }

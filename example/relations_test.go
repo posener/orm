@@ -118,7 +118,6 @@ func TestRelationOneToMany(t *testing.T) {
 		require.Equal(t, 1, len(bItems))
 		bItem2.CsPointer = bItem2.CsPointer[2:4]
 		assert.Equal(t, bItem2, &bItems[0])
-
 	})
 }
 
@@ -226,7 +225,6 @@ func TestRelationOneToOneNonPointerNested(t *testing.T) {
 			aItem.B.C = nil
 			assert.Equal(t, aItem, &aItems[0])
 		}
-
 	})
 }
 
@@ -288,6 +286,66 @@ func TestBidirectionalOneToManyRelationship(t *testing.T) {
 			if assert.NotNil(t, bItem.A) {
 				assert.Equal(t, "A", bItem.A.Name)
 			}
+		}
+	})
+}
+
+func TestFieldsWithTheSameType(t *testing.T) {
+	testDBs(t, func(t *testing.T, conn conn) {
+		a, err := NewA4ORM(conn.name, conn)
+		require.Nil(t, err)
+		b, err := NewB4ORM(conn.name, conn)
+		require.Nil(t, err)
+		if testing.Verbose() {
+			a.Logger(t.Logf)
+			b.Logger(t.Logf)
+		}
+
+		_, err = b.Create().Exec()
+		require.Nil(t, err)
+		_, err = a.Create().Exec()
+		require.Nil(t, err)
+
+		b1 := &B4{Name: "B1"}
+		res, err := b.Insert().InsertB4(b1).Exec()
+		require.Nil(t, err)
+		b1.ID, err = res.LastInsertId()
+		require.Nil(t, err)
+
+		b2 := &B4{Name: "B2"}
+		res, err = b.Insert().InsertB4(b2).Exec()
+		require.Nil(t, err)
+		b2.ID, err = res.LastInsertId()
+		require.Nil(t, err)
+
+		aItem := &A4{Name: "A", B1: b1, B2: b2}
+		res, err = a.Insert().InsertA4(aItem).Exec()
+		require.Nil(t, err)
+		aItem.ID, err = res.LastInsertId()
+		require.Nil(t, err)
+
+		aList, err := a.Select().Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(aList)) {
+			assert.Equal(t, "A", aList[0].Name)
+			assert.Nil(t, aList[0].B1)
+			assert.Nil(t, aList[0].B2)
+		}
+
+		aList, err = a.Select().JoinB1(b.Select().Scanner()).Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(aList)) {
+			assert.Equal(t, "A", aList[0].Name)
+			assert.Equal(t, b1, aList[0].B1)
+			assert.Nil(t, aList[0].B2)
+		}
+
+		aList, err = a.Select().JoinB1(b.Select().Scanner()).JoinB2(b.Select().Scanner()).Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(aList)) {
+			assert.Equal(t, "A", aList[0].Name)
+			assert.Equal(t, b1, aList[0].B1)
+			assert.Equal(t, b2, aList[0].B2)
 		}
 	})
 }
