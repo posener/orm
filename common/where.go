@@ -54,11 +54,17 @@ func (w *where) Statement() string {
 
 // Or applies an or condition between two where conditions
 func (w *where) Or(right Where) Where {
+	if w == nil {
+		return right
+	}
 	return binary(w, right, "OR")
 }
 
 // And applies an and condition between two where conditions
 func (w *where) And(right Where) Where {
+	if w == nil {
+		return right
+	}
 	return binary(w, right, "AND")
 }
 
