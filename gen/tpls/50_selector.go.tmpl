@@ -4,7 +4,7 @@ type {{$.Private}}Selector struct {
     {{ if not $f.IsReference -}}
     Select{{$f.Name}} bool
     {{ else -}}
-    Join{{$f.Name}} {{$.Private}}{{$f.Type.Name}}Scanner
+    Join{{$f.Name}} {{$.Private}}{{$f.Type.Name}}Joiner
     {{ end -}}
     {{ end -}}
     count bool // used for sql COUNT(*) column
