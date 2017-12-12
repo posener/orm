@@ -22,7 +22,7 @@ func TestTypes(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := allDB(t, conn)
 
-		a := All{
+		a := &All{
 			Int:   1,
 			Int8:  int8(2),
 			Int16: int16(3),
@@ -67,18 +67,16 @@ func TestTypes(t *testing.T) {
 		a.PBool = &a.Bool
 		a.PTime = &a.Time
 
-		res, err := db.Insert().InsertAll(&a).Exec()
-		require.Nil(t, err)
-		affected, err := res.RowsAffected()
-		require.Nil(t, err)
-		require.Equal(t, int64(1), affected)
+		aGot, err := db.Insert().InsertAll(a).Exec()
+		assert.Equal(t, 1, aGot.Auto)
+		a.Auto = aGot.Auto
+		assert.Equal(t, a, aGot)
 
 		alls, err := db.Select().Query()
 		require.Nil(t, err)
 		require.Equal(t, 1, len(alls))
 
-		a.Auto = 1 // auto-increment field is set to 1
-		assert.Equal(t, a, alls[0])
+		assert.Equal(t, a, &alls[0])
 	})
 }
 
@@ -86,17 +84,13 @@ func TestAutoIncrement(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := allDB(t, conn)
 
-		res, err := db.Insert().SetNotNil("1").Exec()
+		a1, err := db.Insert().SetNotNil("1").Exec()
 		require.Nil(t, err)
-		affected, err := res.RowsAffected()
-		require.Nil(t, err)
-		require.Equal(t, int64(1), affected)
+		assert.Equal(t, 1, a1.Auto)
 
-		res, err = db.Insert().SetNotNil("2").Exec()
+		a2, err := db.Insert().SetNotNil("2").Exec()
 		require.Nil(t, err)
-		affected, err = res.RowsAffected()
-		require.Nil(t, err)
-		require.Equal(t, int64(1), affected)
+		assert.Equal(t, 2, a2.Auto)
 
 		alls, err := db.Select().OrderByAuto(orm.Asc).Query()
 		require.Nil(t, err)
@@ -128,9 +122,8 @@ func TestFieldReservedName(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := allDB(t, conn)
 
-		res, err := db.Insert().SetSelect(42).SetNotNil("not-nil").Exec()
+		_, err := db.Insert().SetSelect(42).SetNotNil("not-nil").Exec()
 		require.Nil(t, err)
-		assertRowsAffected(t, 1, res)
 
 		query := db.Select().
 			SelectSelect().
@@ -145,7 +138,7 @@ func TestFieldReservedName(t *testing.T) {
 		require.Equal(t, 1, len(alls))
 		assert.Equal(t, 42, alls[0].Select)
 
-		res, err = db.Update().SetSelect(11).Where(db.Where().Select(orm.OpEq, 42)).Exec()
+		res, err := db.Update().SetSelect(11).Where(db.Where().Select(orm.OpEq, 42)).Exec()
 		require.Nil(t, err)
 		assertRowsAffected(t, 1, res)
 
@@ -174,15 +167,12 @@ func TestPersonSelect(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := personDB(t, conn)
 
-		res, err := db.Insert().SetName(p1.Name).SetAge(p1.Age).Exec()
-		require.Nil(t, err, "Failed inserting")
-		assertRowsAffected(t, 1, res)
-		res, err = db.Insert().SetName(p2.Name).SetAge(p2.Age).Exec()
-		require.Nil(t, err, "Failed inserting")
-		assertRowsAffected(t, 1, res)
-		res, err = db.Insert().InsertPerson(&p3).Exec()
-		require.Nil(t, err, "Failed inserting")
-		assertRowsAffected(t, 1, res)
+		_, err := db.Insert().SetName(p1.Name).SetAge(p1.Age).Exec()
+		require.Nil(t, err)
+		_, err = db.Insert().SetName(p2.Name).SetAge(p2.Age).Exec()
+		require.Nil(t, err)
+		_, err = db.Insert().InsertPerson(&p3).Exec()
+		require.Nil(t, err)
 
 		tests := []struct {
 			q    *PersonSelectBuilder
@@ -279,9 +269,8 @@ func TestCRUD(t *testing.T) {
 
 		// prepareAll dataset
 		for _, p := range []Person{p1, p2, p3} {
-			res, err := db.Insert().InsertPerson(&p).Exec()
-			require.Nil(t, err, "Failed inserting")
-			assertRowsAffected(t, 1, res)
+			_, err := db.Insert().InsertPerson(&p).Exec()
+			require.Nil(t, err)
 		}
 
 		ps, err := db.Select().Query()
@@ -319,9 +308,8 @@ func TestCount(t *testing.T) {
 		db := personDB(t, conn)
 
 		for i := 0; i < 100; i++ {
-			res, err := db.Insert().InsertPerson(&Person{Name: fmt.Sprintf("Jim %d", i), Age: i / 5}).Exec()
-			require.Nil(t, err, "Failed inserting")
-			assertRowsAffected(t, 1, res)
+			_, err := db.Insert().InsertPerson(&Person{Name: fmt.Sprintf("Jim %d", i), Age: i / 5}).Exec()
+			require.Nil(t, err)
 		}
 
 		tests := []struct {
@@ -370,10 +358,10 @@ func TestCreateIfNotExists(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := personDB(t, conn)
 
-		_, err := db.Create().IfNotExists().Exec()
+		err := db.Create().IfNotExists().Exec()
 		require.Nil(t, err)
 
-		_, err = db.Create().Exec()
+		err = db.Create().Exec()
 		require.NotNil(t, err)
 	})
 }
@@ -433,7 +421,7 @@ func TestNew(t *testing.T) {
 	if testing.Verbose() {
 		orm.Logger(t.Logf)
 	}
-	_, err = orm.Create().Exec()
+	err = orm.Create().Exec()
 	require.Nil(t, err)
 }
 
@@ -444,7 +432,7 @@ func personDB(t *testing.T, conn conn) PersonORM {
 	if testing.Verbose() {
 		db.Logger(t.Logf)
 	}
-	_, err = db.Create().Exec()
+	err = db.Create().Exec()
 	require.Nil(t, err)
 	return db
 }
@@ -456,7 +444,7 @@ func allDB(t *testing.T, conn conn) AllORM {
 	if testing.Verbose() {
 		db.Logger(t.Logf)
 	}
-	_, err = db.Create().Exec()
+	err = db.Create().Exec()
 	require.Nil(t, err)
 	return db
 }

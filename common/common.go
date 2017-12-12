@@ -38,7 +38,7 @@ func Values(r sql.Rows) []driver.Value {
 	rs := reflect.ValueOf(&r).Elem()
 	rf := rs.FieldByName("lastcols")
 
-	// overcome panic reflect.Value.Interface: cannot return value obtained from unexported field or method
+	// overcome panic reflect.ColumnValue.Interface: cannot return value obtained from unexported field or method
 	rf = reflect.NewAt(rf.Type(), unsafe.Pointer(rf.UnsafeAddr())).Elem()
 	return rf.Interface().([]driver.Value)
 }

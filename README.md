@@ -43,24 +43,26 @@ func main() {
     db.Logger(log.Printf)
 
     // Create table:
-    _, err = db.Create().Exec()
+    err = db.Create().Exec()
 
     // Insert row with arguments:
-    _, err = db.Insert().SetName("John").SetAge(1).Exec()
+    john, err = db.Insert().SetName("John").SetAge(1).Exec()
+    println(john.Name) // Output: John
 
     // Insert row with a struct:
-    _, err = db.Insert().InsertPerson(&example.Person{Name: "Doug", Age: 3}).Exec()
+    doug, err = db.Insert().InsertPerson(&example.Person{Name: "Doug", Age: 3}).Exec()
+    println(doug.Name, doug.Age) // Output: Doug 3
 
     // Select rows from the table:
-    ps, err := db.Select().
+    persons, err := db.Select().
     	SelectAge().
         Where(db.Where().Name(orm.OpNe, "John")).
         Query() // returns []example.Person, typed return value.
 
-    println(ps[0].Age) // Output: 1
+    println(persons[0].Age) // Output: 1
     
     // Get first matching row or "not found" error
-    p, err := db.Select().First()
+    person, err := db.Select().First()
     
     // Delete row
     _, err = db.Delete().Where(db.Where().Name(orm.Eq, "John")).Exec()
