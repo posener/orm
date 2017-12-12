@@ -147,12 +147,12 @@ func (d *dialect) joinParts(table string, p *common.SelectParams) []string {
 		recursive []string
 	)
 	for _, j := range joins {
-		joinTable := j.TableName(p.Table)
+		joinTable := j.TableName(table)
 		tables = append(tables, fmt.Sprintf("`%s` AS `%s`", j.Table, joinTable))
 		for _, pairing := range j.Pairings {
 			conds = append(conds, fmt.Sprintf("`%s`.`%s` = `%s`.`%s`", table, pairing.Column, joinTable, pairing.JoinedColumn))
 		}
-		recursive = append(recursive, d.joinParts(j.TableName(p.Table), &j.SelectParams)...)
+		recursive = append(recursive, d.joinParts(j.TableName(table), &j.SelectParams)...)
 	}
 
 	tablesStmt := strings.Join(tables, ", ")

@@ -350,6 +350,78 @@ func TestFieldsWithTheSameType(t *testing.T) {
 	})
 }
 
+func TestSelfReferencing(t *testing.T) {
+	testDBs(t, func(t *testing.T, conn conn) {
+		a, err := NewA5ORM(conn.name, conn)
+		require.Nil(t, err)
+		if testing.Verbose() {
+			a.Logger(t.Logf)
+		}
+
+		_, err = a.Create().Exec()
+		require.Nil(t, err)
+
+		// lets create this graph:
+		//     a1
+		//    /  \
+		//   a2  a3
+		//  /  \ / \
+		// a4  a5  a6
+		a6 := insertA5(t, a, "6", nil, nil)
+		a5 := insertA5(t, a, "5", nil, nil)
+		a4 := insertA5(t, a, "4", nil, nil)
+		a3 := insertA5(t, a, "3", a5, a6)
+		a2 := insertA5(t, a, "2", a4, a5)
+		a1 := insertA5(t, a, "1", a2, a3)
+
+		as, err := a.Select().Query()
+		if assert.Equal(t, 6, len(as)) {
+			for _, ai := range as {
+				assert.Nil(t, ai.Left)
+				assert.Nil(t, ai.Right)
+			}
+		}
+		a1Got, err := a.Select().Where(a.Where().Name(orm.OpEq, "1")).First()
+		require.Nil(t, err)
+		assert.Equal(t, "1", a1Got.Name)
+		assert.Nil(t, a1Got.Left)
+		assert.Nil(t, a1Got.Right)
+
+		a1Got, err = a.Select().
+			Where(a.Where().Name(orm.OpEq, "1")).
+			JoinLeft(a.Select().Joiner()).
+			First()
+		require.Nil(t, err)
+		assert.Equal(t, "1", a1Got.Name)
+		if assert.NotNil(t, a1Got.Left) {
+			assert.Equal(t, "2", a1Got.Left.Name)
+		}
+		assert.Nil(t, a1Got.Right)
+
+		joinLeftRight := a.Select().
+			JoinLeft(a.Select().Joiner()).
+			JoinRight(a.Select().Joiner()).
+			Joiner()
+
+		a1Got, err = a.Select().
+			Where(a.Where().Name(orm.OpEq, "1")).
+			JoinLeft(joinLeftRight).
+			JoinRight(joinLeftRight).
+			First()
+		require.Nil(t, err)
+		assert.Equal(t, a1, a1Got)
+	})
+}
+
+func insertA5(t *testing.T, a A5ORM, name string, left, right *A5) *A5 {
+	item := &A5{Name: name, Left: left, Right: right}
+	res, err := a.Insert().InsertA5(item).Exec()
+	require.Nil(t, err)
+	item.ID, err = res.LastInsertId()
+	require.Nil(t, err)
+	return item
+}
+
 func orms(t *testing.T, conn conn) (AORM, BORM, CORM) {
 	t.Helper()
 	a, err := NewAORM(conn.name, conn)

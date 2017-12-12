@@ -1,6 +1,6 @@
 package example
 
-//go:generate ../orm -type A,B,C,A2,B2,C2,D2,A3,B3,A4,B4
+//go:generate ../orm -type A,B,C,A2,B2,C2,D2,A3,B3,A4,B4,A5
 
 // A, B, C test simple one-to-one (A->C) and one-to-many(B->C) relationships
 type A struct {
@@ -71,4 +71,11 @@ type A4 struct {
 type B4 struct {
 	ID   int64 `sql:"primary key;auto increment"`
 	Name string
+}
+
+// A5 test self referencing
+type A5 struct {
+	ID          int64 `sql:"primary key;auto increment"`
+	Name        string
+	Left, Right *A5
 }
