@@ -18,49 +18,75 @@ func TestRelationOneToOne(t *testing.T) {
 			require.NotNil(t, err)
 		}
 
-		cItem, err := cORM.Insert().
+		c1, err := cORM.Insert().
 			SetName("The Hitchhiker's Guide to the Galaxy").
 			SetYear(1979).
 			Exec()
 		require.Nil(t, err)
 
-		aItem, err := aORM.Insert().InsertA(&A{Name: "James", Age: 42, CPointer: cItem}).Exec()
+		a1, err := aORM.Insert().InsertA(&A{Name: "James", Age: 42, CPointer: c1}).Exec()
 		require.Nil(t, err)
 
 		// query without join, A.CPointer should be nil
 		aItems, err := aORM.Select().Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
-			assert.Equal(t, aItem.Name, aItems[0].Name)
+			assert.Equal(t, a1.Name, aItems[0].Name)
 			assert.Nil(t, aItems[0].CPointer)
 		}
 
 		// query with join, A.CPointer should be filled with aORM's properties
-		aItems, err = aORM.Select().JoinCPointer(cORM.Select().Joiner()).Query()
+		aItems, err = aORM.Select().
+			JoinCPointer(cORM.Select().Joiner()).
+			Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
-			assert.Equal(t, aItem, &aItems[0])
+			assert.Equal(t, a1, &aItems[0])
 		}
 
 		// query with join, A.CPointer should be filled with aORM's properties
-		aItems, err = aORM.Select().JoinCPointer(cORM.Select().SelectName().Joiner()).Query()
+		aItems, err = aORM.Select().
+			JoinCPointer(cORM.Select().SelectName().Joiner()).
+			Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
-			assert.Equal(t, aItem.Name, aItems[0].Name)
-			assert.Equal(t, aItem.Age, aItems[0].Age)
-			assert.Equal(t, aItem.CPointer.Name, aItems[0].CPointer.Name)
+			assert.Equal(t, a1.Name, aItems[0].Name)
+			assert.Equal(t, a1.Age, aItems[0].Age)
+			assert.Equal(t, a1.CPointer.Name, aItems[0].CPointer.Name)
 			assert.Equal(t, 0, aItems[0].CPointer.Year) // was not selected in query, thus expecting zero value
 		}
 
 		// query with join, A.CPointer should be filled with aORM's properties
-		aItems, err = aORM.Select().SelectName().JoinCPointer(cORM.Select().SelectYear().Joiner()).Query()
+		aItems, err = aORM.Select().
+			SelectName().
+			JoinCPointer(cORM.Select().SelectYear().Joiner()).
+			Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
-			assert.Equal(t, aItem.Name, aItems[0].Name)
+			assert.Equal(t, a1.Name, aItems[0].Name)
 			assert.Equal(t, 0, aItems[0].Age)            // was not selected in query, thus expecting zero value
 			assert.Equal(t, "", aItems[0].CPointer.Name) // was not selected in query, thus expecting zero value
-			assert.Equal(t, aItem.CPointer.Year, aItems[0].CPointer.Year)
+			assert.Equal(t, a1.CPointer.Year, aItems[0].CPointer.Year)
 		}
+
+		// test update of reference
+		c2, err := cORM.Insert().
+			SetName("1984").
+			SetYear(1949).
+			Exec()
+
+		_, err = aORM.Update().
+			Where(aORM.Where().ID(orm.OpEq, a1.ID)).
+			SetCPointer(c2.ID).
+			Exec()
+		require.Nil(t, err)
+
+		gotA1, err := aORM.Select().
+			JoinCPointer(cORM.Select().Joiner()).
+			First()
+		require.Nil(t, err)
+		assert.Equal(t, a1.Name, gotA1.Name)
+		assert.Equal(t, c2.Name, gotA1.CPointer.Name)
 	})
 }
 
@@ -68,32 +94,32 @@ func TestRelationOneToMany(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		_, bORM, cORM := orms(t, conn)
 
-		bItem, err := bORM.Insert().InsertB(&B{Name: "Marks", Hobbies: "drones"}).Exec()
+		b1, err := bORM.Insert().InsertB(&B{Name: "Marks", Hobbies: "drones"}).Exec()
 		require.Nil(t, err)
 
-		generateCs(t, cORM, bItem, 10)
+		generateCs(t, cORM, b1, 10)
 
 		bItems, err := bORM.Select().JoinCsPointer(cORM.Select().Joiner()).Query()
 		require.Nil(t, err)
 		require.Equal(t, 1, len(bItems))
-		assert.Equal(t, bItem, &bItems[0])
+		assert.Equal(t, b1, &bItems[0])
 
-		bItem2, err := bORM.Insert().InsertB(&B{Name: "Yoko", Hobbies: "music"}).Exec()
+		b2, err := bORM.Insert().InsertB(&B{Name: "Yoko", Hobbies: "music"}).Exec()
 		require.Nil(t, err)
 
 		// expect to get only one b, since the second b doesn't have any c related
 		bItems, err = bORM.Select().JoinCsPointer(cORM.Select().Joiner()).Query()
 		require.Nil(t, err)
 		require.Equal(t, 1, len(bItems))
-		assert.Equal(t, bItem, &bItems[0])
+		assert.Equal(t, b1, &bItems[0])
 
-		generateCs(t, cORM, bItem2, 5)
+		generateCs(t, cORM, b2, 5)
 
 		bItems, err = bORM.Select().JoinCsPointer(cORM.Select().Joiner()).Query()
 		require.Nil(t, err)
 		require.Equal(t, 2, len(bItems))
-		assert.Equal(t, bItem, &bItems[0])
-		assert.Equal(t, bItem2, &bItems[1])
+		assert.Equal(t, b1, &bItems[0])
+		assert.Equal(t, b2, &bItems[1])
 
 		bItems, err = bORM.Select().
 			Where(bORM.Where().Name(orm.OpEq, "Yoko")).
@@ -105,8 +131,22 @@ func TestRelationOneToMany(t *testing.T) {
 
 		require.Nil(t, err)
 		require.Equal(t, 1, len(bItems))
-		bItem2.CsPointer = bItem2.CsPointer[2:4]
-		assert.Equal(t, bItem2, &bItems[0])
+		b2.CsPointer = b2.CsPointer[2:4]
+		assert.Equal(t, b2, &bItems[0])
+
+		// test update of reference
+		cORM.Update().
+			Where(cORM.Where().Year(orm.OpEq, 2000)).
+			SetBID(b2.ID).
+			Exec()
+
+		bItems, err = bORM.Select().
+			Where(bORM.Where().ID(orm.OpEq, b1.ID)).
+			JoinCsPointer(cORM.Select().Joiner()).
+			Query()
+		require.Nil(t, err)
+		require.Equal(t, 1, len(bItems))
+		assert.Equal(t, 9, len(bItems[0].CsPointer))
 	})
 }
 
