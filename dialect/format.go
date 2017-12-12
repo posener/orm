@@ -29,7 +29,7 @@ func columnsParts(table string, p *common.SelectParams) []string {
 	parts = append(parts, columnsCollect(table, p.Columns.Columns(), p.Columns.Count())...)
 
 	for _, join := range p.Columns.Joins() {
-		for _, part := range columnsParts(join.TableName(p.Table), &join.SelectParams) {
+		for _, part := range columnsParts(join.TableName(table), &join.SelectParams) {
 			if exists[part] {
 				continue
 			}
