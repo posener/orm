@@ -18,18 +18,13 @@ func TestRelationOneToOne(t *testing.T) {
 			require.NotNil(t, err)
 		}
 
-		cItem := &C{Name: "The Hitchhiker's Guide to the Galaxy", Year: 1979}
-
-		res, err := cORM.Insert().SetName(cItem.Name).SetYear(cItem.Year).Exec()
+		cItem, err := cORM.Insert().
+			SetName("The Hitchhiker's Guide to the Galaxy").
+			SetYear(1979).
+			Exec()
 		require.Nil(t, err)
-		cItem.ID, err = res.LastInsertId()
-		require.Nil(t, err)
 
-		aItem := &A{Name: "James", Age: 42, CPointer: cItem}
-
-		res, err = aORM.Insert().InsertA(aItem).Exec()
-		require.Nil(t, err)
-		aItem.ID, err = res.LastInsertId()
+		aItem, err := aORM.Insert().InsertA(&A{Name: "James", Age: 42, CPointer: cItem}).Exec()
 		require.Nil(t, err)
 
 		// query without join, A.CPointer should be nil
@@ -73,10 +68,7 @@ func TestRelationOneToMany(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		_, bORM, cORM := orms(t, conn)
 
-		bItem := &B{Name: "Marks", Hobbies: "drones"}
-		res, err := bORM.Insert().InsertB(bItem).Exec()
-		require.Nil(t, err)
-		bItem.ID, err = res.LastInsertId()
+		bItem, err := bORM.Insert().InsertB(&B{Name: "Marks", Hobbies: "drones"}).Exec()
 		require.Nil(t, err)
 
 		generateCs(t, cORM, bItem, 10)
@@ -86,10 +78,7 @@ func TestRelationOneToMany(t *testing.T) {
 		require.Equal(t, 1, len(bItems))
 		assert.Equal(t, bItem, &bItems[0])
 
-		bItem2 := &B{Name: "Yoko", Hobbies: "music"}
-		res, err = bORM.Insert().InsertB(bItem2).Exec()
-		require.Nil(t, err)
-		bItem2.ID, err = res.LastInsertId()
+		bItem2, err := bORM.Insert().InsertB(&B{Name: "Yoko", Hobbies: "music"}).Exec()
 		require.Nil(t, err)
 
 		// expect to get only one b, since the second b doesn't have any c related
@@ -125,10 +114,9 @@ func generateCs(t *testing.T, cORM CORM, bItem *B, count int) {
 	t.Helper()
 	var cItems []C
 	for i := 0; i < count; i++ {
-		cItem := &C{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, BID: bItem.ID}
-		res, err := cORM.Insert().InsertC(cItem).Exec()
-		require.Nil(t, err)
-		cItem.ID, err = res.LastInsertId()
+		cItem, err := cORM.Insert().
+			InsertC(&C{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, BID: bItem.ID}).
+			Exec()
 		require.Nil(t, err)
 		cItems = append(cItems, *cItem)
 		bItem.CsPointer = append(bItem.CsPointer, cItem)
@@ -152,38 +140,21 @@ func TestRelationOneToOneNonPointerNested(t *testing.T) {
 			d.Logger(t.Logf)
 		}
 
-		_, err = d.Create().Exec()
-		require.Nil(t, err)
-		_, err = c.Create().Exec()
-		require.Nil(t, err)
-		_, err = b.Create().Exec()
-		require.Nil(t, err)
-		_, err = a.Create().Exec()
+		require.Nil(t, d.Create().Exec())
+		require.Nil(t, c.Create().Exec())
+		require.Nil(t, b.Create().Exec())
+		require.Nil(t, a.Create().Exec())
+
+		dItem, err := d.Insert().SetName("D").Exec()
 		require.Nil(t, err)
 
-		dItem := &D2{Name: "D"}
-		res, err := d.Insert().InsertD2(dItem).Exec()
-		require.Nil(t, err)
-		dItem.ID, err = res.LastInsertId()
+		cItem, err := c.Insert().SetName("C").Exec()
 		require.Nil(t, err)
 
-		cItem := &C2{Name: "C"}
-		res, err = c.Insert().InsertC2(cItem).Exec()
-		require.Nil(t, err)
-		cItem.ID, err = res.LastInsertId()
+		bItem, err := b.Insert().InsertB2(&B2{Name: "B", C: cItem, D: dItem}).Exec()
 		require.Nil(t, err)
 
-		bItem := &B2{Name: "B", C: cItem, D: dItem}
-		res, err = b.Insert().InsertB2(bItem).Exec()
-		require.Nil(t, err)
-		bItem.ID, err = res.LastInsertId()
-		require.Nil(t, err)
-
-		aItem := &A2{B: *bItem}
-
-		res, err = a.Insert().InsertA2(aItem).Exec()
-		require.Nil(t, err)
-		aItem.ID, err = res.LastInsertId()
+		aItem, err := a.Insert().InsertA2(&A2{B: *bItem}).Exec()
 		require.Nil(t, err)
 
 		// query without join, A.CPointer should be nil
@@ -239,22 +210,14 @@ func TestBidirectionalOneToManyRelationship(t *testing.T) {
 			b.Logger(t.Logf)
 		}
 
-		_, err = a.Create().Exec()
-		require.Nil(t, err)
-		_, err = b.Create().Exec()
-		require.Nil(t, err)
+		require.Nil(t, a.Create().Exec())
+		require.Nil(t, b.Create().Exec())
 
-		aItem := &A3{Name: "A"}
-		res, err := a.Insert().InsertA3(aItem).Exec()
-		require.Nil(t, err)
-		aItem.ID, err = res.LastInsertId()
+		aItem, err := a.Insert().SetName("A").Exec()
 		require.Nil(t, err)
 
 		for i := 0; i < 10; i++ {
-			bItem := &B3{Name: fmt.Sprintf("B%d", i), A: aItem}
-			res, err := b.Insert().InsertB3(bItem).Exec()
-			require.Nil(t, err)
-			bItem.ID, err = res.LastInsertId()
+			bItem, err := b.Insert().InsertB3(&B3{Name: fmt.Sprintf("B%d", i), A: aItem}).Exec()
 			require.Nil(t, err)
 			aItem.B = append(aItem.B, bItem)
 			bItem.A = nil // for later query comparison
@@ -301,27 +264,16 @@ func TestFieldsWithTheSameType(t *testing.T) {
 			b.Logger(t.Logf)
 		}
 
-		_, err = b.Create().Exec()
-		require.Nil(t, err)
-		_, err = a.Create().Exec()
+		require.Nil(t, b.Create().Exec())
+		require.Nil(t, a.Create().Exec())
+
+		b1, err := b.Insert().SetName("B1").Exec()
 		require.Nil(t, err)
 
-		b1 := &B4{Name: "B1"}
-		res, err := b.Insert().InsertB4(b1).Exec()
-		require.Nil(t, err)
-		b1.ID, err = res.LastInsertId()
+		b2, err := b.Insert().SetName("B2").Exec()
 		require.Nil(t, err)
 
-		b2 := &B4{Name: "B2"}
-		res, err = b.Insert().InsertB4(b2).Exec()
-		require.Nil(t, err)
-		b2.ID, err = res.LastInsertId()
-		require.Nil(t, err)
-
-		aItem := &A4{Name: "A", B1: b1, B2: b2}
-		res, err = a.Insert().InsertA4(aItem).Exec()
-		require.Nil(t, err)
-		aItem.ID, err = res.LastInsertId()
+		_, err = a.Insert().InsertA4(&A4{Name: "A", B1: b1, B2: b2}).Exec()
 		require.Nil(t, err)
 
 		aList, err := a.Select().Query()
@@ -358,8 +310,7 @@ func TestSelfReferencing(t *testing.T) {
 			a.Logger(t.Logf)
 		}
 
-		_, err = a.Create().Exec()
-		require.Nil(t, err)
+		require.Nil(t, a.Create().Exec())
 
 		// lets create this graph:
 		//     a1
@@ -414,10 +365,7 @@ func TestSelfReferencing(t *testing.T) {
 }
 
 func insertA5(t *testing.T, a A5ORM, name string, left, right *A5) *A5 {
-	item := &A5{Name: name, Left: left, Right: right}
-	res, err := a.Insert().InsertA5(item).Exec()
-	require.Nil(t, err)
-	item.ID, err = res.LastInsertId()
+	item, err := a.Insert().InsertA5(&A5{Name: name, Left: left, Right: right}).Exec()
 	require.Nil(t, err)
 	return item
 }
@@ -436,14 +384,9 @@ func orms(t *testing.T, conn conn) (AORM, BORM, CORM) {
 		c.Logger(t.Logf)
 	}
 
-	_, err = b.Create().Exec()
-	require.Nil(t, err)
-
-	_, err = c.Create().Exec()
-	require.Nil(t, err)
-
-	_, err = a.Create().Exec()
-	require.Nil(t, err)
+	require.Nil(t, b.Create().Exec())
+	require.Nil(t, c.Create().Exec())
+	require.Nil(t, a.Create().Exec())
 
 	return a, b, c
 }

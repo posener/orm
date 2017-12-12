@@ -154,12 +154,12 @@ func (b *{{$.Public}}InsertBuilder) Insert{{.Type.Name}}(p *{{.Type.Naked.Ext $.
 	{{ range $_, $f := .Type.Fields -}}
 	{{ if $f.IsSettable -}}
 	{{ if not $f.IsReference -}}
-	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}})
+	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}, p.{{$f.Name}})
 	{{ else -}}
 	{{ if $f.Type.Pointer -}}
 	if p.{{$f.Name}} != nil {
 	{{ end -}}
-	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}.{{$f.Type.PrimaryKey.Name}})
+	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}.{{$f.Type.PrimaryKey.Name}}, p.{{$f.Name}})
 	{{ if $f.Type.Pointer -}}
 	}
 	{{ end -}}
@@ -194,12 +194,12 @@ func (b *{{$.Public}}UpdateBuilder) Update{{.Type.Name}}(p *{{.Type.Naked.Ext $.
 	{{ range $_, $f := .Type.Fields -}}
     {{ if $f.IsSettable -}}
 	{{ if not $f.IsReference -}}
-	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}})
+	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}, p.{{$f.Name}})
 	{{ else -}}
 	{{ if $f.Type.Pointer -}}
 	if p.{{$f.Name}} != nil {
 	{{ end -}}
-	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}.{{$f.Type.PrimaryKey.Name}})
+	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}.{{$f.Type.PrimaryKey.Name}}, p.{{$f.Name}})
 	{{ if $f.Type.Pointer -}}
 	}
 	{{ end -}}
@@ -236,13 +236,13 @@ func (b *{{$.Public}}DeleteBuilder) Context(ctx context.Context) *{{$.Public}}De
 {{ if $f.IsSettable -}}
 // Set{{$f.Name}} sets value for column {{$f.Column}} in the INSERT statement
 func (b *{{$.Public}}InsertBuilder) Set{{$f.Name}}(value {{$f.SetType.Ext $.Type.Package}}) *{{$.Public}}InsertBuilder {
-	b.params.Assignments.Add("{{$f.Column}}", value)
+	b.params.Assignments.Add("{{$f.Column}}", value, value)
 	return b
 }
 
 // Set{{$f.Name}} sets value for column {{$f.Column}} in the UPDATE statement
 func (b *{{$.Public}}UpdateBuilder) Set{{$f.Name}}(value {{$f.SetType.Ext $.Type.Package}}) *{{$.Public}}UpdateBuilder {
-	b.params.Assignments.Add("{{$f.Column}}", value)
+	b.params.Assignments.Add("{{$f.Column}}", value, value)
 	return b
 }
 

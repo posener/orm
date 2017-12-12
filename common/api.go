@@ -87,8 +87,9 @@ type Page struct {
 // Assignment is a struct that is used for INSERT and UPDATE/SET operations
 // It holds column name and the value to assign.
 type Assignment struct {
-	Column string
-	Value  interface{}
+	Column        string
+	ColumnValue   interface{}
+	OriginalValue interface{}
 }
 
 // Assignments is a list of Assignment
@@ -98,12 +99,16 @@ type Assignments []Assignment
 func (a Assignments) Args() []interface{} {
 	args := make([]interface{}, len(a))
 	for i := range a {
-		args[i] = a[i].Value
+		args[i] = a[i].ColumnValue
 	}
 	return args
 }
 
 // Add adds an assignment to the list
-func (a *Assignments) Add(name string, value interface{}) {
-	*a = append(*a, Assignment{Column: name, Value: value})
+func (a *Assignments) Add(name string, columnValue interface{}, originalValue interface{}) {
+	*a = append(*a, Assignment{
+		Column:        name,
+		ColumnValue:   columnValue,
+		OriginalValue: originalValue,
+	})
 }

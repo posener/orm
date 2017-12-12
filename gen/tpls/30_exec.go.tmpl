@@ -1,8 +1,9 @@
 // Exec creates a table for the given struct
-func (b *{{$.Public}}CreateBuilder) Exec() (sql.Result, error) {
+func (b *{{$.Public}}CreateBuilder) Exec() error {
 	stmt, args := b.conn.dialect.Create(&b.params)
 	b.conn.log("Create: '%v' %v", stmt, args)
-	return b.conn.db.ExecContext(common.ContextOrBackground(b.params.Ctx), stmt, args...)
+	_, err := b.conn.db.ExecContext(common.ContextOrBackground(b.params.Ctx), stmt, args...)
+	return err
 }
 
 // query is used by the Select.Query and Select.Limit functions
@@ -13,13 +14,17 @@ func (b *{{$.Public}}SelectBuilder) query(ctx context.Context) (*sql.Rows, error
 }
 
 // Exec inserts the data to the given database
-func (b *{{$.Public}}InsertBuilder) Exec() (sql.Result, error) {
+func (b *{{$.Public}}InsertBuilder) Exec() (*{{$.Type.Naked.Ext $.Type.Package}}, error) {
 	if len(b.params.Assignments) == 0 {
 		return nil, fmt.Errorf("nothing to insert")
 	}
 	stmt, args := b.conn.dialect.Insert(&b.params)
 	b.conn.log("Insert: '%v' %v", stmt, args)
-	return b.conn.db.ExecContext(common.ContextOrBackground(b.params.Ctx), stmt, args...)
+	res, err := b.conn.db.ExecContext(common.ContextOrBackground(b.params.Ctx), stmt, args...)
+	if err != nil {
+	    return nil, err
+	}
+    return {{$.Private}}ReturnObject(b.params.Assignments, res)
 }
 
 // Exec inserts the data to the given database
@@ -151,4 +156,26 @@ func (b *{{$.Public}}SelectBuilder) First() (*{{.Type.Naked.Ext $.Type.Package}}
         return nil, err
     }
 	return item, rows.Err()
+}
+
+// {{$.Private}}ReturnObject builds {{$.Type.Naked.Ext $.Type.Package}} from assignment values
+// and from the sql result ID, for returning an object from INSERT transactions
+func {{$.Private}}ReturnObject(assignments common.Assignments, res sql.Result) (*{{$.Type.Naked.Ext $.Type.Package}}, error) {
+	ret := new({{$.Type.Naked.Ext $.Type.Package}})
+	for _, assign := range assignments {
+        switch assign.Column {
+        {{ range $_, $f := $.Type.Fields -}}
+        case "{{$f.Column}}":
+            ret.{{$f.Name}} = assign.OriginalValue.({{$f.Type.Ext $.Type.Package}})
+        {{ end -}}
+        }
+	}
+	{{ if $.Type.PrimaryKey -}}
+	id, err := res.LastInsertId()
+	if err != nil {
+	    return nil, err
+	}
+	ret.{{$.Type.PrimaryKey.Name}} = {{$.Type.PrimaryKey.Type.Ext $.Type.Package}}(id)
+	{{ end -}}
+	return ret, nil
 }

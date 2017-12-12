@@ -192,12 +192,12 @@ func TestInsert(t *testing.T) {
 			wantArgs: []interface{}(nil),
 		},
 		{
-			assign:   common.Assignments{{Column: "c1", Value: 1}},
+			assign:   common.Assignments{{Column: "c1", ColumnValue: 1}},
 			wantStmt: "INSERT INTO `name` (`c1`) VALUES (?)",
 			wantArgs: []interface{}{1},
 		},
 		{
-			assign:   common.Assignments{{Column: "c1", Value: 1}, {Column: "c2", Value: ""}},
+			assign:   common.Assignments{{Column: "c1", ColumnValue: 1}, {Column: "c2", ColumnValue: ""}},
 			wantStmt: "INSERT INTO `name` (`c1`, `c2`) VALUES (?, ?)",
 			wantArgs: []interface{}{1, ""},
 		},
@@ -227,17 +227,17 @@ func TestUpdate(t *testing.T) {
 			wantArgs: []interface{}(nil),
 		},
 		{
-			assign:   common.Assignments{{Column: "c1", Value: 1}},
+			assign:   common.Assignments{{Column: "c1", ColumnValue: 1}},
 			wantStmt: "UPDATE `name` SET `c1` = ?",
 			wantArgs: []interface{}{1},
 		},
 		{
-			assign:   common.Assignments{{Column: "c1", Value: 1}, {Column: "c2", Value: ""}},
+			assign:   common.Assignments{{Column: "c1", ColumnValue: 1}, {Column: "c2", ColumnValue: ""}},
 			wantStmt: "UPDATE `name` SET `c1` = ?, `c2` = ?",
 			wantArgs: []interface{}{1, ""},
 		},
 		{
-			assign:   common.Assignments{{Column: "c1", Value: 1}, {Column: "c2", Value: ""}},
+			assign:   common.Assignments{{Column: "c1", ColumnValue: 1}, {Column: "c2", ColumnValue: ""}},
 			where:    common.NewWhere(orm.OpGt, "k", 3),
 			wantStmt: "UPDATE `name` SET `c1` = ?, `c2` = ? WHERE `name`.`k` > ?",
 			wantArgs: []interface{}{1, "", 3},
