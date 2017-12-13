@@ -8,6 +8,7 @@ import (
 	"github.com/posener/orm"
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect/mysql"
+	"github.com/posener/orm/graph"
 	"github.com/posener/orm/load"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,45 +24,45 @@ func TestCreate(t *testing.T) {
 	}{
 		{
 			fields: []*load.Field{
-				{Name: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}},
-				{Name: "String", Type: load.Type{Naked: &load.Naked{Name: "string"}}},
-				{Name: "Bool", Type: load.Type{Naked: &load.Naked{Name: "bool"}}},
-				{Name: "Time", Type: load.Type{Naked: &load.Naked{Name: "time.Time"}}},
+				{AccessName: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}},
+				{AccessName: "String", Type: load.Type{Naked: &load.Naked{Name: "string"}}},
+				{AccessName: "Bool", Type: load.Type{Naked: &load.Naked{Name: "bool"}}},
+				{AccessName: "Time", Type: load.Type{Naked: &load.Naked{Name: "time.Time"}}},
 			},
-			want: "`int` INTEGER, `string` TEXT, `bool` BOOLEAN, `time` DATETIME(3)",
+			want: "`int` INTEGER, `string` VARCHAR(255), `bool` BOOLEAN, `time` DATETIME(3)",
 		},
 		{
 			fields: []*load.Field{
-				{Name: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}, PrimaryKey: true},
-				{Name: "String", Type: load.Type{Naked: &load.Naked{Name: "string"}}},
+				{AccessName: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}, PrimaryKey: true},
+				{AccessName: "String", Type: load.Type{Naked: &load.Naked{Name: "string"}}},
 			},
-			want: "`int` INTEGER PRIMARY KEY, `string` TEXT",
+			want: "`int` INTEGER PRIMARY KEY, `string` VARCHAR(255)",
 		},
 		{
 			fields: []*load.Field{
-				{Name: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}, PrimaryKey: true, AutoIncrement: true},
-				{Name: "String", Type: load.Type{Naked: &load.Naked{Name: "string"}}},
+				{AccessName: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}, PrimaryKey: true, AutoIncrement: true},
+				{AccessName: "String", Type: load.Type{Naked: &load.Naked{Name: "string"}}},
 			},
-			want: "`int` INTEGER PRIMARY KEY AUTO_INCREMENT, `string` TEXT",
+			want: "`int` INTEGER PRIMARY KEY AUTO_INCREMENT, `string` VARCHAR(255)",
 		},
 		{
 			fields: []*load.Field{
-				{Name: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}},
-				{Name: "String", Type: load.Type{Naked: &load.Naked{Name: "string"}}, NotNull: true, Default: "xxx"},
+				{AccessName: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}},
+				{AccessName: "String", Type: load.Type{Naked: &load.Naked{Name: "string"}}, NotNull: true, Default: "xxx"},
 			},
-			want: "`int` INTEGER, `string` TEXT NOT NULL DEFAULT xxx",
+			want: "`int` INTEGER, `string` VARCHAR(255) NOT NULL DEFAULT xxx",
 		},
 		{
 			fields: []*load.Field{
-				{Name: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}},
-				{Name: "String", Type: load.Type{Naked: &load.Naked{Name: "string"}}, CustomType: "VARCHAR(10)"},
+				{AccessName: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}},
+				{AccessName: "String", Type: load.Type{Naked: &load.Naked{Name: "string"}}, CustomType: "VARCHAR(10)"},
 			},
 			want: "`int` INTEGER, `string` VARCHAR(10)",
 		},
 		{
 			fields: []*load.Field{
-				{Name: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}},
-				{Name: "Time", Type: load.Type{Naked: &load.Naked{Name: "time.Time"}}, CustomType: "DATETIME"},
+				{AccessName: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}},
+				{AccessName: "Time", Type: load.Type{Naked: &load.Naked{Name: "time.Time"}}, CustomType: "DATETIME"},
 			},
 			want: "`int` INTEGER, `time` DATETIME",
 		},
@@ -71,7 +72,7 @@ func TestCreate(t *testing.T) {
 		t.Run(tt.want, func(t *testing.T) {
 			tp := &load.Type{Naked: &load.Naked{Name: "name", Fields: tt.fields}}
 			genMysql := &gen{GenImplementer: new(mysql.Gen)}
-			got := genMysql.ColumnsStatement(tp)
+			got := genMysql.ColumnsStatement(&graph.Graph{Type: tp})
 			assert.Equal(t, tt.want, got)
 		})
 	}

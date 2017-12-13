@@ -77,7 +77,7 @@ func TestRelationOneToOne(t *testing.T) {
 
 		_, err = aORM.Update().
 			Where(aORM.Where().ID(orm.OpEq, a1.ID)).
-			SetCPointer(c2.ID).
+			SetCPointer(c2).
 			Exec()
 		require.Nil(t, err)
 
@@ -137,7 +137,7 @@ func TestRelationOneToMany(t *testing.T) {
 		// test update of reference
 		cORM.Update().
 			Where(cORM.Where().Year(orm.OpEq, 2000)).
-			SetBID(b2.ID).
+			SetB(b2).
 			Exec()
 
 		bItems, err = bORM.Select().
@@ -155,9 +155,10 @@ func generateCs(t *testing.T, cORM CORM, bItem *B, count int) {
 	var cItems []C
 	for i := 0; i < count; i++ {
 		cItem, err := cORM.Insert().
-			InsertC(&C{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, BID: bItem.ID}).
+			InsertC(&C{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, B: bItem}).
 			Exec()
 		require.Nil(t, err)
+		cItem.B = nil
 		cItems = append(cItems, *cItem)
 		bItem.CsPointer = append(bItem.CsPointer, cItem)
 	}
@@ -405,9 +406,56 @@ func TestSelfReferencing(t *testing.T) {
 }
 
 func insertA5(t *testing.T, a A5ORM, name string, left, right *A5) *A5 {
+	t.Helper()
 	item, err := a.Insert().InsertA5(&A5{Name: name, Left: left, Right: right}).Exec()
 	require.Nil(t, err)
 	return item
+}
+
+func TestUniqueConstrain(t *testing.T) {
+	testDBs(t, func(t *testing.T, conn conn) {
+		a, err := NewA6ORM(conn.name, conn)
+		require.Nil(t, err)
+		b, err := NewB6ORM(conn.name, conn)
+		require.Nil(t, err)
+		if testing.Verbose() {
+			a.Logger(t.Logf)
+			b.Logger(t.Logf)
+		}
+
+		require.Nil(t, b.Create().Exec())
+		require.Nil(t, a.Create().Exec())
+
+		b1, err := b.Insert().SetSureName("Jackson").SetFirstName("Michael").Exec()
+		require.Nil(t, err)
+
+		b2, err := b.Insert().SetSureName("Obama").SetFirstName("Barak").Exec()
+		require.Nil(t, err)
+
+		_, err = a.Insert().SetName("A").SetB(b1).Exec()
+		require.Nil(t, err)
+
+		_, err = a.Insert().SetName("B").SetB(b2).Exec()
+		require.Nil(t, err)
+
+		as, err := a.Select().Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 2, len(as)) {
+			assert.Equal(t, "A", as[0].Name)
+			assert.Nil(t, as[0].B)
+			assert.Equal(t, "B", as[1].Name)
+			assert.Nil(t, as[1].B)
+		}
+
+		as, err = a.Select().JoinB(b.Select().Joiner()).Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 2, len(as)) {
+			assert.Equal(t, "A", as[0].Name)
+			assert.Equal(t, b1, as[0].B)
+			assert.Equal(t, "B", as[1].Name)
+			assert.Equal(t, b2, as[1].B)
+		}
+	})
 }
 
 func orms(t *testing.T, conn conn) (AORM, BORM, CORM) {

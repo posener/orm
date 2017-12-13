@@ -19,8 +19,8 @@ func (g *Gen) Name() string {
 	return "mysql"
 }
 
-func (g *Gen) ColumnCreateString(f *load.Field, sqlType sqltypes.Type) string {
-	stmt := []string{fmt.Sprintf("`%s` %s", f.Column(), sqlType)}
+func (g *Gen) ColumnCreateString(name string, f *load.Field, sqlType sqltypes.Type) string {
+	stmt := []string{fmt.Sprintf("`%s` %s", name, sqlType)}
 	if f.NotNull {
 		stmt = append(stmt, "NOT NULL")
 	}
@@ -52,7 +52,7 @@ func (Gen) GoTypeToColumnType(t *load.Type) sqltypes.Type {
 	case "bool":
 		return sqltypes.Boolean
 	case "string":
-		return sqltypes.Text
+		return sqltypes.VarChar + "(255)"
 	case "[]byte":
 		return sqltypes.Blob
 	case "time.Time":
@@ -91,20 +91,20 @@ var tmplt = template.Must(template.New("mysql").Parse(`
 				switch val := vals[i].(type) {
 				case []byte:
 					tmp := {{.ConvertFuncString}}
-					row.{{.Field.Name}} = {{if .Field.Type.Pointer}}&{{end}}tmp
+					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer}}&{{end}}tmp
 				{{- if ne .ConvertType "[]byte" }}
 				case {{.ConvertType}}:
 					tmp := {{.Field.Type.Naked.Ext .Type.Package}}(val)
-					row.{{.Field.Name}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
+					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
 				{{- end }}
 				default:
-					return nil, 0, common.ErrConvert("{{.Field.Name}}", i, vals[i], "[]byte, {{.ConvertType}}")
+					return nil, 0, common.ErrConvert("{{.Field.AccessName}}", i, vals[i], "[]byte, {{.ConvertType}}")
 				}
 `))
 
 // convertFuncString is a function for converting the data from SQL to the right type
 func (g *Gen) convertFuncString(t *load.Type, f *load.Field, sqlType sqltypes.Type) string {
-	switch tp := f.SetType().Naked.Ext(""); tp {
+	switch tp := f.Type.Naked.Ext(""); tp {
 	case "string":
 		return "string(val)"
 	case "[]byte":

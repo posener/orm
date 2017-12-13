@@ -1,11 +1,11 @@
 type {{$.Public}}Joiner interface {
     Params() common.SelectParams
-    Scan(dialect string, values []driver.Value{{if $.Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.Ext $.Type.Package}}]*{{.Type.Naked.Ext $.Type.Package}}{{end}}) (*{{$.Type.Naked.Ext $.Type.Package}}, int, error)
+    Scan(dialect string, values []driver.Value{{if $.Graph.Type.HasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}{{end}}) (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, int, error)
 }
 
-// {{.Type.Name}}Count is a struct for counting rows of type {{.Type.Name}}
-type {{.Type.Name}}Count struct {
-    {{.Type.Ext $.Type.Package}}
+// {{$.Graph.Type.Name}}Count is a struct for counting rows of type {{$.Graph.Type.Name}}
+type {{$.Graph.Type.Name}}Count struct {
+    {{$.Graph.Type.Ext $.Graph.Type.Package}}
     Count int64
 }
 
@@ -25,11 +25,11 @@ func (s *{{$.Private}}Joiner) Params() common.SelectParams {
     return s.builder.params
 }
 
-func (s *{{$.Private}}Joiner) Scan(dialect string, values []driver.Value{{if $.Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.Ext $.Type.Package}}]*{{$.Type.Naked.Ext $.Type.Package}}{{end}}) (*{{$.Type.Naked.Ext $.Type.Package}}, int, error) {
-    return s.builder.selector.Scan(dialect, values{{if $.Type.HasOneToManyRelation}}, exists{{end}})
+func (s *{{$.Private}}Joiner) Scan(dialect string, values []driver.Value{{if $.Graph.Type.HasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}{{end}}) (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, int, error) {
+    return s.builder.selector.Scan(dialect, values{{if $.Graph.Type.HasOneToManyRelation}}, exists{{end}})
 }
 
-// Joiner returns an object to be used in a join operation with {{$.Type.Name}}
+// Joiner returns an object to be used in a join operation with {{$.Graph.Type.Name}}
 func (b *{{$.Public}}SelectBuilder) Joiner() {{$.Public}}Joiner {
     return &{{$.Private}}Joiner{builder: b}
 }
@@ -53,16 +53,16 @@ func (b *{{$.Public}}SelectBuilder) Page(offset, limit int64) *{{$.Public}}Selec
 	return b
 }
 
-{{ range $_, $refType := .Type.ReferencedTypes -}}
+{{ range $_, $refType := $.Graph.Type.ReferencedTypes -}}
 // {{$.Private}}{{$refType.Name}}Joiner is a scanner that defined by .Select().Joiner()
 // of an ORM object for type {{$refType.Name}}
 type {{$.Private}}{{$refType.Name}}Joiner interface {
     Params() common.SelectParams
-    Scan(dialect string, values []driver.Value{{if $refType.HasOneToManyRelation}}, exists map[{{$refType.PrimaryKey.Type.Ext $.Type.Package}}]*{{$refType.Ext $.Type.Package}}{{end}}) (*{{$refType.Ext $.Type.Package}}, int, error)
+    Scan(dialect string, values []driver.Value{{if $refType.HasOneToManyRelation}}, exists map[string]*{{$refType.Ext $.Graph.Type.Package}}{{end}}) (*{{$refType.Ext $.Graph.Type.Package}}, int, error)
 }
 {{ end -}}
 
-{{ range $_, $f := .Type.Fields -}}
+{{ range $_, $f := $.Graph.Type.Fields -}}
 {{ if not $f.IsReference }}
 // Select{{$f.Name}} adds {{$f.Name}} to the selected column of a query
 func (b *{{$.Public}}SelectBuilder) Select{{$f.Name}}() *{{$.Public}}SelectBuilder {
@@ -78,15 +78,15 @@ func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(scanner {{$.Private}}{{$f.Ty
 {{ end }}
 
 {{ if not $f.Type.Slice -}}
-// OrderBy{{$f.Name}} set order to the query results according to column {{$f.Column}}
+// OrderBy{{$f.Name}} set order to the query results according to column {{$f.Columns}}
 func (b *{{$.Public}}SelectBuilder) OrderBy{{$f.Name}}(dir common.OrderDir) *{{$.Public}}SelectBuilder {
-    b.params.Orders.Add("{{$f.Column}}", dir)
+    b.params.Orders.Add("{{index $f.Columns 0}}", dir)
     return b
 }
 
-// GroupBy{{$f.Name}} make the query group by column {{$f.Column}}
+// GroupBy{{$f.Name}} make the query group by column {{$f.Columns}}
 func (b *{{$.Public}}SelectBuilder) GroupBy{{$f.Name}}() *{{$.Public}}SelectBuilder {
-    b.params.Groups.Add("{{$f.Column}}")
+    b.params.Groups.Add("{{index $f.Columns 0}}")
     return b
 }
 {{ end -}}

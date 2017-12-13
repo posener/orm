@@ -1,22 +1,22 @@
 type {{$.Public}}WhereBuilder struct {}
 
-{{range $_, $f := .Type.Fields}}
+{{range $_, $f := $.Graph.Type.Fields}}
 // {{$.Public}}Where{{$f.Name}} adds a condition on {{$f.Name}} to the WHERE statement
-func (*{{$.Public}}WhereBuilder) {{$f.Name}}(op common.Op, val {{$f.Type.Ext $.Type.Package}}) common.Where {
-	return common.NewWhere(op, "{{$f.Column}}", val)
+func (*{{$.Public}}WhereBuilder) {{$f.Name}}(op common.Op, val {{$f.Type.Ext $.Graph.Type.Package}}) common.Where {
+	return common.NewWhere(op, "{{index $f.Columns 0}}", val)
 }
 
 // {{$.Public}}Where{{$f.Name}}In adds an IN condition on {{$f.Name}} to the WHERE statement
-func (*{{$.Public}}WhereBuilder) {{$f.Name}}In(vals ...{{$f.Type.Ext $.Type.Package}}) common.Where {
+func (*{{$.Public}}WhereBuilder) {{$f.Name}}In(vals ...{{$f.Type.Ext $.Graph.Type.Package}}) common.Where {
 	args := make([]interface{}, len(vals))
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("{{$f.Column}}", args...)
+	return common.NewWhereIn("{{index $f.Columns 0}}", args...)
 }
 
 // {{$.Public}}Where{{$f.Name}}Between adds a BETWEEN condition on {{$f.Name}} to the WHERE statement
-func (*{{$.Public}}WhereBuilder) {{$f.Name}}Between(low, high {{$f.Type.Ext $.Type.Package}}) common.Where {
-	return common.NewWhereBetween("{{$f.Column}}", low, high)
+func (*{{$.Public}}WhereBuilder) {{$f.Name}}Between(low, high {{$f.Type.Ext $.Graph.Type.Package}}) common.Where {
+	return common.NewWhereBetween("{{index $f.Columns 0}}", low, high)
 }
 {{end}}

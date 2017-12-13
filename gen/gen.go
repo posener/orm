@@ -12,7 +12,7 @@ import (
 
 	"github.com/posener/orm/dialect"
 	"github.com/posener/orm/gen/b0x"
-	"github.com/posener/orm/load"
+	"github.com/posener/orm/graph"
 )
 
 //go:generate fileb0x b0x.yml
@@ -29,7 +29,7 @@ package {{$.Package}}
 // TemplateData arguments for the templates
 type TemplateData struct {
 	// The name	of the new created package
-	Type     *load.Type
+	Graph    *graph.Graph // TODO: rename Type to Graph
 	Dialects []dialect.Generator
 	Public   string
 	Private  string
@@ -52,15 +52,18 @@ func init() {
 		if err != nil {
 			panic(err)
 		}
-		templates.New(file).Parse(string(data))
+		_, err = templates.New(file).Parse(string(data))
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
 // Gen generates all the ORM files for a given struct in a given package.
 // st is the type descriptor of the struct
-func Gen(tp *load.Type) error {
+func Gen(g *graph.Graph) error {
 	// get the package ormDir on disk
-	structPkgDir, err := packagePath(tp.ImportPath)
+	structPkgDir, err := packagePath(g.ImportPath())
 	if err != nil {
 		return err
 	}
@@ -68,16 +71,16 @@ func Gen(tp *load.Type) error {
 	dialects := dialect.NewGen()
 
 	data := TemplateData{
-		Type:     tp,
+		Graph:    g,
 		Dialects: dialects,
-		Public:   tp.Name,
-		Private:  strings.ToLower(tp.Name),
+		Public:   g.Name,
+		Private:  strings.ToLower(g.Name),
 	}
 
-	ormFileName := strings.ToLower(tp.Name + "_orm.go")
+	ormFileName := strings.ToLower(g.Name + "_orm.go")
 	ormFilePath := filepath.Join(structPkgDir, ormFileName)
 
-	log.Printf("Generating code for %s into %s", tp, ormFilePath)
+	log.Printf("Generating code for %s into %s", g.Type, ormFilePath)
 
 	ormFile, err := os.Create(ormFilePath)
 	if err != nil {
@@ -85,7 +88,7 @@ func Gen(tp *load.Type) error {
 	}
 
 	// write header
-	err = header.Execute(ormFile, tp)
+	err = header.Execute(ormFile, g.Type)
 	if err != nil {
 		return err
 	}

@@ -114,7 +114,7 @@ func TestType(t *testing.T) {
 			assert.Equal(t, tt.wantString, tp.String())
 			assert.Equal(t, tt.wantExtName, tp.Ext(""))
 			assert.Equal(t, tt.wantPackage, tp.Package())
-			assert.Equal(t, tt.wantImportPath, tp.ImportPath)
+			assert.Equal(t, tt.wantImportPath, tp.ImportPath())
 			assert.Equal(t, tt.wantExtNaked, tp.Naked.Ext(""))
 			assert.Equal(t, tt.wantPointer, tp.Pointer)
 			assert.Equal(t, tt.wantSlice, tp.Slice)

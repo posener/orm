@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/posener/orm/gen"
+	"github.com/posener/orm/graph"
 	"github.com/posener/orm/load"
 )
 
@@ -44,17 +45,27 @@ func main() {
 	var errors []string
 
 	for _, typeName := range options.types {
+		log.Printf("Loading type")
 		tp, err := load.New(typeName)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("[%s] load type: %s", typeName, err))
 			continue
 		}
-		err = tp.SetRelations()
+
+		log.Printf("Loading fields")
+		err = tp.LoadFields(3)
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("[%s] load type fields", typeName, err))
+			continue
+		}
+
+		log.Printf("Calculating graph")
+		g, err := graph.New(tp)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("[%s] setting relations: %s", typeName, err))
 			continue
 		}
-		err = gen.Gen(tp)
+		err = gen.Gen(g)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("[%s] generate code: %s", typeName, err))
 		}
