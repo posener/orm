@@ -51,7 +51,8 @@ func (g *gen) ColumnsStatement(gr *graph.Graph) string {
 	)
 	for _, f := range gr.Fields {
 		if !f.IsReference() {
-			colStmts = append(colStmts, g.ColumnCreateString(f.Columns()[0], f, g.columnType(f, 0)))
+			sqlColumn := f.Columns()[0]
+			colStmts = append(colStmts, g.ColumnCreateString(sqlColumn.Name, f, g.columnType(&sqlColumn)))
 		}
 	}
 
@@ -66,14 +67,17 @@ func (g *gen) ColumnsStatement(gr *graph.Graph) string {
 }
 
 func (g *gen) ConvertValueCode(tp *load.Type, field *load.Field) string {
-	return g.GenImplementer.ConvertValueCode(tp, field, g.columnType(field, 0))
+	if field.IsReference() {
+		return ""
+	}
+	return g.GenImplementer.ConvertValueCode(tp, field, g.columnType(&field.Columns()[0]))
 }
 
-func (g *gen) columnType(field *load.Field, i int) sqltypes.Type {
-	if custom := field.CustomType; custom != "" {
+func (g *gen) columnType(col *load.SQLColumn) sqltypes.Type {
+	if custom := col.CustomType; custom != "" {
 		return custom
 	}
-	return g.GoTypeToColumnType(field.SetTypes()[i])
+	return g.GoTypeToColumnType(col.SetType)
 }
 
 func (g *gen) foreignKeys(outEdge graph.Edge) (colStmts []string, fkStmts []string) {
@@ -81,10 +85,10 @@ func (g *gen) foreignKeys(outEdge graph.Edge) (colStmts []string, fkStmts []stri
 	dstFields := outEdge.RelationType().PrimaryKeys
 	for i := range cols {
 		colStmts = append(colStmts,
-			fmt.Sprintf("`%s` %s", cols[i], g.GoTypeToColumnType(&dstFields[i].Type)))
+			fmt.Sprintf("`%s` %s", cols[i].Name, g.GoTypeToColumnType(&dstFields[i].Type)))
 		fkStmts = append(fkStmts,
 			fmt.Sprintf("FOREIGN KEY (`%s`) REFERENCES `%s`(`%s`)",
-				cols[i], outEdge.RelationType().Table(), dstFields[i].Columns()[0]))
+				cols[i].Name, outEdge.RelationType().Table(), dstFields[i].Column().Name))
 	}
 	return
 }

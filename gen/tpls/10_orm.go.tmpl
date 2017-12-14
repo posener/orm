@@ -154,13 +154,13 @@ func (b *{{$.Public}}InsertBuilder) Insert{{$.Graph.Type.Name}}(p *{{$.Graph.Typ
 	{{ range $_, $f := $.Graph.Type.Fields -}}
 	{{ if $f.IsSettable -}}
 	{{ if not $f.IsReference -}}
-	b.params.Assignments.Add("{{index $f.Columns 0}}", p.{{$f.AccessName}}, p.{{$f.AccessName}})
+	b.params.Assignments.Add("{{$f.Column.Name}}", p.{{$f.AccessName}}, p.{{$f.AccessName}})
 	{{ else -}}
 	{{ if $f.Type.Pointer -}}
 	if p.{{$f.Name}} != nil {
 	{{ end -}}
 	{{ range $i, $col := $f.Columns -}}
-	b.params.Assignments.Add("{{$col}}", p.{{$f.AccessName}}.{{(index $f.Type.PrimaryKeys $i).Name}}, p.{{$f.AccessName}})
+	b.params.Assignments.Add("{{$col.Name}}", p.{{$f.AccessName}}.{{(index $f.Type.PrimaryKeys $i).Name}}, p.{{$f.AccessName}})
 	{{ end -}}
 	{{ if $f.Type.Pointer -}}
 	}
@@ -196,13 +196,13 @@ func (b *{{$.Public}}UpdateBuilder) Update{{$.Graph.Type.Name}}(p *{{$.Graph.Typ
 	{{ range $_, $f := $.Graph.Type.Fields -}}
     {{ if $f.IsSettable -}}
 	{{ if not $f.IsReference -}}
-	b.params.Assignments.Add("{{index $f.Columns 0}}", p.{{$f.AccessName}}, p.{{$f.AccessName}})
+	b.params.Assignments.Add("{{$f.Column.Name}}", p.{{$f.AccessName}}, p.{{$f.AccessName}})
 	{{ else -}}
 	{{ if $f.Type.Pointer -}}
 	if p.{{$f.Name}} != nil {
 	{{ end -}}
 	{{ range $i, $col := $f.Columns -}}
-	b.params.Assignments.Add("{{$col}}", p.{{$f.AccessName}}.{{(index $f.Type.PrimaryKeys $i).Name}}, p.{{$f.AccessName}})
+	b.params.Assignments.Add("{{$col.Name}}", p.{{$f.AccessName}}.{{(index $f.Type.PrimaryKeys $i).Name}}, p.{{$f.AccessName}})
 	{{ end -}}
 	{{ if $f.Type.Pointer -}}
 	}
@@ -242,10 +242,10 @@ func (b *{{$.Public}}DeleteBuilder) Context(ctx context.Context) *{{$.Public}}De
 func (b *{{$.Public}}InsertBuilder) Set{{$f.Name}}(value {{if $f.IsReference}}*{{end}}{{$f.Type.Naked.Ext $.Graph.Type.Package}}) *{{$.Public}}InsertBuilder {
     {{ if $f.IsReference -}}
 	{{ range $i, $col := $f.Columns -}}
-	b.params.Assignments.Add("{{$col}}", value.{{(index $f.Type.PrimaryKeys $i).Name}}, value)
+	b.params.Assignments.Add("{{$col.Name}}", value.{{(index $f.Type.PrimaryKeys $i).Name}}, value)
 	{{ end -}}
     {{ else -}}
-	b.params.Assignments.Add("{{index $f.Columns 0}}", value, value)
+	b.params.Assignments.Add("{{$f.Column.Name}}", value, value)
 	{{ end -}}
 	return b
 }
@@ -254,10 +254,10 @@ func (b *{{$.Public}}InsertBuilder) Set{{$f.Name}}(value {{if $f.IsReference}}*{
 func (b *{{$.Public}}UpdateBuilder) Set{{$f.Name}}(value {{if $f.IsReference}}*{{end}}{{$f.Type.Naked.Ext $.Graph.Type.Package}}) *{{$.Public}}UpdateBuilder {
     {{ if $f.IsReference -}}
 	{{ range $i, $col := $f.Columns -}}
-	b.params.Assignments.Add("{{$col}}", value.{{(index $f.Type.PrimaryKeys $i).Name}}, value)
+	b.params.Assignments.Add("{{$col.Name}}", value.{{(index $f.Type.PrimaryKeys $i).Name}}, value)
 	{{ end -}}
     {{ else -}}
-	b.params.Assignments.Add("{{index $f.Columns 0}}", value, value)
+	b.params.Assignments.Add("{{$f.Column.Name}}", value, value)
 	{{ end -}}
 	return b
 }

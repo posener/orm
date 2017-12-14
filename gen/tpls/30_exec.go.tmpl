@@ -167,7 +167,7 @@ func {{$.Private}}ReturnObject(assignments common.Assignments, res sql.Result) (
 	for _, assign := range assignments {
         switch assign.Column {
         {{ range $_, $f := $.Graph.Type.Fields -}}
-        case "{{index $f.Columns 0}}":
+        case "{{(index $f.Columns 0).Name}}":
             ret.{{$f.AccessName}} = assign.OriginalValue.({{$f.Type.Ext $.Graph.Type.Package}})
         {{ end -}}
         }

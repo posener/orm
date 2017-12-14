@@ -1,9 +1,10 @@
 type {{$.Public}}WhereBuilder struct {}
 
-{{range $_, $f := $.Graph.Type.Fields}}
+{{ range $_, $f := $.Graph.Type.Fields -}}
+{{ if not $f.IsReference -}}
 // {{$.Public}}Where{{$f.Name}} adds a condition on {{$f.Name}} to the WHERE statement
 func (*{{$.Public}}WhereBuilder) {{$f.Name}}(op common.Op, val {{$f.Type.Ext $.Graph.Type.Package}}) common.Where {
-	return common.NewWhere(op, "{{index $f.Columns 0}}", val)
+	return common.NewWhere(op, "{{$f.Column.Name}}", val)
 }
 
 // {{$.Public}}Where{{$f.Name}}In adds an IN condition on {{$f.Name}} to the WHERE statement
@@ -12,11 +13,12 @@ func (*{{$.Public}}WhereBuilder) {{$f.Name}}In(vals ...{{$f.Type.Ext $.Graph.Typ
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return common.NewWhereIn("{{index $f.Columns 0}}", args...)
+	return common.NewWhereIn("{{$f.Column.Name}}", args...)
 }
 
 // {{$.Public}}Where{{$f.Name}}Between adds a BETWEEN condition on {{$f.Name}} to the WHERE statement
 func (*{{$.Public}}WhereBuilder) {{$f.Name}}Between(low, high {{$f.Type.Ext $.Graph.Type.Package}}) common.Where {
-	return common.NewWhereBetween("{{index $f.Columns 0}}", low, high)
+	return common.NewWhereBetween("{{$f.Column.Name}}", low, high)
 }
-{{end}}
+{{ end -}}
+{{ end -}}

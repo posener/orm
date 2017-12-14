@@ -144,30 +144,47 @@ func (f *Field) IsSettable() bool {
 	return !(f.AutoIncrement || f.Type.Slice)
 }
 
-// SetTypes is the type that is used to set this field.
-// it is usually the actual type, but in case of reference it is the PK of that type.
-func (f *Field) SetTypes() []*Type {
+// Columns returns the SQL column name of a field
+func (f *Field) Columns() []SQLColumn {
 	if f.IsForwardReference() {
-		// forward reference may refer to several fields in referenced columns
-		types := make([]*Type, len(f.Type.PrimaryKeys))
-		for i := range types {
-			types[i] = &f.Type.PrimaryKeys[i].Type
+		if f.CustomType != "" {
+			log.Fatalf("filed %s is reference, can't have a custom type", f)
 		}
-		return types
-	}
-	return []*Type{&f.Type}
-}
-
-// Column returns the SQL column name of a field
-func (f *Field) Columns() []string {
-	if f.IsForwardReference() {
-		cols := make([]string, 0, len(f.Type.PrimaryKeys))
+		cols := make([]SQLColumn, 0, len(f.Type.PrimaryKeys))
 		for _, pk := range f.Type.PrimaryKeys {
-			cols = append(cols, strings.ToLower(fmt.Sprintf("fk_%s_%s", f.Name(), pk.Name())))
+			cols = append(cols, SQLColumn{
+				Name:    strings.ToLower(fmt.Sprintf("fk_%s_%s", f.Name(), pk.Name())),
+				SetType: &pk.Type,
+			})
 		}
 		return cols
 	}
-	return []string{strings.ToLower(f.Name())}
+	return []SQLColumn{f.column()}
+}
+
+// Column returns the SQL column name of a field
+func (f *Field) Column() SQLColumn {
+	if f.IsReference() {
+		log.Panic("Column should not be called on a reference field, use columns")
+	}
+	return f.column()
+}
+func (f *Field) column() SQLColumn {
+	return SQLColumn{
+		Name:       strings.ToLower(f.Name()),
+		SetType:    &f.Type,
+		CustomType: f.CustomType,
+	}
+}
+
+// SQLColumn describe a column in an SQL table
+type SQLColumn struct {
+	// Name is the column name
+	Name string
+	// SetTypes is the type that is used to set a field that reference this column
+	SetType *Type
+	// CustomType is a custom SQL type that can be defined by the user
+	CustomType sqltypes.Type
 }
 
 func (f *Field) String() string {

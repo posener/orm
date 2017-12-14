@@ -77,16 +77,20 @@ func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(scanner {{$.Private}}{{$f.Ty
 }
 {{ end }}
 
-{{ if not $f.Type.Slice -}}
+{{ if not $f.IsReversedReference -}}
 // OrderBy{{$f.Name}} set order to the query results according to column {{$f.Columns}}
 func (b *{{$.Public}}SelectBuilder) OrderBy{{$f.Name}}(dir common.OrderDir) *{{$.Public}}SelectBuilder {
-    b.params.Orders.Add("{{index $f.Columns 0}}", dir)
+    {{ range $_, $col := $f.Columns -}}
+    b.params.Orders.Add("{{$col.Name}}", dir)
+    {{ end -}}
     return b
 }
 
 // GroupBy{{$f.Name}} make the query group by column {{$f.Columns}}
 func (b *{{$.Public}}SelectBuilder) GroupBy{{$f.Name}}() *{{$.Public}}SelectBuilder {
-    b.params.Groups.Add("{{index $f.Columns 0}}")
+    {{ range $_, $col := $f.Columns -}}
+    b.params.Groups.Add("{{$col.Name}}")
+    {{ end -}}
     return b
 }
 {{ end -}}

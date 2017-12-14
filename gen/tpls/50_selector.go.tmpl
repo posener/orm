@@ -16,7 +16,7 @@ func (s *{{$.Private}}Selector) Columns() []string {
     {{ range $_, $f := $.Graph.Type.Fields -}}
     {{ if not $f.IsReference -}}
     if s.Select{{$f.Name}} {
-        cols = append(cols, "{{index $f.Columns 0}}")
+        cols = append(cols, "{{$f.Column.Name}}")
     }
     {{ end -}}
     {{ end -}}
@@ -32,8 +32,8 @@ func (s *{{$.Private}}Selector) Joins() []common.JoinParams {
             Pairings: []common.Pairing{
                 {{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
                 {
-                    Column: "{{index $e.SrcField.Columns $i}}",
-                    JoinedColumn: "{{index $pk.Columns 0}}",
+                    Column: "{{(index $e.SrcField.Columns $i).Name}}",
+                    JoinedColumn: "{{$pk.Column.Name}}",
                 },
                 {{ end -}}
             },
@@ -47,8 +47,8 @@ func (s *{{$.Private}}Selector) Joins() []common.JoinParams {
             Pairings: []common.Pairing{
                 {{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
                 {
-                    Column: "{{index $pk.Columns 0}}",
-                    JoinedColumn: "{{index $e.SrcField.Columns $i}}",
+                    Column: "{{$pk.Column.Name}}",
+                    JoinedColumn: "{{(index $e.SrcField.Columns $i).Name}}",
                 },
                 {{ end -}}
             },
