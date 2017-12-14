@@ -72,7 +72,7 @@ func newField(parent *Naked, i int) (*Field, error) {
 
 	// ignore slice of basic type - not supported
 	if f.Type.Slice && f.Type.IsBasic() {
-		log.Printf("Ignoring field %s: slice of a basic type is not supported", f.Name)
+		log.Printf("Ignoring field %s: slice of a basic type is not supported", f.Name())
 		return nil, nil
 	}
 
