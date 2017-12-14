@@ -36,7 +36,11 @@ type Field struct {
 	Unique bool
 	// Default sets a default value for this column
 	Default string
-
+	// ReferencingFieldName is to used when type A has a one-to-many relationship
+	// to type B, and type B has more than one fields that reference type A.
+	// in this case, the one-to-many field in A, for example 'Bs []B' should add
+	// a tag with the name of the field in B that referencing it. So if type
+	// B hash 'A1, A2 A', type B should add tag `sql:"referencing field:A1"`.
 	ReferencingFieldName string
 }
 
@@ -113,7 +117,6 @@ func (f *Field) parseTags(tag string) error {
 			f.Unique = true
 		case "default":
 			f.Default = value
-
 		case "referencing field", "referencing_field":
 			f.ReferencingFieldName = value
 		}
@@ -138,7 +141,7 @@ func (f *Field) IsReversedReference() bool {
 
 // IsSettable returns whether the column could be set
 func (f *Field) IsSettable() bool {
-	return !(f.PrimaryKey || f.AutoIncrement || f.Type.Slice)
+	return !(f.AutoIncrement || f.Type.Slice)
 }
 
 // SetTypes is the type that is used to set this field.
