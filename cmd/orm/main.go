@@ -52,19 +52,14 @@ func main() {
 			continue
 		}
 
-		log.Printf("Loading fields")
-		err = tp.LoadFields(3)
-		if err != nil {
-			errors = append(errors, fmt.Sprintf("[%s] load type fields", typeName, err))
-			continue
-		}
-
 		log.Printf("Calculating graph")
 		g, err := graph.New(tp)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("[%s] setting relations: %s", typeName, err))
 			continue
 		}
+
+		log.Printf("Generating code")
 		err = gen.Gen(g)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("[%s] generate code: %s", typeName, err))
