@@ -68,6 +68,7 @@ func TestTypes(t *testing.T) {
 		a.PTime = &a.Time
 
 		aGot, err := db.Insert().InsertAll(a).Exec()
+		require.Nil(t, err)
 		assert.Equal(t, 1, aGot.Auto)
 		a.Auto = aGot.Auto
 		assert.Equal(t, a, aGot)

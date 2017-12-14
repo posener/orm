@@ -19,8 +19,8 @@ func (g *Gen) Name() string {
 	return "sqlite3"
 }
 
-func (g *Gen) ColumnCreateString(f *load.Field, sqlType sqltypes.Type) string {
-	stmt := []string{fmt.Sprintf("'%s' %s", f.Column(), sqlType)}
+func (g *Gen) ColumnCreateString(name string, f *load.Field, sqlType sqltypes.Type) string {
+	stmt := []string{fmt.Sprintf("`%s` %s", name, sqlType)}
 	if f.NotNull {
 		stmt = append(stmt, "NOT NULL")
 	}
@@ -90,10 +90,10 @@ type tmpltType struct {
 var tmplt = template.Must(template.New("sqlite3").Parse(`
 				val, ok := vals[i].({{.ConvertType}})
 				if !ok {
-					return nil, 0, common.ErrConvert("{{.Field.Name}}", i, vals[i], "{{.Field.Type.Ext .Type.Package}}")
+					return nil, 0, common.ErrConvert("{{.Field.AccessName}}", i, vals[i], "{{.Field.Type.Ext .Type.Package}}")
 				}
 				tmp := {{.Field.Type.Naked.Ext .Type.Package}}(val)
-				row.{{.Field.Name}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
+				row.{{.Field.AccessName}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
 `))
 
 // convertType is the type of the field when returned by sql/driver from database

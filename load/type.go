@@ -3,8 +3,6 @@ package load
 import (
 	"fmt"
 	"go/types"
-	"log"
-	"path/filepath"
 	"strings"
 )
 
@@ -37,11 +35,12 @@ type Type struct {
 // Naked is a type definition without it's specific usage information
 type Naked struct {
 	Name string
-	// ImportPath is a path to add to the import section for this type
-	ImportPath string
 	// Fields is the list of exported fields
-	Fields     []*Field
-	PrimaryKey *Field
+	Fields      []*Field
+	PrimaryKeys []*Field
+
+	st  *types.Struct
+	pkg *types.Package
 }
 
 // New loads a Type
@@ -56,8 +55,7 @@ func New(fullName string) (*Type, error) {
 	}
 	t := &Type{
 		Naked: &Naked{
-			Name:       typeName(fullName),
-			ImportPath: importPath(fullName),
+			Name: typeName(fullName),
 		},
 		Pointer: pointer(fullName),
 		Slice:   slice(fullName),
@@ -69,66 +67,42 @@ func New(fullName string) (*Type, error) {
 	}
 
 	// load the struct data and package information by scanning the go code
-	st, pkg, err := t.loadStruct()
+	err := t.loadStruct(importPath(fullName))
 	if err != nil {
 		return nil, err
-	}
-
-	// update the import path to the full package path
-	t.ImportPath = pkg.Path()
-
-	// now that we have the type's full name...
-	// before loading the fields, check if the type cached in the cache already
-	var cached bool
-	t.Naked, cached = cacheGetOrUpdate(t.Naked)
-	if cached {
-		return t, err
-	}
-	// the type was not in the cache, we should load all it's fields, which might lead
-	// to recursive calls to New function
-	err = t.loadFields(st)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("%s: creating graph", t.Naked)
-	for _, f := range t.Fields {
-		err := f.SetRefType()
-		if err != nil {
-			return nil, fmt.Errorf("set relation for field '%s': %s", f, err)
-		}
-		if f.RefType != nil {
-			log.Printf("Edge: %s -> %s", f, f.RefType)
-		}
 	}
 	return t, nil
 }
 
-func (t *Type) SetRelations() error {
-	log.Printf("%s: calculating foreign keys", t)
-	for _, f := range t.Fields {
-		err := f.SetForeignKey()
-		if err != nil {
-			return fmt.Errorf("set foreign key for field '%s': %s", f, err)
-		}
+// ImportPath is a path to add to the import section for this type
+func (t *Naked) ImportPath() string {
+	if t.pkg == nil {
+		return ""
 	}
-	return nil
+	return t.pkg.Path()
 }
 
 // loadFields iterate over the type's data structure and load all it's fields
 // this function might recursively call to the New function
-func (t *Naked) loadFields(st *types.Struct) error {
-	for i := 0; i < st.NumFields(); i++ {
-		field, err := newField(t, st, i)
+func (t *Naked) LoadFields(levels int) error {
+	if t.st == nil || levels == 0 {
+		return nil
+	}
+	for i := 0; i < t.st.NumFields(); i++ {
+		field, err := newField(t, i)
 		if err != nil {
 			return err
 		}
 		switch {
 		case field == nil:
 		case field.Embedded:
-			// Embedded field (aka anonymous)
 			// collect all their fields recursively to the parent fields.
+			err := field.Type.LoadFields(-1)
+			if err != nil {
+				return err
+			}
 			for _, field := range field.Type.Fields {
+				field.AccessName = fmt.Sprintf("%s.%s", field.ParentType.Name, field.Name())
 				t.Fields = append(t.Fields, field)
 			}
 		default:
@@ -136,12 +110,20 @@ func (t *Naked) loadFields(st *types.Struct) error {
 			t.Fields = append(t.Fields, field)
 		}
 	}
+
+	// load next level of fields
+	for _, field := range t.Fields {
+		err := field.Type.LoadFields(levels - 1)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 func (t *Naked) String() string {
-	if t.ImportPath != "" {
-		return t.ImportPath + "." + t.Name
+	if t.ImportPath() != "" {
+		return t.ImportPath() + "." + t.Name
 	}
 	return t.Name
 }
@@ -176,8 +158,10 @@ func (t *Naked) Ext(curPkg string) string {
 // for example, type in "github.com/posener/orm/example" has the package
 // name: "example"
 func (t *Naked) Package() string {
-	_, pkg := filepath.Split(t.ImportPath)
-	return pkg
+	if t.pkg == nil {
+		return ""
+	}
+	return t.pkg.Name()
 }
 
 func (t *Naked) IsBasic() bool {
@@ -188,8 +172,8 @@ func (t *Naked) IsBasic() bool {
 func (t *Naked) Imports() []string {
 	impsMap := map[string]bool{}
 	for _, f := range t.Fields {
-		if f.Type.ImportPath != "" && f.Type.ImportPath != t.ImportPath {
-			impsMap[f.Type.ImportPath] = true
+		if f.Type.ImportPath() != "" && f.Type.ImportPath() != t.ImportPath() {
+			impsMap[f.Type.ImportPath()] = true
 		}
 	}
 	imps := make([]string, 0, len(impsMap))

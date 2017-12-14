@@ -1,15 +1,15 @@
 // {{$.Private}}Table is SQL table name
-const {{$.Private}}Table = "{{.Type.Table}}"
+const {{$.Private}}Table = "{{$.Graph.Type.Table}}"
 
 // {{$.Private}}CreateColumnsStatements are columns definitions in different dialects
 var {{$.Private}}CreateColumnsStatements = map[string]string{
     {{ range $_, $d := .Dialects -}}
-    "{{$d.Name}}": "{{$d.ColumnsStatement $.Type}}",
+    "{{$d.Name}}": "{{$d.ColumnsStatement $.Graph}}",
     {{ end -}}
 }
 
-// {{$.Type.Name}}ORM is the interface of the ORM object
-type {{$.Type.Name}}ORM interface {
+// {{$.Graph.Type.Name}}ORM is the interface of the ORM object
+type {{$.Graph.Type.Name}}ORM interface {
     Close() error
     Create() *{{$.Public}}CreateBuilder
     Select() *{{$.Public}}SelectBuilder
@@ -20,17 +20,17 @@ type {{$.Type.Name}}ORM interface {
     Logger(orm.Logger)
 }
 
-// Open{{$.Type.Name}}ORM opens database connection
-func Open{{$.Type.Name}}ORM(driverName, dataSourceName string) ({{$.Type.Name}}ORM, error) {
+// Open{{$.Graph.Type.Name}}ORM opens database connection
+func Open{{$.Graph.Type.Name}}ORM(driverName, dataSourceName string) ({{$.Graph.Type.Name}}ORM, error) {
 	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return nil, err
 	}
-	return New{{$.Type.Name}}ORM(driverName, db)
+	return New{{$.Graph.Type.Name}}ORM(driverName, db)
 }
 
-// New{{$.Type.Name}}ORM returns an conn object from a db instance
-func New{{$.Type.Name}}ORM(driverName string, db orm.DB) ({{$.Type.Name}}ORM, error) {
+// New{{$.Graph.Type.Name}}ORM returns an conn object from a db instance
+func New{{$.Graph.Type.Name}}ORM(driverName string, db orm.DB) ({{$.Graph.Type.Name}}ORM, error) {
 	d, err := dialect.New(driverName)
 	if err != nil {
 		return nil, err
@@ -149,17 +149,19 @@ func (b *{{$.Public}}InsertBuilder) Context(ctx context.Context) *{{$.Public}}In
 	return b
 }
 
-// Insert{{.Type.Name}} returns an SQL INSERT statement builder filled with values of a given object
-func (b *{{$.Public}}InsertBuilder) Insert{{.Type.Name}}(p *{{.Type.Naked.Ext $.Type.Package}}) *{{$.Public}}InsertBuilder {
-	{{ range $_, $f := .Type.Fields -}}
+// Insert{{$.Graph.Type.Name}} returns an SQL INSERT statement builder filled with values of a given object
+func (b *{{$.Public}}InsertBuilder) Insert{{$.Graph.Type.Name}}(p *{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}) *{{$.Public}}InsertBuilder {
+	{{ range $_, $f := $.Graph.Type.Fields -}}
 	{{ if $f.IsSettable -}}
 	{{ if not $f.IsReference -}}
-	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}, p.{{$f.Name}})
+	b.params.Assignments.Add("{{$f.Column.Name}}", p.{{$f.AccessName}}, p.{{$f.AccessName}})
 	{{ else -}}
 	{{ if $f.Type.Pointer -}}
 	if p.{{$f.Name}} != nil {
 	{{ end -}}
-	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}.{{$f.Type.PrimaryKey.Name}}, p.{{$f.Name}})
+	{{ range $i, $col := $f.Columns -}}
+	b.params.Assignments.Add("{{$col.Name}}", p.{{$f.AccessName}}.{{(index $f.Type.PrimaryKeys $i).Name}}, p.{{$f.AccessName}})
+	{{ end -}}
 	{{ if $f.Type.Pointer -}}
 	}
 	{{ end -}}
@@ -189,17 +191,19 @@ func (b *{{$.Public}}UpdateBuilder) Context(ctx context.Context) *{{$.Public}}Up
 	return b
 }
 
-// Update{{.Type.Name}} update values for all struct fields
-func (b *{{$.Public}}UpdateBuilder) Update{{.Type.Name}}(p *{{.Type.Naked.Ext $.Type.Package}}) *{{$.Public}}UpdateBuilder {
-	{{ range $_, $f := .Type.Fields -}}
+// Update{{$.Graph.Type.Name}} update values for all struct fields
+func (b *{{$.Public}}UpdateBuilder) Update{{$.Graph.Type.Name}}(p *{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}) *{{$.Public}}UpdateBuilder {
+	{{ range $_, $f := $.Graph.Type.Fields -}}
     {{ if $f.IsSettable -}}
 	{{ if not $f.IsReference -}}
-	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}, p.{{$f.Name}})
+	b.params.Assignments.Add("{{$f.Column.Name}}", p.{{$f.AccessName}}, p.{{$f.AccessName}})
 	{{ else -}}
 	{{ if $f.Type.Pointer -}}
 	if p.{{$f.Name}} != nil {
 	{{ end -}}
-	b.params.Assignments.Add("{{$f.Column}}", p.{{$f.Name}}.{{$f.Type.PrimaryKey.Name}}, p.{{$f.Name}})
+	{{ range $i, $col := $f.Columns -}}
+	b.params.Assignments.Add("{{$col.Name}}", p.{{$f.AccessName}}.{{(index $f.Type.PrimaryKeys $i).Name}}, p.{{$f.AccessName}})
+	{{ end -}}
 	{{ if $f.Type.Pointer -}}
 	}
 	{{ end -}}
@@ -231,18 +235,30 @@ func (b *{{$.Public}}DeleteBuilder) Context(ctx context.Context) *{{$.Public}}De
 
 // === Update/Insert fields ===
 
-{{- range $_, $f := .Type.Fields }}
+{{- range $_, $f := $.Graph.Type.Fields }}
 
 {{ if $f.IsSettable -}}
-// Set{{$f.Name}} sets value for column {{$f.Column}} in the INSERT statement
-func (b *{{$.Public}}InsertBuilder) Set{{$f.Name}}(value {{$f.SetType.Ext $.Type.Package}}) *{{$.Public}}InsertBuilder {
-	b.params.Assignments.Add("{{$f.Column}}", value, value)
+// Set{{$f.Name}} sets value for column {{$f.Columns}} in the INSERT statement
+func (b *{{$.Public}}InsertBuilder) Set{{$f.Name}}(value {{if $f.IsReference}}*{{end}}{{$f.Type.Naked.Ext $.Graph.Type.Package}}) *{{$.Public}}InsertBuilder {
+    {{ if $f.IsReference -}}
+	{{ range $i, $col := $f.Columns -}}
+	b.params.Assignments.Add("{{$col.Name}}", value.{{(index $f.Type.PrimaryKeys $i).Name}}, value)
+	{{ end -}}
+    {{ else -}}
+	b.params.Assignments.Add("{{$f.Column.Name}}", value, value)
+	{{ end -}}
 	return b
 }
 
-// Set{{$f.Name}} sets value for column {{$f.Column}} in the UPDATE statement
-func (b *{{$.Public}}UpdateBuilder) Set{{$f.Name}}(value {{$f.SetType.Ext $.Type.Package}}) *{{$.Public}}UpdateBuilder {
-	b.params.Assignments.Add("{{$f.Column}}", value, value)
+// Set{{$f.Name}} sets value for column {{$f.Columns}} in the UPDATE statement
+func (b *{{$.Public}}UpdateBuilder) Set{{$f.Name}}(value {{if $f.IsReference}}*{{end}}{{$f.Type.Naked.Ext $.Graph.Type.Package}}) *{{$.Public}}UpdateBuilder {
+    {{ if $f.IsReference -}}
+	{{ range $i, $col := $f.Columns -}}
+	b.params.Assignments.Add("{{$col.Name}}", value.{{(index $f.Type.PrimaryKeys $i).Name}}, value)
+	{{ end -}}
+    {{ else -}}
+	b.params.Assignments.Add("{{$f.Column.Name}}", value, value)
+	{{ end -}}
 	return b
 }
 

@@ -60,18 +60,17 @@ func cacheGetOrUpdate(tp *Naked) (*Naked, bool) {
 }
 
 // loadStruct loads struct information from go package
-func (t *Type) loadStruct() (*types.Struct, *types.Package, error) {
+func (t *Naked) loadStruct(importPath string) error {
 	log.Printf("Loading struct %s", t)
 	structName := t.Name
 
 	// if import path is not define, try to import from local directory
-	importPath := t.ImportPath
 	if importPath == "" {
 		importPath = "./"
 	}
 	p, err := loadProgram(importPath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("loading program: %s", err)
+		return fmt.Errorf("loading program: %s", err)
 	}
 
 	for pkgName, pkg := range p.Imported {
@@ -79,11 +78,13 @@ func (t *Type) loadStruct() (*types.Struct, *types.Package, error) {
 		for _, scope := range pkg.Scopes {
 			st := lookup(scope.Parent(), structName)
 			if st != nil {
-				return st, pkg.Pkg, nil
+				t.st = st
+				t.pkg = pkg.Pkg
+				return nil
 			}
 		}
 	}
-	return nil, nil, ErrTypeNotFound
+	return ErrTypeNotFound
 }
 
 // lookup is a recursive lookup for a struct with name in a scope

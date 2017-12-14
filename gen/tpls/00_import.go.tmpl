@@ -6,7 +6,7 @@ import (
 	"github.com/posener/orm"
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect"
-	{{ range $_, $import := .Type.Imports -}}
+	{{ range $_, $import := $.Graph.Type.Imports -}}
 	"{{$import}}"
 	{{ end -}}
 )

@@ -1,6 +1,6 @@
 // {{$.Private}}Selector selects columns for SQL queries and for parsing SQL rows
 type {{$.Private}}Selector struct {
-    {{ range $i, $f := .Type.Fields -}}
+    {{ range $i, $f := $.Graph.Type.Fields -}}
     {{ if not $f.IsReference -}}
     Select{{$f.Name}} bool
     {{ else -}}
@@ -13,10 +13,10 @@ type {{$.Private}}Selector struct {
 // Columns are the names of selected columns
 func (s *{{$.Private}}Selector) Columns() []string {
 	var cols []string
-    {{ range $_, $f := .Type.Fields -}}
+    {{ range $_, $f := $.Graph.Type.Fields -}}
     {{ if not $f.IsReference -}}
     if s.Select{{$f.Name}} {
-        cols = append(cols, "{{$f.Column}}")
+        cols = append(cols, "{{$f.Column.Name}}")
     }
     {{ end -}}
     {{ end -}}
@@ -26,20 +26,36 @@ func (s *{{$.Private}}Selector) Columns() []string {
 // Joins are join options of the query
 func (s *{{$.Private}}Selector) Joins() []common.JoinParams {
 	var joins []common.JoinParams
-    {{ range $_, $f := .Type.References -}}
-    if selector := s.Join{{$f.Name}}; selector != nil {
-        // adding join of one to many relation, column in other type points to this type
+	{{ range $e := $.Graph.Out -}}
+	if selector := s.Join{{$e.LocalField.Name}}; selector != nil {
         joins = append(joins, common.JoinParams{
             Pairings: []common.Pairing{
+                {{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
                 {
-                    Column: "{{$f.ForeignKey.Src.Column}}",
-                    JoinedColumn: "{{$f.ForeignKey.Dst.Column}}",
+                    Column: "{{(index $e.SrcField.Columns $i).Name}}",
+                    JoinedColumn: "{{$pk.Column.Name}}",
                 },
+                {{ end -}}
             },
             SelectParams: selector.Params(),
         })
-    }
-    {{ end }}
+	}
+	{{ end -}}
+	{{ range $e := $.Graph.In -}}
+	if selector := s.Join{{$e.LocalField.Name}}; selector != nil {
+        joins = append(joins, common.JoinParams{
+            Pairings: []common.Pairing{
+                {{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
+                {
+                    Column: "{{$pk.Column.Name}}",
+                    JoinedColumn: "{{(index $e.SrcField.Columns $i).Name}}",
+                },
+                {{ end -}}
+            },
+            SelectParams: selector.Params(),
+        })
+	}
+	{{ end -}}
 	return joins
 }
 
@@ -48,23 +64,23 @@ func (s *{{$.Private}}Selector) Count() bool {
     return s.count
 }
 
-// Scan scans an SQL row to a {{.Type.Name}} struct
-// It returns the scanned {{.Type.Ext $.Type.Package}} and the number of scanned fields,
+// Scan scans an SQL row to a {{$.Graph.Type.Name}} struct
+// It returns the scanned {{$.Graph.Type.Ext $.Graph.Type.Package}} and the number of scanned fields,
 // and an error in case of failure.
-func (s *{{$.Private}}Selector) Scan(dialect string, vals []driver.Value{{if $.Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.Ext $.Type.Package}}]*{{.Type.Ext $.Type.Package}}{{end}}) (*{{.Type.Ext $.Type.Package}}, int, error) {
-    item, n, err := s.ScanCount(dialect, vals{{if $.Type.HasOneToManyRelation}}, exists{{end}})
+func (s *{{$.Private}}Selector) Scan(dialect string, vals []driver.Value{{if $.Graph.Type.HasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Graph.Type.Package}}{{end}}) (*{{$.Graph.Type.Ext $.Graph.Type.Package}}, int, error) {
+    item, n, err := s.ScanCount(dialect, vals{{if $.Graph.Type.HasOneToManyRelation}}, exists{{end}})
     if err != nil {
         return nil, n, err
     }
-    return &item.{{.Type.Name}}, n, nil
+    return &item.{{$.Graph.Type.Name}}, n, nil
 }
 
-// ScanCount scans an SQL row to a {{.Type.Name}}Count struct
-func (s *{{$.Private}}Selector) ScanCount(dialect string, vals []driver.Value{{if $.Type.HasOneToManyRelation}}, exists map[{{.Type.PrimaryKey.Type.Ext $.Type.Package}}]*{{.Type.Ext $.Type.Package}}{{end}}) (*{{.Type.Name}}Count, int, error) {
+// ScanCount scans an SQL row to a {{$.Graph.Type.Name}}Count struct
+func (s *{{$.Private}}Selector) ScanCount(dialect string, vals []driver.Value{{if $.Graph.Type.HasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Graph.Type.Package}}{{end}}) (*{{$.Graph.Type.Name}}Count, int, error) {
     switch dialect {
     {{- range $_, $dialect := $.Dialects }}
     case "{{$dialect.Name}}":
-        return s.scan{{$dialect.Name}}(vals{{if $.Type.HasOneToManyRelation}}, exists{{end}})
+        return s.scan{{$dialect.Name}}(vals{{if $.Graph.Type.HasOneToManyRelation}}, exists{{end}})
     {{ end -}}
     default:
         return nil, 0, fmt.Errorf("unsupported dialect %s", dialect)
@@ -72,29 +88,29 @@ func (s *{{$.Private}}Selector) ScanCount(dialect string, vals []driver.Value{{i
 }
 
 {{ range $_, $dialect := $.Dialects }}
-// scan{{$dialect.Name}} scans {{$dialect.Name}} row to a {{$.Type.Name}} struct
-func (s *{{$.Private}}Selector) scan{{$dialect.Name}} (vals []driver.Value{{if $.Type.HasOneToManyRelation}}, exists map[{{$.Type.PrimaryKey.Type.Ext $.Type.Package}}]*{{$.Type.Ext $.Type.Package}}{{end}}) (*{{$.Type.Name}}Count, int, error) {
+// scan{{$dialect.Name}} scans {{$dialect.Name}} row to a {{$.Graph.Type.Name}} struct
+func (s *{{$.Private}}Selector) scan{{$dialect.Name}} (vals []driver.Value{{if $.Graph.Type.HasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Graph.Type.Package}}{{end}}) (*{{$.Graph.Type.Name}}Count, int, error) {
     var (
-        row {{$.Type.Name}}Count
+        row {{$.Graph.Type.Name}}Count
         all = s.selectAll()
         i int
         rowExists bool
     )
-    {{ range $_, $f := $.Type.Fields }}
+    {{ range $_, $f := $.Graph.Type.Fields }}
     {{ if not $f.IsReference }}
     if all || s.Select{{$f.Name}} {
         if i >= len(vals) {
             return nil, 0, fmt.Errorf("not enough columns returned: %d", len(vals))
         }
         if vals[i] != nil && !rowExists {
-{{$dialect.ConvertValueCode $.Type $f}}
+{{$dialect.ConvertValueCode $.Graph.Type $f}}
         }
-        {{ if and $.Type.HasOneToManyRelation -}}
-        {{ if eq $f.Name $.Type.PrimaryKey.Name -}}
+        {{ if and $.Graph.Type.HasOneToManyRelation -}}
+        {{ if or $f.Unique $f.PrimaryKey -}}
         // check if we scanned this item in previous rows. If we did, set `rowExists`,
         // so other columns in this table won't be evaluated. We only need values
         // from other tables.
-        if exists[row.{{$.Type.PrimaryKey.Name}}] != nil {
+        if exists[{{$.Private}}HashItem(&row.{{$.Graph.Type.Name}})] != nil {
             rowExists = true
         }
         {{ end -}}
@@ -103,7 +119,7 @@ func (s *{{$.Private}}Selector) scan{{$dialect.Name}} (vals []driver.Value{{if $
     }
     {{ else if not $f.Type.Slice }}
     if all { // skip foreign key column
-        i++
+        i += {{len $f.Columns}}
     }
     {{ end }}
     {{ end }}
@@ -120,16 +136,16 @@ func (s *{{$.Private}}Selector) scan{{$dialect.Name}} (vals []driver.Value{{if $
         i++
     }
 
-    {{ range $_, $f := $.Type.References }}
+    {{ range $_, $f := $.Graph.Type.References }}
     if j := s.Join{{$f.Name}}; j != nil {
         tmp, n, err := j.Scan("{{$dialect.Name}}", vals[i:]{{if $f.Type.HasOneToManyRelation}}, nil{{end}})
         if err != nil {
-            return nil, 0, fmt.Errorf("sub scanning {{$f.Name}}, cols [%d:%d]: %s", i, len(vals), err)
+            return nil, 0, fmt.Errorf("sub scanning {{$f.AccessName}}, cols [%d:%d]: %s", i, len(vals), err)
         }
         {{ if $f.Type.Slice -}}
-        row.{{$f.Name}} = append(row.{{$f.Name}}, {{if not $f.Type.Pointer}}*{{end}}tmp)
+        row.{{$f.AccessName}} = append(row.{{$f.AccessName}}, {{if not $f.Type.Pointer}}*{{end}}tmp)
         {{ else -}}
-        row.{{$f.Name}} = {{ if not $f.Type.Pointer}}*{{end}}tmp
+        row.{{$f.AccessName}} = {{ if not $f.Type.Pointer}}*{{end}}tmp
         {{ end -}}
         i += n
     }
@@ -141,5 +157,5 @@ func (s *{{$.Private}}Selector) scan{{$dialect.Name}} (vals []driver.Value{{if $
 
 // selectAll returns true if no column was specifically selected
 func (s *{{$.Private}}Selector) selectAll() bool {
-    return {{ range $i, $f := .Type.Fields -}}{{if not $f.IsReference }} !s.Select{{$f.Name}} && {{end}}{{end}} !s.count
+    return {{ range $i, $f := $.Graph.Type.Fields -}}{{if not $f.IsReference }} !s.Select{{$f.Name}} && {{end}}{{end}} !s.count
 }
