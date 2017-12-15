@@ -1,6 +1,6 @@
 all: test
 
-.PHONY: b0x orm examples test
+.PHONY: b0x orm tests test
 
 b0x:
 	go generate ./gen/...
@@ -8,11 +8,11 @@ b0x:
 orm: b0x
 	go build ./cmd/orm
 
-examples: orm
-	go generate ./example/...
+tests: orm
+	go generate ./tests/...
 
-test: examples
-	./test.sh
+test: tests
+	./scripts/test.sh
 
 clean:
-	rm -rf example/*_orm.go
+	rm -rf tests/*_orm.go

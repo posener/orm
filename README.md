@@ -18,13 +18,13 @@ and return values as in other ORM Go libraries.
 
 ## Example:
 
-Running the orm command on the `Person` struct in the `example` package with `sqlite3` dialect, 
+Running the orm command on the `Person` struct in the `tests` package with `sqlite3` dialect, 
 will create a `personsqlite3` package, with ORM functions for the given struct.
 
 By doing so, and having a database engine, `db`, one could do database operations with
 ORM semantics.
 
-Notice that all operations are typed, `Age` is `int`, `Name` is `string`, the `example.Person`
+Notice that all operations are typed, `Age` is `int`, `Name` is `string`, the `tests.Person`
 is used in the arguments and in the return values.
 
 ```go
@@ -50,14 +50,14 @@ func main() {
     println(john.Name) // Output: John
 
     // Insert row with a struct:
-    doug, err = db.Insert().InsertPerson(&example.Person{Name: "Doug", Age: 3}).Exec()
+    doug, err = db.Insert().InsertPerson(&tests.Person{Name: "Doug", Age: 3}).Exec()
     println(doug.Name, doug.Age) // Output: Doug 3
 
     // Select rows from the table:
     persons, err := db.Select().
     	SelectAge().
         Where(db.Where().Name(orm.OpNe, "John")).
-        Query() // returns []example.Person, typed return value.
+        Query() // returns []tests.Person, typed return value.
 
     println(persons[0].Age) // Output: 1
     

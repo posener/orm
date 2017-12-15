@@ -18,42 +18,42 @@ func TestLoad(t *testing.T) {
 		wantErr        bool
 	}{
 		{
-			typeName: "github.com/posener/orm/example.NoOne",
+			typeName: "github.com/posener/orm/tests.NoOne",
 			wantErr:  true,
 		},
 		{
-			typeName:      "github.com/posener/orm/example.Person",
+			typeName:      "github.com/posener/orm/tests.Person",
 			wantName:      "Person",
-			wantFullName:  "example.Person",
+			wantFullName:  "tests.Person",
 			wantLocalName: "Person",
 			wantFields: []*Field{
 				{AccessName: "Name", Type: Type{Naked: &Naked{Name: "string"}}},
 				{AccessName: "Age", Type: Type{Naked: &Naked{Name: "int"}}},
 			},
-			wantImportPath: "github.com/posener/orm/example",
+			wantImportPath: "github.com/posener/orm/tests",
 		},
 		{
-			typeName:      "../example.Person",
+			typeName:      "../tests.Person",
 			wantName:      "Person",
-			wantFullName:  "example.Person",
+			wantFullName:  "tests.Person",
 			wantLocalName: "Person",
 			wantFields: []*Field{
 				{AccessName: "Name", Type: Type{Naked: &Naked{Name: "string"}}},
 				{AccessName: "Age", Type: Type{Naked: &Naked{Name: "int"}}},
 			},
-			wantImportPath: "github.com/posener/orm/example",
+			wantImportPath: "github.com/posener/orm/tests",
 		},
 		{
-			typeName:      "../example.Employee",
+			typeName:      "../tests.Employee",
 			wantName:      "Employee",
-			wantFullName:  "example.Employee",
+			wantFullName:  "tests.Employee",
 			wantLocalName: "Employee",
 			wantFields: []*Field{
 				{AccessName: "Person.Name", Type: Type{Naked: &Naked{Name: "string"}}},
 				{AccessName: "Person.Age", Type: Type{Naked: &Naked{Name: "int"}}},
 				{AccessName: "Salary", Type: Type{Naked: &Naked{Name: "int"}}},
 			},
-			wantImportPath: "github.com/posener/orm/example",
+			wantImportPath: "github.com/posener/orm/tests",
 		},
 	}
 

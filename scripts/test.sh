@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# run project tests
+# this script should be run from the project main directory
+
 set -e
 
 if [ -z "${TRAVIS}" ]; then
