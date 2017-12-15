@@ -19,7 +19,7 @@ func (g *Gen) Name() string {
 	return "sqlite3"
 }
 
-func (g *Gen) ColumnCreateString(name string, f *load.Field, sqlType sqltypes.Type) string {
+func (g *Gen) ColumnCreateString(name string, f *load.Field, sqlType *sqltypes.Type) string {
 	stmt := []string{fmt.Sprintf("`%s` %s", name, sqlType)}
 	if f.NotNull {
 		stmt = append(stmt, "NOT NULL")
@@ -34,7 +34,7 @@ func (g *Gen) ColumnCreateString(name string, f *load.Field, sqlType sqltypes.Ty
 		stmt = append(stmt, "PRIMARY KEY")
 	}
 	if f.AutoIncrement {
-		if !f.PrimaryKey || sqlType != sqltypes.Integer {
+		if !f.PrimaryKey || sqlType.Name != sqltypes.Integer {
 			log.Fatalf("Gen supports autoincrement only for 'INTEGER PRIMARY KEY' columns")
 		}
 		stmt = append(stmt, "AUTOINCREMENT")
@@ -45,29 +45,30 @@ func (g *Gen) ColumnCreateString(name string, f *load.Field, sqlType sqltypes.Ty
 	return strings.Join(stmt, " ")
 }
 
-func (*Gen) GoTypeToColumnType(t *load.Type) sqltypes.Type {
+func (*Gen) GoTypeToColumnType(t *load.Type) *sqltypes.Type {
+	st := new(sqltypes.Type)
 	switch typeName := t.Naked.Ext(""); typeName {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
-		return sqltypes.Integer
+		st.Name = sqltypes.Integer
 	case "float", "float8", "float16", "float32", "float64":
-		return sqltypes.Float
+		st.Name = sqltypes.Float
 	case "bool":
-		return sqltypes.Boolean
+		st.Name = sqltypes.Boolean
 	case "string":
-		return sqltypes.Text
+		st.Name = sqltypes.Text
 	case "[]byte":
-		return sqltypes.Blob
+		st.Name = sqltypes.Blob
 	case "time.Time":
-		return sqltypes.TimeStamp
+		st.Name = sqltypes.TimeStamp
 	default:
 		log.Fatalf("Unknown column type for %s", typeName)
-		return sqltypes.NA
 	}
+	return st
 }
 
 // ConvertValueCode returns go code for converting value returned from the
 // database to the given field.
-func (g *Gen) ConvertValueCode(tp *load.Type, field *load.Field, sqlType sqltypes.Type) string {
+func (g *Gen) ConvertValueCode(tp *load.Type, field *load.Field, sqlType *sqltypes.Type) string {
 	s := tmpltType{
 		Type:        tp,
 		Field:       field,
@@ -97,8 +98,8 @@ var tmplt = template.Must(template.New("sqlite3").Parse(`
 `))
 
 // convertType is the type of the field when returned by sql/driver from database
-func (g *Gen) convertType(f *load.Field, sqlType sqltypes.Type) string {
-	switch sqlType.Family() {
+func (g *Gen) convertType(f *load.Field, sqlType *sqltypes.Type) string {
+	switch sqlType.Name {
 	case sqltypes.Integer:
 		return "int64"
 	case sqltypes.Float:

@@ -8,6 +8,7 @@ import (
 	"github.com/posener/orm"
 	"github.com/posener/orm/common"
 	"github.com/posener/orm/dialect/mysql"
+	"github.com/posener/orm/dialect/sqltypes"
 	"github.com/posener/orm/graph"
 	"github.com/posener/orm/load"
 	"github.com/stretchr/testify/assert"
@@ -55,14 +56,22 @@ func TestCreate(t *testing.T) {
 		{
 			fields: []*load.Field{
 				{AccessName: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}},
-				{AccessName: "String", Type: load.Type{Naked: &load.Naked{Name: "string"}}, CustomType: "VARCHAR(10)"},
+				{
+					AccessName: "String",
+					Type:       load.Type{Naked: &load.Naked{Name: "string"}},
+					CustomType: &sqltypes.Type{Name: sqltypes.VarChar, Size: 10},
+				},
 			},
 			want: "`int` INTEGER, `string` VARCHAR(10)",
 		},
 		{
 			fields: []*load.Field{
 				{AccessName: "Int", Type: load.Type{Naked: &load.Naked{Name: "int"}}},
-				{AccessName: "Time", Type: load.Type{Naked: &load.Naked{Name: "time.Time"}}, CustomType: "DATETIME"},
+				{
+					AccessName: "Time",
+					Type:       load.Type{Naked: &load.Naked{Name: "time.Time"}},
+					CustomType: &sqltypes.Type{Name: sqltypes.DateTime},
+				},
 			},
 			want: "`int` INTEGER, `time` DATETIME",
 		},

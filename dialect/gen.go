@@ -38,9 +38,9 @@ type gen struct {
 
 type GenImplementer interface {
 	Name() string
-	GoTypeToColumnType(*load.Type) sqltypes.Type
-	ColumnCreateString(string, *load.Field, sqltypes.Type) string
-	ConvertValueCode(*load.Type, *load.Field, sqltypes.Type) string
+	GoTypeToColumnType(*load.Type) *sqltypes.Type
+	ColumnCreateString(string, *load.Field, *sqltypes.Type) string
+	ConvertValueCode(*load.Type, *load.Field, *sqltypes.Type) string
 }
 
 // ColumnsStatement returns the fields parts of SQL CREATE TABLE statement
@@ -73,8 +73,8 @@ func (g *gen) ConvertValueCode(tp *load.Type, field *load.Field) string {
 	return g.GenImplementer.ConvertValueCode(tp, field, g.columnType(&field.Columns()[0]))
 }
 
-func (g *gen) columnType(col *load.SQLColumn) sqltypes.Type {
-	if custom := col.CustomType; custom != "" {
+func (g *gen) columnType(col *load.SQLColumn) *sqltypes.Type {
+	if custom := col.CustomType; custom != nil {
 		return custom
 	}
 	return g.GoTypeToColumnType(col.SetType)
