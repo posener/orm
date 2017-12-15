@@ -7,14 +7,14 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"github.com/posener/orm/example"
+	"github.com/posener/orm/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // BenchmarkORMInsert tests inserts with posener/orm package
 func BenchmarkORMInsert(b *testing.B) {
-	orm, err := example.OpenPersonORM("sqlite3", ":memory:")
+	orm, err := tests.OpenPersonORM("sqlite3", ":memory:")
 	require.Nil(b, err)
 	defer orm.Close()
 
@@ -22,7 +22,7 @@ func BenchmarkORMInsert(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err = orm.Insert().InsertPerson(&example.Person{Name: "xxx", Age: i}).Exec()
+		_, err = orm.Insert().InsertPerson(&tests.Person{Name: "xxx", Age: i}).Exec()
 		assert.Nil(b, err)
 	}
 }
@@ -33,12 +33,12 @@ func BenchmarkGORMInsert(b *testing.B) {
 	require.Nil(b, err)
 	defer db.Close()
 
-	err = db.AutoMigrate(&example.Person{}).Error
+	err = db.AutoMigrate(&tests.Person{}).Error
 	require.Nil(b, err)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		err = db.Create(&example.Person{Name: "xxx", Age: i}).Error
+		err = db.Create(&tests.Person{Name: "xxx", Age: i}).Error
 		assert.Nil(b, err)
 	}
 }
@@ -64,14 +64,14 @@ const datasetSize = 1000
 
 // BenchmarkORMQuery tests queries with posener/orm package
 func BenchmarkORMQuery(b *testing.B) {
-	orm, err := example.OpenPersonORM("sqlite3", ":memory:")
+	orm, err := tests.OpenPersonORM("sqlite3", ":memory:")
 	require.Nil(b, err)
 	defer orm.Close()
 
 	require.Nil(b, orm.Create().Exec())
 
 	for i := 0; i < datasetSize; i++ {
-		_, err = orm.Insert().InsertPerson(&example.Person{Name: "xxx", Age: i}).Exec()
+		_, err = orm.Insert().InsertPerson(&tests.Person{Name: "xxx", Age: i}).Exec()
 		require.Nil(b, err)
 	}
 
@@ -89,17 +89,17 @@ func BenchmarkGORMQuery(b *testing.B) {
 	require.Nil(b, err)
 	defer db.Close()
 
-	err = db.AutoMigrate(&example.Person{}).Error
+	err = db.AutoMigrate(&tests.Person{}).Error
 	require.Nil(b, err)
 
 	for i := 0; i < datasetSize; i++ {
-		err = db.Create(&example.Person{Name: "xxx", Age: i}).Error
+		err = db.Create(&tests.Person{Name: "xxx", Age: i}).Error
 		require.Nil(b, err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		var ps []example.Person
+		var ps []tests.Person
 		err = db.Find(&ps).Error
 		require.Nil(b, err)
 		assert.Equal(b, datasetSize, len(ps))
@@ -124,9 +124,9 @@ func BenchmarkRawQuery(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		rows, err := db.Query(`SELECT * FROM 'person'`)
 		require.Nil(b, err)
-		var ps []example.Person
+		var ps []tests.Person
 		for rows.Next() {
-			var p example.Person
+			var p tests.Person
 			err := rows.Scan(&p.Name, &p.Age)
 			require.Nil(b, err)
 			ps = append(ps, p)
@@ -138,7 +138,7 @@ func BenchmarkRawQuery(b *testing.B) {
 
 // BenchmarkORMQueryLargeStruct tests large struct queries with posener/orm package
 func BenchmarkORMQueryLargeStruct(b *testing.B) {
-	orm, err := example.OpenAllORM("sqlite3", ":memory:")
+	orm, err := tests.OpenAllORM("sqlite3", ":memory:")
 	require.Nil(b, err)
 	defer orm.Close()
 
@@ -147,7 +147,7 @@ func BenchmarkORMQueryLargeStruct(b *testing.B) {
 	tm := time.Now().Round(time.Millisecond).UTC()
 
 	for i := 0; i < datasetSize; i++ {
-		_, err = orm.Insert().InsertAll(&example.All{String: "xxx", Select: i, Int: i, Time: tm, Bool: true, NotNil: "notnil"}).Exec()
+		_, err = orm.Insert().InsertAll(&tests.All{String: "xxx", Select: i, Int: i, Time: tm, Bool: true, NotNil: "notnil"}).Exec()
 		require.Nil(b, err)
 	}
 
@@ -165,19 +165,19 @@ func BenchmarkGORMQueryLargeStruct(b *testing.B) {
 	require.Nil(b, err)
 	defer db.Close()
 
-	err = db.AutoMigrate(&example.All{}).Error
+	err = db.AutoMigrate(&tests.All{}).Error
 	require.Nil(b, err)
 
 	tm := time.Now().Round(time.Millisecond).UTC()
 
 	for i := 0; i < datasetSize; i++ {
-		err = db.Create(&example.All{String: "xxx", Select: i, Int: i, Time: tm, Bool: true, NotNil: "notnil"}).Error
+		err = db.Create(&tests.All{String: "xxx", Select: i, Int: i, Time: tm, Bool: true, NotNil: "notnil"}).Error
 		require.Nil(b, err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		var alls []example.All
+		var alls []tests.All
 		err = db.Find(&alls).Error
 		require.Nil(b, err)
 		assert.Equal(b, datasetSize, len(alls))
@@ -204,9 +204,9 @@ func BenchmarkRawQueryLargeStruct(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		rows, err := db.Query(`SELECT * FROM 'all'`)
 		require.Nil(b, err)
-		var ps []example.All
+		var ps []tests.All
 		for rows.Next() {
-			var p1, p2 example.All
+			var p1, p2 tests.All
 			err := rows.Scan(
 				&p1.Auto, &p1.NotNil, &p2.PInt, &p2.PInt8, &p2.PInt16,
 				&p2.PInt32, &p2.PInt64, &p2.PUInt, &p2.PUInt8, &p2.PUInt16,

@@ -1,10 +1,10 @@
-package example
+package tests
 
 import "time"
 
 //go:generate ../orm -type Person,Employee,All
 
-// Person is en example struct for the ORM package
+// Person for testing
 type Person struct {
 	Name       string
 	Age        int

@@ -155,8 +155,8 @@ func (t *Naked) Ext(curPkg string) string {
 }
 
 // Package is the package name of the type
-// for example, type in "github.com/posener/orm/example" has the package
-// name: "example"
+// for tests, type in "github.com/posener/orm/tests" has the package
+// name: "tests"
 func (t *Naked) Package() string {
 	if t.pkg == nil {
 		return ""
@@ -233,8 +233,8 @@ func (t *Type) sliceStr() string {
 }
 
 // import path returns the import statement of a type
-// If a full type name is 'github.com/posener/orm/example.Person', this
-// function will return 'github.com/posener/orm/example' which is what you
+// If a full type name is 'github.com/posener/orm/tests.Person', this
+// function will return 'github.com/posener/orm/tests' which is what you
 // would write in the `import` statement.
 func importPath(fullName string) string {
 	i := strings.LastIndex(fullName, ".")
@@ -245,7 +245,7 @@ func importPath(fullName string) string {
 }
 
 // typeName returns the type string from a full type name.
-// If a full type name is 'github.com/posener/orm/example.Person', this
+// If a full type name is 'github.com/posener/orm/tests.Person', this
 // function will return 'Person' which is how you would use this
 // struct in a go file
 func typeName(fullName string) string {

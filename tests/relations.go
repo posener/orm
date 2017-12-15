@@ -1,4 +1,4 @@
-package example
+package tests
 
 //go:generate ../orm -type A,B,C,A2,B2,C2,D2,A3,B3,A4,B4,A5,A6,B6
 
