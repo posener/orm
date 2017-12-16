@@ -27,9 +27,9 @@ func (g *Gen) PreProcess(f *load.Field, sqlType *sqltypes.Type) error {
 	return nil
 }
 
-func (Gen) GoTypeToColumnType(t *load.Type) *sqltypes.Type {
+func (Gen) GoTypeToColumnType(goTypeName string) *sqltypes.Type {
 	st := new(sqltypes.Type)
-	switch typeName := t.Naked.Ext(""); typeName {
+	switch goTypeName {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
 		st.Name = sqltypes.Integer
 	case "float", "float8", "float16", "float32", "float64":
@@ -45,7 +45,7 @@ func (Gen) GoTypeToColumnType(t *load.Type) *sqltypes.Type {
 		st.Name = sqltypes.DateTime
 		st.Size = 3
 	default:
-		log.Fatalf("Unknown column type for %s", typeName)
+		log.Fatalf("Unknown column type for %s", goTypeName)
 	}
 	return st
 }

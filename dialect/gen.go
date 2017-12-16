@@ -35,7 +35,7 @@ type gen struct {
 
 type GenImplementer interface {
 	Name() string
-	GoTypeToColumnType(*load.Type) *sqltypes.Type
+	GoTypeToColumnType(string) *sqltypes.Type
 	Translate(string) string
 	PreProcess(f *load.Field, sqlType *sqltypes.Type) error
 	ConvertValueCode(*load.Type, *load.Field, *sqltypes.Type) string
@@ -55,7 +55,7 @@ func (g *gen) ColumnsStatement(gr *graph.Graph) string {
 			if err != nil {
 				log.Fatal(err)
 			}
-			colStmts = append(colStmts, g.columnCreateString(sqlColumn.Name, f, sqlType))
+			colStmts = append(colStmts, g.constructColumnStmt(sqlColumn.Name, f, sqlType))
 		}
 	}
 
@@ -69,7 +69,7 @@ func (g *gen) ColumnsStatement(gr *graph.Graph) string {
 	return strings.Join(stmts, ", ")
 }
 
-func (g *gen) columnCreateString(name string, f *load.Field, sqlType *sqltypes.Type) string {
+func (g *gen) constructColumnStmt(name string, f *load.Field, sqlType *sqltypes.Type) string {
 	stmt := []string{fmt.Sprintf("`%s` %s", name, sqlType)}
 	if f.NotNull {
 		stmt = append(stmt, g.Translate("NOT NULL"))
@@ -103,7 +103,7 @@ func (g *gen) columnType(col *load.SQLColumn) *sqltypes.Type {
 	if custom := col.CustomType; custom != nil {
 		return custom
 	}
-	return g.GoTypeToColumnType(col.SetType)
+	return g.GoTypeToColumnType(col.SetType.Naked.Ext(""))
 }
 
 func (g *gen) foreignKeys(outEdge graph.Edge) (colStmts []string, fkStmts []string) {
@@ -111,7 +111,7 @@ func (g *gen) foreignKeys(outEdge graph.Edge) (colStmts []string, fkStmts []stri
 	dstFields := outEdge.RelationType().PrimaryKeys
 	for i := range cols {
 		colStmts = append(colStmts,
-			fmt.Sprintf("`%s` %s", cols[i].Name, g.GoTypeToColumnType(&dstFields[i].Type)))
+			fmt.Sprintf("`%s` %s", cols[i].Name, g.GoTypeToColumnType(dstFields[i].Type.Naked.Ext(""))))
 		fkStmts = append(fkStmts,
 			fmt.Sprintf("FOREIGN KEY (`%s`) REFERENCES `%s`(`%s`)",
 				cols[i].Name, outEdge.RelationType().Table(), dstFields[i].Column().Name))
