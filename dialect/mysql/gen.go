@@ -79,7 +79,7 @@ var tmplt = template.Must(template.New("mysql").Parse(`
 					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
 				{{- end }}
 				default:
-					return nil, 0, common.ErrConvert("{{.Field.AccessName}}", i, vals[i], "[]byte, {{.ConvertType}}")
+					return nil, 0, runtime.ErrConvert("{{.Field.AccessName}}", i, vals[i], "[]byte, {{.ConvertType}}")
 				}
 `))
 
@@ -91,13 +91,13 @@ func (g *Gen) convertFuncString(f *load.Field, sqlType *sqltypes.Type) string {
 	case "[]byte":
 		return "[]byte(val)"
 	case "int", "int8", "int16", "int32", "int64":
-		return fmt.Sprintf("%s(common.ParseInt(val))", tp)
+		return fmt.Sprintf("%s(runtime.ParseInt(val))", tp)
 	case "uint", "uint8", "uint16", "uint32", "uint64":
-		return fmt.Sprintf("%s(common.ParseFloat(val))", tp)
+		return fmt.Sprintf("%s(runtime.ParseFloat(val))", tp)
 	case "time.Time":
-		return fmt.Sprintf("common.ParseTime(val, %d)", sqlType.Size)
+		return fmt.Sprintf("runtime.ParseTime(val, %d)", sqlType.Size)
 	case "bool":
-		return "common.ParseBool(val)"
+		return "runtime.ParseBool(val)"
 	default:
 		return fmt.Sprintf("%s(val)", tp)
 	}

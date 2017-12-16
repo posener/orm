@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/posener/orm/common"
+	"github.com/posener/orm/runtime"
 )
 
 // Errors exported by ORM package
@@ -15,19 +15,19 @@ var (
 
 // Operators for SQL WHERE statements
 const (
-	OpEq   common.Op = "="
-	OpNe   common.Op = "<>"
-	OpGt   common.Op = ">"
-	OpGE   common.Op = ">="
-	OpLt   common.Op = "<"
-	OpLE   common.Op = "<="
-	OpLike common.Op = "LIKE"
+	OpEq   runtime.Op = "="
+	OpNe   runtime.Op = "<>"
+	OpGt   runtime.Op = ">"
+	OpGE   runtime.Op = ">="
+	OpLt   runtime.Op = "<"
+	OpLE   runtime.Op = "<="
+	OpLike runtime.Op = "LIKE"
 )
 
 // Directions for SQL ORDER BY statements
 const (
-	Asc  common.OrderDir = "ASC"
-	Desc common.OrderDir = "DESC"
+	Asc  runtime.OrderDir = "ASC"
+	Desc runtime.OrderDir = "DESC"
 )
 
 // DB is an interface of functions of sql.DB which are used by orm struct.

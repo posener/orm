@@ -27,12 +27,12 @@ func (s *{{$.Private}}Selector) Columns() []string {
 }
 
 // Joins are join options of the query
-func (s *{{$.Private}}Selector) Joins() []common.JoinParams {
-	var joins []common.JoinParams
+func (s *{{$.Private}}Selector) Joins() []runtime.JoinParams {
+	var joins []runtime.JoinParams
 	{{ range $e := $.Graph.Out -}}
 	if selector := s.Join{{$e.LocalField.Name}}; selector != nil {
-        joins = append(joins, common.JoinParams{
-            Pairings: []common.Pairing{
+        joins = append(joins, runtime.JoinParams{
+            Pairings: []runtime.Pairing{
                 {{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
                 {
                     Column: "{{(index $e.SrcField.Columns $i).Name}}",
@@ -46,8 +46,8 @@ func (s *{{$.Private}}Selector) Joins() []common.JoinParams {
 	{{ end -}}
 	{{ range $e := $.Graph.In -}}
 	if selector := s.Join{{$e.LocalField.Name}}; selector != nil {
-        joins = append(joins, common.JoinParams{
-            Pairings: []common.Pairing{
+        joins = append(joins, runtime.JoinParams{
+            Pairings: []runtime.Pairing{
                 {{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
                 {
                     Column: "{{$pk.Column.Name}}",
@@ -128,9 +128,9 @@ func (s *{{$.Private}}Selector) scan{{$dialect.Name}} (vals []driver.Value{{if $
         case int64:
             row.Count = val
         case []byte:
-            row.Count = common.ParseInt(val)
+            row.Count = runtime.ParseInt(val)
         default:
-            return nil, 0, common.ErrConvert("COUNT(*)", i, vals[i], "int64, []byte")
+            return nil, 0, runtime.ErrConvert("COUNT(*)", i, vals[i], "int64, []byte")
         }
         i++
     }

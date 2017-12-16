@@ -1,7 +1,7 @@
 // {{$.Private}}Table is SQL table name
 var {{$.Private}}Table = "{{$.Graph.Type.Table}}"
 
-var {{$.Private}}TableProperties = map[string]common.TableProperties{
+var {{$.Private}}TableProperties = map[string]runtime.TableProperties{
 {{ range $_, $dialect := .Dialects -}}
     {{ $table := $dialect.Table $.Graph -}}
     "{{$dialect.Name}}": {
@@ -28,7 +28,7 @@ func init() {
     var v interface{} = &{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}{}
 
     // override tableName if the type implement the TableNamer interface
-    if namer, ok := v.(common.TableNamer); ok {
+    if namer, ok := v.(runtime.TableNamer); ok {
         {{$.Private}}Table = namer.TableName()
     }
 }

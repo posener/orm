@@ -1,5 +1,5 @@
 type {{$.Public}}Joiner interface {
-    Params() common.SelectParams
+    Params() runtime.SelectParams
     Scan(dialect string, values []driver.Value{{if $.Graph.Type.HasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}{{end}}) (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, int, error)
 }
 
@@ -11,7 +11,7 @@ type {{$.Graph.Type.Name}}Count struct {
 
 // {{$.Public}}SelectBuilder builds an SQL SELECT statement parameters
 type {{$.Public}}SelectBuilder struct {
-	params common.SelectParams
+	params runtime.SelectParams
 	conn *{{.Private}}Conn
 	selector {{$.Private}}Selector
 }
@@ -21,7 +21,7 @@ type {{$.Private}}Joiner struct {
     builder *{{$.Public}}SelectBuilder
 }
 
-func (s *{{$.Private}}Joiner) Params() common.SelectParams {
+func (s *{{$.Private}}Joiner) Params() runtime.SelectParams {
     return s.builder.params
 }
 
@@ -35,7 +35,7 @@ func (b *{{$.Public}}SelectBuilder) Joiner() {{$.Public}}Joiner {
 }
 
 // Where applies where conditions on the query
-func (b *{{$.Public}}SelectBuilder) Where(where common.Where) *{{$.Public}}SelectBuilder {
+func (b *{{$.Public}}SelectBuilder) Where(where runtime.Where) *{{$.Public}}SelectBuilder {
 	b.params.Where = where
 	return b
 }
@@ -57,7 +57,7 @@ func (b *{{$.Public}}SelectBuilder) Page(offset, limit int64) *{{$.Public}}Selec
 // {{$.Private}}{{$refType.Name}}Joiner is a scanner that defined by .Select().Joiner()
 // of an ORM object for type {{$refType.Name}}
 type {{$.Private}}{{$refType.Name}}Joiner interface {
-    Params() common.SelectParams
+    Params() runtime.SelectParams
     Scan(dialect string, values []driver.Value{{if $refType.HasOneToManyRelation}}, exists map[string]*{{$refType.Ext $.Graph.Type.Package}}{{end}}) (*{{$refType.Ext $.Graph.Type.Package}}, int, error)
 }
 {{ end -}}
@@ -79,7 +79,7 @@ func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(scanner {{$.Private}}{{$f.Ty
 
 {{ if not $f.IsReversedReference -}}
 // OrderBy{{$f.Name}} set order to the query results according to column {{$f.Columns}}
-func (b *{{$.Public}}SelectBuilder) OrderBy{{$f.Name}}(dir common.OrderDir) *{{$.Public}}SelectBuilder {
+func (b *{{$.Public}}SelectBuilder) OrderBy{{$f.Name}}(dir runtime.OrderDir) *{{$.Public}}SelectBuilder {
     {{ range $_, $col := $f.Columns -}}
     b.params.Orders.Add("{{$col.Name}}", dir)
     {{ end -}}

@@ -1,6 +1,6 @@
 // Exec creates a table for the given struct
 func (b *{{$.Public}}CreateBuilder) Exec() error {
-    b.params.Ctx = common.ContextOrBackground(b.params.Ctx)
+    b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
 	stmts := b.conn.dialect.Create(b.conn.db, &b.params)
 	b.conn.log("Create: '%v'", strings.Join(stmts, "; "))
 	tx, err := b.conn.db.BeginTx(b.params.Ctx, nil)
@@ -29,7 +29,7 @@ func (b *{{$.Public}}InsertBuilder) Exec() (*{{$.Graph.Type.Naked.Ext $.Graph.Ty
 	if len(b.params.Assignments) == 0 {
 		return nil, fmt.Errorf("nothing to insert")
 	}
-    b.params.Ctx = common.ContextOrBackground(b.params.Ctx)
+    b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
 	stmt, args := b.conn.dialect.Insert(&b.params)
 	b.conn.log("Insert: '%v' %v", stmt, args)
 	res, err := b.conn.db.ExecContext(b.params.Ctx, stmt, args...)
@@ -44,7 +44,7 @@ func (b *{{$.Public}}UpdateBuilder) Exec() (sql.Result, error) {
 	if len(b.params.Assignments) == 0 {
 		return nil, fmt.Errorf("nothing to update")
 	}
-    b.params.Ctx = common.ContextOrBackground(b.params.Ctx)
+    b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
 	stmt, args := b.conn.dialect.Update(&b.params)
 	b.conn.log("Update: '%v' %v", stmt, args)
 	return b.conn.db.ExecContext(b.params.Ctx, stmt, args...)
@@ -54,12 +54,12 @@ func (b *{{$.Public}}UpdateBuilder) Exec() (sql.Result, error) {
 func (b *{{$.Public}}DeleteBuilder) Exec() (sql.Result, error) {
 	stmt, args := b.conn.dialect.Delete(&b.params)
 	b.conn.log("Delete: '%v' %v", stmt, args)
-	return b.conn.db.ExecContext(common.ContextOrBackground(b.params.Ctx), stmt, args...)
+	return b.conn.db.ExecContext(runtime.ContextOrBackground(b.params.Ctx), stmt, args...)
 }
 
 // Query the database
 func (b *{{$.Public}}SelectBuilder) Query() ([]{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, error) {
-    b.params.Ctx = common.ContextOrBackground(b.params.Ctx)
+    b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
     rows, err := b.query()
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (b *{{$.Public}}SelectBuilder) Query() ([]{{$.Graph.Type.Naked.Ext $.Graph.
 	    if err := b.params.Ctx.Err(); err != nil  {
 	        return nil, err
 	    }
-		item, _, err := b.selector.Scan(b.conn.dialect.Name(), common.Values(*rows){{if $.Graph.Type.HasOneToManyRelation}}, exists{{end}})
+		item, _, err := b.selector.Scan(b.conn.dialect.Name(), runtime.Values(*rows){{if $.Graph.Type.HasOneToManyRelation}}, exists{{end}})
         if err != nil {
 			return nil, err
 		}
@@ -104,7 +104,7 @@ func (b *{{$.Public}}SelectBuilder) Query() ([]{{$.Graph.Type.Naked.Ext $.Graph.
 
 // Count add a count column to the query
 func (b *{{$.Public}}SelectBuilder) Count() ([]{{$.Graph.Type.Name}}Count, error) {
-    b.params.Ctx = common.ContextOrBackground(b.params.Ctx)
+    b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
     b.selector.count = true
     rows, err := b.query()
 	if err != nil {
@@ -124,7 +124,7 @@ func (b *{{$.Public}}SelectBuilder) Count() ([]{{$.Graph.Type.Name}}Count, error
 	    if err := b.params.Ctx.Err(); err != nil  {
 	        return nil, err
 	    }
-		item, _, err := b.selector.ScanCount(b.conn.dialect.Name(), common.Values(*rows){{if $.Graph.Type.HasOneToManyRelation}}, exists{{end}})
+		item, _, err := b.selector.ScanCount(b.conn.dialect.Name(), runtime.Values(*rows){{if $.Graph.Type.HasOneToManyRelation}}, exists{{end}})
         if err != nil {
 			return nil, err
 		}
@@ -153,7 +153,7 @@ func (b *{{$.Public}}SelectBuilder) Count() ([]{{$.Graph.Type.Name}}Count, error
 // This call cancels any paging that was set with the
 // {{$.Public}}SelectBuilder previously.
 func (b *{{$.Public}}SelectBuilder) First() (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, error) {
-    b.params.Ctx = common.ContextOrBackground(b.params.Ctx)
+    b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
     b.params.Page.Limit = 1
     b.params.Page.Offset = 0
     rows, err := b.query()
@@ -166,7 +166,7 @@ func (b *{{$.Public}}SelectBuilder) First() (*{{$.Graph.Type.Naked.Ext $.Graph.T
     if !found {
         return nil, orm.ErrNotFound
     }
-    item, _, err := b.selector.Scan(b.conn.dialect.Name(), common.Values(*rows){{if $.Graph.Type.HasOneToManyRelation}}, nil{{end}})
+    item, _, err := b.selector.Scan(b.conn.dialect.Name(), runtime.Values(*rows){{if $.Graph.Type.HasOneToManyRelation}}, nil{{end}})
     if err != nil {
         return nil, err
     }
@@ -175,7 +175,7 @@ func (b *{{$.Public}}SelectBuilder) First() (*{{$.Graph.Type.Naked.Ext $.Graph.T
 
 // {{$.Private}}ReturnObject builds {{$.Graph.Type.Naked.Ext $.Graph.Type.Package}} from assignment values
 // and from the sql result ID, for returning an object from INSERT transactions
-func {{$.Private}}ReturnObject(assignments common.Assignments, res sql.Result) (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, error) {
+func {{$.Private}}ReturnObject(assignments runtime.Assignments, res sql.Result) (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, error) {
 	ret := new({{$.Graph.Type.Naked.Ext $.Graph.Type.Package}})
 	for _, assign := range assignments {
         switch assign.Column {

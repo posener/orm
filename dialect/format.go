@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/posener/orm/common"
+	"github.com/posener/orm/runtime"
 )
 
 // columns extract SQL wantCols list statement
-func columns(p *common.SelectParams) string {
+func columns(p *runtime.SelectParams) string {
 	parts := columnsParts(p.Table, p)
 
 	// we can add COUNT(*) only once and it work only on the most upper level
@@ -20,7 +20,7 @@ func columns(p *common.SelectParams) string {
 	return strings.Join(parts, ", ")
 }
 
-func columnsParts(table string, p *common.SelectParams) []string {
+func columnsParts(table string, p *runtime.SelectParams) []string {
 	var (
 		parts  []string
 		exists = make(map[string]bool)
@@ -50,7 +50,7 @@ func columnsCollect(table string, cols []string) []string {
 
 // whereJoin takes SelectParams and traverse all the join options
 // it concat all the conditions with an AND operator
-func whereJoin(table string, p *common.SelectParams) string {
+func whereJoin(table string, p *runtime.SelectParams) string {
 	stmt := whereJoinRec(table, p)
 	if stmt == "" {
 		return ""
@@ -58,7 +58,7 @@ func whereJoin(table string, p *common.SelectParams) string {
 	return "WHERE " + stmt
 }
 
-func whereJoinRec(table string, p *common.SelectParams) string {
+func whereJoinRec(table string, p *runtime.SelectParams) string {
 	var parts []string
 	if p.Where != nil {
 		if w := p.Where.Statement(table); w != "" {
@@ -74,7 +74,7 @@ func whereJoinRec(table string, p *common.SelectParams) string {
 	return strings.Join(parts, " AND ")
 }
 
-func where(table string, c common.StatementArger) string {
+func where(table string, c runtime.StatementArger) string {
 	if c == nil {
 		return ""
 	}
@@ -86,7 +86,7 @@ func where(table string, c common.StatementArger) string {
 }
 
 // groupBy formats an SQL GROUP BY statement
-func groupBy(table string, groups []common.Group) string {
+func groupBy(table string, groups []runtime.Group) string {
 	if len(groups) == 0 {
 		return ""
 	}
@@ -100,7 +100,7 @@ func groupBy(table string, groups []common.Group) string {
 }
 
 // orderBy formats an SQL ORDER BY statement
-func orderBy(table string, orders []common.Order) string {
+func orderBy(table string, orders []runtime.Order) string {
 	if len(orders) == 0 {
 		return ""
 	}
@@ -115,7 +115,7 @@ func orderBy(table string, orders []common.Order) string {
 }
 
 // page formats an SQL LIMIT...OFFSET statement
-func page(p common.Page) string {
+func page(p runtime.Page) string {
 	if p.Limit == 0 { // why would someone ask for a page of zero size?
 		return ""
 	}
@@ -127,7 +127,7 @@ func page(p common.Page) string {
 }
 
 // assignSets formats a list of assignments for SQL UPDATE SET statements
-func assignSets(a common.Assignments) string {
+func assignSets(a runtime.Assignments) string {
 	if len(a) == 0 {
 		return ""
 	}
@@ -142,7 +142,7 @@ func assignSets(a common.Assignments) string {
 
 // assignColumns gets an assignment list and formats the assign column names
 // for an SQL INSERT STATEMENT
-func assignColumns(a common.Assignments) string {
+func assignColumns(a runtime.Assignments) string {
 	if len(a) == 0 {
 		return ""
 	}

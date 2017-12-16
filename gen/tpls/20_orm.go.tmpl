@@ -50,7 +50,7 @@ func (c *{{.Private}}Conn) Logger(logger orm.Logger) {
 // Create returns a builder of an SQL CREATE statement
 func (c *{{.Private}}Conn) Create() *{{$.Public}}CreateBuilder {
 	return &{{$.Public}}CreateBuilder{
-		params: common.CreateParams{
+		params: runtime.CreateParams{
 		    Table: {{$.Private}}Table,
 		    TableProperties: {{$.Private}}TableProperties[c.dialect.Name()],
         },
@@ -61,7 +61,7 @@ func (c *{{.Private}}Conn) Create() *{{$.Public}}CreateBuilder {
 // Select returns a builder of an SQL SELECT statement
 func (c *{{.Private}}Conn) Select() *{{$.Public}}SelectBuilder {
 	s := &{{$.Public}}SelectBuilder{
-		params: common.SelectParams{Table: {{$.Private}}Table},
+		params: runtime.SelectParams{Table: {{$.Private}}Table},
 		conn: c,
 	}
     s.params.Columns = &s.selector
@@ -71,7 +71,7 @@ func (c *{{.Private}}Conn) Select() *{{$.Public}}SelectBuilder {
 // Insert returns a builder of an SQL INSERT statement
 func (c *{{.Private}}Conn) Insert() *{{$.Public}}InsertBuilder {
 	return &{{$.Public}}InsertBuilder{
-		params: common.InsertParams{Table: {{$.Private}}Table},
+		params: runtime.InsertParams{Table: {{$.Private}}Table},
 		conn: c,
 	}
 }
@@ -79,7 +79,7 @@ func (c *{{.Private}}Conn) Insert() *{{$.Public}}InsertBuilder {
 // Update returns a builder of an SQL UPDATE statement
 func (c *{{.Private}}Conn) Update() *{{$.Public}}UpdateBuilder {
 	return &{{$.Public}}UpdateBuilder{
-		params: common.UpdateParams{Table: {{$.Private}}Table},
+		params: runtime.UpdateParams{Table: {{$.Private}}Table},
 		conn: c,
     }
 }
@@ -87,7 +87,7 @@ func (c *{{.Private}}Conn) Update() *{{$.Public}}UpdateBuilder {
 // Delete returns a builder of an SQL DELETE statement
 func (c *{{.Private}}Conn) Delete() *{{$.Public}}DeleteBuilder {
 	return &{{$.Public}}DeleteBuilder{
-		params: common.DeleteParams{Table: {{$.Private}}Table},
+		params: runtime.DeleteParams{Table: {{$.Private}}Table},
 		conn: c,
     }
 }
@@ -109,7 +109,7 @@ func (c *{{.Private}}Conn) log(s string, args ...interface{}) {
 
 // {{$.Public}}CreateBuilder builds an SQL CREATE statement parameters
 type {{$.Public}}CreateBuilder struct {
-	params common.CreateParams
+	params runtime.CreateParams
 	conn   *{{.Private}}Conn
 }
 
@@ -134,7 +134,7 @@ func (b *{{$.Public}}CreateBuilder) Context(ctx context.Context) *{{$.Public}}Cr
 
 // {{$.Public}}InsertBuilder builds an INSERT statement parameters
 type {{$.Public}}InsertBuilder struct {
-	params common.InsertParams
+	params runtime.InsertParams
 	conn   *{{.Private}}Conn
 }
 
@@ -170,12 +170,12 @@ func (b *{{$.Public}}InsertBuilder) Insert{{$.Graph.Type.Name}}(p *{{$.Graph.Typ
 
 // {{$.Public}}UpdateBuilder builds SQL INSERT statement parameters
 type {{$.Public}}UpdateBuilder struct {
-	params common.UpdateParams
+	params runtime.UpdateParams
 	conn   *{{.Private}}Conn
 }
 
 // Where sets the WHERE statement to the SQL query
-func (b *{{$.Public}}UpdateBuilder) Where(where common.Where) *{{$.Public}}UpdateBuilder {
+func (b *{{$.Public}}UpdateBuilder) Where(where runtime.Where) *{{$.Public}}UpdateBuilder {
 	b.params.Where = where
 	return b
 }
@@ -212,12 +212,12 @@ func (b *{{$.Public}}UpdateBuilder) Update{{$.Graph.Type.Name}}(p *{{$.Graph.Typ
 
 // {{$.Public}}DeleteBuilder builds SQL DELETE statement parameters
 type {{$.Public}}DeleteBuilder struct {
-	params common.DeleteParams
+	params runtime.DeleteParams
 	conn   *{{.Private}}Conn
 }
 
 // Where applies where conditions on the SQL query
-func (b *{{$.Public}}DeleteBuilder) Where(w common.Where) *{{$.Public}}DeleteBuilder {
+func (b *{{$.Public}}DeleteBuilder) Where(w runtime.Where) *{{$.Public}}DeleteBuilder {
 	b.params.Where = w
 	return b
 }
