@@ -2,6 +2,7 @@ package dialect
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/posener/orm/dialect/mysql"
@@ -15,10 +16,6 @@ import (
 type Generator interface {
 	// Name is the dialect name
 	Name() string
-	// ColumnsStatement returns the fields parts of SQL CREATE TABLE statement
-	// for a specific struct and specific dialect.
-	// It is used by the generation tool.
-	ColumnsStatement(gr *graph.Graph) string
 	// ConvertValueCode returns go code for converting value returned from the
 	// database to the given field.
 	ConvertValueCode(tp *load.Type, field *load.Field) string
@@ -39,7 +36,8 @@ type gen struct {
 type GenImplementer interface {
 	Name() string
 	GoTypeToColumnType(*load.Type) *sqltypes.Type
-	ColumnCreateString(string, *load.Field, *sqltypes.Type) string
+	Translate(string) string
+	PreProcess(f *load.Field, sqlType *sqltypes.Type) error
 	ConvertValueCode(*load.Type, *load.Field, *sqltypes.Type) string
 }
 
@@ -52,7 +50,12 @@ func (g *gen) ColumnsStatement(gr *graph.Graph) string {
 	for _, f := range gr.Fields {
 		if !f.IsReference() {
 			sqlColumn := f.Columns()[0]
-			colStmts = append(colStmts, g.ColumnCreateString(sqlColumn.Name, f, g.columnType(&sqlColumn)))
+			sqlType := g.columnType(&sqlColumn)
+			err := g.PreProcess(f, sqlType)
+			if err != nil {
+				log.Fatal(err)
+			}
+			colStmts = append(colStmts, g.columnCreateString(sqlColumn.Name, f, sqlType))
 		}
 	}
 
@@ -64,6 +67,29 @@ func (g *gen) ColumnsStatement(gr *graph.Graph) string {
 	}
 	stmts := append(colStmts, fkStmts...)
 	return strings.Join(stmts, ", ")
+}
+
+func (g *gen) columnCreateString(name string, f *load.Field, sqlType *sqltypes.Type) string {
+	stmt := []string{fmt.Sprintf("`%s` %s", name, sqlType)}
+	if f.NotNull {
+		stmt = append(stmt, g.Translate("NOT NULL"))
+	}
+	if f.Null {
+		stmt = append(stmt, g.Translate("NULL"))
+	}
+	if f.Default != "" {
+		stmt = append(stmt, g.Translate("DEFAULT"), f.Default)
+	}
+	if f.PrimaryKey {
+		stmt = append(stmt, g.Translate("PRIMARY KEY"))
+	}
+	if f.AutoIncrement {
+		stmt = append(stmt, g.Translate("AUTO_INCREMENT"))
+	}
+	if f.Unique {
+		stmt = append(stmt, g.Translate("UNIQUE"))
+	}
+	return strings.Join(stmt, " ")
 }
 
 func (g *gen) ConvertValueCode(tp *load.Type, field *load.Field) string {

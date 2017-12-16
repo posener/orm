@@ -19,30 +19,23 @@ func (g *Gen) Name() string {
 	return "sqlite3"
 }
 
-func (g *Gen) ColumnCreateString(name string, f *load.Field, sqlType *sqltypes.Type) string {
-	stmt := []string{fmt.Sprintf("`%s` %s", name, sqlType)}
-	if f.NotNull {
-		stmt = append(stmt, "NOT NULL")
+func (g *Gen) Translate(name string) string {
+	switch name {
+	case "AUTO_INCREMENT":
+		return "AUTOINCREMENT"
+	default:
+		return name
 	}
-	if f.Null {
-		stmt = append(stmt, "NULL")
-	}
-	if f.Default != "" {
-		stmt = append(stmt, "DEFAULT", f.Default)
-	}
-	if f.PrimaryKey || f.AutoIncrement {
-		stmt = append(stmt, "PRIMARY KEY")
-	}
-	if f.AutoIncrement {
-		if !f.PrimaryKey || sqlType.Name != sqltypes.Integer {
-			log.Fatalf("Gen supports autoincrement only for 'INTEGER PRIMARY KEY' columns")
+}
+
+func (g *Gen) PreProcess(f *load.Field, sqlType *sqltypes.Type) error {
+	if f.PrimaryKey {
+		if sqlType.Name != sqltypes.Integer {
+			return fmt.Errorf("sqlite3 supports autoincrement only for 'INTEGER PRIMARY KEY' columns")
 		}
-		stmt = append(stmt, "AUTOINCREMENT")
+		f.AutoIncrement = true
 	}
-	if f.Unique {
-		stmt = append(stmt, " UNIQUE")
-	}
-	return strings.Join(stmt, " ")
+	return nil
 }
 
 func (*Gen) GoTypeToColumnType(t *load.Type) *sqltypes.Type {

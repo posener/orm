@@ -19,28 +19,12 @@ func (g *Gen) Name() string {
 	return "mysql"
 }
 
-func (g *Gen) ColumnCreateString(name string, f *load.Field, sqlType *sqltypes.Type) string {
-	stmt := []string{fmt.Sprintf("`%s` %s", name, sqlType)}
-	if f.NotNull {
-		stmt = append(stmt, "NOT NULL")
-	}
-	if f.Null {
-		stmt = append(stmt, "NULL")
-	}
-	if f.Default != "" {
-		stmt = append(stmt, "DEFAULT", f.Default)
-	}
-	if f.PrimaryKey || f.AutoIncrement {
-		stmt = append(stmt, "PRIMARY KEY")
-	}
-	if f.AutoIncrement {
-		stmt = append(stmt, "AUTO_INCREMENT")
-	}
-	if f.Unique {
-		stmt = append(stmt, " UNIQUE")
-	}
-	return strings.Join(stmt, " ")
+func (g *Gen) Translate(name string) string {
+	return name
+}
 
+func (g *Gen) PreProcess(f *load.Field, sqlType *sqltypes.Type) error {
+	return nil
 }
 
 func (Gen) GoTypeToColumnType(t *load.Type) *sqltypes.Type {
