@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/posener/orm/dialect"
 	"github.com/posener/orm/gen"
 	"github.com/posener/orm/graph"
 	"github.com/posener/orm/load"
@@ -59,8 +60,10 @@ func main() {
 			continue
 		}
 
+		dialects := dialect.NewGen()
+
 		log.Printf("Generating code")
-		err = gen.Gen(g)
+		err = gen.Gen(g, dialects)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("[%s] generate code: %s", typeName, err))
 		}

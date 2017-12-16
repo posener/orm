@@ -88,6 +88,6 @@ type A6 struct {
 }
 
 type B6 struct {
-	SureName  string `sql:"unique"`
-	FirstName string `sql:"unique"`
+	SureName  string `sql:"primary key"`
+	FirstName string `sql:"primary key"`
 }

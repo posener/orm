@@ -358,12 +358,8 @@ func TestCount(t *testing.T) {
 func TestCreateIfNotExists(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := personDB(t, conn)
-
-		err := db.Create().IfNotExists().Exec()
-		require.Nil(t, err)
-
-		err = db.Create().Exec()
-		require.NotNil(t, err)
+		assert.Nil(t, db.Create().IfNotExists().Exec())
+		assert.NotNil(t, db.Create().Exec())
 	})
 }
 

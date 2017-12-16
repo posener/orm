@@ -26,7 +26,7 @@ func columnsParts(table string, p *common.SelectParams) []string {
 		exists = make(map[string]bool)
 	)
 
-	parts = append(parts, columnsCollect(table, p.Columns.Columns(), p.Columns.Count())...)
+	parts = append(parts, columnsCollect(table, p.Columns.Columns())...)
 
 	for _, join := range p.Columns.Joins() {
 		for _, part := range columnsParts(join.TableName(table), &join.SelectParams) {
@@ -40,10 +40,7 @@ func columnsParts(table string, p *common.SelectParams) []string {
 	return parts
 }
 
-func columnsCollect(table string, cols []string, isCount bool) []string {
-	if len(cols) == 0 && !isCount {
-		return []string{fmt.Sprintf("`%s`.*", table)}
-	}
+func columnsCollect(table string, cols []string) []string {
 	var parts []string
 	for _, col := range cols {
 		parts = append(parts, fmt.Sprintf("`%s`.`%s`", table, col))

@@ -414,6 +414,9 @@ func insertA5(t *testing.T, a A5ORM, name string, left, right *A5) *A5 {
 
 func TestUniqueConstrain(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
+		if conn.name == "sqlite3" {
+			t.Skip("sqlite3 does not support string type primary keys")
+		}
 		a, err := NewA6ORM(conn.name, conn)
 		require.Nil(t, err)
 		b, err := NewB6ORM(conn.name, conn)

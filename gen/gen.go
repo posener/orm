@@ -61,14 +61,12 @@ func init() {
 
 // Gen generates all the ORM files for a given struct in a given package.
 // st is the type descriptor of the struct
-func Gen(g *graph.Graph) error {
+func Gen(g *graph.Graph, dialects []dialect.Generator) error {
 	// get the package ormDir on disk
 	structPkgDir, err := packagePath(g.ImportPath())
 	if err != nil {
 		return err
 	}
-
-	dialects := dialect.NewGen()
 
 	data := TemplateData{
 		Graph:    g,

@@ -13,6 +13,10 @@ type Selector interface {
 	Count() bool
 }
 
+type TableNamer interface {
+	TableName() string
+}
+
 // JoinParams are parameters to perform a join operation
 // Field SelectParams is used to perform select operations on the join struct's field.
 // Pairings describe the relation between the join's fields

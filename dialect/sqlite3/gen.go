@@ -2,7 +2,6 @@ package sqlite3
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"strings"
 
@@ -22,20 +21,11 @@ func (g *Gen) Name() string {
 func (g *Gen) Translate(name string) string {
 	switch name {
 	case "AUTO_INCREMENT":
-		return "AUTOINCREMENT"
+		// https://sqlite.org/autoinc.html
+		return ""
 	default:
 		return name
 	}
-}
-
-func (g *Gen) PreProcess(f *load.Field, sqlType *sqltypes.Type) error {
-	if f.PrimaryKey {
-		if sqlType.Name != sqltypes.Integer {
-			return fmt.Errorf("sqlite3 supports autoincrement only for 'INTEGER PRIMARY KEY' columns")
-		}
-		f.AutoIncrement = true
-	}
-	return nil
 }
 
 func (*Gen) GoTypeToColumnType(goTypeName string) *sqltypes.Type {
@@ -61,9 +51,8 @@ func (*Gen) GoTypeToColumnType(goTypeName string) *sqltypes.Type {
 
 // ConvertValueCode returns go code for converting value returned from the
 // database to the given field.
-func (g *Gen) ConvertValueCode(tp *load.Type, field *load.Field, sqlType *sqltypes.Type) string {
+func (g *Gen) ConvertValueCode(field *load.Field, sqlType *sqltypes.Type) string {
 	s := tmpltType{
-		Type:        tp,
 		Field:       field,
 		ConvertType: g.convertType(field, sqlType),
 	}
@@ -77,16 +66,15 @@ func (g *Gen) ConvertValueCode(tp *load.Type, field *load.Field, sqlType *sqltyp
 
 type tmpltType struct {
 	ConvertType string
-	Type        *load.Type
 	Field       *load.Field
 }
 
 var tmplt = template.Must(template.New("sqlite3").Parse(`
 				val, ok := vals[i].({{.ConvertType}})
 				if !ok {
-					return nil, 0, common.ErrConvert("{{.Field.AccessName}}", i, vals[i], "{{.Field.Type.Ext .Type.Package}}")
+					return nil, 0, common.ErrConvert("{{.Field.AccessName}}", i, vals[i], "{{.Field.Type.Ext .Field.ParentType.Package}}")
 				}
-				tmp := {{.Field.Type.Naked.Ext .Type.Package}}(val)
+				tmp := {{.Field.Type.Naked.Ext .Field.ParentType.Package}}(val)
 				row.{{.Field.AccessName}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
 `))
 

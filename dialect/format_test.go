@@ -16,8 +16,7 @@ func TestColumnsJoin(t *testing.T) {
 		wantJoin string
 	}{
 		{
-			p:        common.SelectParams{Table: "table", Columns: selector{}},
-			wantCols: "`table`.*",
+			p: common.SelectParams{Table: "table", Columns: selector{}},
 		},
 		{
 			p:        common.SelectParams{Table: "table", Columns: selector{count: true}},
@@ -50,7 +49,7 @@ func TestColumnsJoin(t *testing.T) {
 					},
 				},
 			},
-			wantCols: "`A`.*, `A_B_id`.*",
+			wantCols: "",
 			wantJoin: "JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
 		},
 		{
@@ -66,7 +65,7 @@ func TestColumnsJoin(t *testing.T) {
 					},
 				},
 			},
-			wantCols: "`A_B_id`.*, COUNT(*)",
+			wantCols: "COUNT(*)",
 			wantJoin: "JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
 		},
 		{
@@ -82,7 +81,7 @@ func TestColumnsJoin(t *testing.T) {
 					},
 				},
 			},
-			wantCols: "`A`.`a`, `A`.`b`, `A_B_id`.*",
+			wantCols: "`A`.`a`, `A`.`b`",
 			wantJoin: "JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
 		},
 		{
@@ -97,7 +96,7 @@ func TestColumnsJoin(t *testing.T) {
 					},
 				},
 			},
-			wantCols: "`A`.*, `A_B_id`.`c`, `A_B_id`.`d`",
+			wantCols: "`A_B_id`.`c`, `A_B_id`.`d`",
 			wantJoin: "JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
 		},
 		{

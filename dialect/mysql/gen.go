@@ -23,10 +23,6 @@ func (g *Gen) Translate(name string) string {
 	return name
 }
 
-func (g *Gen) PreProcess(f *load.Field, sqlType *sqltypes.Type) error {
-	return nil
-}
-
 func (Gen) GoTypeToColumnType(goTypeName string) *sqltypes.Type {
 	st := new(sqltypes.Type)
 	switch goTypeName {
@@ -52,12 +48,11 @@ func (Gen) GoTypeToColumnType(goTypeName string) *sqltypes.Type {
 
 // ConvertValueCode returns go code for converting value returned from the
 // database to the given field.
-func (g *Gen) ConvertValueCode(tp *load.Type, field *load.Field, sqlType *sqltypes.Type) string {
+func (g *Gen) ConvertValueCode(field *load.Field, sqlType *sqltypes.Type) string {
 	s := tmpltType{
-		Type:              tp,
 		Field:             field,
 		ConvertType:       g.convertType(field, sqlType),
-		ConvertFuncString: g.convertFuncString(tp, field, sqlType),
+		ConvertFuncString: g.convertFuncString(field, sqlType),
 	}
 	b := bytes.NewBuffer(nil)
 	err := tmplt.Execute(b, s)
@@ -70,7 +65,6 @@ func (g *Gen) ConvertValueCode(tp *load.Type, field *load.Field, sqlType *sqltyp
 type tmpltType struct {
 	ConvertFuncString string
 	ConvertType       string
-	Type              *load.Type
 	Field             *load.Field
 }
 
@@ -81,7 +75,7 @@ var tmplt = template.Must(template.New("mysql").Parse(`
 					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer}}&{{end}}tmp
 				{{- if ne .ConvertType "[]byte" }}
 				case {{.ConvertType}}:
-					tmp := {{.Field.Type.Naked.Ext .Type.Package}}(val)
+					tmp := {{.Field.Type.Naked.Ext .Field.ParentType.Package}}(val)
 					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
 				{{- end }}
 				default:
@@ -90,7 +84,7 @@ var tmplt = template.Must(template.New("mysql").Parse(`
 `))
 
 // convertFuncString is a function for converting the data from SQL to the right type
-func (g *Gen) convertFuncString(t *load.Type, f *load.Field, sqlType *sqltypes.Type) string {
+func (g *Gen) convertFuncString(f *load.Field, sqlType *sqltypes.Type) string {
 	switch tp := f.Type.Naked.Ext(""); tp {
 	case "string":
 		return "string(val)"

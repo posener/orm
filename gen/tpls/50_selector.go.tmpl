@@ -12,10 +12,13 @@ type {{$.Private}}Selector struct {
 
 // Columns are the names of selected columns
 func (s *{{$.Private}}Selector) Columns() []string {
-	var cols []string
+	var (
+	    cols []string
+	    all = s.selectAll()
+    )
     {{ range $_, $f := $.Graph.Type.Fields -}}
     {{ if not $f.IsReference -}}
-    if s.Select{{$f.Name}} {
+    if all || s.Select{{$f.Name}} {
         cols = append(cols, "{{$f.Column.Name}}")
     }
     {{ end -}}
@@ -96,14 +99,14 @@ func (s *{{$.Private}}Selector) scan{{$dialect.Name}} (vals []driver.Value{{if $
         i int
         rowExists bool
     )
-    {{ range $_, $f := $.Graph.Type.Fields }}
-    {{ if not $f.IsReference }}
+    {{ range $_, $f := $.Graph.Type.Fields -}}
+    {{ if not $f.IsReference -}}
     if all || s.Select{{$f.Name}} {
         if i >= len(vals) {
             return nil, 0, fmt.Errorf("not enough columns returned: %d", len(vals))
         }
         if vals[i] != nil && !rowExists {
-{{$dialect.ConvertValueCode $.Graph.Type $f}}
+{{ $dialect.ConvertValueCode $f -}}
         }
         {{ if and $.Graph.Type.HasOneToManyRelation -}}
         {{ if or $f.Unique $f.PrimaryKey -}}
@@ -117,12 +120,8 @@ func (s *{{$.Private}}Selector) scan{{$dialect.Name}} (vals []driver.Value{{if $
         {{ end -}}
         i++
     }
-    {{ else if not $f.Type.Slice }}
-    if all { // skip foreign key column
-        i += {{len $f.Columns}}
-    }
-    {{ end }}
-    {{ end }}
+    {{ end -}}
+    {{ end -}}
 
     if s.count {
         switch val := vals[i].(type) {

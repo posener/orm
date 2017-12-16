@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/posener/orm"
 	"github.com/posener/orm/common"
 )
 
@@ -17,7 +18,7 @@ type Dialect interface {
 	// Name returns the name of the dialect
 	Name() string
 	// Create returns the SQL CREATE statement and arguments according to the given parameters
-	Create(*common.CreateParams) (string, []interface{})
+	Create(orm.DB, *common.CreateParams) []string
 	// Insert returns the SQL INSERT statement and arguments according to the given parameters
 	Insert(*common.InsertParams) (string, []interface{})
 	// Select returns the SQL SELECT statement and arguments according to the given parameters
@@ -43,14 +44,38 @@ func (d *dialect) Name() string {
 }
 
 // Create returns the SQL CREATE statement and arguments according to the given parameters
-func (d *dialect) Create(p *common.CreateParams) (string, []interface{}) {
+func (d *dialect) Create(db orm.DB, p *common.CreateParams) []string {
+	if p.AutoMigrate {
+		if stmts, ok := d.autoMigrate(db, p); ok {
+			return stmts
+		}
+	}
 	stmt := fmt.Sprintf("CREATE TABLE %s `%s` ( %s )",
 		IfNotExists(p.IfNotExists),
 		p.Table,
-		p.ColumnsStatement,
+		p.TableProperties,
 	)
+	return []string{stmt}
+}
 
-	return stmt, nil
+func (d *dialect) autoMigrate(db orm.DB, p *common.CreateParams) ([]string, bool) {
+	columns, err := describeTable(p.Ctx, db, p.Table)
+	if err != nil {
+		return nil, false
+	}
+	var existingCols = make(map[string]bool)
+	for _, c := range columns {
+		existingCols[c.Field] = true
+	}
+	var stmts []string
+	for name, stmt := range p.TableProperties.Columns {
+		if existingCols[name] {
+			// TODO: update column if necessary
+			continue
+		}
+		stmts = append(stmts, fmt.Sprintf("ALTER TABLE `%s` ADD COLUMN %s", p.Table, stmt))
+	}
+	return stmts, true
 }
 
 // Insert returns the SQL INSERT statement and arguments according to the given parameters
