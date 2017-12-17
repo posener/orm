@@ -1,28 +1,7 @@
 // {{$.Private}}Table is SQL table name
 var {{$.Private}}Table = "{{$.Graph.Type.Table}}"
 
-var {{$.Private}}TableProperties = map[string]runtime.TableProperties{
-{{ range $_, $dialect := .Dialects -}}
-    {{ $table := $dialect.Table $.Graph -}}
-    "{{$dialect.Name}}": {
-        Columns: map[string]string{
-            {{ range $_, $col := $table.Columns -}}
-            "{{ $col.Name }}": "{{ $col }}",
-            {{ end -}}
-        },
-        ForeignKeys: map[string]string{
-            {{ range $_, $fk := $table.ForeignKeys -}}
-            "{{ $fk.Hash }}": "{{ $fk }}",
-            {{ end -}}
-        },
-        PrimaryKeys: []string{
-            {{ range $_, $pk := $table.PrimaryKeys -}}
-            "{{ $pk }}",
-            {{ end -}}
-        },
-    },
-{{ end -}}
-}
+var {{$.Private}}TableProperties = `{{$.Table.Marshal}}`
 
 func init() {
     var v interface{} = &{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}{}

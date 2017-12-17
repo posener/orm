@@ -60,7 +60,7 @@ func main() {
 			continue
 		}
 
-		dialects := dialect.NewGen()
+		dialects := dialect.All()
 
 		log.Printf("Generating code")
 		err = gen.Gen(g, dialects)

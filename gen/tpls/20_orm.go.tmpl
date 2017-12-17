@@ -21,9 +21,9 @@ func Open{{$.Graph.Type.Name}}ORM(driverName, dataSourceName string) ({{$.Graph.
 
 // New{{$.Graph.Type.Name}}ORM returns an conn object from a db instance
 func New{{$.Graph.Type.Name}}ORM(driverName string, db orm.DB) ({{$.Graph.Type.Name}}ORM, error) {
-	d, err := dialect.New(driverName)
-	if err != nil {
-		return nil, err
+	d := dialect.Get(driverName)
+	if d == nil {
+		return nil, fmt.Errorf("dialect %s does not exists", driverName)
 	}
     return &{{.Private}}Conn{dialect: d, db: db}, nil
 }
@@ -33,7 +33,7 @@ func New{{$.Graph.Type.Name}}ORM(driverName string, db orm.DB) ({{$.Graph.Type.N
 // to this struct, are done by an instance of this object.
 // To get an instance of orm use Open or New functions.
 type {{.Private}}Conn struct {
-	dialect dialect.Dialect
+	dialect dialect.API
 	db      orm.DB
 	logger  orm.Logger
 }
@@ -52,7 +52,7 @@ func (c *{{.Private}}Conn) Create() *{{$.Public}}CreateBuilder {
 	return &{{$.Public}}CreateBuilder{
 		params: runtime.CreateParams{
 		    Table: {{$.Private}}Table,
-		    TableProperties: {{$.Private}}TableProperties[c.dialect.Name()],
+		    MarshaledTable: {{$.Private}}TableProperties,
         },
 	    conn: c,
     }

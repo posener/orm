@@ -185,8 +185,8 @@ func TestColumnsJoin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.wantCols, func(t *testing.T) {
-			d := &dialect{"mysql"}
-			assert.Equal(t, tt.wantCols, columns(&tt.p))
+			d := Get("mysql").(*dialect)
+			assert.Equal(t, tt.wantCols, d.selectColumns(&tt.p))
 			assert.Equal(t, tt.wantJoin, strings.Trim(d.join(&tt.p), " "))
 		})
 	}

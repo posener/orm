@@ -107,7 +107,7 @@ func TestSelect(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.wantStmt, func(t *testing.T) {
 			tt.sel.Table = table
-			stmt, args := newMust("mysql").Select(&tt.sel)
+			stmt, args := Get("mysql").Select(&tt.sel)
 			assert.Equal(t, tt.wantStmt, reduceSpaces(stmt), " ")
 			assert.Equal(t, tt.wantArgs, args)
 		})
@@ -141,7 +141,7 @@ func TestInsert(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.wantStmt, func(t *testing.T) {
 			params := &runtime.InsertParams{Table: table, Assignments: tt.assign}
-			stmt, args := newMust("mysql").Insert(params)
+			stmt, args := Get("mysql").Insert(params)
 			assert.Equal(t, tt.wantStmt, reduceSpaces(stmt), " ")
 			assert.Equal(t, tt.wantArgs, args, " ")
 		})
@@ -182,7 +182,7 @@ func TestUpdate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.wantStmt, func(t *testing.T) {
 			params := &runtime.UpdateParams{Table: table, Assignments: tt.assign, Where: tt.where}
-			stmt, args := newMust("mysql").Update(params)
+			stmt, args := Get("mysql").Update(params)
 			assert.Equal(t, tt.wantStmt, reduceSpaces(stmt), " ")
 			assert.Equal(t, tt.wantArgs, args)
 		})
@@ -211,19 +211,11 @@ func TestDelete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.wantStmt, func(t *testing.T) {
 			params := &runtime.DeleteParams{Table: table, Where: tt.where}
-			stmt, args := newMust("mysql").Delete(params)
+			stmt, args := Get("mysql").Delete(params)
 			assert.Equal(t, tt.wantStmt, reduceSpaces(stmt), " ")
 			assert.Equal(t, tt.wantArgs, args)
 		})
 	}
-}
-
-func newMust(name string) Dialect {
-	d, err := New(name)
-	if err != nil {
-		panic(err)
-	}
-	return d
 }
 
 func reduceSpaces(s string) string {

@@ -11,19 +11,23 @@ import (
 	"github.com/posener/orm/load"
 )
 
-// Gen is code generator for mysql dialect
-type Gen struct{}
+// Dialect is code generator for mysql dialect
+type Dialect struct{}
 
 // Name returns the dialect name
-func (g *Gen) Name() string {
+func (d *Dialect) Name() string {
 	return "mysql"
 }
 
-func (g *Gen) Translate(name string) string {
+func (d *Dialect) Translate(name string) string {
 	return name
 }
 
-func (Gen) GoTypeToColumnType(goTypeName string) *sqltypes.Type {
+func (d *Dialect) Quote(name string) string {
+	return fmt.Sprintf("`%s`", name)
+}
+
+func (Dialect) GoTypeToColumnType(goTypeName string) *sqltypes.Type {
 	st := new(sqltypes.Type)
 	switch goTypeName {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
@@ -48,11 +52,15 @@ func (Gen) GoTypeToColumnType(goTypeName string) *sqltypes.Type {
 
 // ConvertValueCode returns go code for converting value returned from the
 // database to the given field.
-func (g *Gen) ConvertValueCode(field *load.Field, sqlType *sqltypes.Type) string {
+func (d *Dialect) ConvertValueCode(field *load.Field) string {
+	sqlType := field.CustomType
+	if sqlType == nil {
+		sqlType = d.GoTypeToColumnType(field.Type.Naked.Ext(""))
+	}
 	s := tmpltType{
 		Field:             field,
-		ConvertType:       g.convertType(field, sqlType),
-		ConvertFuncString: g.convertFuncString(field, sqlType),
+		ConvertType:       d.convertType(field, sqlType),
+		ConvertFuncString: d.convertFuncString(field, sqlType),
 	}
 	b := bytes.NewBuffer(nil)
 	err := tmplt.Execute(b, s)
@@ -84,7 +92,7 @@ var tmplt = template.Must(template.New("mysql").Parse(`
 `))
 
 // convertFuncString is a function for converting the data from SQL to the right type
-func (g *Gen) convertFuncString(f *load.Field, sqlType *sqltypes.Type) string {
+func (d *Dialect) convertFuncString(f *load.Field, sqlType *sqltypes.Type) string {
 	switch tp := f.Type.Naked.Ext(""); tp {
 	case "string":
 		return "string(val)"
@@ -103,7 +111,7 @@ func (g *Gen) convertFuncString(f *load.Field, sqlType *sqltypes.Type) string {
 	}
 }
 
-func (g *Gen) convertType(f *load.Field, sqlType *sqltypes.Type) string {
+func (d *Dialect) convertType(f *load.Field, sqlType *sqltypes.Type) string {
 	switch sqlType.Name {
 	case sqltypes.Integer:
 		return "int64"

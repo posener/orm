@@ -13,6 +13,7 @@ import (
 	"github.com/posener/orm/dialect"
 	"github.com/posener/orm/gen/b0x"
 	"github.com/posener/orm/graph"
+	"github.com/posener/orm/runtime"
 )
 
 //go:generate fileb0x b0x.yml
@@ -30,9 +31,10 @@ package {{$.Package}}
 type TemplateData struct {
 	// The name	of the new created package
 	Graph    *graph.Graph // TODO: rename Type to Graph
-	Dialects []dialect.Generator
+	Dialects []dialect.API
 	Public   string
 	Private  string
+	Table    *runtime.Table
 }
 
 var templates = template.New("").Funcs(template.FuncMap{
@@ -61,7 +63,7 @@ func init() {
 
 // Gen generates all the ORM files for a given struct in a given package.
 // st is the type descriptor of the struct
-func Gen(g *graph.Graph, dialects []dialect.Generator) error {
+func Gen(g *graph.Graph, dialects []dialect.API) error {
 	// get the package ormDir on disk
 	structPkgDir, err := packagePath(g.ImportPath())
 	if err != nil {
@@ -73,6 +75,7 @@ func Gen(g *graph.Graph, dialects []dialect.Generator) error {
 		Dialects: dialects,
 		Public:   g.Name,
 		Private:  strings.ToLower(g.Name),
+		Table:    runtime.NewTable(g),
 	}
 
 	ormFileName := strings.ToLower(g.Name + "_orm.go")

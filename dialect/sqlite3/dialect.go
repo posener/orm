@@ -2,6 +2,7 @@ package sqlite3
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"strings"
 
@@ -10,15 +11,15 @@ import (
 	"github.com/posener/orm/load"
 )
 
-// Gen is code generator for sqlite3 dialect
-type Gen struct{}
+// Dialect is code generator for sqlite3 dialect
+type Dialect struct{}
 
 // Name returns the dialect name
-func (g *Gen) Name() string {
+func (d *Dialect) Name() string {
 	return "sqlite3"
 }
 
-func (g *Gen) Translate(name string) string {
+func (d *Dialect) Translate(name string) string {
 	switch name {
 	case "AUTO_INCREMENT":
 		// https://sqlite.org/autoinc.html
@@ -28,7 +29,11 @@ func (g *Gen) Translate(name string) string {
 	}
 }
 
-func (*Gen) GoTypeToColumnType(goTypeName string) *sqltypes.Type {
+func (d *Dialect) Quote(name string) string {
+	return fmt.Sprintf("`%s`", name)
+}
+
+func (*Dialect) GoTypeToColumnType(goTypeName string) *sqltypes.Type {
 	st := new(sqltypes.Type)
 	switch goTypeName {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
@@ -51,10 +56,14 @@ func (*Gen) GoTypeToColumnType(goTypeName string) *sqltypes.Type {
 
 // ConvertValueCode returns go code for converting value returned from the
 // database to the given field.
-func (g *Gen) ConvertValueCode(field *load.Field, sqlType *sqltypes.Type) string {
+func (d *Dialect) ConvertValueCode(field *load.Field) string {
+	sqlType := field.CustomType
+	if sqlType == nil {
+		sqlType = d.GoTypeToColumnType(field.Type.Naked.Ext(""))
+	}
 	s := tmpltType{
 		Field:       field,
-		ConvertType: g.convertType(field, sqlType),
+		ConvertType: d.convertType(field, sqlType),
 	}
 	b := bytes.NewBuffer(nil)
 	err := tmplt.Execute(b, s)
@@ -79,7 +88,7 @@ var tmplt = template.Must(template.New("sqlite3").Parse(`
 `))
 
 // convertType is the type of the field when returned by sql/driver from database
-func (g *Gen) convertType(f *load.Field, sqlType *sqltypes.Type) string {
+func (d *Dialect) convertType(f *load.Field, sqlType *sqltypes.Type) string {
 	switch sqlType.Name {
 	case sqltypes.Integer:
 		return "int64"

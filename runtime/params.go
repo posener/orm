@@ -8,8 +8,8 @@ import (
 
 // CreateParams holds parameters for an SQL CREATE statement
 type CreateParams struct {
-	Table           string
-	TableProperties TableProperties
+	Table          string
+	MarshaledTable string
 	// IfNotExists determines to create the table only if it does not exists
 	IfNotExists bool
 	// AutoMigrate perform auto-migration of table scheme

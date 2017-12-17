@@ -1,7 +1,10 @@
 // Exec creates a table for the given struct
 func (b *{{$.Public}}CreateBuilder) Exec() error {
     b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
-	stmts := b.conn.dialect.Create(b.conn.db, &b.params)
+	stmts, err := b.conn.dialect.Create(b.conn.db, &b.params)
+	if err != nil {
+	    return err
+	}
 	b.conn.log("Create: '%v'", strings.Join(stmts, "; "))
 	tx, err := b.conn.db.BeginTx(b.params.Ctx, nil)
 	if err != nil {
