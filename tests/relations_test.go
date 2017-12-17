@@ -412,8 +412,11 @@ func insertA5(t *testing.T, a A5ORM, name string, left, right *A5) *A5 {
 	return item
 }
 
-func TestUniqueConstrain(t *testing.T) {
+func TestMultiplePrimaryKeys(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
+		if conn.name == "sqlite3" {
+			t.Skip("sqlite3 does not support string type primary keys")
+		}
 		a, err := NewA6ORM(conn.name, conn)
 		require.Nil(t, err)
 		b, err := NewB6ORM(conn.name, conn)
@@ -454,6 +457,50 @@ func TestUniqueConstrain(t *testing.T) {
 			assert.Equal(t, b1, as[0].B)
 			assert.Equal(t, "B", as[1].Name)
 			assert.Equal(t, b2, as[1].B)
+		}
+	})
+}
+
+func TestReferencingField(t *testing.T) {
+	testDBs(t, func(t *testing.T, conn conn) {
+		a, err := NewA7ORM(conn.name, conn)
+		require.Nil(t, err)
+		b, err := NewB7ORM(conn.name, conn)
+		require.Nil(t, err)
+		if testing.Verbose() {
+			a.Logger(t.Logf)
+			b.Logger(t.Logf)
+		}
+
+		require.Nil(t, a.Create().Exec())
+		require.Nil(t, b.Create().Exec())
+
+		a1, err := a.Insert().SetName("A1").Exec()
+		require.Nil(t, err)
+		a2, err := a.Insert().SetName("A2").Exec()
+		require.Nil(t, err)
+
+		_, err = b.Insert().SetName("B1").SetA1(a1).SetA2(a2).Exec()
+		require.Nil(t, err)
+		_, err = b.Insert().SetName("B2").SetA1(a1).SetA2(a2).Exec()
+		require.Nil(t, err)
+		_, err = b.Insert().SetName("B3").SetA1(a2).SetA2(a1).Exec()
+		require.Nil(t, err)
+		_, err = b.Insert().SetName("B4").SetA1(a2).SetA2(a1).Exec()
+		require.Nil(t, err)
+
+		as, err := a.Select().JoinB(b.Select().Joiner()).Query()
+		require.Nil(t, err)
+
+		if assert.Equal(t, 2, len(as)) {
+			if assert.Equal(t, "A1", as[0].Name) && assert.Equal(t, 2, len(as[0].B)) {
+				assert.Equal(t, "B1", as[0].B[0].Name)
+				assert.Equal(t, "B2", as[0].B[1].Name)
+			}
+			if assert.Equal(t, "A2", as[1].Name) && assert.Equal(t, 2, len(as[1].B)) {
+				assert.Equal(t, "B3", as[1].B[0].Name)
+				assert.Equal(t, "B4", as[1].B[1].Name)
+			}
 		}
 	})
 }

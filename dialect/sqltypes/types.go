@@ -1,6 +1,7 @@
 package sqltypes
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 )
@@ -8,38 +9,41 @@ import (
 var typeFormat = regexp.MustCompile(`([^(]+)(\((\d+)\))?`)
 
 // Type represents an SQL column type
-type Type string
+type Type struct {
+	Name string
+	Size int
+}
+
+func New(s string) (*Type, error) {
+	t := new(Type)
+	m := typeFormat.FindStringSubmatch(string(s))
+	switch len(m) {
+	case 0:
+		return nil, fmt.Errorf("invalid SQL type: %s", s)
+	case 1:
+		t.Name = m[0]
+	case 4:
+		t.Name = m[1]
+		t.Size, _ = strconv.Atoi(m[3])
+	}
+	return t, nil
+}
+
+func (t *Type) String() string {
+	if t.Size == 0 {
+		return t.Name
+	}
+	return fmt.Sprintf("%s(%d)", t.Name, t.Size)
+}
 
 // List of SQL types
 const (
-	NA        Type = ""
-	Integer   Type = "INTEGER"
-	Float     Type = "FLOAT"
-	Boolean   Type = "BOOLEAN"
-	Text      Type = "TEXT"
-	Blob      Type = "BLOB"
-	TimeStamp Type = "TIMESTAMP"
-	DateTime  Type = "DATETIME"
-	VarChar   Type = "VARCHAR"
+	Integer   = "INTEGER"
+	Float     = "FLOAT"
+	Boolean   = "BOOLEAN"
+	Text      = "TEXT"
+	Blob      = "BLOB"
+	TimeStamp = "TIMESTAMP"
+	DateTime  = "DATETIME"
+	VarChar   = "VARCHAR"
 )
-
-// Family returns the family of a type
-// ex. the family of VARCHAR(10) is VARCHAR, the family of INT is INT.
-func (t Type) Family() Type {
-	m := typeFormat.FindStringSubmatch(string(t))
-	if len(m) < 2 {
-		return t
-	}
-	return Type(m[1])
-}
-
-// Size returns the size of a column, if that is defined.
-// ex. the size of VARCHAR(10) is 10, the size of INT is 0 since it is not defined.
-func (t Type) Size() int {
-	m := typeFormat.FindStringSubmatch(string(t))
-	if len(m) < 4 {
-		return 0
-	}
-	i, _ := strconv.Atoi(m[3])
-	return i
-}

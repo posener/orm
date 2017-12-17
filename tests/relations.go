@@ -1,6 +1,6 @@
 package tests
 
-//go:generate ../orm -type A,B,C,A2,B2,C2,D2,A3,B3,A4,B4,A5,A6,B6
+//go:generate ../orm -type A,B,C,A2,B2,C2,D2,A3,B3,A4,B4,A5,A6,B6,A7,B7
 
 // A, B, C test simple one-to-one (A->C) and one-to-many(B->C) relationships
 type A struct {
@@ -88,6 +88,20 @@ type A6 struct {
 }
 
 type B6 struct {
-	SureName  string `sql:"unique"`
-	FirstName string `sql:"unique"`
+	SureName  string `sql:"primary key"`
+	FirstName string `sql:"primary key"`
+}
+
+// A7,B7 test functionality of 'referencing field'
+// A7 has one-to-many relationship to B7, and B7 has several A7 reverse references
+type A7 struct {
+	ID   int64 `sql:"primary key;auto increment"`
+	Name string
+	B    []B7 `sql:"referencing field:A1"`
+}
+
+type B7 struct {
+	ID     int64 `sql:"primary key;auto increment"`
+	Name   string
+	A1, A2 *A7
 }

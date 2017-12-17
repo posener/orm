@@ -1,4 +1,4 @@
-package common
+package runtime
 
 import "strings"
 
@@ -11,6 +11,13 @@ type Selector interface {
 	Columns() []string
 	Joins() []JoinParams
 	Count() bool
+}
+
+// TableNamer is an interface for a model to change it's table name
+// a struct that implements this interface will set it's SQL table name by the return
+// value from TableName function.
+type TableNamer interface {
+	TableName() string
 }
 
 // JoinParams are parameters to perform a join operation

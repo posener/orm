@@ -11,66 +11,56 @@ import (
 	"github.com/posener/orm/load"
 )
 
-// Gen is code generator for mysql dialect
-type Gen struct{}
+// Dialect is code generator for mysql dialect
+type Dialect struct{}
 
 // Name returns the dialect name
-func (g *Gen) Name() string {
+func (d *Dialect) Name() string {
 	return "mysql"
 }
 
-func (g *Gen) ColumnCreateString(name string, f *load.Field, sqlType sqltypes.Type) string {
-	stmt := []string{fmt.Sprintf("`%s` %s", name, sqlType)}
-	if f.NotNull {
-		stmt = append(stmt, "NOT NULL")
-	}
-	if f.Null {
-		stmt = append(stmt, "NULL")
-	}
-	if f.Default != "" {
-		stmt = append(stmt, "DEFAULT", f.Default)
-	}
-	if f.PrimaryKey || f.AutoIncrement {
-		stmt = append(stmt, "PRIMARY KEY")
-	}
-	if f.AutoIncrement {
-		stmt = append(stmt, "AUTO_INCREMENT")
-	}
-	if f.Unique {
-		stmt = append(stmt, " UNIQUE")
-	}
-	return strings.Join(stmt, " ")
-
+func (d *Dialect) Translate(name string) string {
+	return name
 }
 
-func (Gen) GoTypeToColumnType(t *load.Type) sqltypes.Type {
-	switch typeName := t.Naked.Ext(""); typeName {
+func (d *Dialect) Quote(name string) string {
+	return fmt.Sprintf("`%s`", name)
+}
+
+func (Dialect) GoTypeToColumnType(goTypeName string) *sqltypes.Type {
+	st := new(sqltypes.Type)
+	switch goTypeName {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
-		return sqltypes.Integer
+		st.Name = sqltypes.Integer
 	case "float", "float8", "float16", "float32", "float64":
-		return sqltypes.Float
+		st.Name = sqltypes.Float
 	case "bool":
-		return sqltypes.Boolean
+		st.Name = sqltypes.Boolean
 	case "string":
-		return sqltypes.VarChar + "(255)"
+		st.Name = sqltypes.VarChar
+		st.Size = 255
 	case "[]byte":
-		return sqltypes.Blob
+		st.Name = sqltypes.Blob
 	case "time.Time":
-		return sqltypes.DateTime + "(3)"
+		st.Name = sqltypes.DateTime
+		st.Size = 3
 	default:
-		log.Fatalf("Unknown column type for %s", typeName)
-		return sqltypes.NA
+		log.Fatalf("Unknown column type for %s", goTypeName)
 	}
+	return st
 }
 
 // ConvertValueCode returns go code for converting value returned from the
 // database to the given field.
-func (g *Gen) ConvertValueCode(tp *load.Type, field *load.Field, sqlType sqltypes.Type) string {
+func (d *Dialect) ConvertValueCode(field *load.Field) string {
+	sqlType := field.CustomType
+	if sqlType == nil {
+		sqlType = d.GoTypeToColumnType(field.Type.Naked.Ext(""))
+	}
 	s := tmpltType{
-		Type:              tp,
 		Field:             field,
-		ConvertType:       g.convertType(field, sqlType),
-		ConvertFuncString: g.convertFuncString(tp, field, sqlType),
+		ConvertType:       d.convertType(field, sqlType),
+		ConvertFuncString: d.convertFuncString(field, sqlType),
 	}
 	b := bytes.NewBuffer(nil)
 	err := tmplt.Execute(b, s)
@@ -83,7 +73,6 @@ func (g *Gen) ConvertValueCode(tp *load.Type, field *load.Field, sqlType sqltype
 type tmpltType struct {
 	ConvertFuncString string
 	ConvertType       string
-	Type              *load.Type
 	Field             *load.Field
 }
 
@@ -94,36 +83,36 @@ var tmplt = template.Must(template.New("mysql").Parse(`
 					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer}}&{{end}}tmp
 				{{- if ne .ConvertType "[]byte" }}
 				case {{.ConvertType}}:
-					tmp := {{.Field.Type.Naked.Ext .Type.Package}}(val)
+					tmp := {{.Field.Type.Naked.Ext .Field.ParentType.Package}}(val)
 					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
 				{{- end }}
 				default:
-					return nil, 0, common.ErrConvert("{{.Field.AccessName}}", i, vals[i], "[]byte, {{.ConvertType}}")
+					return nil, 0, runtime.ErrConvert("{{.Field.AccessName}}", i, vals[i], "[]byte, {{.ConvertType}}")
 				}
 `))
 
 // convertFuncString is a function for converting the data from SQL to the right type
-func (g *Gen) convertFuncString(t *load.Type, f *load.Field, sqlType sqltypes.Type) string {
+func (d *Dialect) convertFuncString(f *load.Field, sqlType *sqltypes.Type) string {
 	switch tp := f.Type.Naked.Ext(""); tp {
 	case "string":
 		return "string(val)"
 	case "[]byte":
 		return "[]byte(val)"
 	case "int", "int8", "int16", "int32", "int64":
-		return fmt.Sprintf("%s(common.ParseInt(val))", tp)
+		return fmt.Sprintf("%s(runtime.ParseInt(val))", tp)
 	case "uint", "uint8", "uint16", "uint32", "uint64":
-		return fmt.Sprintf("%s(common.ParseFloat(val))", tp)
+		return fmt.Sprintf("%s(runtime.ParseFloat(val))", tp)
 	case "time.Time":
-		return fmt.Sprintf("common.ParseTime(val, %d)", sqlType.Size())
+		return fmt.Sprintf("runtime.ParseTime(val, %d)", sqlType.Size)
 	case "bool":
-		return "common.ParseBool(val)"
+		return "runtime.ParseBool(val)"
 	default:
 		return fmt.Sprintf("%s(val)", tp)
 	}
 }
 
-func (g *Gen) convertType(f *load.Field, sqlType sqltypes.Type) string {
-	switch sqlType.Family() {
+func (d *Dialect) convertType(f *load.Field, sqlType *sqltypes.Type) string {
+	switch sqlType.Name {
 	case sqltypes.Integer:
 		return "int64"
 	case sqltypes.Float:

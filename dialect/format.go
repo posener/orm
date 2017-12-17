@@ -5,12 +5,47 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/posener/orm/common"
+	"github.com/posener/orm/runtime"
 )
 
-// columns extract SQL wantCols list statement
-func columns(p *common.SelectParams) string {
-	parts := columnsParts(p.Table, p)
+// tableProperties returns all properties of SQL table, as should be given in the table CREATE statement
+func (d *dialect) tableProperties(t *runtime.Table) string {
+	var stmts []string
+	for _, col := range t.Columns {
+		stmts = append(stmts, d.createColumn(col))
+	}
+	if len(t.PrimaryKeys) > 0 {
+		stmts = append(stmts, fmt.Sprintf("PRIMARY KEY (%s)",
+			strings.Join(d.quoteSlice(t.PrimaryKeys), ", ")))
+	}
+	for _, fk := range t.ForeignKeys {
+		stmts = append(stmts, d.foreignKey(fk))
+	}
+	return strings.Join(stmts, ", ")
+}
+
+// createColumn is an SQL column definition, as given in the SQL CREATE statement
+func (d *dialect) createColumn(col runtime.Column) string {
+	s := fmt.Sprintf("%s %s", d.Quote(col.Name), d.GoTypeToColumnType(col.GoType))
+	for _, opt := range col.Options {
+		s += " " + d.Translate(opt)
+	}
+	return s
+}
+
+// foreignKey is teh FOREIGN KEY statement
+func (d *dialect) foreignKey(fk runtime.ForeignKey) string {
+	return fmt.Sprintf(
+		"FOREIGN KEY (%s) REFERENCES %s(%s)",
+		strings.Join(d.quoteSlice(fk.Columns), ", "),
+		fk.Table,
+		strings.Join(d.quoteSlice(fk.ForeignColumns), ", "),
+	)
+}
+
+// selectColumns returns the columns selected for an SQL SELECT query
+func (d *dialect) selectColumns(p *runtime.SelectParams) string {
+	parts := d.columnsParts(p.Table, p)
 
 	// we can add COUNT(*) only once and it work only on the most upper level
 	if p.Columns.Count() {
@@ -20,16 +55,16 @@ func columns(p *common.SelectParams) string {
 	return strings.Join(parts, ", ")
 }
 
-func columnsParts(table string, p *common.SelectParams) []string {
+func (d *dialect) columnsParts(table string, p *runtime.SelectParams) []string {
 	var (
 		parts  []string
 		exists = make(map[string]bool)
 	)
 
-	parts = append(parts, columnsCollect(table, p.Columns.Columns(), p.Columns.Count())...)
+	parts = append(parts, d.columnsCollect(table, p.Columns.Columns())...)
 
 	for _, join := range p.Columns.Joins() {
-		for _, part := range columnsParts(join.TableName(table), &join.SelectParams) {
+		for _, part := range d.columnsParts(join.TableName(table), &join.SelectParams) {
 			if exists[part] {
 				continue
 			}
@@ -40,28 +75,26 @@ func columnsParts(table string, p *common.SelectParams) []string {
 	return parts
 }
 
-func columnsCollect(table string, cols []string, isCount bool) []string {
-	if len(cols) == 0 && !isCount {
-		return []string{fmt.Sprintf("`%s`.*", table)}
-	}
+func (d *dialect) columnsCollect(table string, cols []string) []string {
 	var parts []string
 	for _, col := range cols {
-		parts = append(parts, fmt.Sprintf("`%s`.`%s`", table, col))
+		parts = append(parts, fmt.Sprintf("%s.%s", d.Quote(table), d.Quote(col)))
 	}
 	return parts
 }
 
 // whereJoin takes SelectParams and traverse all the join options
 // it concat all the conditions with an AND operator
-func whereJoin(table string, p *common.SelectParams) string {
-	stmt := whereJoinRec(table, p)
+func (d *dialect) whereJoin(table string, p *runtime.SelectParams) string {
+	stmt := d.whereJoinRec(table, p)
 	if stmt == "" {
 		return ""
 	}
 	return "WHERE " + stmt
 }
 
-func whereJoinRec(table string, p *common.SelectParams) string {
+// whereJoinRec returns a WHERE statement for a recursive join statement
+func (d *dialect) whereJoinRec(table string, p *runtime.SelectParams) string {
 	var parts []string
 	if p.Where != nil {
 		if w := p.Where.Statement(table); w != "" {
@@ -69,7 +102,7 @@ func whereJoinRec(table string, p *common.SelectParams) string {
 		}
 	}
 	for _, join := range p.Columns.Joins() {
-		joinCond := whereJoinRec(join.TableName(table), &join.SelectParams)
+		joinCond := d.whereJoinRec(join.TableName(table), &join.SelectParams)
 		if joinCond != "" {
 			parts = append(parts, joinCond)
 		}
@@ -77,7 +110,8 @@ func whereJoinRec(table string, p *common.SelectParams) string {
 	return strings.Join(parts, " AND ")
 }
 
-func where(table string, c common.StatementArger) string {
+// where returns an SQL WHERE statement
+func (d *dialect) where(table string, c runtime.StatementArger) string {
 	if c == nil {
 		return ""
 	}
@@ -89,13 +123,13 @@ func where(table string, c common.StatementArger) string {
 }
 
 // groupBy formats an SQL GROUP BY statement
-func groupBy(table string, groups []common.Group) string {
+func (d *dialect) groupBy(table string, groups []runtime.Group) string {
 	if len(groups) == 0 {
 		return ""
 	}
 	b := bytes.NewBufferString("GROUP BY ")
 	for i := range groups {
-		b.WriteString(fmt.Sprintf("`%s`.`%s`, ", table, groups[i].Column))
+		b.WriteString(fmt.Sprintf("%s.%s, ", d.Quote(table), d.Quote(groups[i].Column)))
 	}
 
 	s := b.String()
@@ -103,14 +137,14 @@ func groupBy(table string, groups []common.Group) string {
 }
 
 // orderBy formats an SQL ORDER BY statement
-func orderBy(table string, orders []common.Order) string {
+func (d *dialect) orderBy(table string, orders []runtime.Order) string {
 	if len(orders) == 0 {
 		return ""
 	}
 
 	b := bytes.NewBufferString("ORDER BY ")
 	for i := range orders {
-		b.WriteString(fmt.Sprintf("`%s`.`%s` %s, ", table, orders[i].Column, orders[i].Dir))
+		b.WriteString(fmt.Sprintf("%s.%s %s, ", d.Quote(table), d.Quote(orders[i].Column), orders[i].Dir))
 	}
 
 	s := b.String()
@@ -118,7 +152,7 @@ func orderBy(table string, orders []common.Order) string {
 }
 
 // page formats an SQL LIMIT...OFFSET statement
-func page(p common.Page) string {
+func (d *dialect) page(p runtime.Page) string {
 	if p.Limit == 0 { // why would someone ask for a page of zero size?
 		return ""
 	}
@@ -130,38 +164,45 @@ func page(p common.Page) string {
 }
 
 // assignSets formats a list of assignments for SQL UPDATE SET statements
-func assignSets(a common.Assignments) string {
+func (d *dialect) assignSets(a runtime.Assignments) string {
 	if len(a) == 0 {
 		return ""
 	}
 	b := bytes.NewBuffer(nil)
 	for i := range a {
-		b.WriteString(fmt.Sprintf("`%s` = ?, ", a[i].Column))
+		b.WriteString(fmt.Sprintf("%s = ?, ", d.Quote(a[i].Column)))
 	}
 
 	s := b.String()
 	return s[:len(s)-2]
 }
 
-// assignColumns gets an assignment list and formats the assign column names
+// assignColumns gets an assignment list and formats the assign createColumn names
 // for an SQL INSERT STATEMENT
-func assignColumns(a common.Assignments) string {
+func (d *dialect) assignColumns(a runtime.Assignments) string {
 	if len(a) == 0 {
 		return ""
 	}
 	b := bytes.NewBuffer(nil)
 	for i := range a {
-		b.WriteString(fmt.Sprintf("`%s`, ", a[i].Column))
+		b.WriteString(fmt.Sprintf("%s, ", d.Quote(a[i].Column)))
 	}
 
 	s := b.String()
 	return s[:len(s)-2]
 }
 
-// IfNotExists formats an SQL IF NOT EXISTS statement
-func IfNotExists(ifNotExists bool) string {
+// ifNotExists formats an SQL IF NOT EXISTS statement
+func (d *dialect) ifNotExists(ifNotExists bool) string {
 	if ifNotExists {
 		return "IF NOT EXISTS"
 	}
 	return ""
+}
+
+func (d *dialect) quoteSlice(s []string) []string {
+	for i := range s {
+		s[i] = d.Quote(s[i])
+	}
+	return s
 }

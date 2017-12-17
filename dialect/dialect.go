@@ -1,10 +1,16 @@
 package dialect
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
-	"github.com/posener/orm/common"
+	"github.com/posener/orm"
+	"github.com/posener/orm/dialect/mysql"
+	"github.com/posener/orm/dialect/sqlite3"
+	"github.com/posener/orm/dialect/sqltypes"
+	"github.com/posener/orm/load"
+	"github.com/posener/orm/runtime"
 )
 
 const SQLite3 = "sqlite3"
@@ -13,52 +19,110 @@ const SQLite3 = "sqlite3"
 // Objects that implement this interface, can convert query params, such as SelectParams or
 // UpdateParams, and convert them to an SQL statement and a list of arguments, which can be used
 // to invoke SQL Exec or Query functions.
-type Dialect interface {
+type API interface {
 	// Name returns the name of the dialect
 	Name() string
 	// Create returns the SQL CREATE statement and arguments according to the given parameters
-	Create(*common.CreateParams) (string, []interface{})
+	Create(orm.DB, *runtime.CreateParams) ([]string, error)
 	// Insert returns the SQL INSERT statement and arguments according to the given parameters
-	Insert(*common.InsertParams) (string, []interface{})
+	Insert(*runtime.InsertParams) (string, []interface{})
 	// Select returns the SQL SELECT statement and arguments according to the given parameters
-	Select(*common.SelectParams) (string, []interface{})
+	Select(*runtime.SelectParams) (string, []interface{})
 	// Delete returns the SQL DELETE statement and arguments according to the given parameters
-	Delete(*common.DeleteParams) (string, []interface{})
+	Delete(*runtime.DeleteParams) (string, []interface{})
 	// Update returns the SQL UPDATE statement and arguments according to the given parameters
-	Update(*common.UpdateParams) (string, []interface{})
+	Update(*runtime.UpdateParams) (string, []interface{})
 }
 
-// New returns a new dialect according to it's name
-func New(name string) (Dialect, error) {
-	return &dialect{name: name}, nil
+// Dialect is an interface for a dialect for generating ORM code
+type Dialect interface {
+	// Name returns the name of the dialect
+	Name() string
+	// GoTypeToColumnType gets a string that represents a go basic type
+	// and returns an SQL type for a createColumn for a field of that type.
+	GoTypeToColumnType(string) *sqltypes.Type
+	// Translate gets a MySQL statement and returns a corresponding statement
+	// in a specific dialect
+	Translate(string) string
+	// ConvertValueCode returns code for converting a value for a field with
+	// a given SQL type.
+	ConvertValueCode(*load.Field) string
+	// Quote returns the quoted form of an SQL variable
+	Quote(string) string
 }
 
-// dialect represents the sqlite dialect
+var dialects = map[string]API{
+	"mysql":   &dialect{name: "mysql", Dialect: new(mysql.Dialect)},
+	"sqlite3": &dialect{name: "sqlite3", Dialect: new(sqlite3.Dialect)},
+}
+
+// All returns all available dialects
+func All() []API {
+	var all []API
+	for _, d := range dialects {
+		all = append(all, d)
+	}
+	return all
+}
+
+// Get returns a dialect by name
+func Get(name string) API {
+	return dialects[name]
+}
+
 type dialect struct {
+	Dialect
 	name string
 }
 
-func (d *dialect) Name() string {
-	return d.name
+// Create returns the SQL CREATE statement and arguments according to the given parameters
+func (d *dialect) Create(db orm.DB, p *runtime.CreateParams) ([]string, error) {
+	table := new(runtime.Table)
+	err := table.UnMarshal(p.MarshaledTable)
+	if err != nil {
+		return nil, err
+	}
+
+	if p.AutoMigrate {
+		if stmts, ok := d.autoMigrate(p.Ctx, db, p.Table, table); ok {
+			return stmts, nil
+		}
+	}
+	stmt := fmt.Sprintf("CREATE TABLE %s %s (%s)",
+		d.ifNotExists(p.IfNotExists),
+		d.Quote(p.Table),
+		d.tableProperties(table),
+	)
+	return []string{stmt}, nil
 }
 
-// Create returns the SQL CREATE statement and arguments according to the given parameters
-func (d *dialect) Create(p *common.CreateParams) (string, []interface{}) {
-	stmt := fmt.Sprintf("CREATE TABLE %s `%s` ( %s )",
-		IfNotExists(p.IfNotExists),
-		p.Table,
-		p.ColumnsStatement,
-	)
-
-	return stmt, nil
+func (d *dialect) autoMigrate(ctx context.Context, db orm.DB, tableName string, table *runtime.Table) ([]string, bool) {
+	columns, err := describeTable(ctx, db, tableName)
+	if err != nil {
+		return nil, false
+	}
+	var existingCols = make(map[string]bool)
+	for _, c := range columns {
+		existingCols[c.Field] = true
+	}
+	var stmts []string
+	for _, col := range table.Columns {
+		if existingCols[col.Name] {
+			// TODO: update createColumn if necessary
+			continue
+		}
+		stmts = append(stmts, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s",
+			d.Quote(tableName), d.createColumn(col)))
+	}
+	return stmts, true
 }
 
 // Insert returns the SQL INSERT statement and arguments according to the given parameters
-func (d *dialect) Insert(p *common.InsertParams) (string, []interface{}) {
-	stmt := fmt.Sprintf("INSERT INTO `%s` (%s) VALUES (%s)",
-		p.Table,
-		assignColumns(p.Assignments),
-		common.QMarks(len(p.Assignments)),
+func (d *dialect) Insert(p *runtime.InsertParams) (string, []interface{}) {
+	stmt := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",
+		d.Quote(p.Table),
+		d.assignColumns(p.Assignments),
+		runtime.QMarks(len(p.Assignments)),
 	)
 
 	var args []interface{}
@@ -70,15 +134,15 @@ func (d *dialect) Insert(p *common.InsertParams) (string, []interface{}) {
 }
 
 // Select returns the SQL SELECT statement and arguments according to the given parameters
-func (d *dialect) Select(p *common.SelectParams) (string, []interface{}) {
-	stmt := fmt.Sprintf("SELECT %s FROM `%s` %s %s %s %s %s",
-		columns(p),
-		p.Table,
+func (d *dialect) Select(p *runtime.SelectParams) (string, []interface{}) {
+	stmt := fmt.Sprintf("SELECT %s FROM %s %s %s %s %s %s",
+		d.selectColumns(p),
+		d.Quote(p.Table),
 		d.join(p),
-		whereJoin(p.Table, p),
-		groupBy(p.Table, p.Groups),
-		orderBy(p.Table, p.Orders),
-		page(p.Page),
+		d.whereJoin(p.Table, p),
+		d.groupBy(p.Table, p.Groups),
+		d.orderBy(p.Table, p.Orders),
+		d.page(p.Page),
 	)
 
 	return stmt, collectWhereArgs(p)
@@ -86,7 +150,7 @@ func (d *dialect) Select(p *common.SelectParams) (string, []interface{}) {
 
 // collectWhereArgs collects arguments for WHERE statement from
 // select params and all its nested join options
-func collectWhereArgs(p *common.SelectParams) []interface{} {
+func collectWhereArgs(p *runtime.SelectParams) []interface{} {
 	var args []interface{}
 	if p.Where != nil {
 		args = append(args, p.Where.Args()...)
@@ -98,10 +162,10 @@ func collectWhereArgs(p *common.SelectParams) []interface{} {
 }
 
 // Delete returns the SQL DELETE statement and arguments according to the given parameters
-func (d *dialect) Delete(p *common.DeleteParams) (string, []interface{}) {
-	stmt := fmt.Sprintf("DELETE FROM `%s` %s",
-		p.Table,
-		where(p.Table, p.Where),
+func (d *dialect) Delete(p *runtime.DeleteParams) (string, []interface{}) {
+	stmt := fmt.Sprintf("DELETE FROM %s %s",
+		d.Quote(p.Table),
+		d.where(p.Table, p.Where),
 	)
 
 	var args []interface{}
@@ -113,11 +177,11 @@ func (d *dialect) Delete(p *common.DeleteParams) (string, []interface{}) {
 }
 
 // Update returns the SQL UPDATE statement and arguments according to the given parameters
-func (d *dialect) Update(p *common.UpdateParams) (string, []interface{}) {
-	stmt := fmt.Sprintf("UPDATE `%s` SET %s %s",
-		p.Table,
-		assignSets(p.Assignments),
-		where(p.Table, p.Where),
+func (d *dialect) Update(p *runtime.UpdateParams) (string, []interface{}) {
+	stmt := fmt.Sprintf("UPDATE %s SET %s %s",
+		d.Quote(p.Table),
+		d.assignSets(p.Assignments),
+		d.where(p.Table, p.Where),
 	)
 
 	var args []interface{}
@@ -132,11 +196,11 @@ func (d *dialect) Update(p *common.UpdateParams) (string, []interface{}) {
 }
 
 // join extract SQL join list statement
-func (d *dialect) join(p *common.SelectParams) string {
+func (d *dialect) join(p *runtime.SelectParams) string {
 	return strings.Join(d.joinParts(p.Table, p), " ")
 }
 
-func (d *dialect) joinParts(table string, p *common.SelectParams) []string {
+func (d *dialect) joinParts(table string, p *runtime.SelectParams) []string {
 	joins := p.Columns.Joins()
 	if len(joins) == 0 {
 		return nil
@@ -148,9 +212,10 @@ func (d *dialect) joinParts(table string, p *common.SelectParams) []string {
 	)
 	for _, j := range joins {
 		joinTable := j.TableName(table)
-		tables = append(tables, fmt.Sprintf("`%s` AS `%s`", j.Table, joinTable))
+		tables = append(tables, fmt.Sprintf("%s AS %s", d.Quote(j.Table), d.Quote(joinTable)))
 		for _, pairing := range j.Pairings {
-			conds = append(conds, fmt.Sprintf("`%s`.`%s` = `%s`.`%s`", table, pairing.Column, joinTable, pairing.JoinedColumn))
+			conds = append(conds, fmt.Sprintf("%s.%s = %s.%s",
+				d.Quote(table), d.Quote(pairing.Column), d.Quote(joinTable), d.Quote(pairing.JoinedColumn)))
 		}
 		recursive = append(recursive, d.joinParts(j.TableName(table), &j.SelectParams)...)
 	}

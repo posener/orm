@@ -23,7 +23,7 @@ type Field struct {
 	// Embedded means that the field is embedded in a struct
 	Embedded bool
 	// CustomType can be defined to a column
-	CustomType sqltypes.Type
+	CustomType *sqltypes.Type
 	// PrimaryKeys defines a column as a table's primary key
 	PrimaryKey bool
 	// NotNull defines that this column value can't be null
@@ -77,6 +77,9 @@ func newField(parent *Naked, i int) (*Field, error) {
 	}
 
 	err = f.parseTags(parent.st.Tag(i))
+	if err != nil {
+		return nil, fmt.Errorf("%s: parse tags: %s", f, err)
+	}
 
 	// set primary key for parent type
 	if f.PrimaryKey || f.Unique {
@@ -104,7 +107,11 @@ func (f *Field) parseTags(tag string) error {
 	for key, value := range tagsMap[tagSQLType] {
 		switch key {
 		case "type":
-			f.CustomType = sqltypes.Type(value)
+			var err error
+			f.CustomType, err = sqltypes.New(value)
+			if err != nil {
+				return fmt.Errorf("parsing type %s: %s", value, err)
+			}
 		case "primary key", "primary_key", "primarykey":
 			f.PrimaryKey = true
 		case "not null", "not_null":
@@ -147,7 +154,7 @@ func (f *Field) IsSettable() bool {
 // Columns returns the SQL column name of a field
 func (f *Field) Columns() []SQLColumn {
 	if f.IsForwardReference() {
-		if f.CustomType != "" {
+		if f.CustomType != nil {
 			log.Fatalf("filed %s is reference, can't have a custom type", f)
 		}
 		cols := make([]SQLColumn, 0, len(f.Type.PrimaryKeys))
@@ -184,7 +191,7 @@ type SQLColumn struct {
 	// SetTypes is the type that is used to set a field that reference this column
 	SetType *Type
 	// CustomType is a custom SQL type that can be defined by the user
-	CustomType sqltypes.Type
+	CustomType *sqltypes.Type
 }
 
 func (f *Field) String() string {
