@@ -1,10 +1,8 @@
 package runtime
 
 import (
-	"fmt"
-
 	"encoding/json"
-
+	"fmt"
 	"strings"
 
 	"github.com/posener/orm/graph"
@@ -18,6 +16,7 @@ type Table struct {
 	ForeignKeys []ForeignKey
 }
 
+// Marshal returns a string of Table
 func (t *Table) Marshal() string {
 	b, err := json.Marshal(t)
 	if err != nil {
@@ -26,23 +25,26 @@ func (t *Table) Marshal() string {
 	return string(b)
 }
 
+// UnMarshal takes a string and set the table content
 func (t *Table) UnMarshal(s string) error {
 	return json.Unmarshal([]byte(s), t)
 }
 
+// Column describe an SQL table
 type Column struct {
 	Name    string
 	GoType  string
 	Options []string
 }
 
+// ForeignKey describes an SQL foreign key
 type ForeignKey struct {
 	Columns        []string
 	Table          string
 	ForeignColumns []string
 }
 
-// Table returns table structure for generated code
+// Table returns table structure to be used for generated code
 func NewTable(gr *graph.Graph) *Table {
 	t := new(Table)
 	for _, f := range gr.Fields {
@@ -102,6 +104,7 @@ func foreignKey(outEdge graph.Edge) (cols []Column, fk ForeignKey) {
 	return
 }
 
+// Hash returns a unique identifier for the foreign key
 func (fk *ForeignKey) Hash() string {
 	return strings.Join(fk.Columns, ",")
 }

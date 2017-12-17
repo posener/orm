@@ -2,8 +2,6 @@ package runtime
 
 import (
 	"context"
-	"fmt"
-	"strings"
 )
 
 // CreateParams holds parameters for an SQL CREATE statement
@@ -18,26 +16,6 @@ type CreateParams struct {
 	// even though it is not recommended to store context in a struct, here the struct
 	// actually represents an arguments list, passed to a function.
 	Ctx context.Context
-}
-
-type TableProperties struct {
-	Columns     map[string]string
-	ForeignKeys map[string]string
-	PrimaryKeys []string
-}
-
-func (tp TableProperties) String() string {
-	stmts := make([]string, 0, len(tp.Columns)+len(tp.ForeignKeys))
-	for _, col := range tp.Columns {
-		stmts = append(stmts, col)
-	}
-	if len(tp.PrimaryKeys) > 0 {
-		stmts = append(stmts, fmt.Sprintf("PRIMARY KEY(%s)", strings.Join(tp.PrimaryKeys, ", ")))
-	}
-	for _, fk := range tp.ForeignKeys {
-		stmts = append(stmts, fk)
-	}
-	return strings.Join(stmts, ", ")
 }
 
 // InsertParams holds parameters for an SQL INSERT statement

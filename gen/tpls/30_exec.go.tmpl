@@ -199,6 +199,7 @@ func {{$.Private}}ReturnObject(assignments runtime.Assignments, res sql.Result) 
 }
 
 {{ if $.Graph.Type.HasOneToManyRelation -}}
+// TODO: fix hash function
 func {{$.Private}}HashItem(item *{{$.Graph.Type.Name}}) string {
     var str string
     {{ range $f := $.Graph.Type.PrimaryKeys -}}

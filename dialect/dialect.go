@@ -56,6 +56,7 @@ var dialects = map[string]API{
 	"sqlite3": &dialect{name: "sqlite3", Dialect: new(sqlite3.Dialect)},
 }
 
+// All returns all available dialects
 func All() []API {
 	var all []API
 	for _, d := range dialects {
@@ -64,6 +65,7 @@ func All() []API {
 	return all
 }
 
+// Get returns a dialect by name
 func Get(name string) API {
 	return dialects[name]
 }
@@ -71,10 +73,6 @@ func Get(name string) API {
 type dialect struct {
 	Dialect
 	name string
-}
-
-func (d *dialect) Name() string {
-	return d.name
 }
 
 // Create returns the SQL CREATE statement and arguments according to the given parameters
