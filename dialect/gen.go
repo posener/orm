@@ -32,13 +32,22 @@ type gen struct {
 	GenImplementer
 }
 
+// GenImplementer is an interface for a dialect for generating ORM code
 type GenImplementer interface {
+	// Name returns the name of the dialect
 	Name() string
+	// GoTypeToColumnType gets a string that represents a go basic type
+	// and returns an SQL type for a column for a field of that type.
 	GoTypeToColumnType(string) *sqltypes.Type
+	// Translate gets a MySQL statement and returns a corresponding statement
+	// in a specific dialect
 	Translate(string) string
+	// ConvertValueCode returns code for converting a value for a field with
+	// a given SQL type.
 	ConvertValueCode(*load.Field, *sqltypes.Type) string
 }
 
+// Table represents an SQL table for marshaling to go code
 type Table struct {
 	Columns     []Column
 	PrimaryKeys []string
