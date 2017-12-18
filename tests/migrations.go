@@ -1,6 +1,6 @@
 package tests
 
-//go:generate ../orm -type Migration0,Migration1
+//go:generate ../orm -type Migration0,Migration1,Migration2,Migration3
 
 type Migration0 struct {
 	A string
@@ -16,5 +16,27 @@ type Migration1 struct {
 }
 
 func (*Migration1) TableName() string {
+	return "migration"
+}
+
+type Migration2 struct {
+	A  string
+	B  string
+	D  string `sql:"not null"`
+	P1 *C2
+}
+
+func (*Migration2) TableName() string {
+	return "migration"
+}
+
+type Migration3 struct {
+	A      string
+	B      string
+	D      string `sql:"not null"`
+	P1, P2 *C2
+}
+
+func (*Migration3) TableName() string {
 	return "migration"
 }
