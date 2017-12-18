@@ -63,19 +63,13 @@ type {{$.Private}}{{$refType.Name}}Joiner interface {
 {{ end -}}
 
 {{ range $_, $f := $.Graph.Type.Fields -}}
-{{ if not $f.IsReference }}
-// Select{{$f.Name}} adds {{$f.Name}} to the selected column of a query
-func (b *{{$.Public}}SelectBuilder) Select{{$f.Name}}() *{{$.Public}}SelectBuilder {
-    b.selector.Select{{$f.Name}} = true
-    return b
-}
-{{ else }}
+{{ if $f.IsReference -}}
 // Join{{$f.Name}} add a join query for {{$f.Name}}
 func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(scanner {{$.Private}}{{$f.Type.Name}}Joiner) *{{$.Public}}SelectBuilder {
     b.selector.Join{{$f.Name}} = scanner
     return b
 }
-{{ end }}
+{{ end -}}
 
 {{ if not $f.IsReversedReference -}}
 // OrderBy{{$f.Name}} set order to the query results according to column {{$f.Columns}}

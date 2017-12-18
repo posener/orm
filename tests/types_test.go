@@ -126,8 +126,7 @@ func TestFieldReservedName(t *testing.T) {
 		_, err := db.Insert().SetSelect(42).SetNotNil("not-nil").Exec()
 		require.Nil(t, err)
 
-		query := db.Select().
-			SelectSelect().
+		query := db.Select(AllColSelect).
 			Where(db.Where().Select(orm.OpEq, 42).
 				Or(db.Where().SelectBetween(10, 50)).
 				Or(db.Where().SelectIn(11, 12))).
@@ -143,7 +142,7 @@ func TestFieldReservedName(t *testing.T) {
 		require.Nil(t, err)
 		assertRowsAffected(t, 1, res)
 
-		alls, err = db.Select().SelectSelect().Query()
+		alls, err = db.Select(AllColSelect).Query()
 		require.Nil(t, err)
 		require.Equal(t, 1, len(alls))
 		assert.Equal(t, 11, alls[0].Select)
@@ -152,7 +151,7 @@ func TestFieldReservedName(t *testing.T) {
 		require.Nil(t, err)
 		assertRowsAffected(t, 1, res)
 
-		alls, err = db.Select().SelectSelect().Query()
+		alls, err = db.Select(AllColSelect).Query()
 		require.Nil(t, err)
 		require.Equal(t, 0, len(alls))
 	})
@@ -184,19 +183,19 @@ func TestPersonSelect(t *testing.T) {
 				want: []Person{p1, p2, p3},
 			},
 			{
-				q:    db.Select().SelectName(),
+				q:    db.Select(PersonColName),
 				want: []Person{{Name: "moshe"}, {Name: "haim"}, {Name: "zvika"}},
 			},
 			{
-				q:    db.Select().SelectAge(),
+				q:    db.Select(PersonColAge),
 				want: []Person{{Age: 1}, {Age: 2}, {Age: 3}},
 			},
 			{
-				q:    db.Select().SelectAge().SelectName(),
+				q:    db.Select(PersonColAge, PersonColName),
 				want: []Person{p1, p2, p3},
 			},
 			{
-				q:    db.Select().SelectName().SelectAge(),
+				q:    db.Select(PersonColAge, PersonColName),
 				want: []Person{p1, p2, p3},
 			},
 			{
@@ -326,7 +325,7 @@ func TestCount(t *testing.T) {
 				want: []PersonCount{{Count: 50}},
 			},
 			{
-				q: db.Select().SelectAge().GroupByAge().Where(db.Where().AgeIn(1, 3, 12)),
+				q: db.Select(PersonColAge).GroupByAge().Where(db.Where().AgeIn(1, 3, 12)),
 				want: []PersonCount{
 					{Person: Person{Age: 1}, Count: 5},
 					{Person: Person{Age: 3}, Count: 5},
@@ -334,7 +333,7 @@ func TestCount(t *testing.T) {
 				},
 			},
 			{
-				q: db.Select().SelectAge().GroupByAge().Where(db.Where().AgeIn(1, 3, 12)).OrderByAge(orm.Desc),
+				q: db.Select(PersonColAge).GroupByAge().Where(db.Where().AgeIn(1, 3, 12)).OrderByAge(orm.Desc),
 				want: []PersonCount{
 					{Person: Person{Age: 12}, Count: 5},
 					{Person: Person{Age: 3}, Count: 5},
