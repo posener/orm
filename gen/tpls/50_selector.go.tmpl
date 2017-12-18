@@ -1,11 +1,8 @@
 // {{$.Private}}Selector selects columns for SQL queries and for parsing SQL rows
 type {{$.Private}}Selector struct {
-    {{ range $i, $f := $.Graph.Type.Fields -}}
-    {{ if not $f.IsReference -}}
-    Select{{$f.Name}} bool
-    {{ else -}}
+    selected map[{{$.Private}}Column]bool
+    {{ range $i, $f := $.Graph.Type.References -}}
     Join{{$f.Name}} {{$.Private}}{{$f.Type.Name}}Joiner
-    {{ end -}}
     {{ end -}}
     count bool // used for sql COUNT(*) column
 }
@@ -18,7 +15,7 @@ func (s *{{$.Private}}Selector) Columns() []string {
     )
     {{ range $_, $f := $.Graph.Type.Fields -}}
     {{ if not $f.IsReference -}}
-    if all || s.Select{{$f.Name}} {
+    if all || s.selected["{{$f.Column.Name}}"] {
         cols = append(cols, "{{$f.Column.Name}}")
     }
     {{ end -}}
@@ -101,7 +98,7 @@ func (s *{{$.Private}}Selector) scan{{$dialect.Name}} (vals []driver.Value{{if $
     )
     {{ range $_, $f := $.Graph.Type.Fields -}}
     {{ if not $f.IsReference -}}
-    if all || s.Select{{$f.Name}} {
+    if all || s.selected["{{$f.Column.Name}}"] {
         if i >= len(vals) {
             return nil, 0, fmt.Errorf("not enough columns returned: %d", len(vals))
         }
@@ -156,5 +153,5 @@ func (s *{{$.Private}}Selector) scan{{$dialect.Name}} (vals []driver.Value{{if $
 
 // selectAll returns true if no column was specifically selected
 func (s *{{$.Private}}Selector) selectAll() bool {
-    return {{ range $i, $f := $.Graph.Type.Fields -}}{{if not $f.IsReference }} !s.Select{{$f.Name}} && {{end}}{{end}} !s.count
+    return len(s.selected) == 0 && !s.count
 }

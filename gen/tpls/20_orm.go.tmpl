@@ -2,7 +2,7 @@
 type {{$.Graph.Type.Name}}ORM interface {
     Close() error
     Create() *{{$.Public}}CreateBuilder
-    Select() *{{$.Public}}SelectBuilder
+    Select(...{{$.Private}}Column) *{{$.Public}}SelectBuilder
     Insert() *{{$.Public}}InsertBuilder
     Update() *{{$.Public}}UpdateBuilder
     Delete() *{{$.Public}}DeleteBuilder
@@ -58,11 +58,26 @@ func (c *{{.Private}}Conn) Create() *{{$.Public}}CreateBuilder {
     }
 }
 
+type {{$.Private}}Column string
+
+const (
+    {{ range $_, $f := $.Graph.Type.Fields -}}
+    {{ if not $f.IsReference -}}
+    // {{$.Public}}Col{{$f.Name}} is used to select the {{$f.Name}} column in SELECT queries
+    {{$.Public}}Col{{$f.Name}} {{$.Private}}Column = "{{$f.Column.Name}}"
+    {{ end -}}
+    {{ end -}}
+)
+
 // Select returns a builder of an SQL SELECT statement
-func (c *{{.Private}}Conn) Select() *{{$.Public}}SelectBuilder {
+func (c *{{.Private}}Conn) Select(cols ...{{$.Private}}Column) *{{$.Public}}SelectBuilder {
 	s := &{{$.Public}}SelectBuilder{
 		params: runtime.SelectParams{Table: {{$.Private}}Table},
 		conn: c,
+	}
+	s.selector.selected = make(map[{{$.Private}}Column]bool)
+	for _, col := range cols {
+	    s.selector.selected[col] = true
 	}
     s.params.Columns = &s.selector
     return s
