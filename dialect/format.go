@@ -6,10 +6,11 @@ import (
 	"strings"
 
 	"github.com/posener/orm/runtime"
+	"github.com/posener/orm/runtime/migration"
 )
 
 // tableProperties returns all properties of SQL table, as should be given in the table CREATE statement
-func (d *dialect) tableProperties(t *runtime.Table) string {
+func (d *dialect) tableProperties(t *migration.Table) string {
 	var stmts []string
 	for _, col := range t.Columns {
 		stmts = append(stmts, d.createColumn(col))
@@ -25,7 +26,7 @@ func (d *dialect) tableProperties(t *runtime.Table) string {
 }
 
 // createColumn is an SQL column definition, as given in the SQL CREATE statement
-func (d *dialect) createColumn(col runtime.Column) string {
+func (d *dialect) createColumn(col migration.Column) string {
 	s := fmt.Sprintf("%s %s", d.Quote(col.Name), d.GoTypeToColumnType(col.GoType))
 	for _, opt := range col.Options {
 		s += " " + d.Translate(opt)
@@ -34,7 +35,7 @@ func (d *dialect) createColumn(col runtime.Column) string {
 }
 
 // foreignKey is teh FOREIGN KEY statement
-func (d *dialect) foreignKey(fk runtime.ForeignKey) string {
+func (d *dialect) foreignKey(fk migration.ForeignKey) string {
 	return fmt.Sprintf(
 		"FOREIGN KEY (%s) REFERENCES %s(%s)",
 		strings.Join(d.quoteSlice(fk.Columns), ", "),

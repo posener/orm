@@ -11,6 +11,7 @@ import (
 	"github.com/posener/orm/dialect/sqltypes"
 	"github.com/posener/orm/load"
 	"github.com/posener/orm/runtime"
+	"github.com/posener/orm/runtime/migration"
 )
 
 const SQLite3 = "sqlite3"
@@ -77,14 +78,18 @@ type dialect struct {
 
 // Create returns the SQL CREATE statement and arguments according to the given parameters
 func (d *dialect) Create(db orm.DB, p *runtime.CreateParams) ([]string, error) {
-	table := new(runtime.Table)
+	table := new(migration.Table)
 	err := table.UnMarshal(p.MarshaledTable)
 	if err != nil {
 		return nil, err
 	}
 
 	if p.AutoMigrate {
-		if stmts, ok := d.autoMigrate(p.Ctx, db, p.Table, table); ok {
+		stmts, ok, err := d.autoMigrate(p.Ctx, db, p.Table, table)
+		if err != nil {
+			return nil, fmt.Errorf("automigration: %s", err)
+		}
+		if ok {
 			return stmts, nil
 		}
 	}
@@ -96,25 +101,32 @@ func (d *dialect) Create(db orm.DB, p *runtime.CreateParams) ([]string, error) {
 	return []string{stmt}, nil
 }
 
-func (d *dialect) autoMigrate(ctx context.Context, db orm.DB, tableName string, table *runtime.Table) ([]string, bool) {
-	columns, err := describeTable(ctx, db, tableName)
+func (d *dialect) autoMigrate(ctx context.Context, db orm.DB, tableName string, want *migration.Table) ([]string, bool, error) {
+	got, err := migration.Load(ctx, db, tableName)
 	if err != nil {
-		return nil, false
+		// XXX: Here we assume error is: table does not exists
+		// if it is not, we should return the error and not nil
+		return nil, false, nil
 	}
-	var existingCols = make(map[string]bool)
-	for _, c := range columns {
-		existingCols[c.Field] = true
+	diff, err := got.Diff(want)
+	if err != nil {
+		return nil, false, fmt.Errorf("bad conditions: %s", err)
 	}
+
+	for len(diff.PrimaryKeys) > 0 {
+		return nil, false, fmt.Errorf("not supported: add primary keys %s", diff.PrimaryKeys)
+	}
+
 	var stmts []string
-	for _, col := range table.Columns {
-		if existingCols[col.Name] {
-			// TODO: update createColumn if necessary
-			continue
-		}
+	for _, col := range diff.Columns {
 		stmts = append(stmts, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s",
 			d.Quote(tableName), d.createColumn(col)))
 	}
-	return stmts, true
+	for _, fk := range diff.ForeignKeys {
+		stmts = append(stmts, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s",
+			d.Quote(tableName), d.foreignKey(fk)))
+	}
+	return stmts, true, nil
 }
 
 // Insert returns the SQL INSERT statement and arguments according to the given parameters

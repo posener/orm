@@ -1,8 +1,9 @@
-package runtime
+package migration
 
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/posener/orm/graph"
@@ -30,10 +31,11 @@ func (t *Table) UnMarshal(s string) error {
 	return json.Unmarshal([]byte(s), t)
 }
 
-// Column describe an SQL table
+// Column describes an SQL table
 type Column struct {
 	Name    string
 	GoType  string
+	SQLType string
 	Options []string
 }
 
@@ -42,6 +44,13 @@ type ForeignKey struct {
 	Columns        []string
 	Table          string
 	ForeignColumns []string
+}
+
+func (f *ForeignKey) hash() string {
+	cols := make([]string, len(f.Columns))
+	copy(cols, f.Columns)
+	sort.Strings(cols)
+	return strings.Join(cols, "/")
 }
 
 // Table returns table structure to be used for generated code
@@ -104,7 +113,43 @@ func foreignKey(outEdge graph.Edge) (cols []Column, fk ForeignKey) {
 	return
 }
 
-// Hash returns a unique identifier for the foreign key
-func (fk *ForeignKey) Hash() string {
-	return strings.Join(fk.Columns, ",")
+// Diff calculate difference between a 'got' table and a 'want' table
+// and returns a table containing the columns, primary keys and foreign keys that
+// we need to add the that 'got' table.
+// It returns an error in case that there is a change that can't be applied.
+func (t *Table) Diff(want *Table) (*Table, error) {
+	var (
+		got    = t
+		gotMap = make(map[string]bool)
+		diff   = new(Table)
+	)
+	// see what we got first
+	for _, c := range got.Columns {
+		gotMap["col/"+c.Name] = true
+	}
+	for _, fk := range got.ForeignKeys {
+		gotMap["fk/"+fk.hash()] = true
+	}
+	for _, pk := range got.PrimaryKeys {
+		gotMap["pk/"+pk] = true
+	}
+
+	// append to 'diff' table all missing things
+	for _, col := range want.Columns {
+		if !gotMap["col/"+col.Name] {
+			diff.Columns = append(diff.Columns, col)
+		}
+	}
+	for _, fk := range want.ForeignKeys {
+		if !gotMap["fk/"+fk.hash()] {
+			diff.ForeignKeys = append(diff.ForeignKeys, fk)
+		}
+	}
+
+	for _, pk := range want.PrimaryKeys {
+		if !gotMap["pk/"+pk] {
+			diff.PrimaryKeys = append(diff.PrimaryKeys, pk)
+		}
+	}
+	return diff, nil
 }
