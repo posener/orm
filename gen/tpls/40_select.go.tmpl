@@ -62,8 +62,7 @@ type {{$.Private}}{{$refType.Name}}Joiner interface {
 }
 {{ end -}}
 
-{{ range $_, $f := $.Graph.Type.Fields -}}
-{{ if $f.IsReference -}}
+{{ range $_, $f := $.Graph.Type.References -}}
 // Join{{$f.Name}} add a join query for {{$f.Name}}
 func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(scanner {{$.Private}}{{$f.Type.Name}}Joiner) *{{$.Public}}SelectBuilder {
     b.selector.Join{{$f.Name}} = scanner
@@ -71,24 +70,17 @@ func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(scanner {{$.Private}}{{$f.Ty
 }
 {{ end -}}
 
-{{ if not $f.IsReversedReference -}}
-// OrderBy{{$f.Name}} set order to the query results according to column {{$f.Columns}}
-func (b *{{$.Public}}SelectBuilder) OrderBy{{$f.Name}}(dir runtime.OrderDir) *{{$.Public}}SelectBuilder {
-    {{ range $_, $col := $f.Columns -}}
-    b.params.Orders.Add("{{$col.Name}}", dir)
-    {{ end -}}
+// OrderBy set order to the query results according to column
+func (b *{{$.Public}}SelectBuilder) OrderBy(col {{$.Private}}Column, dir runtime.OrderDir) *{{$.Public}}SelectBuilder {
+    b.params.Orders.Add(string(col), dir)
     return b
 }
 
-// GroupBy{{$f.Name}} make the query group by column {{$f.Columns}}
-func (b *{{$.Public}}SelectBuilder) GroupBy{{$f.Name}}() *{{$.Public}}SelectBuilder {
-    {{ range $_, $col := $f.Columns -}}
-    b.params.Groups.Add("{{$col.Name}}")
-    {{ end -}}
+// GroupBy make the query group by column
+func (b *{{$.Public}}SelectBuilder) GroupBy(col {{$.Private}}Column) *{{$.Public}}SelectBuilder {
+    b.params.Groups.Add(string(col))
     return b
 }
-{{ end -}}
-{{ end -}}
 
 // Context sets the context for the SQL query
 func (b *{{$.Public}}SelectBuilder) Context(ctx context.Context) *{{$.Public}}SelectBuilder {

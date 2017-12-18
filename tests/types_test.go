@@ -93,14 +93,14 @@ func TestAutoIncrement(t *testing.T) {
 		require.Nil(t, err)
 		assert.Equal(t, 2, a2.Auto)
 
-		alls, err := db.Select().OrderByAuto(orm.Asc).Query()
+		alls, err := db.Select().OrderBy(AllColAuto, orm.Asc).Query()
 		require.Nil(t, err)
 		require.Equal(t, 2, len(alls))
 
 		assert.Equal(t, 1, alls[0].Auto)
 		assert.Equal(t, 2, alls[1].Auto)
 
-		alls, err = db.Select().OrderByAuto(orm.Desc).Query()
+		alls, err = db.Select().OrderBy(AllColAuto, orm.Desc).Query()
 		require.Nil(t, err)
 		require.Equal(t, 2, len(alls))
 
@@ -130,8 +130,8 @@ func TestFieldReservedName(t *testing.T) {
 			Where(db.Where().Select(orm.OpEq, 42).
 				Or(db.Where().SelectBetween(10, 50)).
 				Or(db.Where().SelectIn(11, 12))).
-			OrderBySelect(orm.Desc).
-			GroupBySelect()
+			OrderBy(AllColSelect, orm.Desc).
+			GroupBy(AllColSelect)
 
 		alls, err := query.Query()
 		require.Nil(t, err)
@@ -325,7 +325,7 @@ func TestCount(t *testing.T) {
 				want: []PersonCount{{Count: 50}},
 			},
 			{
-				q: db.Select(PersonColAge).GroupByAge().Where(db.Where().AgeIn(1, 3, 12)),
+				q: db.Select(PersonColAge).GroupBy(PersonColAge).Where(db.Where().AgeIn(1, 3, 12)),
 				want: []PersonCount{
 					{Person: Person{Age: 1}, Count: 5},
 					{Person: Person{Age: 3}, Count: 5},
@@ -333,7 +333,7 @@ func TestCount(t *testing.T) {
 				},
 			},
 			{
-				q: db.Select(PersonColAge).GroupByAge().Where(db.Where().AgeIn(1, 3, 12)).OrderByAge(orm.Desc),
+				q: db.Select(PersonColAge).GroupBy(PersonColAge).Where(db.Where().AgeIn(1, 3, 12)).OrderBy(PersonColAge, orm.Desc),
 				want: []PersonCount{
 					{Person: Person{Age: 12}, Count: 5},
 					{Person: Person{Age: 3}, Count: 5},
@@ -389,11 +389,11 @@ func TestFirst(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, &john, got)
 
-		got, err = db.Select().OrderByAge(orm.Asc).First()
+		got, err = db.Select().OrderBy(PersonColAge, orm.Asc).First()
 		assert.Nil(t, err)
 		assert.Equal(t, &john, got)
 
-		got, err = db.Select().OrderByAge(orm.Desc).First()
+		got, err = db.Select().OrderBy(PersonColAge, orm.Desc).First()
 		assert.Nil(t, err)
 		assert.Equal(t, &smith, got)
 	})

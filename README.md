@@ -54,8 +54,7 @@ func main() {
     println(doug.Name, doug.Age) // Output: Doug 3
 
     // Select rows from the table:
-    persons, err := db.Select().
-    	SelectAge().
+    persons, err := db.Select(PersonColAge).
         Where(db.Where().Name(orm.OpNe, "John")).
         Query() // returns []tests.Person, typed return value.
 

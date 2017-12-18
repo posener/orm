@@ -63,6 +63,7 @@ type {{$.Private}}Column string
 const (
     {{ range $_, $f := $.Graph.Type.Fields -}}
     {{ if not $f.IsReference -}}
+    // {{$.Public}}Col{{$f.Name}} is used to select the {{$f.Name}} column in SELECT queries
     {{$.Public}}Col{{$f.Name}} {{$.Private}}Column = "{{$f.Column.Name}}"
     {{ end -}}
     {{ end -}}
