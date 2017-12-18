@@ -11,6 +11,7 @@ import (
 	"github.com/posener/orm/dialect/sqltypes"
 	"github.com/posener/orm/load"
 	"github.com/posener/orm/runtime"
+	"github.com/posener/orm/runtime/migration"
 )
 
 const SQLite3 = "sqlite3"
@@ -77,7 +78,7 @@ type dialect struct {
 
 // Create returns the SQL CREATE statement and arguments according to the given parameters
 func (d *dialect) Create(db orm.DB, p *runtime.CreateParams) ([]string, error) {
-	table := new(runtime.Table)
+	table := new(migration.Table)
 	err := table.UnMarshal(p.MarshaledTable)
 	if err != nil {
 		return nil, err
@@ -96,18 +97,18 @@ func (d *dialect) Create(db orm.DB, p *runtime.CreateParams) ([]string, error) {
 	return []string{stmt}, nil
 }
 
-func (d *dialect) autoMigrate(ctx context.Context, db orm.DB, tableName string, table *runtime.Table) ([]string, bool) {
-	columns, err := describeTable(ctx, db, tableName)
+func (d *dialect) autoMigrate(ctx context.Context, db orm.DB, tableName string, want *migration.Table) ([]string, bool) {
+	got, err := migration.Load(ctx, db, tableName)
 	if err != nil {
 		return nil, false
 	}
-	var existingCols = make(map[string]bool)
-	for _, c := range columns {
-		existingCols[c.Field] = true
+	var gotCols = make(map[string]bool)
+	for _, c := range got.Columns {
+		gotCols[c.Name] = true
 	}
 	var stmts []string
-	for _, col := range table.Columns {
-		if existingCols[col.Name] {
+	for _, col := range want.Columns {
+		if gotCols[col.Name] {
 			// TODO: update createColumn if necessary
 			continue
 		}

@@ -1,4 +1,4 @@
-package runtime
+package migration
 
 import (
 	"encoding/json"
@@ -34,6 +34,7 @@ func (t *Table) UnMarshal(s string) error {
 type Column struct {
 	Name    string
 	GoType  string
+	SQLType string
 	Options []string
 }
 

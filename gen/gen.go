@@ -13,7 +13,7 @@ import (
 	"github.com/posener/orm/dialect"
 	"github.com/posener/orm/gen/b0x"
 	"github.com/posener/orm/graph"
-	"github.com/posener/orm/runtime"
+	"github.com/posener/orm/runtime/migration"
 )
 
 //go:generate fileb0x b0x.yml
@@ -34,7 +34,7 @@ type TemplateData struct {
 	Dialects []dialect.API
 	Public   string
 	Private  string
-	Table    *runtime.Table
+	Table    *migration.Table
 }
 
 var templates = template.New("").Funcs(template.FuncMap{
@@ -75,7 +75,7 @@ func Gen(g *graph.Graph, dialects []dialect.API) error {
 		Dialects: dialects,
 		Public:   g.Name,
 		Private:  strings.ToLower(g.Name),
-		Table:    runtime.NewTable(g),
+		Table:    migration.NewTable(g),
 	}
 
 	ormFileName := strings.ToLower(g.Name + "_orm.go")
