@@ -14,21 +14,20 @@ Check out the [Wiki](https://github.com/posener/orm/wiki) for documentation.
 
 This repository gives a command line tool, called `orm`, for generating
 ORM code for a given struct. The generated code is typed and has no `interface{}`s arguments
-and return values as in other ORM Go libraries.
+and returns values as in other ORM Go libraries.
 
-In addition to compile time checks, editor completion and spare of coding confusion, the generated
-code results in accelerated performance - no reflections are needed in run time, and decoding of
-database data is faster when you know the target type.
+In addition to compile time checks, editor completion and minimizing coding confusion, the generated
+code results in accelerated performance - no reflections are needed in run time, and database data decoding is faster when you know the target type.
 
 ## Example:
 
 Running the orm command on the `Person` struct in the `tests` package with `sqlite3` dialect, 
 will create a `personsqlite3` package, with ORM functions for the given struct.
 
-By doing so, and having a database engine, `db`, one could do database operations with
+By doing this, given a working database engine, `db`, you could perform database operations with
 ORM semantics.
 
-Notice that all operations are typed, `Age` is `int`, `Name` is `string`, the `tests.Person`
+Notice that all operations are typed, `Age` is an `int`, `Name` is a `string`, the `tests.Person`
 is used in the arguments and in the return values.
 
 ```go
@@ -84,7 +83,7 @@ go get -u github.com/posener/orm/cmd/orm
 
 Run `orm -h` to get detailed usage information.
 
-Simple use case is to run `orm -type MyStruct
+A simple use-case is to run `orm -type MyStruct
 
 #### go generate
 
@@ -108,7 +107,7 @@ type MyType struct {
 
 Here are the strengths of `orm` in comparison to other ORM libraries for Go.
 
-> Just to make clear: [GORM](http://jinzhu.me/gorm/) is a mature, widely used, heavily debugged, favorable, 
+> Just to clearify: [GORM](http://jinzhu.me/gorm/) is a mature, widely used, heavily debugged, favorable, 
   and very recommended to use. `orm` is in **proof of concept** stage.
 
 |     | `orm` | [GORM](http://jinzhu.me/gorm/) |
