@@ -1,11 +1,16 @@
 // {{$.Graph.Type.Name}}ORM is the interface of the ORM object
 type {{$.Graph.Type.Name}}ORM interface {
-    Close() error
+    // Create returns a builder for creating an SQL table
     Create() *{{$.Public}}CreateBuilder
+    // Select returns a builder for selecting rows from an SQL table
     Select(...{{$.Private}}Column) *{{$.Public}}SelectBuilder
+    // Insert returns a builder for inserting a row to an SQL table
     Insert() *{{$.Public}}InsertBuilder
+    // Update returns a builder for updating a row in an SQL table
     Update() *{{$.Public}}UpdateBuilder
+    // Delete returns a builder for deleting a row in an SQL table
     Delete() *{{$.Public}}DeleteBuilder
+    // Where returns a builder to build a where statement to be used in a Where function
     Where() *{{$.Public}}WhereBuilder
 
     {{ if $.Graph.Type.PrimaryKeys -}}
@@ -13,6 +18,10 @@ type {{$.Graph.Type.Name}}ORM interface {
     // In case that the object was not found, it returns an error orm.ErrNotFound
     Get({{range $_, $pk := $.Graph.Type.PrimaryKeys}}{{$pk.PrivateName}} {{$pk.Type.Ext $.Graph.Type.Package}},{{end}}) (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, error)
     {{ end -}}
+    // Close closes the DB connection
+    Close() error
+    // Logger sets a logger
+    // currently logs contain SQL queries before executing them
     Logger(orm.Logger)
 }
 
