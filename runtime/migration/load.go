@@ -3,7 +3,6 @@ package migration
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/posener/orm"
 )
@@ -24,24 +23,15 @@ func Load(ctx context.Context, db orm.DB, tableName string) (*Table, error) {
 			Name:    col.Field,
 			SQLType: col.Type,
 		}
-		log.Printf(">>> Column: %s %s", col.Field, col.Type)
 		if col.Key != nil {
-			log.Printf("Key: %s", *col.Key)
 		}
 		if col.Null != nil {
-			log.Printf("Null: %s", *col.Null)
 			switch *col.Null {
 			case "YES":
 				newCol.Options = append(newCol.Options, "NULL")
 			case "NO":
 				newCol.Options = append(newCol.Options, "NOT NULL")
 			}
-		}
-		if col.Extra != nil {
-			log.Printf("Extra: %s", *col.Extra)
-		}
-		if col.Default != nil {
-			log.Printf("Default: %s", *col.Default)
 		}
 		t.Columns = append(t.Columns, newCol)
 	}
@@ -68,7 +58,6 @@ func Load(ctx context.Context, db orm.DB, tableName string) (*Table, error) {
 func columns(ctx context.Context, db orm.DB, tableName string) ([]column, error) {
 	rows, err := db.QueryContext(ctx, fmt.Sprintf("DESCRIBE `%s`", tableName))
 	if err != nil {
-		log.Print(err)
 		return nil, err
 	}
 	var cols []column
@@ -86,7 +75,6 @@ func columns(ctx context.Context, db orm.DB, tableName string) ([]column, error)
 func indices(ctx context.Context, db orm.DB, tableName string) ([]index, error) {
 	rows, err := db.QueryContext(ctx, fmt.Sprintf("SHOW INDEX FROM `%s`", tableName))
 	if err != nil {
-		log.Print(err)
 		return nil, err
 	}
 	var indices []index
