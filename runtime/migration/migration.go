@@ -53,7 +53,7 @@ func (f *ForeignKey) hash() string {
 	return strings.Join(cols, "/")
 }
 
-// Table returns table structure to be used for generated code
+// NewTable returns table structure to be used for generated code
 func NewTable(gr *graph.Graph) *Table {
 	t := new(Table)
 	for _, f := range gr.Fields {

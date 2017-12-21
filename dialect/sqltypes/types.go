@@ -16,7 +16,7 @@ type Type struct {
 
 func New(s string) (*Type, error) {
 	t := new(Type)
-	m := typeFormat.FindStringSubmatch(string(s))
+	m := typeFormat.FindStringSubmatch(s)
 	switch len(m) {
 	case 0:
 		return nil, fmt.Errorf("invalid SQL type: %s", s)

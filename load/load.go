@@ -24,7 +24,6 @@ var (
 		},
 	}
 	importCache = map[string]*loader.Program{}
-	typeCache   = map[string]*Naked{}
 	cacheLock   sync.Mutex
 )
 
@@ -41,22 +40,6 @@ func loadProgram(importPath string) (*loader.Program, error) {
 	}
 	importCache[importPath] = p
 	return p, err
-}
-
-// cacheGetOrUpdate get or updates the cache.
-// the cache is used to prevent recursive load of fields
-// - if the type exists in the cache, it return the full type and true value
-// - if it does not exists, it sets it in the cache, return it and false value
-// the bool return value means 'exists in cache'
-func cacheGetOrUpdate(tp *Naked) (*Naked, bool) {
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	fullName := tp.String()
-	if loaded := typeCache[fullName]; loaded != nil {
-		return loaded, true
-	}
-	typeCache[fullName] = tp
-	return tp, false
 }
 
 // loadStruct loads struct information from go package

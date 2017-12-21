@@ -80,7 +80,7 @@ func (w *where) Args() []interface{} {
 	return w.args
 }
 
-func binary(l *where, r Where, op string) Where {
+func binary(l *where, r StatementArger, op string) Where {
 	l.stmt = []string{"(", l.Statement(""), ")", op, "(", r.Statement(""), ")"}
 	l.args = append(l.args, r.Args()...)
 	return l
