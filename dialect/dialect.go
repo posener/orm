@@ -167,7 +167,7 @@ func collectWhereArgs(p *runtime.SelectParams) []interface{} {
 	if p.Where != nil {
 		args = append(args, p.Where.Args()...)
 	}
-	for _, join := range p.Columns.Joins() {
+	for _, join := range p.Joins {
 		args = append(args, collectWhereArgs(&join.SelectParams)...)
 	}
 	return args
@@ -213,7 +213,7 @@ func (d *dialect) join(p *runtime.SelectParams) string {
 }
 
 func (d *dialect) joinParts(table string, p *runtime.SelectParams) []string {
-	joins := p.Columns.Joins()
+	joins := p.Joins
 	if len(joins) == 0 {
 		return nil
 	}

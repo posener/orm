@@ -1,4 +1,6 @@
-type {{$.Public}}Joiner interface {
+// {{$.Graph.Type.Naked.Name}}Joiner is an interface for joining a {{$.Graph.Type.Name}} in a SELECT statement
+// in another type
+type {{$.Graph.Type.Naked.Name}}Joiner interface {
     Params() runtime.SelectParams
     Scan(dialect string, values []driver.Value{{if $.Graph.Type.HasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}{{end}}) (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, int, error)
 }
@@ -13,7 +15,9 @@ type {{$.Graph.Type.Name}}Count struct {
 type {{$.Public}}SelectBuilder struct {
 	params runtime.SelectParams
 	conn *{{.Private}}Conn
-	selector {{$.Private}}Selector
+	{{ range $_, $f := $.Graph.Type.References -}}
+	scan{{$f.Name}} {{$.Private}}{{$f.Type.Naked.Name}}Joiner
+	{{ end -}}
 }
 
 // {{$.Private}}Joiner represents a builder that exposes only Params and Scan method
@@ -21,12 +25,12 @@ type {{$.Private}}Joiner struct {
     builder *{{$.Public}}SelectBuilder
 }
 
-func (s *{{$.Private}}Joiner) Params() runtime.SelectParams {
-    return s.builder.params
+func (j *{{$.Private}}Joiner) Params() runtime.SelectParams {
+    return j.builder.params
 }
 
-func (s *{{$.Private}}Joiner) Scan(dialect string, values []driver.Value{{if $.Graph.Type.HasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}{{end}}) (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, int, error) {
-    return s.builder.selector.Scan(dialect, values{{if $.Graph.Type.HasOneToManyRelation}}, exists{{end}})
+func (j *{{$.Private}}Joiner) Scan(dialect string, values []driver.Value{{if $.Graph.Type.HasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}{{end}}) (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, int, error) {
+    return j.builder.scan(dialect, values{{if $.Graph.Type.HasOneToManyRelation}}, exists{{end}})
 }
 
 // Joiner returns an object to be used in a join operation with {{$.Graph.Type.Name}}
@@ -62,10 +66,42 @@ type {{$.Private}}{{$refType.Name}}Joiner interface {
 }
 {{ end -}}
 
-{{ range $_, $f := $.Graph.Type.References -}}
+{{ range $_, $e := $.Graph.Out -}}
+{{ $f := $e.LocalField -}}
 // Join{{$f.Name}} add a join query for {{$f.Name}}
-func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(scanner {{$.Private}}{{$f.Type.Name}}Joiner) *{{$.Public}}SelectBuilder {
-    b.selector.Join{{$f.Name}} = scanner
+func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(joiner {{$.Private}}{{$f.Type.Name}}Joiner) *{{$.Public}}SelectBuilder {
+    b.scan{{$f.Name}} = joiner
+    b.params.Joins = append(b.params.Joins, runtime.JoinParams{
+        Pairings: []runtime.Pairing{
+            {{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
+            {
+                Column: "{{(index $e.SrcField.Columns $i).Name}}",
+                JoinedColumn: "{{$pk.Column.Name}}",
+            },
+            {{ end -}}
+        },
+        SelectParams: joiner.Params(),
+    })
+    return b
+}
+{{ end -}}
+
+{{ range $_, $e := $.Graph.In -}}
+{{ $f := $e.LocalField -}}
+// Join{{$f.Name}} add a join query for {{$f.Name}}
+func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(joiner {{$.Private}}{{$f.Type.Name}}Joiner) *{{$.Public}}SelectBuilder {
+    b.scan{{$f.Name}} = joiner
+    b.params.Joins = append(b.params.Joins, runtime.JoinParams{
+        Pairings: []runtime.Pairing{
+            {{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
+            {
+                Column: "{{$pk.Column.Name}}",
+                JoinedColumn: "{{(index $e.SrcField.Columns $i).Name}}",
+            },
+            {{ end -}}
+        },
+        SelectParams: joiner.Params(),
+    })
     return b
 }
 {{ end -}}

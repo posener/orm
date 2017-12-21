@@ -21,58 +21,97 @@ func TestSelect(t *testing.T) {
 		wantArgs []interface{}
 	}{
 		{
-			sel:      runtime.SelectParams{Columns: &columner{columns: []string{"col"}}},
-			wantStmt: "SELECT `name`.`col` FROM `name`",
-		},
-		{
-			sel:      runtime.SelectParams{Columns: &columner{columns: []string{"col"}}, Page: runtime.Page{}},
-			wantStmt: "SELECT `name`.`col` FROM `name`",
-		},
-		{
-			sel:      runtime.SelectParams{Columns: &columner{count: true}},
-			wantStmt: "SELECT COUNT(*) FROM `name`",
-		},
-		{
-			sel:      runtime.SelectParams{Columns: &columner{columns: []string{"a", "b", "c"}, count: true}},
-			wantStmt: "SELECT `name`.`a`, `name`.`b`, `name`.`c`, COUNT(*) FROM `name`",
-		},
-		{
-			sel:      runtime.SelectParams{Columns: &columner{columns: []string{"a", "b", "c"}}},
-			wantStmt: "SELECT `name`.`a`, `name`.`b`, `name`.`c` FROM `name`",
-		},
-		{
-			sel:      runtime.SelectParams{Columns: &columner{columns: []string{"col"}}, Page: runtime.Page{}},
-			wantStmt: "SELECT `name`.`col` FROM `name`",
-		},
-		{
-			sel:      runtime.SelectParams{Columns: &columner{columns: []string{"col"}}, Page: runtime.Page{Limit: 1}},
-			wantStmt: "SELECT `name`.`col` FROM `name` LIMIT 1",
-		},
-		{
-			sel:      runtime.SelectParams{Columns: &columner{columns: []string{"col"}}, Page: runtime.Page{Limit: 1, Offset: 2}},
-			wantStmt: "SELECT `name`.`col` FROM `name` LIMIT 1 OFFSET 2",
-		},
-		{
-			sel:      runtime.SelectParams{Columns: &columner{columns: []string{"col"}}, Page: runtime.Page{Offset: 1}},
+			sel:      runtime.SelectParams{Columns: map[string]bool{"col": true}, OrderedColumns: []string{"col"}},
 			wantStmt: "SELECT `name`.`col` FROM `name`",
 		},
 		{
 			sel: runtime.SelectParams{
-				Columns: &columner{columns: []string{"a", "b", "c"}, count: true},
-				Page:    runtime.Page{Limit: 1, Offset: 2},
+				Columns:        map[string]bool{"col": true},
+				OrderedColumns: []string{"col"},
+				Page:           runtime.Page{},
+			},
+			wantStmt: "SELECT `name`.`col` FROM `name`",
+		},
+		{
+			sel:      runtime.SelectParams{Count: true},
+			wantStmt: "SELECT COUNT(*) FROM `name`",
+		},
+		{
+			sel: runtime.SelectParams{
+				Columns:        map[string]bool{"a": true, "b": true, "c": true},
+				OrderedColumns: []string{"a", "b", "c"},
+				Count:          true,
+			},
+			wantStmt: "SELECT `name`.`a`, `name`.`b`, `name`.`c`, COUNT(*) FROM `name`",
+		},
+		{
+			sel: runtime.SelectParams{
+				Columns:        map[string]bool{"a": true, "b": true, "c": true},
+				OrderedColumns: []string{"a", "c", "b"},
+				Count:          true,
+			},
+			wantStmt: "SELECT `name`.`a`, `name`.`c`, `name`.`b`, COUNT(*) FROM `name`",
+		},
+		{
+			sel: runtime.SelectParams{
+				Columns:        map[string]bool{"a": true, "b": true, "c": true},
+				OrderedColumns: []string{"a", "c", "b"},
+			},
+			wantStmt: "SELECT `name`.`a`, `name`.`c`, `name`.`b` FROM `name`",
+		},
+		{
+			sel: runtime.SelectParams{
+				Columns:        map[string]bool{"col": true},
+				OrderedColumns: []string{"col"},
+				Page:           runtime.Page{},
+			},
+			wantStmt: "SELECT `name`.`col` FROM `name`",
+		},
+		{
+			sel: runtime.SelectParams{
+				Columns:        map[string]bool{"col": true},
+				OrderedColumns: []string{"col"},
+				Page:           runtime.Page{Limit: 1},
+			},
+			wantStmt: "SELECT `name`.`col` FROM `name` LIMIT 1",
+		},
+		{
+			sel: runtime.SelectParams{
+				Columns:        map[string]bool{"col": true},
+				OrderedColumns: []string{"col"},
+				Page:           runtime.Page{Limit: 1, Offset: 2},
+			},
+			wantStmt: "SELECT `name`.`col` FROM `name` LIMIT 1 OFFSET 2",
+		},
+		{
+			sel: runtime.SelectParams{
+				Columns:        map[string]bool{"col": true},
+				OrderedColumns: []string{"col"},
+				Page:           runtime.Page{Offset: 1},
+			},
+			wantStmt: "SELECT `name`.`col` FROM `name`",
+		},
+		{
+			sel: runtime.SelectParams{
+				Columns:        map[string]bool{"a": true, "b": true, "c": true},
+				OrderedColumns: []string{"a", "b", "c"},
+				Count:          true,
+				Page:           runtime.Page{Limit: 1, Offset: 2},
 			},
 			wantStmt: "SELECT `name`.`a`, `name`.`b`, `name`.`c`, COUNT(*) FROM `name` LIMIT 1 OFFSET 2",
 		},
 		{
 			sel: runtime.SelectParams{
-				Columns: &columner{columns: []string{"a"}},
-				Groups:  runtime.Groups{{Column: "a"}, {Column: "b"}},
+				Columns:        map[string]bool{"a": true},
+				OrderedColumns: []string{"a"},
+				Groups:         runtime.Groups{{Column: "a"}, {Column: "b"}},
 			},
 			wantStmt: "SELECT `name`.`a` FROM `name` GROUP BY `name`.`a`, `name`.`b`",
 		},
 		{
 			sel: runtime.SelectParams{
-				Columns: &columner{columns: []string{"c"}},
+				Columns:        map[string]bool{"c": true},
+				OrderedColumns: []string{"c"},
 				Orders: runtime.Orders{
 					{Column: "c", Dir: "ASC"},
 					{Column: "d", Dir: "DESC"},
@@ -82,17 +121,20 @@ func TestSelect(t *testing.T) {
 		},
 		{
 			sel: runtime.SelectParams{
-				Columns: &columner{columns: []string{"k"}},
-				Where:   runtime.NewWhere(orm.OpEq, "k", 3),
+				Columns:        map[string]bool{"k": true},
+				OrderedColumns: []string{"k"},
+				Where:          runtime.NewWhere(orm.OpEq, "k", 3),
 			},
 			wantStmt: "SELECT `name`.`k` FROM `name` WHERE `name`.`k` = ?",
 			wantArgs: []interface{}{3},
 		},
 		{
 			sel: runtime.SelectParams{
-				Columns: &columner{columns: []string{"a", "b", "c"}, count: true},
-				Where:   runtime.NewWhere(orm.OpGt, "k", 3),
-				Groups:  runtime.Groups{{Column: "a"}, {Column: "b"}},
+				Columns:        map[string]bool{"a": true, "b": true, "c": true},
+				OrderedColumns: []string{"a", "b", "c"},
+				Count:          true,
+				Where:          runtime.NewWhere(orm.OpGt, "k", 3),
+				Groups:         runtime.Groups{{Column: "a"}, {Column: "b"}},
 				Orders: runtime.Orders{
 					{Column: "c", Dir: "ASC"},
 					{Column: "d", Dir: "DESC"},
@@ -221,21 +263,4 @@ func TestDelete(t *testing.T) {
 func reduceSpaces(s string) string {
 	re := regexp.MustCompile("([ ]+)")
 	return strings.Trim(re.ReplaceAllString(s, " "), " ")
-}
-
-type columner struct {
-	columns []string
-	count   bool
-}
-
-func (c *columner) Columns() []string {
-	return c.columns
-}
-
-func (c *columner) Joins() []runtime.JoinParams {
-	return nil
-}
-
-func (c *columner) Count() bool {
-	return c.count
 }

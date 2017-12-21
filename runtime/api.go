@@ -1,50 +1,13 @@
 package runtime
 
-import "strings"
-
 // Op is an SQL comparison operation
 type Op string
-
-// Selector is interface for generating columns of SELECT queries.
-// With this interface, a dialect talks to struct specific generated implementation.
-type Selector interface {
-	Columns() []string
-	Joins() []JoinParams
-	Count() bool
-}
 
 // TableNamer is an interface for a model to change it's table name
 // a struct that implements this interface will set it's SQL table name by the return
 // value from TableName function.
 type TableNamer interface {
 	TableName() string
-}
-
-// JoinParams are parameters to perform a join operation
-// Field SelectParams is used to perform select operations on the join struct's field.
-// Pairings describe the relation between the join's fields
-type JoinParams struct {
-	SelectParams
-	Pairings []Pairing
-}
-
-// Pairing describe a join relation
-type Pairing struct {
-	// Column is the column in the current table for the JOIN statement
-	Column string
-	// JoinedColumn is the column in the referenced table for the JOIN statement
-	JoinedColumn string
-}
-
-// TableName creates a table name for a join operation
-// this is useful in case several fields referencing the same table
-func (j *JoinParams) TableName(parentTable string) string {
-	parts := make([]string, 0, len(j.Pairings)+1)
-	parts = append(parts, parentTable)
-	for _, pairing := range j.Pairings {
-		parts = append(parts, pairing.Column)
-	}
-	return strings.Join(parts, "_")
 }
 
 // StatementArger is interface for queries.

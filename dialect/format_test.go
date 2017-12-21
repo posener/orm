@@ -16,36 +16,56 @@ func TestColumnsJoin(t *testing.T) {
 		wantJoin string
 	}{
 		{
-			p: runtime.SelectParams{Table: "table", Columns: selector{}},
+			p: runtime.SelectParams{Table: "table"},
 		},
 		{
-			p:        runtime.SelectParams{Table: "table", Columns: selector{count: true}},
+			p:        runtime.SelectParams{Table: "table", Count: true},
 			wantCols: "COUNT(*)",
 		},
 		{
-			p:        runtime.SelectParams{Table: "table", Columns: selector{cols: []string{"a", "b"}}},
+			p: runtime.SelectParams{
+				Table:          "table",
+				Columns:        map[string]bool{"a": true, "b": true},
+				OrderedColumns: []string{"a", "b"},
+			},
 			wantCols: "`table`.`a`, `table`.`b`",
 		},
 		{
-			p:        runtime.SelectParams{Table: "table", Columns: selector{cols: []string{"a", "b"}, count: true}},
+			p: runtime.SelectParams{
+				Table:          "table",
+				Columns:        map[string]bool{"a": true, "b": true},
+				OrderedColumns: []string{"a", "b"},
+				Count:          true,
+			},
 			wantCols: "`table`.`a`, `table`.`b`, COUNT(*)",
 		},
 		{
-			p:        runtime.SelectParams{Table: "table", Columns: selector{cols: []string{"a", "b"}, count: true}},
+			p: runtime.SelectParams{
+				Table:          "table",
+				Columns:        map[string]bool{"a": true, "b": true},
+				OrderedColumns: []string{"b", "a"},
+				Count:          true,
+			},
+			wantCols: "`table`.`b`, `table`.`a`, COUNT(*)",
+		},
+		{
+			p: runtime.SelectParams{
+				Table:          "table",
+				Columns:        map[string]bool{"a": true, "b": true},
+				Count:          true,
+				OrderedColumns: []string{"a", "b"},
+			},
 			wantCols: "`table`.`a`, `table`.`b`, COUNT(*)",
 		},
 		{
 			p: runtime.SelectParams{
 				Table: "A",
-				Columns: selector{
-					joins: []runtime.JoinParams{
-						{
-							SelectParams: runtime.SelectParams{
-								Table:   "B",
-								Columns: selector{},
-							},
-							Pairings: []runtime.Pairing{{Column: "B_id", JoinedColumn: "id"}},
+				Joins: []runtime.JoinParams{
+					{
+						SelectParams: runtime.SelectParams{
+							Table: "B",
 						},
+						Pairings: []runtime.Pairing{{Column: "B_id", JoinedColumn: "id"}},
 					},
 				},
 			},
@@ -55,13 +75,11 @@ func TestColumnsJoin(t *testing.T) {
 		{
 			p: runtime.SelectParams{
 				Table: "A",
-				Columns: selector{
-					count: true,
-					joins: []runtime.JoinParams{
-						{
-							SelectParams: runtime.SelectParams{Table: "B", Columns: selector{}},
-							Pairings:     []runtime.Pairing{{Column: "B_id", JoinedColumn: "id"}},
-						},
+				Count: true,
+				Joins: []runtime.JoinParams{
+					{
+						SelectParams: runtime.SelectParams{Table: "B"},
+						Pairings:     []runtime.Pairing{{Column: "B_id", JoinedColumn: "id"}},
 					},
 				},
 			},
@@ -70,14 +88,13 @@ func TestColumnsJoin(t *testing.T) {
 		},
 		{
 			p: runtime.SelectParams{
-				Table: "A",
-				Columns: selector{
-					cols: []string{"a", "b"},
-					joins: []runtime.JoinParams{
-						{
-							SelectParams: runtime.SelectParams{Table: "B", Columns: selector{}},
-							Pairings:     []runtime.Pairing{{Column: "B_id", JoinedColumn: "id"}},
-						},
+				Table:          "A",
+				Columns:        map[string]bool{"a": true, "b": true},
+				OrderedColumns: []string{"a", "b"},
+				Joins: []runtime.JoinParams{
+					{
+						SelectParams: runtime.SelectParams{Table: "B"},
+						Pairings:     []runtime.Pairing{{Column: "B_id", JoinedColumn: "id"}},
 					},
 				},
 			},
@@ -87,12 +104,14 @@ func TestColumnsJoin(t *testing.T) {
 		{
 			p: runtime.SelectParams{
 				Table: "A",
-				Columns: selector{
-					joins: []runtime.JoinParams{
-						{
-							SelectParams: runtime.SelectParams{Table: "B", Columns: selector{cols: []string{"c", "d"}}},
-							Pairings:     []runtime.Pairing{{Column: "B_id", JoinedColumn: "id"}},
+				Joins: []runtime.JoinParams{
+					{
+						SelectParams: runtime.SelectParams{
+							Table:          "B",
+							Columns:        map[string]bool{"c": true, "d": true},
+							OrderedColumns: []string{"c", "d"},
 						},
+						Pairings: []runtime.Pairing{{Column: "B_id", JoinedColumn: "id"}},
 					},
 				},
 			},
@@ -101,17 +120,17 @@ func TestColumnsJoin(t *testing.T) {
 		},
 		{
 			p: runtime.SelectParams{
-				Table: "A",
-				Columns: selector{
-					cols: []string{"a", "b"},
-					joins: []runtime.JoinParams{
-						{
-							SelectParams: runtime.SelectParams{
-								Table:   "B",
-								Columns: selector{cols: []string{"c", "d"}},
-							},
-							Pairings: []runtime.Pairing{{Column: "B_id", JoinedColumn: "id"}},
+				Table:          "A",
+				Columns:        map[string]bool{"a": true, "b": true},
+				OrderedColumns: []string{"a", "b"},
+				Joins: []runtime.JoinParams{
+					{
+						SelectParams: runtime.SelectParams{
+							Table:          "B",
+							Columns:        map[string]bool{"c": true, "d": true},
+							OrderedColumns: []string{"c", "d"},
 						},
+						Pairings: []runtime.Pairing{{Column: "B_id", JoinedColumn: "id"}},
 					},
 				},
 			},
@@ -120,24 +139,25 @@ func TestColumnsJoin(t *testing.T) {
 		},
 		{
 			p: runtime.SelectParams{
-				Table: "A",
-				Columns: selector{
-					cols: []string{"a", "b"},
-					joins: []runtime.JoinParams{
-						{
-							SelectParams: runtime.SelectParams{
-								Table:   "B",
-								Columns: selector{cols: []string{"c", "d"}},
-							},
-							Pairings: []runtime.Pairing{{Column: "B_id", JoinedColumn: "id"}},
+				Table:          "A",
+				Columns:        map[string]bool{"a": true, "b": true},
+				OrderedColumns: []string{"a", "b"},
+				Joins: []runtime.JoinParams{
+					{
+						SelectParams: runtime.SelectParams{
+							Table:          "B",
+							Columns:        map[string]bool{"c": true, "d": true},
+							OrderedColumns: []string{"c", "d"},
 						},
-						{
-							SelectParams: runtime.SelectParams{
-								Table:   "C",
-								Columns: selector{cols: []string{"e", "f"}},
-							},
-							Pairings: []runtime.Pairing{{Column: "C_id", JoinedColumn: "id"}},
+						Pairings: []runtime.Pairing{{Column: "B_id", JoinedColumn: "id"}},
+					},
+					{
+						SelectParams: runtime.SelectParams{
+							Table:          "C",
+							Columns:        map[string]bool{"e": true, "f": true},
+							OrderedColumns: []string{"e", "f"},
 						},
+						Pairings: []runtime.Pairing{{Column: "C_id", JoinedColumn: "id"}},
 					},
 				},
 			},
@@ -146,35 +166,35 @@ func TestColumnsJoin(t *testing.T) {
 		},
 		{
 			p: runtime.SelectParams{
-				Table: "A",
-				Columns: selector{
-					cols: []string{"a", "b"},
-					joins: []runtime.JoinParams{
-						{
-							SelectParams: runtime.SelectParams{
-								Table: "B",
-								Columns: selector{
-									cols: []string{"c", "d"},
-									joins: []runtime.JoinParams{
-										{
-											SelectParams: runtime.SelectParams{
-												Table:   "D",
-												Columns: selector{cols: []string{"g", "h"}},
-											},
-											Pairings: []runtime.Pairing{{Column: "D_id", JoinedColumn: "id"}},
-										},
+				Table:          "A",
+				Columns:        map[string]bool{"a": true, "b": true},
+				OrderedColumns: []string{"a", "b"},
+				Joins: []runtime.JoinParams{
+					{
+						SelectParams: runtime.SelectParams{
+							Table:          "B",
+							Columns:        map[string]bool{"c": true, "d": true},
+							OrderedColumns: []string{"c", "d"},
+							Joins: []runtime.JoinParams{
+								{
+									SelectParams: runtime.SelectParams{
+										Table:          "D",
+										Columns:        map[string]bool{"g": true, "h": true},
+										OrderedColumns: []string{"g", "h"},
 									},
+									Pairings: []runtime.Pairing{{Column: "D_id", JoinedColumn: "id"}},
 								},
 							},
-							Pairings: []runtime.Pairing{{Column: "B_id", JoinedColumn: "id"}},
 						},
-						{
-							SelectParams: runtime.SelectParams{
-								Table:   "C",
-								Columns: selector{cols: []string{"e", "f"}},
-							},
-							Pairings: []runtime.Pairing{{Column: "C_id", JoinedColumn: "id"}},
+						Pairings: []runtime.Pairing{{Column: "B_id", JoinedColumn: "id"}},
+					},
+					{
+						SelectParams: runtime.SelectParams{
+							Table:          "C",
+							Columns:        map[string]bool{"e": true, "f": true},
+							OrderedColumns: []string{"e", "f"},
 						},
+						Pairings: []runtime.Pairing{{Column: "C_id", JoinedColumn: "id"}},
 					},
 				},
 			},
@@ -190,22 +210,4 @@ func TestColumnsJoin(t *testing.T) {
 			assert.Equal(t, tt.wantJoin, strings.Trim(d.join(&tt.p), " "))
 		})
 	}
-}
-
-type selector struct {
-	cols  []string
-	joins []runtime.JoinParams
-	count bool
-}
-
-func (s selector) Columns() []string {
-	return s.cols
-}
-
-func (s selector) Joins() []runtime.JoinParams {
-	return s.joins
-}
-
-func (s selector) Count() bool {
-	return s.count
 }

@@ -69,17 +69,27 @@ const (
     {{ end -}}
 )
 
+var {{$.Private}}OrderedColumns = []string{
+    {{ range $_, $f := $.Graph.Type.Fields -}}
+    {{ if not $f.IsReference -}}
+    string({{$.Public}}Col{{$f.Name}}),
+    {{ end -}}
+    {{ end -}}
+}
+
 // Select returns a builder of an SQL SELECT statement
 func (c *{{.Private}}Conn) Select(cols ...{{$.Private}}Column) *{{$.Public}}SelectBuilder {
 	s := &{{$.Public}}SelectBuilder{
-		params: runtime.SelectParams{Table: {{$.Private}}Table},
+		params: runtime.SelectParams{
+		    Table: {{$.Private}}Table,
+		    OrderedColumns: {{$.Private}}OrderedColumns,
+        },
 		conn: c,
 	}
-	s.selector.selected = make(map[{{$.Private}}Column]bool)
+	s.params.Columns = make(map[string]bool, len(cols))
 	for _, col := range cols {
-	    s.selector.selected[col] = true
+		s.params.Columns[string(col)] = true
 	}
-    s.params.Columns = &s.selector
     return s
 }
 
