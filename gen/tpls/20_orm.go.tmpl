@@ -7,6 +7,12 @@ type {{$.Graph.Type.Name}}ORM interface {
     Update() *{{$.Public}}UpdateBuilder
     Delete() *{{$.Public}}DeleteBuilder
     Where() *{{$.Public}}WhereBuilder
+
+    {{ if $.Graph.Type.PrimaryKeys -}}
+    // Get returns an object by primary key
+    // In case that the object was not found, it returns an error orm.ErrNotFound
+    Get({{range $_, $pk := $.Graph.Type.PrimaryKeys}}{{$pk.PrivateName}} {{$pk.Type.Ext $.Graph.Type.Package}},{{end}}) (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, error)
+    {{ end -}}
     Logger(orm.Logger)
 }
 
@@ -258,29 +264,48 @@ func (b *{{$.Public}}DeleteBuilder) Context(ctx context.Context) *{{$.Public}}De
 {{- range $_, $f := $.Graph.Type.Fields }}
 
 {{ if $f.IsSettable -}}
-// Set{{$f.Name}} sets value for column {{$f.Columns}} in the INSERT statement
-func (b *{{$.Public}}InsertBuilder) Set{{$f.Name}}(value {{if $f.IsReference}}*{{end}}{{$f.Type.Naked.Ext $.Graph.Type.Package}}) *{{$.Public}}InsertBuilder {
+// Set{{$f.Name}} sets value for column in the INSERT statement
+{{ $varName := "value" -}}
+func (b *{{$.Public}}InsertBuilder) Set{{$f.Name}}({{$varName}} {{if $f.IsReference}}*{{end}}{{$f.Type.Naked.Ext $.Graph.Type.Package}}) *{{$.Public}}InsertBuilder {
     {{ if $f.IsReference -}}
 	{{ range $i, $col := $f.Columns -}}
-	b.params.Assignments.Add("{{$col.Name}}", value.{{(index $f.Type.PrimaryKeys $i).Name}}, value)
+	b.params.Assignments.Add("{{$col.Name}}", {{$varName}}.{{(index $f.Type.PrimaryKeys $i).Name}}, {{$varName}})
 	{{ end -}}
     {{ else -}}
-	b.params.Assignments.Add("{{$f.Column.Name}}", value, value)
+	b.params.Assignments.Add("{{$f.Column.Name}}", {{$varName}}, {{$varName}})
 	{{ end -}}
 	return b
 }
 
-// Set{{$f.Name}} sets value for column {{$f.Columns}} in the UPDATE statement
-func (b *{{$.Public}}UpdateBuilder) Set{{$f.Name}}(value {{if $f.IsReference}}*{{end}}{{$f.Type.Naked.Ext $.Graph.Type.Package}}) *{{$.Public}}UpdateBuilder {
+// Set{{$f.Name}} sets value for column in the UPDATE statement
+func (b *{{$.Public}}UpdateBuilder) Set{{$f.Name}}({{$varName}} {{if $f.IsReference}}*{{end}}{{$f.Type.Naked.Ext $.Graph.Type.Package}}) *{{$.Public}}UpdateBuilder {
     {{ if $f.IsReference -}}
 	{{ range $i, $col := $f.Columns -}}
-	b.params.Assignments.Add("{{$col.Name}}", value.{{(index $f.Type.PrimaryKeys $i).Name}}, value)
+	b.params.Assignments.Add("{{$col.Name}}", {{$varName}}.{{(index $f.Type.PrimaryKeys $i).Name}}, {{$varName}})
 	{{ end -}}
     {{ else -}}
-	b.params.Assignments.Add("{{$f.Column.Name}}", value, value)
+	b.params.Assignments.Add("{{$f.Column.Name}}", {{$varName}}, {{$varName}})
 	{{ end -}}
 	return b
 }
 
 {{ end -}}
+{{ end -}}
+
+{{ if $.Graph.Type.PrimaryKeys -}}
+func (c *{{.Private}}Conn) Get({{range $i, $pk := $.Graph.Type.PrimaryKeys}}key{{$i}} {{$pk.Type.Ext $.Graph.Type.Package}},{{end}}) (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, error) {
+    return c.Select().Where(
+    {{- range $i, $pk := $.Graph.Type.PrimaryKeys -}}
+        c.Where().{{$pk.Name}}(orm.OpEq, key{{$i}})
+        {{- if ne (plus1 $i) (len $.Graph.Type.PrimaryKeys) -}}
+        .And(
+        {{- end -}}
+    {{end}}
+    {{- range $i, $_ := $.Graph.Type.PrimaryKeys -}}
+    {{- if ne (plus1 $i) (len $.Graph.Type.PrimaryKeys) -}}
+    )
+    {{- end -}}
+    {{- end -}}
+    ).First()
+}
 {{ end -}}
