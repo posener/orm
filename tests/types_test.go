@@ -267,7 +267,7 @@ func TestCRUD(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := personDB(t, conn)
 
-		// prepareAll dataset
+		// prepare dataset
 		for _, p := range []Person{p1, p2, p3} {
 			_, err := db.Insert().InsertPerson(&p).Exec()
 			require.Nil(t, err)
@@ -292,14 +292,14 @@ func TestCRUD(t *testing.T) {
 		assert.Equal(t, []Person(nil), ps)
 
 		// Test Update
-		update := db.Update().SetName("Jonney").Where(db.Where().Name(orm.OpEq, "zvika"))
+		update := db.Update().SetName("Jenny").Where(db.Where().Name(orm.OpEq, "zvika"))
 		res, err = update.Exec()
 		require.Nil(t, err)
 		assertRowsAffected(t, 1, res)
 
-		ps, err = db.Select().Where(db.Where().Name(orm.OpEq, "Jonney")).Query()
+		ps, err = db.Select().Where(db.Where().Name(orm.OpEq, "Jenny")).Query()
 		require.Nil(t, err)
-		assert.Equal(t, []Person{{Name: "Jonney", Age: 3}}, ps)
+		assert.Equal(t, []Person{{Name: "Jenny", Age: 3}}, ps)
 	})
 }
 

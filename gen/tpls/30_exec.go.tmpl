@@ -81,7 +81,7 @@ func (b *{{$.Public}}SelectBuilder) Query() ([]{{$.Graph.Type.Naked.Ext $.Graph.
 	    if err := b.params.Ctx.Err(); err != nil  {
 	        return nil, err
 	    }
-		item, _, err := b.selector.Scan(b.conn.dialect.Name(), runtime.Values(*rows){{if $.Graph.Type.HasOneToManyRelation}}, exists{{end}})
+		item, _, err := b.scan(b.conn.dialect.Name(), runtime.Values(*rows){{if $.Graph.Type.HasOneToManyRelation}}, exists{{end}})
         if err != nil {
 			return nil, err
 		}
@@ -108,7 +108,7 @@ func (b *{{$.Public}}SelectBuilder) Query() ([]{{$.Graph.Type.Naked.Ext $.Graph.
 // Count add a count column to the query
 func (b *{{$.Public}}SelectBuilder) Count() ([]{{$.Graph.Type.Name}}Count, error) {
     b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
-    b.selector.count = true
+    b.params.Count = true
     rows, err := b.query()
 	if err != nil {
 		return nil, err
@@ -127,7 +127,7 @@ func (b *{{$.Public}}SelectBuilder) Count() ([]{{$.Graph.Type.Name}}Count, error
 	    if err := b.params.Ctx.Err(); err != nil  {
 	        return nil, err
 	    }
-		item, _, err := b.selector.ScanCount(b.conn.dialect.Name(), runtime.Values(*rows){{if $.Graph.Type.HasOneToManyRelation}}, exists{{end}})
+		item, _, err := b.scanCount(b.conn.dialect.Name(), runtime.Values(*rows){{if $.Graph.Type.HasOneToManyRelation}}, exists{{end}})
         if err != nil {
 			return nil, err
 		}
@@ -169,7 +169,7 @@ func (b *{{$.Public}}SelectBuilder) First() (*{{$.Graph.Type.Naked.Ext $.Graph.T
     if !found {
         return nil, orm.ErrNotFound
     }
-    item, _, err := b.selector.Scan(b.conn.dialect.Name(), runtime.Values(*rows){{if $.Graph.Type.HasOneToManyRelation}}, nil{{end}})
+    item, _, err := b.scan(b.conn.dialect.Name(), runtime.Values(*rows){{if $.Graph.Type.HasOneToManyRelation}}, nil{{end}})
     if err != nil {
         return nil, err
     }

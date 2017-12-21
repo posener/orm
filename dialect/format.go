@@ -49,7 +49,7 @@ func (d *dialect) selectColumns(p *runtime.SelectParams) string {
 	parts := d.columnsParts(p.Table, p)
 
 	// we can add COUNT(*) only once and it work only on the most upper level
-	if p.Columns.Count() {
+	if p.Count {
 		parts = append(parts, "COUNT(*)")
 	}
 
@@ -62,9 +62,9 @@ func (d *dialect) columnsParts(table string, p *runtime.SelectParams) []string {
 		exists = make(map[string]bool)
 	)
 
-	parts = append(parts, d.columnsCollect(table, p.Columns.Columns())...)
+	parts = append(parts, d.columnsCollect(table, p.SelectedColumns())...)
 
-	for _, join := range p.Columns.Joins() {
+	for _, join := range p.Joins {
 		for _, part := range d.columnsParts(join.TableName(table), &join.SelectParams) {
 			if exists[part] {
 				continue
@@ -102,7 +102,7 @@ func (d *dialect) whereJoinRec(table string, p *runtime.SelectParams) string {
 			parts = append(parts, w)
 		}
 	}
-	for _, join := range p.Columns.Joins() {
+	for _, join := range p.Joins {
 		joinCond := d.whereJoinRec(join.TableName(table), &join.SelectParams)
 		if joinCond != "" {
 			parts = append(parts, joinCond)
