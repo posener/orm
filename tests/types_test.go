@@ -399,6 +399,29 @@ func TestFirst(t *testing.T) {
 	})
 }
 
+func TestGet(t *testing.T) {
+	testDBs(t, func(t *testing.T, conn conn) {
+		db := allDB(t, conn)
+
+		_, err := db.Get(1)
+		assert.Equal(t, orm.ErrNotFound, err)
+
+		a0Insert, err := db.Insert().InsertAll(&All{NotNil: "A0"}).Exec()
+		require.Nil(t, err)
+
+		a1Insert, err := db.Insert().InsertAll(&All{NotNil: "A1"}).Exec()
+		require.Nil(t, err)
+
+		a0Get, err := db.Get(a0Insert.Auto)
+		require.Nil(t, err)
+		assert.Equal(t, a0Insert, a0Get)
+
+		a1Get, err := db.Get(a1Insert.Auto)
+		require.Nil(t, err)
+		assert.Equal(t, a1Insert, a1Get)
+	})
+}
+
 func assertRowsAffected(t *testing.T, wantRows int64, result sql.Result) {
 	gotRows, err := result.RowsAffected()
 	require.Nil(t, err)
