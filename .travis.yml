@@ -6,15 +6,12 @@ go:
   - 1.9
 
 services:
-  - docker
+  - mysql
 
 env:
   global:
     - TRAVIS=1
-    - DB_PASSWORD=secret
-    - DB_DATABASE=test
-    - MYSQL_PORT=19423
-    - MYSQL_ADDR=root:${DB_PASSWORD}@(127.0.0.1:${MYSQL_PORT})/${DB_DATABASE}
+    - MYSQL_ADDR=root:@(127.0.0.1:3306)/test
 
 before_install:
   - go get -u ./...
@@ -22,7 +19,7 @@ before_install:
   - go get -u golang.org/x/tools/cmd/goimports
   - make gen-tests
   - go get -t ./...
-  - ./scripts/start-mysql.sh
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS test;'
 
 script:
   - make test
