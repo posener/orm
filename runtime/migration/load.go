@@ -33,6 +33,12 @@ func Load(ctx context.Context, db orm.DB, tableName string) (*Table, error) {
 				newCol.Options = append(newCol.Options, "NOT NULL")
 			}
 		}
+		if col.Extra != nil {
+			switch *col.Extra {
+			case "auto_increment":
+				newCol.Options = append(newCol.Options, "AUTO_INCREMENT")
+			}
+		}
 		t.Columns = append(t.Columns, newCol)
 	}
 
@@ -82,7 +88,7 @@ func indices(ctx context.Context, db orm.DB, tableName string) ([]index, error) 
 		var i index
 		err = rows.Scan(
 			&i.Table, &i.NonUnique, &i.KeyName, &i.SeqInIndex, &i.ColumnName, &i.Collation, &i.Cardinality,
-			&i.SubPart, &i.Packed, &i.Null, &i.IndexType, &i.Comment, &i.IndexComment, &i.Visible,
+			&i.SubPart, &i.Packed, &i.Null, &i.IndexType, &i.Comment, &i.IndexComment,
 		)
 		if err != nil {
 			return nil, err
@@ -117,5 +123,4 @@ type index struct {
 	IndexType    string
 	Comment      *string
 	IndexComment *string
-	Visible      string
 }

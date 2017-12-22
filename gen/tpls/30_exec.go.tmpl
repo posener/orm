@@ -5,6 +5,9 @@ func (b *{{$.Public}}CreateBuilder) Exec() error {
 	if err != nil {
 	    return err
 	}
+	if len(stmts) == 0 {
+	    return nil
+	}
 	b.conn.log("Create: '%v'", strings.Join(stmts, "; "))
 	tx, err := b.conn.db.BeginTx(b.params.Ctx, nil)
 	if err != nil {

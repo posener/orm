@@ -109,16 +109,6 @@ func TestAutoIncrement(t *testing.T) {
 	})
 }
 
-// TestNotNull tests that given inserting an empty not null field causes an error
-func TestNotNull(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn conn) {
-		db := allDB(t, conn)
-
-		_, err := db.Insert().SetInt(1).Exec()
-		require.NotNil(t, err)
-	})
-}
-
 func TestFieldReservedName(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn conn) {
 		db := allDB(t, conn)
