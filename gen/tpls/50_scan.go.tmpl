@@ -30,8 +30,9 @@ func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{
         rowExists bool
         all = s.params.SelectAll()
     )
-    {{ range $_, $f := $.Graph.Type.Fields -}}
+    {{ range $i, $f := $.Graph.Type.Fields -}}
     {{ if not $f.IsReference -}}
+    // scan column {{$i}}
     if all || s.params.Columns["{{$f.Column.Name}}"] {
         if i >= len(vals) {
             return nil, 0, fmt.Errorf("not enough columns returned: %d", len(vals))
@@ -66,7 +67,7 @@ func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{
         i++
     }
 
-    {{ range $_, $f := $.Graph.Type.References }}
+    {{ range $_, $f := $.Graph.Type.References -}}
     if s := s.scan{{$f.Name}}; s != nil {
         tmp, n, err := s.Scan("{{$dialect.Name}}", vals[i:]{{if $f.Type.HasOneToManyRelation}}, nil{{end}})
         if err != nil {

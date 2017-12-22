@@ -58,9 +58,10 @@ func (d *Dialect) ConvertValueCode(field *load.Field) string {
 		sqlType = d.GoTypeToColumnType(field.Type.Naked.Ext(""))
 	}
 	s := tmpltType{
-		Field:             field,
-		ConvertType:       d.convertType(field, sqlType),
-		ConvertFuncString: d.convertFuncString(field, sqlType),
+		Field:                  field,
+		ConvertType:            d.convertType(field, sqlType),
+		ConvertBytesFuncString: d.convertBytesFuncString(field, sqlType),
+		ConvertIntFuncString:   d.convertIntFuncString(field, sqlType),
 	}
 	b := bytes.NewBuffer(nil)
 	err := tmplt.Execute(b, s)
@@ -71,36 +72,42 @@ func (d *Dialect) ConvertValueCode(field *load.Field) string {
 }
 
 type tmpltType struct {
-	ConvertFuncString string
-	ConvertType       string
-	Field             *load.Field
+	ConvertBytesFuncString string
+	ConvertIntFuncString   string
+	ConvertType            string
+	Field                  *load.Field
 }
 
 var tmplt = template.Must(template.New("mysql").Parse(`
 				switch val := vals[i].(type) {
 				case []byte:
-					tmp := {{.ConvertFuncString}}
+					tmp := {{.ConvertBytesFuncString}}
 					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer}}&{{end}}tmp
-				{{- if ne .ConvertType "[]byte" }}
+				{{ if ne .ConvertType "[]byte" -}}
 				case {{.ConvertType}}:
 					tmp := {{.Field.Type.Naked.Ext .Field.ParentType.Package}}(val)
-					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
-				{{- end }}
+					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer }}&{{end}}tmp
+				{{ end -}}
+				{{ if and (ne .ConvertType "int64") .ConvertIntFuncString -}}
+				case int64:
+					tmp := {{.ConvertIntFuncString}}
+					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer}}&{{end}}tmp
+				{{ end -}}
 				default:
-					return nil, 0, runtime.ErrConvert("{{.Field.AccessName}}", i, vals[i], "[]byte, {{.ConvertType}}")
+					return nil, 0, runtime.ErrConvert("{{.Field.AccessName}}", i, vals[i], "{{.ConvertType}}, []byte, (int64?)")
 				}
 `))
 
 // convertFuncString is a function for converting the data from SQL to the right type
-func (d *Dialect) convertFuncString(f *load.Field, sqlType *sqltypes.Type) string {
+func (d *Dialect) convertBytesFuncString(f *load.Field, sqlType *sqltypes.Type) string {
 	switch tp := f.Type.Naked.Ext(""); tp {
 	case "string":
 		return "string(val)"
 	case "[]byte":
 		return "[]byte(val)"
-	case "int", "int8", "int16", "int32", "int64":
+	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
 		return fmt.Sprintf("%s(runtime.ParseInt(val))", tp)
-	case "uint", "uint8", "uint16", "uint32", "uint64":
+	case "float", "float8", "float16", "float32", "float64":
 		return fmt.Sprintf("%s(runtime.ParseFloat(val))", tp)
 	case "time.Time":
 		return fmt.Sprintf("runtime.ParseTime(val, %d)", sqlType.Size)
@@ -108,6 +115,20 @@ func (d *Dialect) convertFuncString(f *load.Field, sqlType *sqltypes.Type) strin
 		return "runtime.ParseBool(val)"
 	default:
 		return fmt.Sprintf("%s(val)", tp)
+	}
+}
+
+// convertFuncString is a function for converting the data from SQL to the right type
+func (d *Dialect) convertIntFuncString(f *load.Field, sqlType *sqltypes.Type) string {
+	switch tp := f.Type.Naked.Ext(""); tp {
+	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
+		return fmt.Sprintf("%s(val)", tp)
+	case "time.Time":
+		return fmt.Sprintf("time.Unix(val, 0)")
+	case "bool":
+		return "val != 0"
+	default:
+		return ""
 	}
 }
 
