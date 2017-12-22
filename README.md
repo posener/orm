@@ -12,6 +12,8 @@ An attempt to write a **typed** ORM for Go.
 
 Check out the [Wiki](https://github.com/posener/orm/wiki) for documentation.
 
+Check out the [examples](./examples).
+
 This repository gives a command line tool, called `orm`, for generating
 ORM code for a given struct. The generated code is typed and has no `interface{}`s arguments
 and returns values as in other ORM Go libraries.
