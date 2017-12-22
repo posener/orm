@@ -2,10 +2,8 @@ package examples
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
-	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/posener/orm"
@@ -136,22 +134,4 @@ func ExampleSimpleUsage() {
 	// Select group len: 1
 	// Updated: updated 1 true
 	// Should not be found: Not Found
-}
-
-func panicOnErr(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
-func conn() *sql.DB {
-	db, err := sql.Open("mysql", os.Getenv("MYSQL_ADDR"))
-	if err != nil {
-		panic(err)
-	}
-	_, err = db.Exec("DROP TABLE IF EXISTS simple")
-	if err != nil {
-		panic(err)
-	}
-	return db
 }

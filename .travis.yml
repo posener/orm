@@ -20,7 +20,7 @@ before_install:
   - go get -u ./...
   - go get -u github.com/UnnoTed/fileb0x
   - go get -u golang.org/x/tools/cmd/goimports
-  - make tests
+  - make gen-tests
   - go get -t ./...
   - ./scripts/start-mysql.sh
 
