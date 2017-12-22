@@ -67,14 +67,25 @@ func ParseFloat(s []byte) float64 {
 	return i
 }
 
-func ParseTime(s []byte, precision int) time.Time {
-	format := "2006-01-02 15:04:05"
+// ParseTime parses time from mysql database
+// zero time is a special case, since it's month is 00, which causes month out of range error.
+func ParseTime(b []byte, precision int) time.Time {
+	var (
+		format = "2006-01-02 15:04:05"
+		zero   = "0000-00-00 00:00:00"
+		s      = string(b)
+	)
 	if precision > 0 {
-		format += "." + strings.Repeat("0", precision)
+		ext := "." + strings.Repeat("0", precision)
+		format += ext
+		zero += ext
 	}
-	t, err := time.Parse(format, string(s))
+	if s == zero {
+		return time.Time{}
+	}
+	t, err := time.Parse(format, s)
 	if err != nil {
-		log.Printf("Failed parsing '%s' to time.Time", string(s))
+		log.Printf("Failed parsing '%s' to time.Time with format '%s'", string(s), format)
 	}
 	return t
 }

@@ -197,3 +197,10 @@ type SQLColumn struct {
 func (f *Field) String() string {
 	return fmt.Sprintf("%s#%s", f.ParentType.Ext(""), f.Name())
 }
+
+// PrivateName returns the name of the field with the first letter as a lower case
+// so it could be used as a private variable name
+func (f *Field) PrivateName() string {
+	name := f.Name()
+	return strings.ToLower(name[:1]) + name[1:]
+}

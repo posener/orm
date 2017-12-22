@@ -6,7 +6,7 @@ MYSQL_PORT=${MYSQL_PORT:-3306}
 DB_DATABASE=${DB_DATABASE:-test}
 
 echo ">> Starting mysql..."
-docker run --name mysql -e MYSQL_ROOT_PASSWORD=${DB_PASSWORD} -d -p ${MYSQL_PORT}:3306 mysql:8.0.3 > /dev/null
+docker run --name mysql -e MYSQL_ROOT_PASSWORD=${DB_PASSWORD} -d -p ${MYSQL_PORT}:3306 mysql:5.6.38 > /dev/null
 
 printf ">> Waiting for mysql "
 until docker exec mysql mysql -h127.0.0.1 -uroot -psecret -e "SHOW DATABASES" > /dev/null

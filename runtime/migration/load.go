@@ -3,7 +3,6 @@ package migration
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/posener/orm"
 )
@@ -24,12 +23,9 @@ func Load(ctx context.Context, db orm.DB, tableName string) (*Table, error) {
 			Name:    col.Field,
 			SQLType: col.Type,
 		}
-		log.Printf(">>> Column: %s %s", col.Field, col.Type)
 		if col.Key != nil {
-			log.Printf("Key: %s", *col.Key)
 		}
 		if col.Null != nil {
-			log.Printf("Null: %s", *col.Null)
 			switch *col.Null {
 			case "YES":
 				newCol.Options = append(newCol.Options, "NULL")
@@ -38,10 +34,10 @@ func Load(ctx context.Context, db orm.DB, tableName string) (*Table, error) {
 			}
 		}
 		if col.Extra != nil {
-			log.Printf("Extra: %s", *col.Extra)
-		}
-		if col.Default != nil {
-			log.Printf("Default: %s", *col.Default)
+			switch *col.Extra {
+			case "auto_increment":
+				newCol.Options = append(newCol.Options, "AUTO_INCREMENT")
+			}
 		}
 		t.Columns = append(t.Columns, newCol)
 	}
@@ -68,7 +64,6 @@ func Load(ctx context.Context, db orm.DB, tableName string) (*Table, error) {
 func columns(ctx context.Context, db orm.DB, tableName string) ([]column, error) {
 	rows, err := db.QueryContext(ctx, fmt.Sprintf("DESCRIBE `%s`", tableName))
 	if err != nil {
-		log.Print(err)
 		return nil, err
 	}
 	var cols []column
@@ -86,7 +81,6 @@ func columns(ctx context.Context, db orm.DB, tableName string) ([]column, error)
 func indices(ctx context.Context, db orm.DB, tableName string) ([]index, error) {
 	rows, err := db.QueryContext(ctx, fmt.Sprintf("SHOW INDEX FROM `%s`", tableName))
 	if err != nil {
-		log.Print(err)
 		return nil, err
 	}
 	var indices []index
@@ -94,7 +88,7 @@ func indices(ctx context.Context, db orm.DB, tableName string) ([]index, error) 
 		var i index
 		err = rows.Scan(
 			&i.Table, &i.NonUnique, &i.KeyName, &i.SeqInIndex, &i.ColumnName, &i.Collation, &i.Cardinality,
-			&i.SubPart, &i.Packed, &i.Null, &i.IndexType, &i.Comment, &i.IndexComment, &i.Visible,
+			&i.SubPart, &i.Packed, &i.Null, &i.IndexType, &i.Comment, &i.IndexComment,
 		)
 		if err != nil {
 			return nil, err
@@ -129,5 +123,4 @@ type index struct {
 	IndexType    string
 	Comment      *string
 	IndexComment *string
-	Visible      string
 }

@@ -61,6 +61,10 @@ func TestMigrations(t *testing.T) {
 		c1, err := p.Insert().SetName("C1").Exec()
 		require.Nil(t, err)
 
+		t.Logf("migration again to 1")
+
+		require.Nil(t, m1.Create().AutoMigrate().Exec())
+
 		t.Logf("migration to 2")
 
 		require.Nil(t, m2.Create().AutoMigrate().Exec())
