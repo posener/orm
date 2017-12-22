@@ -9,7 +9,7 @@ orm: b0x
 	go build ./cmd/orm
 
 tests: orm
-	go generate ./tests/...
+	go generate ./tests/... ./examples/...
 
 test: tests
 	./scripts/test.sh
