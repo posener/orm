@@ -106,11 +106,12 @@ func TestRelationOneToMany(t *testing.T) {
 		b2, err := bORM.Insert().InsertB(&B{Name: "Yoko", Hobbies: "music"}).Exec()
 		require.Nil(t, err)
 
-		// expect to get only one b, since the second b doesn't have any c related
 		bItems, err = bORM.Select().JoinCsPointer(cORM.Select().Joiner()).Query()
 		require.Nil(t, err)
-		require.Equal(t, 1, len(bItems))
+		require.Equal(t, 2, len(bItems))
 		assert.Equal(t, b1, &bItems[0])
+		assert.Equal(t, b2, &bItems[1])
+		assert.Equal(t, 0, len(bItems[1].CsPointer))
 
 		generateCs(t, cORM, b2, 5)
 

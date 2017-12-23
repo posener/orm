@@ -7,7 +7,11 @@ import (
 )
 
 func conn() *sql.DB {
-	db, err := sql.Open("mysql", os.Getenv("MYSQL_ADDR"))
+	addr := os.Getenv("MYSQL_ADDR")
+	if addr == "" {
+		return nil
+	}
+	db, err := sql.Open("mysql", addr)
 	if err != nil {
 		panic(err)
 	}

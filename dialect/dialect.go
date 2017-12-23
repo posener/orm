@@ -240,7 +240,10 @@ func (d *dialect) joinParts(table string, p *runtime.SelectParams) []string {
 		tablesStmt = "(" + tablesStmt + ")"
 	}
 
-	joinStmt := fmt.Sprintf("JOIN %s ON (%s)", tablesStmt, condStmt)
+	// We want to use a left join, so also if no matching rows from the joined
+	// table will be found, we will still have the row with an empty value of
+	// the parent table.
+	joinStmt := fmt.Sprintf("LEFT OUTER JOIN %s ON (%s)", tablesStmt, condStmt)
 
 	return append([]string{joinStmt}, recursive...)
 }

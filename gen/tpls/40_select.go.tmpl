@@ -7,7 +7,7 @@ type {{$.Graph.Type.Naked.Name}}Joiner interface {
 
 // {{$.Graph.Type.Name}}Count is a struct for counting rows of type {{$.Graph.Type.Name}}
 type {{$.Graph.Type.Name}}Count struct {
-    {{$.Graph.Type.Ext $.Graph.Type.Package}}
+    *{{$.Graph.Type.Ext $.Graph.Type.Package}}
     Count int64
 }
 

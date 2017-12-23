@@ -70,7 +70,7 @@ func TestColumnsJoin(t *testing.T) {
 				},
 			},
 			wantCols: "",
-			wantJoin: "JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
+			wantJoin: "LEFT OUTER JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
 		},
 		{
 			p: runtime.SelectParams{
@@ -84,7 +84,7 @@ func TestColumnsJoin(t *testing.T) {
 				},
 			},
 			wantCols: "COUNT(*)",
-			wantJoin: "JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
+			wantJoin: "LEFT OUTER JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
 		},
 		{
 			p: runtime.SelectParams{
@@ -99,7 +99,7 @@ func TestColumnsJoin(t *testing.T) {
 				},
 			},
 			wantCols: "`A`.`a`, `A`.`b`",
-			wantJoin: "JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
+			wantJoin: "LEFT OUTER JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
 		},
 		{
 			p: runtime.SelectParams{
@@ -116,7 +116,7 @@ func TestColumnsJoin(t *testing.T) {
 				},
 			},
 			wantCols: "`A_B_id`.`c`, `A_B_id`.`d`",
-			wantJoin: "JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
+			wantJoin: "LEFT OUTER JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
 		},
 		{
 			p: runtime.SelectParams{
@@ -135,7 +135,7 @@ func TestColumnsJoin(t *testing.T) {
 				},
 			},
 			wantCols: "`A`.`a`, `A`.`b`, `A_B_id`.`c`, `A_B_id`.`d`",
-			wantJoin: "JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
+			wantJoin: "LEFT OUTER JOIN (`B` AS `A_B_id`) ON (`A`.`B_id` = `A_B_id`.`id`)",
 		},
 		{
 			p: runtime.SelectParams{
@@ -162,7 +162,7 @@ func TestColumnsJoin(t *testing.T) {
 				},
 			},
 			wantCols: "`A`.`a`, `A`.`b`, `A_B_id`.`c`, `A_B_id`.`d`, `A_C_id`.`e`, `A_C_id`.`f`",
-			wantJoin: "JOIN (`B` AS `A_B_id`, `C` AS `A_C_id`) ON (`A`.`B_id` = `A_B_id`.`id` AND `A`.`C_id` = `A_C_id`.`id`)",
+			wantJoin: "LEFT OUTER JOIN (`B` AS `A_B_id`, `C` AS `A_C_id`) ON (`A`.`B_id` = `A_B_id`.`id` AND `A`.`C_id` = `A_C_id`.`id`)",
 		},
 		{
 			p: runtime.SelectParams{
@@ -199,7 +199,7 @@ func TestColumnsJoin(t *testing.T) {
 				},
 			},
 			wantCols: "`A`.`a`, `A`.`b`, `A_B_id`.`c`, `A_B_id`.`d`, `A_B_id_D_id`.`g`, `A_B_id_D_id`.`h`, `A_C_id`.`e`, `A_C_id`.`f`",
-			wantJoin: "JOIN (`B` AS `A_B_id`, `C` AS `A_C_id`) ON (`A`.`B_id` = `A_B_id`.`id` AND `A`.`C_id` = `A_C_id`.`id`) JOIN (`D` AS `A_B_id_D_id`) ON (`A_B_id`.`D_id` = `A_B_id_D_id`.`id`)",
+			wantJoin: "LEFT OUTER JOIN (`B` AS `A_B_id`, `C` AS `A_C_id`) ON (`A`.`B_id` = `A_B_id`.`id` AND `A`.`C_id` = `A_C_id`.`id`) LEFT OUTER JOIN (`D` AS `A_B_id_D_id`) ON (`A_B_id`.`D_id` = `A_B_id_D_id`.`id`)",
 		},
 	}
 
