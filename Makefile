@@ -11,7 +11,7 @@ orm: b0x
 gen-tests: orm
 	go generate ./tests/... ./examples/...
 
-test: tests
+test: gen-tests
 	./scripts/test.sh
 
 clean:

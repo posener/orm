@@ -37,6 +37,9 @@ import (
 //}
 func ExampleRelationship() {
 	db := conn()
+	if db == nil {
+		return // mysql address was not defined
+	}
 
 	oneORM, err := NewOneORM("mysql", db)
 	panicOnErr(err)

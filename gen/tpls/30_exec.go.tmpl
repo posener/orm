@@ -136,7 +136,7 @@ func (b *{{$.Public}}SelectBuilder) Count() ([]{{$.Graph.Type.Name}}Count, error
 		}
 
         {{ if $.Graph.Type.HasOneToManyRelation -}}
-        hash := {{$.Private}}HashItem(&item.{{$.Graph.Type.Name}})
+        hash := {{$.Private}}HashItem(item.{{$.Graph.Type.Name}})
 		if exist := exists[hash]; exist != nil {
 		    {{ range $_, $f := $.Graph.Type.References -}}
 		    {{ if $f.Type.Slice -}}
@@ -145,7 +145,7 @@ func (b *{{$.Public}}SelectBuilder) Count() ([]{{$.Graph.Type.Name}}Count, error
 			{{ end -}}
 		} else {
 			items = append(items, *item)
-			exists[hash] = &items[len(items)-1].{{$.Graph.Type.Name}}
+			exists[hash] = items[len(items)-1].{{$.Graph.Type.Name}}
 		}
 		{{ else -}}
 		items = append(items, *item)

@@ -19,6 +19,9 @@ import (
 //}
 func ExampleSimpleUsage() {
 	db := conn()
+	if db == nil {
+		return // mysql address was not defined
+	}
 
 	// Create an ORM controller for the Simple struct
 	sorm, err := NewSimpleORM("mysql", db)

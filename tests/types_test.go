@@ -317,17 +317,17 @@ func TestCount(t *testing.T) {
 			{
 				q: db.Select(PersonColAge).GroupBy(PersonColAge).Where(db.Where().AgeIn(1, 3, 12)),
 				want: []PersonCount{
-					{Person: Person{Age: 1}, Count: 5},
-					{Person: Person{Age: 3}, Count: 5},
-					{Person: Person{Age: 12}, Count: 5},
+					{Person: &Person{Age: 1}, Count: 5},
+					{Person: &Person{Age: 3}, Count: 5},
+					{Person: &Person{Age: 12}, Count: 5},
 				},
 			},
 			{
 				q: db.Select(PersonColAge).GroupBy(PersonColAge).Where(db.Where().AgeIn(1, 3, 12)).OrderBy(PersonColAge, orm.Desc),
 				want: []PersonCount{
-					{Person: Person{Age: 12}, Count: 5},
-					{Person: Person{Age: 3}, Count: 5},
-					{Person: Person{Age: 1}, Count: 5},
+					{Person: &Person{Age: 12}, Count: 5},
+					{Person: &Person{Age: 3}, Count: 5},
+					{Person: &Person{Age: 1}, Count: 5},
 				},
 			},
 		}

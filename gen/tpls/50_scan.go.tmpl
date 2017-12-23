@@ -6,7 +6,7 @@ func (s *{{$.Public}}SelectBuilder) scan(dialect string, vals []driver.Value{{if
     if err != nil {
         return nil, n, err
     }
-    return &item.{{$.Graph.Type.Name}}, n, nil
+    return item.{{$.Graph.Type.Name}}, n, nil
 }
 
 // ScanCount scans an SQL row to a {{$.Graph.Type.Name}}Count struct
@@ -25,11 +25,13 @@ func (s *{{$.Public}}SelectBuilder) scanCount(dialect string, vals []driver.Valu
 // scan{{$dialect.Name}} scans {{$dialect.Name}} row to a {{$.Graph.Type.Name}} struct
 func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{if $.Graph.Type.HasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Graph.Type.Package}}{{end}}) (*{{$.Graph.Type.Name}}Count, int, error) {
     var (
-        row {{$.Graph.Type.Name}}Count
+        row = new({{$.Graph.Type.Name}}Count)
         i int
         rowExists bool
+        allNils = true
         all = s.params.SelectAll()
     )
+    row.{{$.Graph.Type.Name}} = new({{$.Graph.Type.Name}})
     {{ range $i, $f := $.Graph.Type.Fields -}}
     {{ if not $f.IsReference -}}
     // scan column {{$i}}
@@ -38,6 +40,7 @@ func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{
             return nil, 0, fmt.Errorf("not enough columns returned: %d", len(vals))
         }
         if vals[i] != nil && !rowExists {
+            allNils = false
 {{ $dialect.ConvertValueCode $f -}}
         }
         {{ if and $.Graph.Type.HasOneToManyRelation -}}
@@ -45,7 +48,7 @@ func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{
         // check if we scanned this item in previous rows. If we did, set `rowExists`,
         // so other columns in this table won't be evaluated. We only need values
         // from other tables.
-        if exists[{{$.Private}}HashItem(&row.{{$.Graph.Type.Name}})] != nil {
+        if exists[{{$.Private}}HashItem(row.{{$.Graph.Type.Name}})] != nil {
             rowExists = true
         }
         {{ end -}}
@@ -73,16 +76,29 @@ func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{
         if err != nil {
             return nil, 0, fmt.Errorf("sub scanning {{$f.AccessName}}, cols [%d:%d]: %s", i, len(vals), err)
         }
-        {{ if $f.Type.Slice -}}
-        row.{{$f.AccessName}} = append(row.{{$f.AccessName}}, {{if not $f.Type.Pointer}}*{{end}}tmp)
-        {{ else -}}
-        row.{{$f.AccessName}} = {{ if not $f.Type.Pointer}}*{{end}}tmp
-        {{ end -}}
+        // If the result is nil, we want to discard it.
+        // This is possible since we are doing a left join, if there was no match in the
+        // right table, all it's columns are set to nil, and the result of a Scan function
+        // is nil also.
+        if tmp != nil {
+            {{ if $f.Type.Slice -}}
+            row.{{$f.AccessName}} = append(row.{{$f.AccessName}}, {{if not $f.Type.Pointer}}*{{end}}tmp)
+            {{ else -}}
+            row.{{$f.AccessName}} = {{ if not $f.Type.Pointer}}*{{end}}tmp
+            {{ end -}}
+        }
         i += n
     }
     {{ end }}
 
-    return &row, i, nil
+    // If all values were nil, there was not any actual row returned,
+    // this could happen in case that the scanned row is the right table in case of an
+    // outer left join statement. We set the result to nil, so it ill be discarded.
+    if allNils {
+        row.{{$.Graph.Type.Name}} = nil
+    }
+
+    return row, i, nil
 }
 {{ end }}
 
