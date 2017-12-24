@@ -77,15 +77,6 @@ type {{$apiName}} interface {
     Logger(orm.Logger)
 }
 
-// Open{{$apiName}} opens database connection
-func Open{{$apiName}}(driverName, dataSourceName string) ({{$apiName}}, error) {
-	db, err := sql.Open(driverName, dataSourceName)
-	if err != nil {
-		return nil, err
-	}
-	return New{{$apiName}}(driverName, db)
-}
-
 // New{{$apiName}} returns an conn object from a db instance
 func New{{$apiName}}(driverName string, db orm.DB) ({{$apiName}}, error) {
 	d := dialect.Get(driverName)

@@ -14,9 +14,11 @@ import (
 
 // BenchmarkORMInsert tests inserts with posener/orm package
 func BenchmarkORMInsert(b *testing.B) {
-	orm, err := tests.OpenPersonORM("sqlite3", ":memory:")
+	db, err := sql.Open("sqlite3", ":memory:")
 	require.Nil(b, err)
-	defer orm.Close()
+	defer db.Close()
+	orm, err := tests.NewPersonORM("sqlite3", db)
+	require.Nil(b, err)
 
 	require.Nil(b, orm.Create().Exec())
 
@@ -64,9 +66,11 @@ const datasetSize = 1000
 
 // BenchmarkORMQuery tests queries with posener/orm package
 func BenchmarkORMQuery(b *testing.B) {
-	orm, err := tests.OpenPersonORM("sqlite3", ":memory:")
+	db, err := sql.Open("sqlite3", ":memory:")
 	require.Nil(b, err)
-	defer orm.Close()
+	defer db.Close()
+	orm, err := tests.NewPersonORM("sqlite3", db)
+	require.Nil(b, err)
 
 	require.Nil(b, orm.Create().Exec())
 
@@ -138,9 +142,11 @@ func BenchmarkRawQuery(b *testing.B) {
 
 // BenchmarkORMQueryLargeStruct tests large struct queries with posener/orm package
 func BenchmarkORMQueryLargeStruct(b *testing.B) {
-	orm, err := tests.OpenAllORM("sqlite3", ":memory:")
+	db, err := sql.Open("sqlite3", ":memory:")
 	require.Nil(b, err)
-	defer orm.Close()
+	defer db.Close()
+	orm, err := tests.NewAllORM("sqlite3", db)
+	require.Nil(b, err)
 
 	require.Nil(b, orm.Create().Exec())
 
