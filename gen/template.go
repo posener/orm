@@ -81,7 +81,11 @@ func New{{$apiName}}(driverName string, db orm.DB) ({{$apiName}}, error) {
 	if d == nil {
 		return nil, fmt.Errorf("dialect %s does not exists", driverName)
 	}
-    return &{{$conn}}{dialect: d, db: db}, nil
+    return &{{$conn}}{
+		dialect: d,
+		db: db,
+		logger: orm.Logf,
+	}, nil
 }
 
 // {{$conn}} represents a DB connection for manipulating a given struct.

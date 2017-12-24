@@ -36,10 +36,12 @@ import (
 //	MyOneIs *One
 //}
 func ExampleRelationship() {
+	orm.GlobalLogger(log.Printf)
 	db := conn()
 	if db == nil {
 		return // mysql address was not defined
 	}
+	defer db.Close()
 
 	oneORM, err := NewOneORM("mysql", db)
 	panicOnErr(err)
@@ -47,10 +49,6 @@ func ExampleRelationship() {
 	panicOnErr(err)
 	otherManyORM, err := NewOtherManyORM("mysql", db)
 	panicOnErr(err)
-
-	oneORM.Logger(log.Printf)
-	otherOneORM.Logger(log.Printf)
-	otherManyORM.Logger(log.Printf)
 
 	// Create the tables: order is important!
 	// When have a forward reference (one-to-one relationship) to another table, the other

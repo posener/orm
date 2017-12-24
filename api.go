@@ -44,3 +44,10 @@ type DB interface {
 
 // Logger is a fmt.Printf - like function
 type Logger func(string, ...interface{})
+
+// GlobalLogger sets orm's global logger
+// Running this function in parallel to query execution will result in
+// race condition, please prepare the logger beforehand.
+func GlobalLogger(l Logger) {
+	log = l
+}

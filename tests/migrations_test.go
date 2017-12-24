@@ -4,11 +4,15 @@ import (
 	"context"
 	"testing"
 
+	"github.com/posener/orm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMigrations(t *testing.T) {
+	if testing.Verbose() {
+		orm.GlobalLogger(t.Logf)
+	}
 	testDBs(t, func(t *testing.T, conn conn) {
 		if conn.name == "sqlite3" {
 			t.Skip("sqlite migrations is not supported")
@@ -23,13 +27,6 @@ func TestMigrations(t *testing.T) {
 		require.Nil(t, err)
 		p, err := NewC2ORM(conn.name, conn) // for foreign key constraint
 		require.Nil(t, err)
-		if testing.Verbose() {
-			m0.Logger(t.Logf)
-			m1.Logger(t.Logf)
-			m2.Logger(t.Logf)
-			m3.Logger(t.Logf)
-			p.Logger(t.Logf)
-		}
 		_, err = conn.ExecContext(context.Background(), "DROP TABLE IF EXISTS migrations")
 		require.Nil(t, err)
 
