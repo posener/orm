@@ -133,16 +133,8 @@ type MyType struct {
 
 Here are the strengths of `orm` in comparison to other ORM libraries for Go.
 
-> Just to clearify: [GORM](http://jinzhu.me/gorm/) is a mature, widely used, heavily debugged, favorable, 
-  and very recommended to use. `orm` is in **proof of concept** stage.
-
-|     | `orm` | [GORM](http://jinzhu.me/gorm/) |
-| --- | :---: | :----: |
-| Typed API | :muscle: | :disappointed: |
-| `Context` support | :muscle: | :disappointed: |
-| Custom logger | :muscle: | :disappointed: |
-| Speed | :rabbit: | :snail: |
-| Clear and explicit API | :bowtie: | :confused: |
-
+> [GORM](http://jinzhu.me/gorm/): is a mature, widely used, heavily debugged, favorable, 
+  and very recommended to use. `orm` advantages over GORM are: fully typed APIs, clear and explicit APIs, speed,
+  support for `Context`, and support for custom logger.
 
 Also, [benchmarking results](./bench) are available.
