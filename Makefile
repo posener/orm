@@ -12,4 +12,4 @@ test: gen-tests
 	./scripts/test.sh
 
 clean:
-	rm -rf tests/*_orm.go
+	rm -rf tests/*_orm.go examples/*_orm.go
