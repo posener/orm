@@ -1,5 +1,5 @@
-pkg: b0x
-dest: "./b0x"
+pkg: tmpls
+dest: "./tmpls"
 fmt: false
 tags: ""
 updater:
@@ -14,7 +14,7 @@ spread: false
 debug: false
 custom:
   - files:
-    - "tpls/*"
-    base: "tpls/"
+    - "tmpls/*.tmpl"
+    base: "tmpls/"
     prefix: ""
     tags: ""
