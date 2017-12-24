@@ -70,8 +70,6 @@ type {{$apiName}} interface {
     // In case that the object was not found, it returns an error orm.ErrNotFound
     Get({{range $_, $pk := $.Graph.Type.PrimaryKeys}}{{$pk.PrivateName}} {{$pk.Type.Ext $pkg}},{{end}}) (*{{$type}}, error)
     {{ end -}}
-    // Close closes the DB connection
-    Close() error
     // Logger sets a logger
     // currently logs contain SQL queries before executing them
     Logger(orm.Logger)
@@ -94,10 +92,6 @@ type {{$conn}} struct {
 	dialect dialect.API
 	db      orm.DB
 	logger  orm.Logger
-}
-
-func (c *{{$conn}}) Close() error {
-	return c.db.Close()
 }
 
 // Logger sets a logger to the conn package
