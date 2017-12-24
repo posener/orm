@@ -11,7 +11,11 @@ import (
 	{{ end -}}
 )
 
-{{ $name := $.Graph.Type.Name }}
+{{ $name := $.Graph.Type.Name -}}
+{{ $type := $.Graph.Type.Naked.Ext $.Graph.Type.Package -}}
+{{ $hasOneToManyRelationship := $.Graph.Type.HasOneToManyRelation -}}
+{{ $apiName := (print $name "ORM") -}}
+{{ $conn := (print $.Private "Conn") -}}
 
 // {{$.Private}}Table is SQL table name
 var {{$.Private}}Table = "{{$.Graph.Type.Table}}"
@@ -19,7 +23,7 @@ var {{$.Private}}Table = "{{$.Graph.Type.Table}}"
 var {{$.Private}}TableProperties = `{{$.Table.Marshal}}`
 
 func init() {
-    var v interface{} = &{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}{}
+    var v interface{} = &{{$type}}{}
 
     // override tableName if the type implement the TableNamer interface
     if namer, ok := v.(runtime.TableNamer); ok {
@@ -27,8 +31,8 @@ func init() {
     }
 }
 
-// {{$name}}ORM is the interface of the ORM object
-type {{$name}}ORM interface {
+// {{$apiName}} is the interface of the ORM object
+type {{$apiName}} interface {
     // Create returns a builder for creating an SQL table
     Create() *{{$.Public}}CreateBuilder
     // Select returns a builder for selecting rows from an SQL table
@@ -45,7 +49,7 @@ type {{$name}}ORM interface {
     {{ if $.Graph.Type.PrimaryKeys -}}
     // Get returns an object by primary key
     // In case that the object was not found, it returns an error orm.ErrNotFound
-    Get({{range $_, $pk := $.Graph.Type.PrimaryKeys}}{{$pk.PrivateName}} {{$pk.Type.Ext $.Graph.Type.Package}},{{end}}) (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, error)
+    Get({{range $_, $pk := $.Graph.Type.PrimaryKeys}}{{$pk.PrivateName}} {{$pk.Type.Ext $.Graph.Type.Package}},{{end}}) (*{{$type}}, error)
     {{ end -}}
     // Close closes the DB connection
     Close() error
@@ -54,45 +58,45 @@ type {{$name}}ORM interface {
     Logger(orm.Logger)
 }
 
-// Open{{$name}}ORM opens database connection
-func Open{{$name}}ORM(driverName, dataSourceName string) ({{$name}}ORM, error) {
+// Open{{$apiName}} opens database connection
+func Open{{$apiName}}(driverName, dataSourceName string) ({{$apiName}}, error) {
 	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return nil, err
 	}
-	return New{{$name}}ORM(driverName, db)
+	return New{{$apiName}}(driverName, db)
 }
 
-// New{{$name}}ORM returns an conn object from a db instance
-func New{{$name}}ORM(driverName string, db orm.DB) ({{$name}}ORM, error) {
+// New{{$apiName}} returns an conn object from a db instance
+func New{{$apiName}}(driverName string, db orm.DB) ({{$apiName}}, error) {
 	d := dialect.Get(driverName)
 	if d == nil {
 		return nil, fmt.Errorf("dialect %s does not exists", driverName)
 	}
-    return &{{.Private}}Conn{dialect: d, db: db}, nil
+    return &{{$conn}}{dialect: d, db: db}, nil
 }
 
-// {{.Private}}Conn represents a DB connection for manipulating a given struct.
+// {{$conn}} represents a DB connection for manipulating a given struct.
 // All functions available to interact with an SQL table that is related
 // to this struct, are done by an instance of this object.
 // To get an instance of orm use Open or New functions.
-type {{.Private}}Conn struct {
+type {{$conn}} struct {
 	dialect dialect.API
 	db      orm.DB
 	logger  orm.Logger
 }
 
-func (c *{{.Private}}Conn) Close() error {
+func (c *{{$conn}}) Close() error {
 	return c.db.Close()
 }
 
 // Logger sets a logger to the conn package
-func (c *{{.Private}}Conn) Logger(logger orm.Logger) {
+func (c *{{$conn}}) Logger(logger orm.Logger) {
 	c.logger = logger
 }
 
 // Create returns a builder of an SQL CREATE statement
-func (c *{{.Private}}Conn) Create() *{{$.Public}}CreateBuilder {
+func (c *{{$conn}}) Create() *{{$.Public}}CreateBuilder {
 	return &{{$.Public}}CreateBuilder{
 		params: runtime.CreateParams{
 		    Table: {{$.Private}}Table,
@@ -105,24 +109,20 @@ func (c *{{.Private}}Conn) Create() *{{$.Public}}CreateBuilder {
 type {{$.Private}}Column string
 
 const (
-    {{ range $_, $f := $.Graph.Type.Fields -}}
-    {{ if not $f.IsReference -}}
+    {{ range $_, $f := $.Graph.Type.NonReferences -}}
     // {{$.Public}}Col{{$f.Name}} is used to select the {{$f.Name}} column in SELECT queries
     {{$.Public}}Col{{$f.Name}} {{$.Private}}Column = "{{$f.Column.Name}}"
-    {{ end -}}
     {{ end -}}
 )
 
 var {{$.Private}}OrderedColumns = []string{
-    {{ range $_, $f := $.Graph.Type.Fields -}}
-    {{ if not $f.IsReference -}}
+    {{ range $_, $f := $.Graph.Type.NonReferences -}}
     string({{$.Public}}Col{{$f.Name}}),
-    {{ end -}}
     {{ end -}}
 }
 
 // Select returns a builder of an SQL SELECT statement
-func (c *{{.Private}}Conn) Select(cols ...{{$.Private}}Column) *{{$.Public}}SelectBuilder {
+func (c *{{$conn}}) Select(cols ...{{$.Private}}Column) *{{$.Public}}SelectBuilder {
 	s := &{{$.Public}}SelectBuilder{
 		params: runtime.SelectParams{
 		    Table: {{$.Private}}Table,
@@ -138,7 +138,7 @@ func (c *{{.Private}}Conn) Select(cols ...{{$.Private}}Column) *{{$.Public}}Sele
 }
 
 // Insert returns a builder of an SQL INSERT statement
-func (c *{{.Private}}Conn) Insert() *{{$.Public}}InsertBuilder {
+func (c *{{$conn}}) Insert() *{{$.Public}}InsertBuilder {
 	return &{{$.Public}}InsertBuilder{
 		params: runtime.InsertParams{Table: {{$.Private}}Table},
 		conn: c,
@@ -146,7 +146,7 @@ func (c *{{.Private}}Conn) Insert() *{{$.Public}}InsertBuilder {
 }
 
 // Update returns a builder of an SQL UPDATE statement
-func (c *{{.Private}}Conn) Update() *{{$.Public}}UpdateBuilder {
+func (c *{{$conn}}) Update() *{{$.Public}}UpdateBuilder {
 	return &{{$.Public}}UpdateBuilder{
 		params: runtime.UpdateParams{Table: {{$.Private}}Table},
 		conn: c,
@@ -154,7 +154,7 @@ func (c *{{.Private}}Conn) Update() *{{$.Public}}UpdateBuilder {
 }
 
 // Delete returns a builder of an SQL DELETE statement
-func (c *{{.Private}}Conn) Delete() *{{$.Public}}DeleteBuilder {
+func (c *{{$conn}}) Delete() *{{$.Public}}DeleteBuilder {
 	return &{{$.Public}}DeleteBuilder{
 		params: runtime.DeleteParams{Table: {{$.Private}}Table},
 		conn: c,
@@ -162,12 +162,12 @@ func (c *{{.Private}}Conn) Delete() *{{$.Public}}DeleteBuilder {
 }
 
 // Where returns a builder of an SQL WHERE statement
-func (c *{{.Private}}Conn) Where() *{{$.Public}}WhereBuilder {
+func (c *{{$conn}}) Where() *{{$.Public}}WhereBuilder {
 	return &{{$.Public}}WhereBuilder{}
 }
 
 // log if a logger was set
-func (c *{{.Private}}Conn) log(s string, args ...interface{}) {
+func (c *{{$conn}}) log(s string, args ...interface{}) {
 	if c.logger == nil {
 		return
 	}
@@ -179,7 +179,7 @@ func (c *{{.Private}}Conn) log(s string, args ...interface{}) {
 // {{$.Public}}CreateBuilder builds an SQL CREATE statement parameters
 type {{$.Public}}CreateBuilder struct {
 	params runtime.CreateParams
-	conn   *{{.Private}}Conn
+	conn   *{{$conn}}
 }
 
 // IfNotExists sets IF NOT EXISTS for the CREATE SQL statement
@@ -204,7 +204,7 @@ func (b *{{$.Public}}CreateBuilder) Context(ctx context.Context) *{{$.Public}}Cr
 // {{$.Public}}InsertBuilder builds an INSERT statement parameters
 type {{$.Public}}InsertBuilder struct {
 	params runtime.InsertParams
-	conn   *{{.Private}}Conn
+	conn   *{{$conn}}
 }
 
 // Context sets the context for the SQL query
@@ -214,7 +214,7 @@ func (b *{{$.Public}}InsertBuilder) Context(ctx context.Context) *{{$.Public}}In
 }
 
 // Insert{{$name}} returns an SQL INSERT statement builder filled with values of a given object
-func (b *{{$.Public}}InsertBuilder) Insert{{$name}}(p *{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}) *{{$.Public}}InsertBuilder {
+func (b *{{$.Public}}InsertBuilder) Insert{{$name}}(p *{{$type}}) *{{$.Public}}InsertBuilder {
 	{{ range $_, $f := $.Graph.Type.Fields -}}
 	{{ if $f.IsSettable -}}
 	{{ if not $f.IsReference -}}
@@ -240,7 +240,7 @@ func (b *{{$.Public}}InsertBuilder) Insert{{$name}}(p *{{$.Graph.Type.Naked.Ext 
 // {{$.Public}}UpdateBuilder builds SQL INSERT statement parameters
 type {{$.Public}}UpdateBuilder struct {
 	params runtime.UpdateParams
-	conn   *{{.Private}}Conn
+	conn   *{{$conn}}
 }
 
 // Where sets the WHERE statement to the SQL query
@@ -256,7 +256,7 @@ func (b *{{$.Public}}UpdateBuilder) Context(ctx context.Context) *{{$.Public}}Up
 }
 
 // Update{{$name}} update values for all struct fields
-func (b *{{$.Public}}UpdateBuilder) Update{{$name}}(p *{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}) *{{$.Public}}UpdateBuilder {
+func (b *{{$.Public}}UpdateBuilder) Update{{$name}}(p *{{$type}}) *{{$.Public}}UpdateBuilder {
 	{{ range $_, $f := $.Graph.Type.Fields -}}
     {{ if $f.IsSettable -}}
 	{{ if not $f.IsReference -}}
@@ -282,7 +282,7 @@ func (b *{{$.Public}}UpdateBuilder) Update{{$name}}(p *{{$.Graph.Type.Naked.Ext 
 // {{$.Public}}DeleteBuilder builds SQL DELETE statement parameters
 type {{$.Public}}DeleteBuilder struct {
 	params runtime.DeleteParams
-	conn   *{{.Private}}Conn
+	conn   *{{$conn}}
 }
 
 // Where applies where conditions on the SQL query
@@ -331,7 +331,7 @@ func (b *{{$.Public}}UpdateBuilder) Set{{$f.Name}}({{$varName}} {{if $f.IsRefere
 {{ end -}}
 
 {{ if $.Graph.Type.PrimaryKeys -}}
-func (c *{{.Private}}Conn) Get({{range $i, $pk := $.Graph.Type.PrimaryKeys}}key{{$i}} {{$pk.Type.Ext $.Graph.Type.Package}},{{end}}) (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, error) {
+func (c *{{$conn}}) Get({{range $i, $pk := $.Graph.Type.PrimaryKeys}}key{{$i}} {{$pk.Type.Ext $.Graph.Type.Package}},{{end}}) (*{{$type}}, error) {
     return c.Select().Where(
     {{- range $i, $pk := $.Graph.Type.PrimaryKeys -}}
         c.Where().{{$pk.Name}}(orm.OpEq, key{{$i}})
@@ -381,7 +381,7 @@ func (b *{{$.Public}}SelectBuilder) query() (*sql.Rows, error) {
 }
 
 // Exec inserts the data to the given database
-func (b *{{$.Public}}InsertBuilder) Exec() (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, error) {
+func (b *{{$.Public}}InsertBuilder) Exec() (*{{$type}}, error) {
 	if len(b.params.Assignments) == 0 {
 		return nil, fmt.Errorf("nothing to insert")
 	}
@@ -414,7 +414,7 @@ func (b *{{$.Public}}DeleteBuilder) Exec() (sql.Result, error) {
 }
 
 // Query the database
-func (b *{{$.Public}}SelectBuilder) Query() ([]{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, error) {
+func (b *{{$.Public}}SelectBuilder) Query() ([]{{$type}}, error) {
     b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
     rows, err := b.query()
 	if err != nil {
@@ -423,10 +423,10 @@ func (b *{{$.Public}}SelectBuilder) Query() ([]{{$.Graph.Type.Naked.Ext $.Graph.
 	defer rows.Close()
 
 	var (
-	    items []{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}
+	    items []{{$type}}
         {{ if $.Graph.Type.HasOneToManyRelation -}}
         // exists is a mapping from primary key to already parsed structs
-        exists = make(map[string]*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}})
+        exists = make(map[string]*{{$type}})
         {{ end -}}
     )
 	for rows.Next() {
@@ -472,7 +472,7 @@ func (b *{{$.Public}}SelectBuilder) Count() ([]{{$name}}Count, error) {
 	    items []{{$name}}Count
         {{ if $.Graph.Type.HasOneToManyRelation -}}
         // exists is a mapping from primary key to already parsed structs
-        exists = make(map[string]*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}})
+        exists = make(map[string]*{{$type}})
         {{ end -}}
     )
 	for rows.Next() {
@@ -508,7 +508,7 @@ func (b *{{$.Public}}SelectBuilder) Count() ([]{{$name}}Count, error) {
 // If no row matches the query, an ErrNotFound will be returned.
 // This call cancels any paging that was set with the
 // {{$.Public}}SelectBuilder previously.
-func (b *{{$.Public}}SelectBuilder) First() (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, error) {
+func (b *{{$.Public}}SelectBuilder) First() (*{{$type}}, error) {
     b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
     b.params.Page.Limit = 1
     b.params.Page.Offset = 0
@@ -529,10 +529,10 @@ func (b *{{$.Public}}SelectBuilder) First() (*{{$.Graph.Type.Naked.Ext $.Graph.T
 	return item, rows.Err()
 }
 
-// {{$.Private}}ReturnObject builds {{$.Graph.Type.Naked.Ext $.Graph.Type.Package}} from assignment values
+// {{$.Private}}ReturnObject builds {{$type}} from assignment values
 // and from the sql result ID, for returning an object from INSERT transactions
-func {{$.Private}}ReturnObject(assignments runtime.Assignments, res sql.Result) (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, error) {
-	ret := new({{$.Graph.Type.Naked.Ext $.Graph.Type.Package}})
+func {{$.Private}}ReturnObject(assignments runtime.Assignments, res sql.Result) (*{{$type}}, error) {
+	ret := new({{$type}})
 	for _, assign := range assignments {
         switch assign.Column {
         {{ range $_, $f := $.Graph.Type.Fields -}}
@@ -566,7 +566,7 @@ func {{$.Private}}HashItem(item *{{$name}}) string {
 // in another type
 type {{$.Graph.Type.Naked.Name}}Joiner interface {
     Params() runtime.SelectParams
-    Scan(dialect string, values []driver.Value{{if $.Graph.Type.HasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}{{end}}) (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, int, error)
+    Scan(dialect string, values []driver.Value{{if $.Graph.Type.HasOneToManyRelation}}, exists map[string]*{{$type}}{{end}}) (*{{$type}}, int, error)
 }
 
 // {{$name}}Count is a struct for counting rows of type {{$name}}
@@ -578,7 +578,7 @@ type {{$name}}Count struct {
 // {{$.Public}}SelectBuilder builds an SQL SELECT statement parameters
 type {{$.Public}}SelectBuilder struct {
 	params runtime.SelectParams
-	conn *{{.Private}}Conn
+	conn *{{$conn}}
 	{{ range $_, $f := $.Graph.Type.References -}}
 	scan{{$f.Name}} {{$.Private}}{{$f.Type.Naked.Name}}Joiner
 	{{ end -}}
@@ -593,8 +593,8 @@ func (j *{{$.Private}}Joiner) Params() runtime.SelectParams {
     return j.builder.params
 }
 
-func (j *{{$.Private}}Joiner) Scan(dialect string, values []driver.Value{{if $.Graph.Type.HasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}{{end}}) (*{{$.Graph.Type.Naked.Ext $.Graph.Type.Package}}, int, error) {
-    return j.builder.scan(dialect, values{{if $.Graph.Type.HasOneToManyRelation}}, exists{{end}})
+func (j *{{$.Private}}Joiner) Scan(dialect string, values []driver.Value{{if $hasOneToManyRelationship}}, exists map[string]*{{$type}}{{end}}) (*{{$type}}, int, error) {
+    return j.builder.scan(dialect, values{{if $hasOneToManyRelationship}}, exists{{end}})
 }
 
 // Joiner returns an object to be used in a join operation with {{$name}}
@@ -691,8 +691,8 @@ func (b *{{$.Public}}SelectBuilder) Context(ctx context.Context) *{{$.Public}}Se
 // scan an SQL row to a {{$name}} struct
 // It returns the scanned {{$.Graph.Type.Ext $.Graph.Type.Package}} and the number of scanned fields,
 // and an error in case of failure.
-func (s *{{$.Public}}SelectBuilder) scan(dialect string, vals []driver.Value{{if $.Graph.Type.HasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Graph.Type.Package}}{{end}}) (*{{$.Graph.Type.Ext $.Graph.Type.Package}}, int, error) {
-    item, n, err := s.scanCount(dialect, vals{{if $.Graph.Type.HasOneToManyRelation}}, exists{{end}})
+func (s *{{$.Public}}SelectBuilder) scan(dialect string, vals []driver.Value{{if $hasOneToManyRelationship}}, exists map[string]*{{$.Graph.Type.Ext $.Graph.Type.Package}}{{end}}) (*{{$.Graph.Type.Ext $.Graph.Type.Package}}, int, error) {
+    item, n, err := s.scanCount(dialect, vals{{if $hasOneToManyRelationship}}, exists{{end}})
     if err != nil {
         return nil, n, err
     }
@@ -700,11 +700,11 @@ func (s *{{$.Public}}SelectBuilder) scan(dialect string, vals []driver.Value{{if
 }
 
 // ScanCount scans an SQL row to a {{$name}}Count struct
-func (s *{{$.Public}}SelectBuilder) scanCount(dialect string, vals []driver.Value{{if $.Graph.Type.HasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Graph.Type.Package}}{{end}}) (*{{$name}}Count, int, error) {
+func (s *{{$.Public}}SelectBuilder) scanCount(dialect string, vals []driver.Value{{if $hasOneToManyRelationship}}, exists map[string]*{{$.Graph.Type.Ext $.Graph.Type.Package}}{{end}}) (*{{$name}}Count, int, error) {
     switch dialect {
     {{ range $_, $dialect := $.Dialects -}}
     case "{{$dialect.Name}}":
-        return s.scan{{$dialect.Name}}(vals{{if $.Graph.Type.HasOneToManyRelation}}, exists{{end}})
+        return s.scan{{$dialect.Name}}(vals{{if $hasOneToManyRelationship}}, exists{{end}})
     {{ end -}}
     default:
         return nil, 0, fmt.Errorf("unsupported dialect %s", dialect)
@@ -713,7 +713,7 @@ func (s *{{$.Public}}SelectBuilder) scanCount(dialect string, vals []driver.Valu
 
 {{ range $_, $dialect := $.Dialects }}
 // scan{{$dialect.Name}} scans {{$dialect.Name}} row to a {{$name}} struct
-func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{if $.Graph.Type.HasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Graph.Type.Package}}{{end}}) (*{{$name}}Count, int, error) {
+func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{if $hasOneToManyRelationship}}, exists map[string]*{{$.Graph.Type.Ext $.Graph.Type.Package}}{{end}}) (*{{$name}}Count, int, error) {
     var (
         row = new({{$name}}Count)
         i int
@@ -722,8 +722,7 @@ func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{
         all = s.params.SelectAll()
     )
     row.{{$name}} = new({{$name}})
-    {{ range $i, $f := $.Graph.Type.Fields -}}
-    {{ if not $f.IsReference -}}
+    {{ range $i, $f := $.Graph.Type.NonReferences -}}
     // scan column {{$i}}
     if all || s.params.Columns["{{$f.Column.Name}}"] {
         if i >= len(vals) {
@@ -733,8 +732,7 @@ func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{
             allNils = false
 {{ $dialect.ConvertValueCode $f -}}
         }
-        {{ if and $.Graph.Type.HasOneToManyRelation -}}
-        {{ if or $f.Unique $f.PrimaryKey -}}
+        {{ if and $hasOneToManyRelationship (or $f.Unique $f.PrimaryKey) -}}
         // check if we scanned this item in previous rows. If we did, set `rowExists`,
         // so other columns in this table won't be evaluated. We only need values
         // from other tables.
@@ -742,10 +740,8 @@ func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{
             rowExists = true
         }
         {{ end -}}
-        {{ end -}}
         i++
     }
-    {{ end -}}
     {{ end -}}
 
     if s.params.Count {
@@ -794,8 +790,7 @@ func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{
 
 type {{$.Public}}WhereBuilder struct {}
 
-{{ range $_, $f := $.Graph.Type.Fields -}}
-{{ if not $f.IsReference -}}
+{{ range $_, $f := $.Graph.Type.NonReferences -}}
 // {{$.Public}}Where{{$f.Name}} adds a condition on {{$f.Name}} to the WHERE statement
 func (*{{$.Public}}WhereBuilder) {{$f.Name}}(op runtime.Op, val {{$f.Type.Ext $.Graph.Type.Package}}) runtime.Where {
 	return runtime.NewWhere(op, "{{$f.Column.Name}}", val)
@@ -814,5 +809,4 @@ func (*{{$.Public}}WhereBuilder) {{$f.Name}}In(vals ...{{$f.Type.Ext $.Graph.Typ
 func (*{{$.Public}}WhereBuilder) {{$f.Name}}Between(low, high {{$f.Type.Ext $.Graph.Type.Package}}) runtime.Where {
 	return runtime.NewWhereBetween("{{$f.Column.Name}}", low, high)
 }
-{{ end -}}
 {{ end -}}
