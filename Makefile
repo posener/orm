@@ -1,11 +1,8 @@
 all: test
 
-.PHONY: b0x orm gen-tests test
+.PHONY: orm gen-tests test
 
-b0x:
-	go generate ./gen/...
-
-orm: b0x
+orm:
 	go build ./cmd/orm
 
 gen-tests: orm
