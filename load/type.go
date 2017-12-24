@@ -194,6 +194,17 @@ func (t *Naked) References() []*Field {
 	return refs
 }
 
+// NonReferences returns all non-reference fields
+func (t *Naked) NonReferences() []*Field {
+	var refs []*Field
+	for _, field := range t.Fields {
+		if !field.IsReference() {
+			refs = append(refs, field)
+		}
+	}
+	return refs
+}
+
 // ReferencedTypes returns a list of all referenced types from this type
 func (t *Naked) ReferencedTypes() []*Naked {
 	var m = map[string]*Naked{}

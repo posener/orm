@@ -10,6 +10,9 @@ import (
 )
 
 func TestRelationOneToOne(t *testing.T) {
+	if testing.Verbose() {
+		orm.GlobalLogger(t.Logf)
+	}
 	testDBs(t, func(t *testing.T, conn conn) {
 		aORM, _, cORM := orms(t, conn)
 
@@ -90,6 +93,9 @@ func TestRelationOneToOne(t *testing.T) {
 }
 
 func TestRelationOneToMany(t *testing.T) {
+	if testing.Verbose() {
+		orm.GlobalLogger(t.Logf)
+	}
 	testDBs(t, func(t *testing.T, conn conn) {
 		_, bORM, cORM := orms(t, conn)
 
@@ -165,6 +171,9 @@ func generateCs(t *testing.T, cORM CORM, bItem *B, count int) {
 }
 
 func TestRelationOneToOneNonPointerNested(t *testing.T) {
+	if testing.Verbose() {
+		orm.GlobalLogger(t.Logf)
+	}
 	testDBs(t, func(t *testing.T, conn conn) {
 		a, err := NewA2ORM(conn.name, conn)
 		require.Nil(t, err)
@@ -174,12 +183,6 @@ func TestRelationOneToOneNonPointerNested(t *testing.T) {
 		require.Nil(t, err)
 		d, err := NewD2ORM(conn.name, conn)
 		require.Nil(t, err)
-		if testing.Verbose() {
-			a.Logger(t.Logf)
-			b.Logger(t.Logf)
-			c.Logger(t.Logf)
-			d.Logger(t.Logf)
-		}
 
 		require.Nil(t, d.Create().Exec())
 		require.Nil(t, c.Create().Exec())
@@ -241,15 +244,14 @@ func TestRelationOneToOneNonPointerNested(t *testing.T) {
 }
 
 func TestBidirectionalOneToManyRelationship(t *testing.T) {
+	if testing.Verbose() {
+		orm.GlobalLogger(t.Logf)
+	}
 	testDBs(t, func(t *testing.T, conn conn) {
 		a, err := NewA3ORM(conn.name, conn)
 		require.Nil(t, err)
 		b, err := NewB3ORM(conn.name, conn)
 		require.Nil(t, err)
-		if testing.Verbose() {
-			a.Logger(t.Logf)
-			b.Logger(t.Logf)
-		}
 
 		require.Nil(t, a.Create().Exec())
 		require.Nil(t, b.Create().Exec())
@@ -295,15 +297,14 @@ func TestBidirectionalOneToManyRelationship(t *testing.T) {
 }
 
 func TestFieldsWithTheSameType(t *testing.T) {
+	if testing.Verbose() {
+		orm.GlobalLogger(t.Logf)
+	}
 	testDBs(t, func(t *testing.T, conn conn) {
 		a, err := NewA4ORM(conn.name, conn)
 		require.Nil(t, err)
 		b, err := NewB4ORM(conn.name, conn)
 		require.Nil(t, err)
-		if testing.Verbose() {
-			a.Logger(t.Logf)
-			b.Logger(t.Logf)
-		}
 
 		require.Nil(t, b.Create().Exec())
 		require.Nil(t, a.Create().Exec())
@@ -344,12 +345,12 @@ func TestFieldsWithTheSameType(t *testing.T) {
 }
 
 func TestSelfReferencing(t *testing.T) {
+	if testing.Verbose() {
+		orm.GlobalLogger(t.Logf)
+	}
 	testDBs(t, func(t *testing.T, conn conn) {
 		a, err := NewA5ORM(conn.name, conn)
 		require.Nil(t, err)
-		if testing.Verbose() {
-			a.Logger(t.Logf)
-		}
 
 		require.Nil(t, a.Create().Exec())
 
@@ -413,6 +414,9 @@ func insertA5(t *testing.T, a A5ORM, name string, left, right *A5) *A5 {
 }
 
 func TestMultiplePrimaryKeys(t *testing.T) {
+	if testing.Verbose() {
+		orm.GlobalLogger(t.Logf)
+	}
 	testDBs(t, func(t *testing.T, conn conn) {
 		if conn.name == "sqlite3" {
 			t.Skip("sqlite3 does not support string type primary keys")
@@ -421,10 +425,6 @@ func TestMultiplePrimaryKeys(t *testing.T) {
 		require.Nil(t, err)
 		b, err := NewB6ORM(conn.name, conn)
 		require.Nil(t, err)
-		if testing.Verbose() {
-			a.Logger(t.Logf)
-			b.Logger(t.Logf)
-		}
 
 		require.Nil(t, b.Create().Exec())
 		require.Nil(t, a.Create().Exec())
@@ -462,15 +462,14 @@ func TestMultiplePrimaryKeys(t *testing.T) {
 }
 
 func TestReferencingField(t *testing.T) {
+	if testing.Verbose() {
+		orm.GlobalLogger(t.Logf)
+	}
 	testDBs(t, func(t *testing.T, conn conn) {
 		a, err := NewA7ORM(conn.name, conn)
 		require.Nil(t, err)
 		b, err := NewB7ORM(conn.name, conn)
 		require.Nil(t, err)
-		if testing.Verbose() {
-			a.Logger(t.Logf)
-			b.Logger(t.Logf)
-		}
 
 		require.Nil(t, a.Create().Exec())
 		require.Nil(t, b.Create().Exec())
@@ -513,11 +512,6 @@ func orms(t *testing.T, conn conn) (AORM, BORM, CORM) {
 	require.Nil(t, err)
 	c, err := NewCORM(conn.name, conn)
 	require.Nil(t, err)
-	if testing.Verbose() {
-		a.Logger(t.Logf)
-		b.Logger(t.Logf)
-		c.Logger(t.Logf)
-	}
 
 	require.Nil(t, b.Create().Exec())
 	require.Nil(t, c.Create().Exec())
