@@ -1,7 +1,6 @@
 package runtime
 
-// Op is an SQL comparison operation
-type Op string
+import "github.com/posener/orm"
 
 // TableNamer is an interface for a model to change it's table name
 // a struct that implements this interface will set it's SQL table name by the return
@@ -17,21 +16,18 @@ type StatementArger interface {
 	Args() []interface{}
 }
 
-// OrderDir is direction in which a column can be ordered
-type OrderDir string
-
 // Order is a struct that is used for ORDER BY operations.
 // It holds the column name and the order direction.
 type Order struct {
 	Column string
-	Dir    OrderDir
+	Dir    orm.OrderDir
 }
 
 // Orders is a list of Order
 type Orders []Order
 
 // Add adds an order of a column and direction
-func (g *Orders) Add(name string, dir OrderDir) {
+func (g *Orders) Add(name string, dir orm.OrderDir) {
 	*g = append(*g, Order{Column: name, Dir: dir})
 }
 

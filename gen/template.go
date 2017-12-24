@@ -681,7 +681,7 @@ func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(joiner {{$.Private}}{{$f.Typ
 {{ end -}}
 
 // OrderBy set order to the query results according to column
-func (b *{{$.Public}}SelectBuilder) OrderBy(col {{$.Private}}Column, dir runtime.OrderDir) *{{$.Public}}SelectBuilder {
+func (b *{{$.Public}}SelectBuilder) OrderBy(col {{$.Private}}Column, dir orm.OrderDir) *{{$.Public}}SelectBuilder {
     b.params.Orders.Add(string(col), dir)
     return b
 }
@@ -802,7 +802,7 @@ type {{$.Public}}WhereBuilder struct {}
 
 {{ range $_, $f := $.Graph.Type.NonReferences -}}
 // {{$.Public}}Where{{$f.Name}} adds a condition on {{$f.Name}} to the WHERE statement
-func (*{{$.Public}}WhereBuilder) {{$f.Name}}(op runtime.Op, val {{$f.Type.Ext $pkg}}) runtime.Where {
+func (*{{$.Public}}WhereBuilder) {{$f.Name}}(op orm.Op, val {{$f.Type.Ext $pkg}}) runtime.Where {
 	return runtime.NewWhere(op, "{{$f.Column.Name}}", val)
 }
 

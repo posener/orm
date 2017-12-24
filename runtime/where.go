@@ -3,6 +3,8 @@ package runtime
 import (
 	"fmt"
 	"strings"
+
+	"github.com/posener/orm"
 )
 
 // Where is an API for creating WHERE statements
@@ -21,7 +23,7 @@ type where struct {
 }
 
 // NewWhere returns a new WHERE statement
-func NewWhere(op Op, variable string, value interface{}) Where {
+func NewWhere(op orm.Op, variable string, value interface{}) Where {
 	var w where
 	w.stmt = append(w.stmt, fmt.Sprintf("`{{.Table}}`.`%s` %s ?", variable, op))
 	w.args = append(w.args, value)

@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-
-	"github.com/posener/orm/runtime"
 )
 
 // Errors exported by ORM package
@@ -13,21 +11,27 @@ var (
 	ErrNotFound = errors.New("Not Found")
 )
 
+// Op is an SQL comparison operation
+type Op string
+
 // Operators for SQL WHERE statements
 const (
-	OpEq   runtime.Op = "="
-	OpNe   runtime.Op = "<>"
-	OpGt   runtime.Op = ">"
-	OpGE   runtime.Op = ">="
-	OpLt   runtime.Op = "<"
-	OpLE   runtime.Op = "<="
-	OpLike runtime.Op = "LIKE"
+	OpEq   Op = "="
+	OpNe   Op = "<>"
+	OpGt   Op = ">"
+	OpGE   Op = ">="
+	OpLt   Op = "<"
+	OpLE   Op = "<="
+	OpLike Op = "LIKE"
 )
+
+// OrderDir is direction in which a column can be ordered
+type OrderDir string
 
 // Directions for SQL ORDER BY statements
 const (
-	Asc  runtime.OrderDir = "ASC"
-	Desc runtime.OrderDir = "DESC"
+	Asc  OrderDir = "ASC"
+	Desc OrderDir = "DESC"
 )
 
 // DB is an interface of functions of sql.DB which are used by orm struct.
