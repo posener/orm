@@ -201,6 +201,14 @@ func (d *dialect) ifNotExists(ifNotExists bool) string {
 	return ""
 }
 
+// ifExists formats an SQL IF EXISTS statement
+func (d *dialect) ifExists(ifExists bool) string {
+	if ifExists {
+		return "IF EXISTS"
+	}
+	return ""
+}
+
 func (d *dialect) quoteSlice(s []string) []string {
 	for i := range s {
 		s[i] = d.Quote(s[i])

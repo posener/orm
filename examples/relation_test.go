@@ -50,6 +50,11 @@ func ExampleRelationship() {
 	otherManyORM, err := NewOtherManyORM("mysql", db)
 	panicOnErr(err)
 
+	// Drop existing table if exists from previous run
+	panicOnErr(otherManyORM.Drop().IfExists().Exec())
+	panicOnErr(oneORM.Drop().IfExists().Exec())
+	panicOnErr(otherOneORM.Drop().IfExists().Exec())
+
 	// Create the tables: order is important!
 	// When have a forward reference (one-to-one relationship) to another table, the other
 	// table should be created before.

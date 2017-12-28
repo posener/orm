@@ -362,7 +362,7 @@ func TestCount(t *testing.T) {
 	})
 }
 
-func TestCreateIfNotExists(t *testing.T) {
+func TestCreateDrop(t *testing.T) {
 	if testing.Verbose() {
 		orm.GlobalLogger(t.Logf)
 	}
@@ -370,6 +370,9 @@ func TestCreateIfNotExists(t *testing.T) {
 		db := personDB(t, conn)
 		assert.Nil(t, db.Create().IfNotExists().Exec())
 		assert.NotNil(t, db.Create().Exec())
+		assert.Nil(t, db.Drop().Exec())
+		assert.NotNil(t, db.Drop().Exec())
+		assert.Nil(t, db.Drop().IfExists().Exec())
 	})
 }
 
