@@ -33,7 +33,7 @@ type API interface {
 	Delete(*runtime.DeleteParams) (string, []interface{})
 	// Update returns the SQL UPDATE statement and arguments according to the given parameters
 	Update(*runtime.UpdateParams) (string, []interface{})
-	// Update returns the SQL UPDATE statement and arguments according to the given parameters
+	// Drop returns the SQL DROP statement and arguments according to the given parameters
 	Drop(*runtime.DropParams) (string, []interface{})
 }
 
@@ -209,7 +209,7 @@ func (d *dialect) Update(p *runtime.UpdateParams) (string, []interface{}) {
 	return stmt, args
 }
 
-// Update returns the SQL UPDATE statement and arguments according to the given parameters
+// Drop returns the SQL DROP statement and arguments according to the given parameters
 func (d *dialect) Drop(p *runtime.DropParams) (string, []interface{}) {
 	stmt := fmt.Sprintf("DROP TABLE %s %s",
 		d.ifExists(p.IfExists),
