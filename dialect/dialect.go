@@ -33,6 +33,8 @@ type API interface {
 	Delete(*runtime.DeleteParams) (string, []interface{})
 	// Update returns the SQL UPDATE statement and arguments according to the given parameters
 	Update(*runtime.UpdateParams) (string, []interface{})
+	// Update returns the SQL UPDATE statement and arguments according to the given parameters
+	Drop(*runtime.DropParams) (string, []interface{})
 }
 
 // Dialect is an interface for a dialect for generating ORM code
@@ -205,6 +207,15 @@ func (d *dialect) Update(p *runtime.UpdateParams) (string, []interface{}) {
 	}
 
 	return stmt, args
+}
+
+// Update returns the SQL UPDATE statement and arguments according to the given parameters
+func (d *dialect) Drop(p *runtime.DropParams) (string, []interface{}) {
+	stmt := fmt.Sprintf("DROP TABLE %s %s",
+		d.ifExists(p.IfExists),
+		d.Quote(p.Table),
+	)
+	return stmt, nil
 }
 
 // join extract SQL join list statement

@@ -39,7 +39,26 @@ import (
 // {{$.Private}}Table is SQL table name
 var {{$.Private}}Table = "{{$.Graph.Type.Table}}"
 
-var {{$.Private}}TableProperties = {{backtick $.Table.Marshal}}
+// {{$.Private}}TableProperties is a json representation of the table properties
+// used for table creation and migration.
+const {{$.Private}}TableProperties = {{backtick $.Table.Marshal}}
+
+// {{$.Private}}Column is for table column names
+type {{$.Private}}Column string
+
+const (
+    {{ range $_, $f := $.Graph.Type.NonReferences -}}
+    // {{$.Public}}Col{{$f.Name}} is used to select the {{$f.Name}} column in SELECT queries
+    {{$.Public}}Col{{$f.Name}} {{$.Private}}Column = "{{$f.Column.Name}}"
+    {{ end -}}
+)
+
+// {{$.Private}}OrderedColumns is an oredered list of all the columns in the table
+var {{$.Private}}OrderedColumns = []string{
+    {{ range $_, $f := $.Graph.Type.NonReferences -}}
+    string({{$.Public}}Col{{$f.Name}}),
+    {{ end -}}
+}
 
 func init() {
     var v interface{} = &{{$type}}{}
@@ -64,6 +83,8 @@ type {{$apiName}} interface {
     Delete() *{{$.Public}}DeleteBuilder
     // Where returns a builder to build a where statement to be used in a Where function
     Where() *{{$.Public}}WhereBuilder
+    // Drop returns a builder for dropping an SQL table
+    Drop() *{{$.Public}}DropBuilder
 
     {{ if $.Graph.Type.PrimaryKeys -}}
     // Get returns an object by primary key
@@ -114,21 +135,6 @@ func (c *{{$conn}}) Create() *{{$.Public}}CreateBuilder {
     }
 }
 
-type {{$.Private}}Column string
-
-const (
-    {{ range $_, $f := $.Graph.Type.NonReferences -}}
-    // {{$.Public}}Col{{$f.Name}} is used to select the {{$f.Name}} column in SELECT queries
-    {{$.Public}}Col{{$f.Name}} {{$.Private}}Column = "{{$f.Column.Name}}"
-    {{ end -}}
-)
-
-var {{$.Private}}OrderedColumns = []string{
-    {{ range $_, $f := $.Graph.Type.NonReferences -}}
-    string({{$.Public}}Col{{$f.Name}}),
-    {{ end -}}
-}
-
 // Select returns a builder of an SQL SELECT statement
 func (c *{{$conn}}) Select(cols ...{{$.Private}}Column) *{{$.Public}}SelectBuilder {
 	s := &{{$.Public}}SelectBuilder{
@@ -170,6 +176,16 @@ func (c *{{$conn}}) Delete() *{{$.Public}}DeleteBuilder {
 }
 
 // Where returns a builder of an SQL WHERE statement
+func (c *{{$conn}}) Drop() *{{$.Public}}DropBuilder {
+	return &{{$.Public}}DropBuilder{
+		params: runtime.DropParams{
+		    Table: {{$.Private}}Table,
+        },
+		conn: c,
+	}
+}
+
+// Drop returns a builder of an SQL DROP statement
 func (c *{{$conn}}) Where() *{{$.Public}}WhereBuilder {
 	return &{{$.Public}}WhereBuilder{}
 }
@@ -195,6 +211,7 @@ func (b *{{$.Public}}CreateBuilder) IfNotExists() *{{$.Public}}CreateBuilder {
 	b.params.IfNotExists = true
 	return b
 }
+
 // AutoMigrate sets auto-migration mode for table creation
 func (b *{{$.Public}}CreateBuilder) AutoMigrate() *{{$.Public}}CreateBuilder {
 	b.params.AutoMigrate = true
@@ -243,6 +260,22 @@ func (b *{{$.Public}}InsertBuilder) Insert{{$name}}(p *{{$type}}) *{{$.Public}}I
 	return b
 }
 
+{{ range $_, $f := $.Graph.Type.Fields -}}
+{{ if $f.IsSettable -}}
+// Set{{$f.Name}} sets value for column in the INSERT statement
+func (b *{{$.Public}}InsertBuilder) Set{{$f.Name}}(value {{if $f.IsReference}}*{{end}}{{$f.Type.Naked.Ext $pkg}}) *{{$.Public}}InsertBuilder {
+    {{ if $f.IsReference -}}
+	{{ range $i, $col := $f.Columns -}}
+	b.params.Assignments.Add("{{$col.Name}}", value.{{(index $f.Type.PrimaryKeys $i).Name}}, value)
+	{{ end -}}
+    {{ else -}}
+	b.params.Assignments.Add("{{$f.Column.Name}}", value, value)
+	{{ end -}}
+	return b
+}
+{{ end -}}
+{{ end -}}
+
 // === UpdateBuilder ===
 
 // {{$.Public}}UpdateBuilder builds SQL INSERT statement parameters
@@ -285,6 +318,22 @@ func (b *{{$.Public}}UpdateBuilder) Update{{$name}}(p *{{$type}}) *{{$.Public}}U
 	return b
 }
 
+{{ range $_, $f := $.Graph.Type.Fields -}}
+{{ if $f.IsSettable -}}
+// Set{{$f.Name}} sets value for column in the UPDATE statement
+func (b *{{$.Public}}UpdateBuilder) Set{{$f.Name}}(value {{if $f.IsReference}}*{{end}}{{$f.Type.Naked.Ext $pkg}}) *{{$.Public}}UpdateBuilder {
+    {{ if $f.IsReference -}}
+	{{ range $i, $col := $f.Columns -}}
+	b.params.Assignments.Add("{{$col.Name}}", value.{{(index $f.Type.PrimaryKeys $i).Name}}, value)
+	{{ end -}}
+    {{ else -}}
+	b.params.Assignments.Add("{{$f.Column.Name}}", value, value)
+	{{ end -}}
+	return b
+}
+{{ end -}}
+{{ end -}}
+
 // === DeleteBuilder ===
 
 // {{$.Public}}DeleteBuilder builds SQL DELETE statement parameters
@@ -305,38 +354,30 @@ func (b *{{$.Public}}DeleteBuilder) Context(ctx context.Context) *{{$.Public}}De
 	return b
 }
 
-// === Update/Insert fields ===
+// === DropBuilder ===
 
-{{ range $_, $f := $.Graph.Type.Fields -}}
-{{ if $f.IsSettable -}}
-// Set{{$f.Name}} sets value for column in the INSERT statement
-{{ $varName := "value" -}}
-func (b *{{$.Public}}InsertBuilder) Set{{$f.Name}}({{$varName}} {{if $f.IsReference}}*{{end}}{{$f.Type.Naked.Ext $pkg}}) *{{$.Public}}InsertBuilder {
-    {{ if $f.IsReference -}}
-	{{ range $i, $col := $f.Columns -}}
-	b.params.Assignments.Add("{{$col.Name}}", {{$varName}}.{{(index $f.Type.PrimaryKeys $i).Name}}, {{$varName}})
-	{{ end -}}
-    {{ else -}}
-	b.params.Assignments.Add("{{$f.Column.Name}}", {{$varName}}, {{$varName}})
-	{{ end -}}
+// {{$.Public}}DropBuilder builds an SQL DROP statement parameters
+type {{$.Public}}DropBuilder struct {
+	params runtime.DropParams
+	conn   *{{$conn}}
+}
+
+// IfExists sets IF NOT EXISTS for the CREATE SQL statement
+func (b *{{$.Public}}DropBuilder) IfExists() *{{$.Public}}DropBuilder {
+	b.params.IfExists = true
 	return b
 }
 
-// Set{{$f.Name}} sets value for column in the UPDATE statement
-func (b *{{$.Public}}UpdateBuilder) Set{{$f.Name}}({{$varName}} {{if $f.IsReference}}*{{end}}{{$f.Type.Naked.Ext $pkg}}) *{{$.Public}}UpdateBuilder {
-    {{ if $f.IsReference -}}
-	{{ range $i, $col := $f.Columns -}}
-	b.params.Assignments.Add("{{$col.Name}}", {{$varName}}.{{(index $f.Type.PrimaryKeys $i).Name}}, {{$varName}})
-	{{ end -}}
-    {{ else -}}
-	b.params.Assignments.Add("{{$f.Column.Name}}", {{$varName}}, {{$varName}})
-	{{ end -}}
+// Context sets the context for the SQL query
+func (b *{{$.Public}}DropBuilder) Context(ctx context.Context) *{{$.Public}}DropBuilder {
+	b.params.Ctx = ctx
 	return b
 }
-{{ end -}}
-{{ end -}}
 
 {{ if $.Graph.Type.PrimaryKeys -}}
+
+// === Get ===
+
 func (c *{{$conn}}) Get({{range $i, $pk := $.Graph.Type.PrimaryKeys}}key{{$i}} {{$pk.Type.Ext $pkg}},{{end}}) (*{{$type}}, error) {
     return c.Select().Where(
     {{- range $i, $pk := $.Graph.Type.PrimaryKeys -}}
@@ -568,9 +609,17 @@ func {{$.Private}}HashItem(item *{{$name}}) string {
 }
 {{ end -}}
 
+// Exec runs the drop statement on a given database.
+func (b *{{$.Public}}DropBuilder) Exec() error {
+	stmt, args := b.conn.dialect.Drop(&b.params)
+	b.conn.log("Drop: '%v' %v", stmt, args)
+	_, err := b.conn.db.ExecContext(runtime.ContextOrBackground(b.params.Ctx), stmt, args...)
+	return err
+}
+
 // {{$.Graph.Type.Naked.Name}}Joiner is an interface for joining a {{$name}} in a SELECT statement
 // in another type
-type {{$.Graph.Type.Naked.Name}}Joiner interface {
+type {{$name}}Joiner interface {
     Params() runtime.SelectParams
     Scan(dialect string, values []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$type}}{{end}}) (*{{$type}}, int, error)
 }

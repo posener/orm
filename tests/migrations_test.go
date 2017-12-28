@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"context"
 	"testing"
 
 	"github.com/posener/orm"
@@ -27,8 +26,9 @@ func TestMigrations(t *testing.T) {
 		require.Nil(t, err)
 		p, err := NewC2ORM(conn.name, conn) // for foreign key constraint
 		require.Nil(t, err)
-		_, err = conn.ExecContext(context.Background(), "DROP TABLE IF EXISTS migrations")
-		require.Nil(t, err)
+
+		// drop table if it already exists
+		require.Nil(t, m0.Drop().IfExists().Exec())
 
 		t.Logf("migration to 0")
 
