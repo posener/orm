@@ -8,7 +8,7 @@ import (
 
 // Errors exported by ORM package
 var (
-	ErrNotFound = errors.New("Not Found")
+	ErrNotFound = errors.New("not Found")
 )
 
 // Op is an SQL comparison operation
