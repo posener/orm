@@ -84,7 +84,7 @@ func main() {
 	// comparisons can be made, and they are checked in compile time.
 	// Query() returns the slice []Person, and an error object. Everything is typed!
 	persons, err := person.Select().
-		Where(person.Where().Name(orm.OpNe, "John")).
+		Where(person.Where().Name(orm.OpEq, "John")).
 		Query() // returns []tests.Person, typed return value.
 	println(persons[0].Age) // Output: 1
 	
