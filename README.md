@@ -32,23 +32,22 @@ is used in the arguments and in the return values.
 ```go
 import (
 	"log"
-	"database/sql"
 	
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/posener/orm"
 )
 
 func main() {
-	db, err := sql.Open("mysql", "user:password@(127.0.0.1:3306)/db")
+	db, err := orm.Open("mysql", "user:password@(127.0.0.1:3306)/db")
 	defer db.Close()
 	// NewPersonORM was generated with the `orm` command line.
 	// It returns an object that interacts with the database.
 	// This was generated for a struct:
 	// type Person struct {
-	// 	Name       string
-	// 	Age        int
+	//      Name       string
+	//      Age        int
 	// }
-	person, err := NewPersonORM("mysql", db)
+	person, err := NewPersonORM(db)
 	
 	// Set a logger to log SQL commands
 	person.Logger(log.Printf)

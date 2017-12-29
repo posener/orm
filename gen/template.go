@@ -97,10 +97,10 @@ type {{$apiName}} interface {
 }
 
 // New{{$apiName}} returns an conn object from a db instance
-func New{{$apiName}}(driverName string, db orm.DB) ({{$apiName}}, error) {
-	d := dialect.Get(driverName)
+func New{{$apiName}}(db orm.DB) ({{$apiName}}, error) {
+	d := dialect.Get(db.Driver())
 	if d == nil {
-		return nil, fmt.Errorf("dialect %s does not exists", driverName)
+		return nil, fmt.Errorf("dialect %s does not exists", db.Driver())
 	}
 	return &{{$conn}}{
 		dialect: d,

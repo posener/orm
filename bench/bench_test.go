@@ -7,6 +7,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"github.com/posener/orm"
 	"github.com/posener/orm/tests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,17 +15,17 @@ import (
 
 // BenchmarkORMInsert tests inserts with posener/orm package
 func BenchmarkORMInsert(b *testing.B) {
-	db, err := sql.Open("sqlite3", ":memory:")
+	db, err := orm.Open("sqlite3", ":memory:")
 	require.Nil(b, err)
 	defer db.Close()
-	orm, err := tests.NewPersonORM("sqlite3", db)
+	porm, err := tests.NewPersonORM(db)
 	require.Nil(b, err)
 
-	require.Nil(b, orm.Create().Exec())
+	require.Nil(b, porm.Create().Exec())
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err = orm.Insert().InsertPerson(&tests.Person{Name: "xxx", Age: i}).Exec()
+		_, err = porm.Insert().InsertPerson(&tests.Person{Name: "xxx", Age: i}).Exec()
 		assert.Nil(b, err)
 	}
 }
@@ -66,22 +67,22 @@ const datasetSize = 1000
 
 // BenchmarkORMQuery tests queries with posener/orm package
 func BenchmarkORMQuery(b *testing.B) {
-	db, err := sql.Open("sqlite3", ":memory:")
+	db, err := orm.Open("sqlite3", ":memory:")
 	require.Nil(b, err)
 	defer db.Close()
-	orm, err := tests.NewPersonORM("sqlite3", db)
+	porm, err := tests.NewPersonORM(db)
 	require.Nil(b, err)
 
-	require.Nil(b, orm.Create().Exec())
+	require.Nil(b, porm.Create().Exec())
 
 	for i := 0; i < datasetSize; i++ {
-		_, err = orm.Insert().InsertPerson(&tests.Person{Name: "xxx", Age: i}).Exec()
+		_, err = porm.Insert().InsertPerson(&tests.Person{Name: "xxx", Age: i}).Exec()
 		require.Nil(b, err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ps, err := orm.Select().Query()
+		ps, err := porm.Select().Query()
 		require.Nil(b, err)
 		assert.Equal(b, datasetSize, len(ps))
 	}
@@ -142,24 +143,24 @@ func BenchmarkRawQuery(b *testing.B) {
 
 // BenchmarkORMQueryLargeStruct tests large struct queries with posener/orm package
 func BenchmarkORMQueryLargeStruct(b *testing.B) {
-	db, err := sql.Open("sqlite3", ":memory:")
+	db, err := orm.Open("sqlite3", ":memory:")
 	require.Nil(b, err)
 	defer db.Close()
-	orm, err := tests.NewAllORM("sqlite3", db)
+	aorm, err := tests.NewAllORM(db)
 	require.Nil(b, err)
 
-	require.Nil(b, orm.Create().Exec())
+	require.Nil(b, aorm.Create().Exec())
 
 	tm := time.Now().Round(time.Millisecond).UTC()
 
 	for i := 0; i < datasetSize; i++ {
-		_, err = orm.Insert().InsertAll(&tests.All{String: "xxx", Select: i, Int: i, Time: tm, Bool: true, NotNil: "notnil"}).Exec()
+		_, err = aorm.Insert().InsertAll(&tests.All{String: "xxx", Select: i, Int: i, Time: tm, Bool: true, NotNil: "notnil"}).Exec()
 		require.Nil(b, err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		alls, err := orm.Select().Query()
+		alls, err := aorm.Select().Query()
 		require.Nil(b, err)
 		assert.Equal(b, datasetSize, len(alls))
 	}

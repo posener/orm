@@ -8,7 +8,7 @@ import (
 
 // Errors exported by ORM package
 var (
-	ErrNotFound = errors.New("not Found")
+	ErrNotFound = errors.New("not found")
 )
 
 // Op is an SQL comparison operation
@@ -40,6 +40,26 @@ type DB interface {
 	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
 	Close() error
 	BeginTx(context.Context, *sql.TxOptions) (*sql.Tx, error)
+	Driver() string
+}
+
+// Open returns a new database for orm libraries
+func Open(driverName, address string) (DB, error) {
+	sqlDB, err := sql.Open(driverName, address)
+	if err != nil {
+		return nil, err
+	}
+	return &db{DB: sqlDB, name: driverName}, nil
+}
+
+type db struct {
+	*sql.DB
+	name string
+}
+
+// Driver returns the driver name
+func (d *db) Driver() string {
+	return d.name
 }
 
 // Logger is a fmt.Printf - like function

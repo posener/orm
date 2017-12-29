@@ -20,23 +20,24 @@ import (
 func ExampleSimpleUsage() {
 	// GlobalLogger sets a logger to log SQL commands before being executed
 	orm.GlobalLogger(log.Printf)
-	db := conn()
-	if db == nil {
+	conn := conn()
+	if conn == nil {
 		return // mysql address was not defined
 	}
-	defer db.Close()
+	defer conn.Close()
 
 	// Create an ORM controller for the Simple struct
-	sorm, err := NewSimpleORM("mysql", db)
+	sorm, err := NewSimpleORM(conn)
 	panicOnErr(err)
+
+	// Drop table if exists
+	panicOnErr(sorm.Drop().IfExists().Exec())
 
 	// Create will create a new table
 	// IfNotExists will add an SQL "IF NOT EXISTS" statement, so that the
 	// CREATE statement won't fail in case that the table already exists.
 	// Invoking Exec() causes the create statement to be executed.
-	err = sorm.Create().
-		IfNotExists().
-		Exec()
+	err = sorm.Create().IfNotExists().Exec()
 	panicOnErr(err)
 
 	// Insert an item with a Simple object.
@@ -131,10 +132,10 @@ func ExampleSimpleUsage() {
 	// Output: simple1.ID: 1
 	// simple2.ID: 2
 	// getSimple2.ID: 2
-	// Error: Not Found
+	// Error: not found
 	// Select len: 2
 	// Select where len: 1
 	// Select group len: 1
 	// Updated: updated 1 true
-	// Should not be found: Not Found
+	// Should not be found: not found
 }
