@@ -21,9 +21,6 @@ var mySQLAddr = os.Getenv("MYSQL_ADDR")
 var dbNames = []string{"sqlite3", "mysql"}
 
 func TestTypes(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := allDB(t, conn)
 
@@ -87,9 +84,6 @@ func TestTypes(t *testing.T) {
 }
 
 func TestAutoIncrement(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := allDB(t, conn)
 
@@ -118,9 +112,6 @@ func TestAutoIncrement(t *testing.T) {
 }
 
 func TestFieldReservedName(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := allDB(t, conn)
 
@@ -165,9 +156,6 @@ var (
 )
 
 func TestPersonSelect(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := personDB(t, conn)
 
@@ -268,9 +256,6 @@ func TestPersonSelect(t *testing.T) {
 }
 
 func TestCRUD(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := personDB(t, conn)
 
@@ -311,9 +296,6 @@ func TestCRUD(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := personDB(t, conn)
 
@@ -365,9 +347,6 @@ func TestCount(t *testing.T) {
 }
 
 func TestCreateDrop(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := personDB(t, conn)
 		assert.Nil(t, db.Create().IfNotExists().Exec())
@@ -379,9 +358,6 @@ func TestCreateDrop(t *testing.T) {
 }
 
 func TestFirst(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := personDB(t, conn)
 
@@ -419,9 +395,6 @@ func TestFirst(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := allDB(t, conn)
 
@@ -451,9 +424,6 @@ func assertRowsAffected(t *testing.T, wantRows int64, result sql.Result) {
 }
 
 func TestNew(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	t.Parallel()
 	conn, err := orm.Open("sqlite3", ":memory:")
 	require.Nil(t, err)
@@ -517,6 +487,9 @@ func testDBs(t *testing.T, testFunc func(t *testing.T, conn orm.DB)) {
 			}
 
 			defer conn.Close()
+			if testing.Verbose() {
+				conn.Logger(t.Logf)
+			}
 			testFunc(t, conn)
 
 		})

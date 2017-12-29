@@ -9,12 +9,12 @@ import (
 )
 
 func TestMigrations(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		if conn.Driver() == "sqlite3" {
 			t.Skip("sqlite migrations is not supported")
+		}
+		if testing.Verbose() {
+			conn.Logger(t.Logf)
 		}
 		m0, err := NewMigration0ORM(conn)
 		require.Nil(t, err)

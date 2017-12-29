@@ -34,13 +34,20 @@ const (
 	Desc OrderDir = "DESC"
 )
 
-// DB is an interface of functions of sql.DB which are used by orm struct.
+// DB is SQL database interface
 type DB interface {
+	// *sql.DB APIs
 	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
 	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
-	Close() error
 	BeginTx(context.Context, *sql.TxOptions) (*sql.Tx, error)
+	Close() error
+
+	// Driver returns the SQL driver name
 	Driver() string
+	// Logger sets a logger for SQL queries
+	Logger(Logger)
+	// Logf write to logger
+	Logf(format string, args ...interface{})
 }
 
 // Open returns a new database for orm libraries
@@ -55,6 +62,7 @@ func Open(driverName, address string) (DB, error) {
 type db struct {
 	*sql.DB
 	name string
+	log  Logger
 }
 
 // Driver returns the driver name
@@ -62,12 +70,16 @@ func (d *db) Driver() string {
 	return d.name
 }
 
+func (d *db) Logger(log Logger) {
+	d.log = log
+}
+
+func (d *db) Logf(format string, args ...interface{}) {
+	if d.log == nil {
+		return
+	}
+	d.log(format, args...)
+}
+
 // Logger is a fmt.Printf - like function
 type Logger func(string, ...interface{})
-
-// GlobalLogger sets orm's global logger
-// Running this function in parallel to query execution will result in
-// race condition, please prepare the logger beforehand.
-func GlobalLogger(l Logger) {
-	log = l
-}

@@ -36,12 +36,13 @@ import (
 //	MyOneIs *One
 //}
 func ExampleRelationship() {
-	orm.GlobalLogger(log.Printf)
 	conn := conn()
 	if conn == nil {
 		return // mysql address was not defined
 	}
 	defer conn.Close()
+
+	conn.Logger(log.Printf)
 
 	oneORM, err := NewOneORM(conn)
 	panicOnErr(err)

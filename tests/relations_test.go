@@ -10,9 +10,6 @@ import (
 )
 
 func TestRelationOneToOne(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		aORM, _, cORM := orms(t, conn)
 
@@ -93,9 +90,6 @@ func TestRelationOneToOne(t *testing.T) {
 }
 
 func TestRelationOneToMany(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		_, bORM, cORM := orms(t, conn)
 
@@ -171,9 +165,6 @@ func generateCs(t *testing.T, cORM CORM, bItem *B, count int) {
 }
 
 func TestRelationOneToOneNonPointerNested(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		a, err := NewA2ORM(conn)
 		require.Nil(t, err)
@@ -244,9 +235,6 @@ func TestRelationOneToOneNonPointerNested(t *testing.T) {
 }
 
 func TestBidirectionalOneToManyRelationship(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		a, err := NewA3ORM(conn)
 		require.Nil(t, err)
@@ -297,9 +285,6 @@ func TestBidirectionalOneToManyRelationship(t *testing.T) {
 }
 
 func TestFieldsWithTheSameType(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		a, err := NewA4ORM(conn)
 		require.Nil(t, err)
@@ -345,9 +330,6 @@ func TestFieldsWithTheSameType(t *testing.T) {
 }
 
 func TestSelfReferencing(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		a, err := NewA5ORM(conn)
 		require.Nil(t, err)
@@ -414,9 +396,6 @@ func insertA5(t *testing.T, a A5ORM, name string, left, right *A5) *A5 {
 }
 
 func TestMultiplePrimaryKeys(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		if conn.Driver() == "sqlite3" {
 			t.Skip("sqlite3 does not support string type primary keys")
@@ -462,9 +441,6 @@ func TestMultiplePrimaryKeys(t *testing.T) {
 }
 
 func TestReferencingField(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		a, err := NewA7ORM(conn)
 		require.Nil(t, err)

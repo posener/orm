@@ -18,13 +18,14 @@ import (
 //	Field3 bool
 //}
 func ExampleSimpleUsage() {
-	// GlobalLogger sets a logger to log SQL commands before being executed
-	orm.GlobalLogger(log.Printf)
 	conn := conn()
 	if conn == nil {
 		return // mysql address was not defined
 	}
 	defer conn.Close()
+
+	// Logger sets a logger to log SQL commands before being executed
+	conn.Logger(log.Printf)
 
 	// Create an ORM controller for the Simple struct
 	sorm, err := NewSimpleORM(conn)

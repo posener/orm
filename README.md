@@ -47,10 +47,13 @@ func main() {
 	//      Name       string
 	//      Age        int
 	// }
-	person, err := NewPersonORM(db)
 	
 	// Set a logger to log SQL commands
-	person.Logger(log.Printf)
+	db.Logger(log.Printf)
+	
+	// Create an ORM object, an object to interact with a person table
+	// in a database.
+	person, err := NewPersonORM(db)
 	
 	// Create a table:
 	// The AutoMigrate modifier will cause the create table function to try and
