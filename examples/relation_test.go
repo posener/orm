@@ -36,18 +36,19 @@ import (
 //	MyOneIs *One
 //}
 func ExampleRelationship() {
-	orm.GlobalLogger(log.Printf)
-	db := conn()
-	if db == nil {
+	conn := conn()
+	if conn == nil {
 		return // mysql address was not defined
 	}
-	defer db.Close()
+	defer conn.Close()
 
-	oneORM, err := NewOneORM("mysql", db)
+	conn.Logger(log.Printf)
+
+	oneORM, err := NewOneORM(conn)
 	panicOnErr(err)
-	otherOneORM, err := NewOtherOneORM("mysql", db)
+	otherOneORM, err := NewOtherOneORM(conn)
 	panicOnErr(err)
-	otherManyORM, err := NewOtherManyORM("mysql", db)
+	otherManyORM, err := NewOtherManyORM(conn)
 	panicOnErr(err)
 
 	// Drop existing table if exists from previous run

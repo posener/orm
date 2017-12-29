@@ -10,13 +10,10 @@ import (
 )
 
 func TestRelationOneToOne(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
+	testDBs(t, func(t *testing.T, conn orm.DB) {
 		aORM, _, cORM := orms(t, conn)
 
-		if conn.name != "sqlite3" { // this is not enforced in sqlite3
+		if conn.Driver() != "sqlite3" { // this is not enforced in sqlite3
 			_, err := aORM.Insert().InsertA(&A{Name: "James", CPointer: &C{ID: -10}}).Exec()
 			require.NotNil(t, err)
 		}
@@ -93,10 +90,7 @@ func TestRelationOneToOne(t *testing.T) {
 }
 
 func TestRelationOneToMany(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
+	testDBs(t, func(t *testing.T, conn orm.DB) {
 		_, bORM, cORM := orms(t, conn)
 
 		b1, err := bORM.Insert().InsertB(&B{Name: "Marks", Hobbies: "drones"}).Exec()
@@ -171,17 +165,14 @@ func generateCs(t *testing.T, cORM CORM, bItem *B, count int) {
 }
 
 func TestRelationOneToOneNonPointerNested(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
-		a, err := NewA2ORM(conn.name, conn)
+	testDBs(t, func(t *testing.T, conn orm.DB) {
+		a, err := NewA2ORM(conn)
 		require.Nil(t, err)
-		b, err := NewB2ORM(conn.name, conn)
+		b, err := NewB2ORM(conn)
 		require.Nil(t, err)
-		c, err := NewC2ORM(conn.name, conn)
+		c, err := NewC2ORM(conn)
 		require.Nil(t, err)
-		d, err := NewD2ORM(conn.name, conn)
+		d, err := NewD2ORM(conn)
 		require.Nil(t, err)
 
 		require.Nil(t, d.Create().Exec())
@@ -244,13 +235,10 @@ func TestRelationOneToOneNonPointerNested(t *testing.T) {
 }
 
 func TestBidirectionalOneToManyRelationship(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
-		a, err := NewA3ORM(conn.name, conn)
+	testDBs(t, func(t *testing.T, conn orm.DB) {
+		a, err := NewA3ORM(conn)
 		require.Nil(t, err)
-		b, err := NewB3ORM(conn.name, conn)
+		b, err := NewB3ORM(conn)
 		require.Nil(t, err)
 
 		require.Nil(t, a.Create().Exec())
@@ -297,13 +285,10 @@ func TestBidirectionalOneToManyRelationship(t *testing.T) {
 }
 
 func TestFieldsWithTheSameType(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
-		a, err := NewA4ORM(conn.name, conn)
+	testDBs(t, func(t *testing.T, conn orm.DB) {
+		a, err := NewA4ORM(conn)
 		require.Nil(t, err)
-		b, err := NewB4ORM(conn.name, conn)
+		b, err := NewB4ORM(conn)
 		require.Nil(t, err)
 
 		require.Nil(t, b.Create().Exec())
@@ -345,11 +330,8 @@ func TestFieldsWithTheSameType(t *testing.T) {
 }
 
 func TestSelfReferencing(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
-		a, err := NewA5ORM(conn.name, conn)
+	testDBs(t, func(t *testing.T, conn orm.DB) {
+		a, err := NewA5ORM(conn)
 		require.Nil(t, err)
 
 		require.Nil(t, a.Create().Exec())
@@ -414,16 +396,13 @@ func insertA5(t *testing.T, a A5ORM, name string, left, right *A5) *A5 {
 }
 
 func TestMultiplePrimaryKeys(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
-		if conn.name == "sqlite3" {
+	testDBs(t, func(t *testing.T, conn orm.DB) {
+		if conn.Driver() == "sqlite3" {
 			t.Skip("sqlite3 does not support string type primary keys")
 		}
-		a, err := NewA6ORM(conn.name, conn)
+		a, err := NewA6ORM(conn)
 		require.Nil(t, err)
-		b, err := NewB6ORM(conn.name, conn)
+		b, err := NewB6ORM(conn)
 		require.Nil(t, err)
 
 		require.Nil(t, b.Create().Exec())
@@ -462,13 +441,10 @@ func TestMultiplePrimaryKeys(t *testing.T) {
 }
 
 func TestReferencingField(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
-		a, err := NewA7ORM(conn.name, conn)
+	testDBs(t, func(t *testing.T, conn orm.DB) {
+		a, err := NewA7ORM(conn)
 		require.Nil(t, err)
-		b, err := NewB7ORM(conn.name, conn)
+		b, err := NewB7ORM(conn)
 		require.Nil(t, err)
 
 		require.Nil(t, a.Create().Exec())
@@ -504,13 +480,13 @@ func TestReferencingField(t *testing.T) {
 	})
 }
 
-func orms(t *testing.T, conn conn) (AORM, BORM, CORM) {
+func orms(t *testing.T, conn orm.DB) (AORM, BORM, CORM) {
 	t.Helper()
-	a, err := NewAORM(conn.name, conn)
+	a, err := NewAORM(conn)
 	require.Nil(t, err)
-	b, err := NewBORM(conn.name, conn)
+	b, err := NewBORM(conn)
 	require.Nil(t, err)
-	c, err := NewCORM(conn.name, conn)
+	c, err := NewCORM(conn)
 	require.Nil(t, err)
 
 	require.Nil(t, b.Create().Exec())

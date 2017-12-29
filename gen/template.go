@@ -91,21 +91,17 @@ type {{$apiName}} interface {
 	// In case that the object was not found, it returns an error orm.ErrNotFound
 	Get({{range $_, $pk := $.Graph.Type.PrimaryKeys}}{{$pk.PrivateName}} {{$pk.Type.Ext $pkg}},{{end}}) (*{{$type}}, error)
 	{{ end -}}
-	// Logger sets a logger
-	// currently logs contain SQL queries before executing them
-	Logger(orm.Logger)
 }
 
 // New{{$apiName}} returns an conn object from a db instance
-func New{{$apiName}}(driverName string, db orm.DB) ({{$apiName}}, error) {
-	d := dialect.Get(driverName)
+func New{{$apiName}}(db orm.DB) ({{$apiName}}, error) {
+	d := dialect.Get(db.Driver())
 	if d == nil {
-		return nil, fmt.Errorf("dialect %s does not exists", driverName)
+		return nil, fmt.Errorf("dialect %s does not exists", db.Driver())
 	}
 	return &{{$conn}}{
 		dialect: d,
 		db: db,
-		logger: orm.Logf,
 	}, nil
 }
 
@@ -116,12 +112,6 @@ func New{{$apiName}}(driverName string, db orm.DB) ({{$apiName}}, error) {
 type {{$conn}} struct {
 	dialect dialect.API
 	db      orm.DB
-	logger  orm.Logger
-}
-
-// Logger sets a logger to the conn package
-func (c *{{$conn}}) Logger(logger orm.Logger) {
-	c.logger = logger
 }
 
 // Create returns a builder of an SQL CREATE statement
@@ -188,14 +178,6 @@ func (c *{{$conn}}) Drop() *{{$.Public}}DropBuilder {
 // Drop returns a builder of an SQL DROP statement
 func (c *{{$conn}}) Where() *{{$.Public}}WhereBuilder {
 	return &{{$.Public}}WhereBuilder{}
-}
-
-// log if a logger was set
-func (c *{{$conn}}) log(s string, args ...interface{}) {
-	if c.logger == nil {
-		return
-	}
-	c.logger(s, args...)
 }
 
 // === CreateBuilder ===
@@ -405,7 +387,7 @@ func (b *{{$.Public}}CreateBuilder) Exec() error {
 	if len(stmts) == 0 {
 		return nil
 	}
-	b.conn.log("Create: '%v'", strings.Join(stmts, "; "))
+	b.conn.db.Logf("Create: '%v'", strings.Join(stmts, "; "))
 	tx, err := b.conn.db.BeginTx(b.params.Ctx, nil)
 	if err != nil {
 		return err
@@ -423,7 +405,7 @@ func (b *{{$.Public}}CreateBuilder) Exec() error {
 // query is used by the Select.Query and Select.Limit functions
 func (b *{{$.Public}}SelectBuilder) query() (*sql.Rows, error) {
 	stmt, args := b.conn.dialect.Select(&b.params)
-	b.conn.log("Query: '%v' %v", stmt, args)
+	b.conn.db.Logf("Query: '%v' %v", stmt, args)
 	return b.conn.db.QueryContext(b.params.Ctx, stmt, args...)
 }
 
@@ -434,7 +416,7 @@ func (b *{{$.Public}}InsertBuilder) Exec() (*{{$type}}, error) {
 	}
 	b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
 	stmt, args := b.conn.dialect.Insert(&b.params)
-	b.conn.log("Insert: '%v' %v", stmt, args)
+	b.conn.db.Logf("Insert: '%v' %v", stmt, args)
 	res, err := b.conn.db.ExecContext(b.params.Ctx, stmt, args...)
 	if err != nil {
 		return nil, err
@@ -449,14 +431,14 @@ func (b *{{$.Public}}UpdateBuilder) Exec() (sql.Result, error) {
 	}
 	b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
 	stmt, args := b.conn.dialect.Update(&b.params)
-	b.conn.log("Update: '%v' %v", stmt, args)
+	b.conn.db.Logf("Update: '%v' %v", stmt, args)
 	return b.conn.db.ExecContext(b.params.Ctx, stmt, args...)
 }
 
 // Exec runs the delete statement on a given database.
 func (b *{{$.Public}}DeleteBuilder) Exec() (sql.Result, error) {
 	stmt, args := b.conn.dialect.Delete(&b.params)
-	b.conn.log("Delete: '%v' %v", stmt, args)
+	b.conn.db.Logf("Delete: '%v' %v", stmt, args)
 	return b.conn.db.ExecContext(runtime.ContextOrBackground(b.params.Ctx), stmt, args...)
 }
 
@@ -612,7 +594,7 @@ func {{$.Private}}HashItem(item *{{$name}}) string {
 // Exec runs the drop statement on a given database.
 func (b *{{$.Public}}DropBuilder) Exec() error {
 	stmt, args := b.conn.dialect.Drop(&b.params)
-	b.conn.log("Drop: '%v' %v", stmt, args)
+	b.conn.db.Logf("Drop: '%v' %v", stmt, args)
 	_, err := b.conn.db.ExecContext(runtime.ContextOrBackground(b.params.Ctx), stmt, args...)
 	return err
 }

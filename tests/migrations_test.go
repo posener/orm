@@ -9,22 +9,22 @@ import (
 )
 
 func TestMigrations(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
-		if conn.name == "sqlite3" {
+	testDBs(t, func(t *testing.T, conn orm.DB) {
+		if conn.Driver() == "sqlite3" {
 			t.Skip("sqlite migrations is not supported")
 		}
-		m0, err := NewMigration0ORM(conn.name, conn)
+		if testing.Verbose() {
+			conn.Logger(t.Logf)
+		}
+		m0, err := NewMigration0ORM(conn)
 		require.Nil(t, err)
-		m1, err := NewMigration1ORM(conn.name, conn)
+		m1, err := NewMigration1ORM(conn)
 		require.Nil(t, err)
-		m2, err := NewMigration2ORM(conn.name, conn)
+		m2, err := NewMigration2ORM(conn)
 		require.Nil(t, err)
-		m3, err := NewMigration3ORM(conn.name, conn)
+		m3, err := NewMigration3ORM(conn)
 		require.Nil(t, err)
-		p, err := NewC2ORM(conn.name, conn) // for foreign key constraint
+		p, err := NewC2ORM(conn) // for foreign key constraint
 		require.Nil(t, err)
 
 		// drop table if it already exists

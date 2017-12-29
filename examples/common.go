@@ -1,20 +1,21 @@
 package examples
 
 import (
-	"database/sql"
 	"os"
+
+	"github.com/posener/orm"
 )
 
-func conn() *sql.DB {
+func conn() orm.DB {
 	addr := os.Getenv("MYSQL_ADDR")
 	if addr == "" {
 		return nil
 	}
-	db, err := sql.Open("mysql", addr)
+	conn, err := orm.Open("mysql", addr)
 	if err != nil {
 		panic(err)
 	}
-	return db
+	return conn
 }
 
 func panicOnErr(err error) {

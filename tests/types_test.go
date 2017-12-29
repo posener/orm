@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"context"
+
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm"
@@ -19,10 +21,7 @@ var mySQLAddr = os.Getenv("MYSQL_ADDR")
 var dbNames = []string{"sqlite3", "mysql"}
 
 func TestTypes(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
+	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := allDB(t, conn)
 
 		a := &All{
@@ -85,10 +84,7 @@ func TestTypes(t *testing.T) {
 }
 
 func TestAutoIncrement(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
+	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := allDB(t, conn)
 
 		a1, err := db.Insert().SetNotNil("1").Exec()
@@ -116,10 +112,7 @@ func TestAutoIncrement(t *testing.T) {
 }
 
 func TestFieldReservedName(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
+	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := allDB(t, conn)
 
 		_, err := db.Insert().SetSelect(42).SetNotNil("not-nil").Exec()
@@ -163,10 +156,7 @@ var (
 )
 
 func TestPersonSelect(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
+	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := personDB(t, conn)
 
 		_, err := db.Insert().SetName(p1.Name).SetAge(p1.Age).Exec()
@@ -266,10 +256,7 @@ func TestPersonSelect(t *testing.T) {
 }
 
 func TestCRUD(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
+	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := personDB(t, conn)
 
 		// prepare dataset
@@ -309,10 +296,7 @@ func TestCRUD(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
+	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := personDB(t, conn)
 
 		for i := 0; i < 100; i++ {
@@ -363,10 +347,7 @@ func TestCount(t *testing.T) {
 }
 
 func TestCreateDrop(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
+	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := personDB(t, conn)
 		assert.Nil(t, db.Create().IfNotExists().Exec())
 		assert.NotNil(t, db.Create().Exec())
@@ -377,10 +358,7 @@ func TestCreateDrop(t *testing.T) {
 }
 
 func TestFirst(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
+	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := personDB(t, conn)
 
 		_, err := db.Select().First()
@@ -417,10 +395,7 @@ func TestFirst(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
-	testDBs(t, func(t *testing.T, conn conn) {
+	testDBs(t, func(t *testing.T, conn orm.DB) {
 		db := allDB(t, conn)
 
 		_, err := db.Get(1)
@@ -449,77 +424,73 @@ func assertRowsAffected(t *testing.T, wantRows int64, result sql.Result) {
 }
 
 func TestNew(t *testing.T) {
-	if testing.Verbose() {
-		orm.GlobalLogger(t.Logf)
-	}
 	t.Parallel()
-	db, err := sql.Open("sqlite3", ":memory:")
+	conn, err := orm.Open("sqlite3", ":memory:")
 	require.Nil(t, err)
-	defer db.Close()
+	defer conn.Close()
 
-	orm, err := NewPersonORM("sqlite3", db)
+	orm, err := NewPersonORM(conn)
 	require.Nil(t, err)
 
 	err = orm.Create().Exec()
 	require.Nil(t, err)
 }
 
-func personDB(t *testing.T, conn conn) PersonORM {
+func personDB(t *testing.T, conn orm.DB) PersonORM {
 	t.Helper()
-	db, err := NewPersonORM(conn.name, conn)
+	db, err := NewPersonORM(conn)
 	require.Nil(t, err)
 	err = db.Create().Exec()
 	require.Nil(t, err)
 	return db
 }
 
-func allDB(t *testing.T, conn conn) AllORM {
+func allDB(t *testing.T, conn orm.DB) AllORM {
 	t.Helper()
-	db, err := NewAllORM(conn.name, conn)
+	db, err := NewAllORM(conn)
 	require.Nil(t, err)
 	err = db.Create().Exec()
 	require.Nil(t, err)
 	return db
 }
 
-type conn struct {
-	name string
-	orm.DB
-}
-
-func testDBs(t *testing.T, testFunc func(t *testing.T, conn conn)) {
+func testDBs(t *testing.T, testFunc func(t *testing.T, conn orm.DB)) {
 	t.Helper()
 	for _, name := range dbNames {
 		t.Run(name, func(t *testing.T) {
 			var (
-				s   *sql.DB
-				err error
+				conn orm.DB
+				err  error
 			)
 			switch name {
 			case "mysql":
 				if mySQLAddr == "" {
 					t.Skipf("mysql environment is not set")
 				}
-				s, err = sql.Open(name, mySQLAddr)
+				ctx := context.Background()
+				conn, err = orm.Open(name, mySQLAddr)
 				require.Nil(t, err)
-				_, err = s.Exec("DROP DATABASE IF EXISTS test")
+				_, err = conn.ExecContext(ctx, "DROP DATABASE IF EXISTS test")
 				require.Nil(t, err)
-				_, err = s.Exec("CREATE DATABASE test")
+				_, err = conn.ExecContext(ctx, "CREATE DATABASE test")
 				require.Nil(t, err)
-				_, err = s.Exec("USE test")
+				_, err = conn.ExecContext(ctx, "USE test")
 				require.Nil(t, err)
 
 			case "sqlite3":
 				os.Remove("test.db")
-				s, err = sql.Open(name, "test.db")
+				conn, err = orm.Open(name, "test.db")
 				require.Nil(t, err)
 
 			default:
 				panic("unknown db")
 			}
 
-			defer s.Close()
-			testFunc(t, conn{name: name, DB: s})
+			defer conn.Close()
+			if testing.Verbose() {
+				conn.Logger(t.Logf)
+			}
+			testFunc(t, conn)
 
 		})
 	}
