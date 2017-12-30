@@ -1,4 +1,4 @@
-package examples
+package simple
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/posener/orm"
+	"github.com/posener/orm/examples"
 )
 
 // ExampleSimpleUsage
@@ -18,7 +19,7 @@ import (
 //	Field3 bool
 //}
 func ExampleSimpleUsage() {
-	conn := conn()
+	conn := examples.Conn("simple")
 	if conn == nil {
 		return // mysql address was not defined
 	}
@@ -29,17 +30,14 @@ func ExampleSimpleUsage() {
 
 	// Create an ORM controller for the Simple struct
 	sorm, err := NewSimpleORM(conn)
-	panicOnErr(err)
-
-	// Drop table if exists
-	panicOnErr(sorm.Drop().IfExists().Exec())
+	examples.PanicOnErr(err)
 
 	// Create will create a new table
 	// IfNotExists will add an SQL "IF NOT EXISTS" statement, so that the
 	// CREATE statement won't fail in case that the table already exists.
 	// Invoking Exec() causes the create statement to be executed.
 	err = sorm.Create().IfNotExists().Exec()
-	panicOnErr(err)
+	examples.PanicOnErr(err)
 
 	// Insert an item with a Simple object.
 	// Invoking Exec() causes the insert statement to be executed.
@@ -47,7 +45,7 @@ func ExampleSimpleUsage() {
 	simple1, err := sorm.Insert().
 		InsertSimple(&Simple{Field1: "simple 1", Field2: 12, Field3: true}).
 		Exec()
-	panicOnErr(err)
+	examples.PanicOnErr(err)
 
 	// The first object in the table gets id 1, since we chosen auto increment for
 	// this column.
@@ -63,7 +61,7 @@ func ExampleSimpleUsage() {
 		SetField2(12).
 		Context(context.Background()).
 		Exec()
-	panicOnErr(err)
+	examples.PanicOnErr(err)
 
 	// This time we expect the ID to be 2
 	fmt.Println("simple2.ID:", simple2.ID)
@@ -72,7 +70,7 @@ func ExampleSimpleUsage() {
 	// If we want a specific object, we can use the Get function, and give as argument
 	// the object's primary key or keys (in case of multiple primary keys)
 	getSimple2, err := sorm.Get(2)
-	panicOnErr(err)
+	examples.PanicOnErr(err)
 
 	// This time we expect the ID to be 2
 	fmt.Println("getSimple2.ID:", getSimple2.ID)
@@ -83,7 +81,7 @@ func ExampleSimpleUsage() {
 
 	// Listing objects is done with the Select function
 	simples, err := sorm.Select().Query()
-	panicOnErr(err)
+	examples.PanicOnErr(err)
 
 	// We expect the select length to be 2 since we inserted 2 rows
 	fmt.Println("Select len:", len(simples))
@@ -95,7 +93,7 @@ func ExampleSimpleUsage() {
 	simples, err = sorm.Select().
 		Where(sorm.Where().Field3(orm.OpEq, true)).
 		Query()
-	panicOnErr(err)
+	examples.PanicOnErr(err)
 
 	// We expect the select length to be 1 since only the 1st row agrees with the
 	// where conditions
@@ -115,17 +113,17 @@ func ExampleSimpleUsage() {
 		SetField1("updated").
 		SetField2(1).
 		Exec()
-	panicOnErr(err)
+	examples.PanicOnErr(err)
 
 	// Check the new values:
 	simple1Updated, err := sorm.Get(1)
-	panicOnErr(err)
+	examples.PanicOnErr(err)
 
 	fmt.Println("Updated:", simple1Updated.Field1, simple1Updated.Field2, simple1Updated.Field3)
 
 	// Delete a row:
 	_, err = sorm.Delete().Where(sorm.Where().Field1(orm.OpEq, "updated")).Exec()
-	panicOnErr(err)
+	examples.PanicOnErr(err)
 
 	_, err = sorm.Get(1)
 	fmt.Println("Should not be found:", err.Error())
