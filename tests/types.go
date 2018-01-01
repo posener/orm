@@ -3,6 +3,7 @@ package tests
 import "time"
 
 //go:generate ../orm -type Person,Employee,All
+//go:generate ../orm -type Person -out ./external
 
 // Person for testing
 type Person struct {
