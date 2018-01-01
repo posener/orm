@@ -440,6 +440,52 @@ func TestMultiplePrimaryKeys(t *testing.T) {
 	})
 }
 
+func TestMultiplePrimaryKeysOneToMany(t *testing.T) {
+	testDBs(t, func(t *testing.T, conn orm.DB) {
+		if conn.Driver() == "sqlite3" {
+			t.Skip("sqlite3 does not support string type primary keys")
+		}
+		b, err := NewB6ORM(conn)
+		require.Nil(t, err)
+		c, err := NewC6ORM(conn)
+		require.Nil(t, err)
+
+		require.Nil(t, b.Create().Exec())
+		require.Nil(t, c.Create().Exec())
+
+		b1, err := b.Insert().SetSureName("Jackson").SetFirstName("Michael").Exec()
+		require.Nil(t, err)
+
+		_, err = c.Insert().SetName("1").SetB(*b1).Exec()
+		require.Nil(t, err)
+		_, err = c.Insert().SetName("2").SetB(*b1).Exec()
+		require.Nil(t, err)
+		_, err = c.Insert().SetName("3").SetB(*b1).Exec()
+		require.Nil(t, err)
+
+		cs, err := c.Select().JoinB(b.Select().Joiner()).Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 3, len(cs)) {
+			for i, c := range cs {
+				assert.Equal(t, fmt.Sprintf("%d", i+1), c.Name)
+				assert.Equal(t, *b1, c.B)
+			}
+		}
+
+		bs, err := b.Select().JoinCs(c.Select().Joiner()).Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(bs)) {
+			assert.Equal(t, "Jackson", bs[0].SureName)
+			if assert.Equal(t, 3, len(bs[0].Cs)) {
+				for i, c := range bs[0].Cs {
+					assert.Equal(t, fmt.Sprintf("%d", i+1), c.Name)
+					assert.Equal(t, B6{}, c.B)
+				}
+			}
+		}
+	})
+}
+
 func TestReferencingField(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn orm.DB) {
 		a, err := NewA7ORM(conn)

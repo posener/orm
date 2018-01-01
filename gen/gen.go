@@ -26,7 +26,7 @@ func init() {
 // TemplateData arguments for the templates
 type TemplateData struct {
 	// The name	of the new created package
-	Graph    *graph.Graph // TODO: rename Type to Graph
+	Graph    *graph.Graph
 	Dialects []dialect.API
 	Public   string
 	Private  string

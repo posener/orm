@@ -2,6 +2,7 @@ package gen
 
 import (
 	"fmt"
+	"strings"
 	"text/template"
 )
 
@@ -9,6 +10,7 @@ var tpl = template.Must(template.New("").
 	Funcs(template.FuncMap{
 		"plus1":    func(x int) int { return x + 1 },
 		"backtick": func(s string) string { return fmt.Sprintf("`%s`", s) },
+		"repeat":   func(s string, n int) string { return strings.Repeat(s, n) },
 	}).Parse(`
 {{ $name := $.Graph.Type.Name -}}
 {{ $type := $.Graph.Type.Naked.Ext $.Package -}}
@@ -244,7 +246,7 @@ func (b *{{$.Public}}InsertBuilder) Insert{{$name}}(p *{{$type}}) *{{$.Public}}I
 {{ range $_, $f := $.Graph.Type.Fields -}}
 {{ if $f.IsSettable -}}
 // Set{{$f.Name}} sets value for column in the INSERT statement
-func (b *{{$.Public}}InsertBuilder) Set{{$f.Name}}(value {{if $f.IsReference}}*{{end}}{{$f.Type.Naked.Ext $.Package}}) *{{$.Public}}InsertBuilder {
+func (b *{{$.Public}}InsertBuilder) Set{{$f.Name}}(value {{$f.Type.Ext $.Package}}) *{{$.Public}}InsertBuilder {
 	{{ if $f.IsReference -}}
 	{{ range $i, $col := $f.Columns -}}
 	b.params.Assignments.Add("{{$col.Name}}", value.{{(index $f.Type.PrimaryKeys $i).Name}}, value)
@@ -302,7 +304,7 @@ func (b *{{$.Public}}UpdateBuilder) Update{{$name}}(p *{{$type}}) *{{$.Public}}U
 {{ range $_, $f := $.Graph.Type.Fields -}}
 {{ if $f.IsSettable -}}
 // Set{{$f.Name}} sets value for column in the UPDATE statement
-func (b *{{$.Public}}UpdateBuilder) Set{{$f.Name}}(value {{if $f.IsReference}}*{{end}}{{$f.Type.Naked.Ext $.Package}}) *{{$.Public}}UpdateBuilder {
+func (b *{{$.Public}}UpdateBuilder) Set{{$f.Name}}(value {{$f.Type.Ext $.Package}}) *{{$.Public}}UpdateBuilder {
 	{{ if $f.IsReference -}}
 	{{ range $i, $col := $f.Columns -}}
 	b.params.Assignments.Add("{{$col.Name}}", value.{{(index $f.Type.PrimaryKeys $i).Name}}, value)
@@ -564,8 +566,10 @@ func {{$.Private}}ReturnObject(assignments runtime.Assignments, res sql.Result) 
 	for _, assign := range assignments {
 		switch assign.Column {
 		{{ range $_, $f := $.Graph.Type.Fields -}}
+		{{ if not $f.Type.Slice -}}
 		case "{{(index $f.Columns 0).Name}}":
 			ret.{{$f.AccessName}} = assign.OriginalValue.({{$f.Type.Ext $.Package}})
+		{{ end -}}
 		{{ end -}}
 		}
 	}
@@ -580,13 +584,12 @@ func {{$.Private}}ReturnObject(assignments runtime.Assignments, res sql.Result) 
 }
 
 {{ if $hasOneToManyRelation -}}
-// TODO: fix hash function
 func {{$.Private}}HashItem(item *{{$name}}) string {
-	var str string
-	{{ range $f := $.Graph.Type.PrimaryKeys -}}
-	str += fmt.Sprintf("%v", item.{{$f.AccessName}})
-	{{ end -}}
-	return str
+	return fmt.Sprintf("{{repeat "%v" (len $.Graph.Type.PrimaryKeys)}}",
+	{{- range $f := $.Graph.Type.PrimaryKeys -}}
+	{{if $f.Type.Pointer}}*{{end}}item.{{$f.AccessName}},
+	{{- end -}}
+	)
 }
 {{ end -}}
 
@@ -669,6 +672,7 @@ type {{$.Private}}{{$refType.Name}}Joiner interface {
 {{ range $_, $e := $.Graph.Out -}}
 {{ $f := $e.LocalField -}}
 // Join{{$f.Name}} add a join query for {{$f.Name}}
+// Based on a forward relation
 func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(joiner {{$.Private}}{{$f.Type.Name}}Joiner) *{{$.Public}}SelectBuilder {
 	b.scan{{$f.Name}} = joiner
 	b.params.Joins = append(b.params.Joins, runtime.JoinParams{
@@ -689,6 +693,7 @@ func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(joiner {{$.Private}}{{$f.Typ
 {{ range $_, $e := $.Graph.In -}}
 {{ $f := $e.LocalField -}}
 // Join{{$f.Name}} add a join query for {{$f.Name}}
+// Based on a reversed relation
 func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(joiner {{$.Private}}{{$f.Type.Name}}Joiner) *{{$.Public}}SelectBuilder {
 	b.scan{{$f.Name}} = joiner
 	b.params.Joins = append(b.params.Joins, runtime.JoinParams{
