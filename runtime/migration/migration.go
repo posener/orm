@@ -100,8 +100,8 @@ func options(f *load.Field) []string {
 }
 
 func foreignKey(outEdge graph.Edge) (cols []Column, fk ForeignKey) {
-	fk.Table = outEdge.RelationType().Table()
-	dstFields := outEdge.RelationType().PrimaryKeys
+	fk.Table = outEdge.RelationType.Table()
+	dstFields := outEdge.RelationType.PrimaryKeys
 	for i, col := range outEdge.SrcField.Columns() {
 		cols = append(cols, Column{
 			Name:   col.Name,

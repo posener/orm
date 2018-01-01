@@ -24,11 +24,8 @@ type Edge struct {
 	// SrcField is the source field from which the edge goes from.
 	// It can be in any node.
 	SrcField *load.Field
-}
 
-// RelationType is the type that the edge relates to.
-func (e *Edge) RelationType() *load.Type {
-	return &e.LocalField.Type
+	RelationType *load.Type
 }
 
 // New returns a graph with a given root type
@@ -49,8 +46,9 @@ func New(tp *load.Type) (*Graph, error) {
 		switch {
 		case field.IsForwardReference():
 			root.Out = append(root.Out, Edge{
-				SrcField:   field,
-				LocalField: field,
+				SrcField:     field,
+				LocalField:   field,
+				RelationType: &field.Type,
 			})
 
 		case field.IsReversedReference():
@@ -59,8 +57,9 @@ func New(tp *load.Type) (*Graph, error) {
 				return nil, fmt.Errorf("field %v: %v", field, err)
 			}
 			root.In = append(root.In, Edge{
-				SrcField:   srcField,
-				LocalField: field,
+				SrcField:     srcField,
+				LocalField:   field,
+				RelationType: tp,
 			})
 		}
 	}

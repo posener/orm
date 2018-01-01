@@ -456,11 +456,11 @@ func TestMultiplePrimaryKeysOneToMany(t *testing.T) {
 		b1, err := b.Insert().SetSureName("Jackson").SetFirstName("Michael").Exec()
 		require.Nil(t, err)
 
-		_, err = c.Insert().SetName("1").SetB(b1).Exec()
+		_, err = c.Insert().SetName("1").SetB(*b1).Exec()
 		require.Nil(t, err)
-		_, err = c.Insert().SetName("2").SetB(b1).Exec()
+		_, err = c.Insert().SetName("2").SetB(*b1).Exec()
 		require.Nil(t, err)
-		_, err = c.Insert().SetName("3").SetB(b1).Exec()
+		_, err = c.Insert().SetName("3").SetB(*b1).Exec()
 		require.Nil(t, err)
 
 		cs, err := c.Select().JoinB(b.Select().Joiner()).Query()
@@ -468,7 +468,7 @@ func TestMultiplePrimaryKeysOneToMany(t *testing.T) {
 		if assert.Equal(t, 3, len(cs)) {
 			for i, c := range cs {
 				assert.Equal(t, fmt.Sprintf("%d", i+1), c.Name)
-				assert.Equal(t, b1, c.B)
+				assert.Equal(t, *b1, c.B)
 			}
 		}
 
@@ -479,7 +479,7 @@ func TestMultiplePrimaryKeysOneToMany(t *testing.T) {
 			if assert.Equal(t, 3, len(bs[0].Cs)) {
 				for i, c := range bs[0].Cs {
 					assert.Equal(t, fmt.Sprintf("%d", i+1), c.Name)
-					assert.Nil(t, c.B)
+					assert.Equal(t, B6{}, c.B)
 				}
 			}
 		}
