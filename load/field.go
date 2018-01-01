@@ -51,13 +51,18 @@ type ForeignKey struct {
 }
 
 func newField(parent *Naked, i int) (*Field, error) {
+
 	stField := parent.st.Field(i)
 	if !stField.Exported() {
 		return nil, nil
 	}
-
 	log.Printf("loading field %s", stField.Name())
-
+	m := tags.Parse(parent.st.Tag(i))[tagSQLType]
+	if m != nil && len(m) == 1 {
+		if _, ok := m["-"]; ok {
+			return nil, nil
+		}
+	}
 	fieldType, err := New(stField.Type().String())
 	if err != nil {
 		return nil, fmt.Errorf("creating type %s: %s", stField.Type().String(), err)
@@ -76,7 +81,7 @@ func newField(parent *Naked, i int) (*Field, error) {
 		return nil, nil
 	}
 
-	err = f.parseTags(parent.st.Tag(i))
+	err = f.parseTags(m)
 	if err != nil {
 		return nil, fmt.Errorf("%s: parse tags: %s", f, err)
 	}
@@ -98,13 +103,8 @@ func (f *Field) Name() string {
 }
 
 // parseTags parses tags from a struct tags into a SQL struct.
-func (f *Field) parseTags(tag string) error {
-	if tag == "" {
-		return nil
-	}
-
-	tagsMap := tags.Parse(tag)
-	for key, value := range tagsMap[tagSQLType] {
+func (f *Field) parseTags(tag map[string]string) error {
+	for key, value := range tag {
 		switch key {
 		case "type":
 			var err error

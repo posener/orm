@@ -76,3 +76,9 @@ type All struct {
 	// test a case where field is a reserved name
 	Select int
 }
+
+// Ignore contains ignored fields.
+type Ignore struct {
+	ID   int64
+	Data map[string]interface{} `sql:"-"`
+}
