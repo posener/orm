@@ -67,7 +67,7 @@ func Gen(g *graph.Graph, out string, dialects []dialect.API) error {
 	ormFileName := strings.ToLower(g.Name + "_orm.go")
 	ormFilePath := filepath.Join(outDir, ormFileName)
 
-	log.Printf("Generating code for %s into %s", g.Type, ormFilePath)
+	log.Printf("Output for type %s to %s", g.Type.Ext(""), ormFilePath)
 
 	ormFile, err := os.Create(ormFilePath)
 	if err != nil {
@@ -78,8 +78,7 @@ func Gen(g *graph.Graph, out string, dialects []dialect.API) error {
 	if err = tpl.Execute(ormFile, data); err != nil {
 		return fmt.Errorf("executing template: %s", err)
 	}
-	format(ormFilePath)
-	return nil
+	return format(ormFilePath)
 }
 
 func packagePath(pkg string) (string, error) {
@@ -154,9 +153,10 @@ func outPkg(outDir string) (string, error) {
 	return pkgName, nil
 }
 
-func format(path string) {
+func format(path string) error {
 	_, err := exec.Command("goimports", "-w", path).CombinedOutput()
 	if err != nil {
-		log.Printf("Failed formatting package: %s", err)
+		return fmt.Errorf("failed formatting package: %s", err)
 	}
+	return nil
 }
