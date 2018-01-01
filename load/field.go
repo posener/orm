@@ -57,7 +57,7 @@ func newField(parent *Naked, i int) (*Field, error) {
 		return nil, nil
 	}
 	log.Printf("loading field %s", stField.Name())
-	m := parseTags(parent.st.Tag(i))
+	m := tags.Parse(parent.st.Tag(i))[tagSQLType]
 	if m != nil && len(m) == 1 {
 		if _, ok := m["-"]; ok {
 			return nil, nil
@@ -100,14 +100,6 @@ func newField(parent *Naked, i int) (*Field, error) {
 // distinct between a field with name 'Field' in StructA, the name will be 'StructBField'
 func (f *Field) Name() string {
 	return strings.Replace(f.AccessName, ".", "", -1)
-}
-
-func parseTags(tag string) map[string]string {
-	if tag == "" {
-		return nil
-	}
-	tagsMap := tags.Parse(tag)
-	return tagsMap[tagSQLType]
 }
 
 // parseTags parses tags from a struct tags into a SQL struct.
