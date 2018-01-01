@@ -55,6 +55,16 @@ func TestLoad(t *testing.T) {
 			},
 			wantImportPath: "github.com/posener/orm/tests",
 		},
+		{
+			typeName:      "../tests.Ignore",
+			wantName:      "Ignore",
+			wantFullName:  "tests.Ignore",
+			wantLocalName: "Ignore",
+			wantFields: []*Field{
+				{AccessName: "ID", Type: Type{Naked: &Naked{Name: "int64"}}},
+			},
+			wantImportPath: "github.com/posener/orm/tests",
+		},
 	}
 
 	for _, tt := range tests {

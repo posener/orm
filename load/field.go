@@ -97,14 +97,17 @@ func (f *Field) Name() string {
 	return strings.Replace(f.AccessName, ".", "", -1)
 }
 
-// parseTags parses tags from a struct tags into a SQL struct.
-func (f *Field) parseTags(tag string) error {
+func parseTags(tag string) map[string]string {
 	if tag == "" {
 		return nil
 	}
-
 	tagsMap := tags.Parse(tag)
-	for key, value := range tagsMap[tagSQLType] {
+	return tagsMap[tagSQLType]
+}
+
+// parseTags parses tags from a struct tags into a SQL struct.
+func (f *Field) parseTags(tag string) error {
+	for key, value := range parseTags(tag) {
 		switch key {
 		case "type":
 			var err error
