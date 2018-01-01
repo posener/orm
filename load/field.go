@@ -56,10 +56,8 @@ func newField(parent *Naked, i int) (*Field, error) {
 		return nil, nil
 	}
 	m := tags.Parse(parent.st.Tag(i))[tagSQLType]
-	if m != nil && len(m) == 1 {
-		if _, ok := m["-"]; ok {
-			return nil, nil
-		}
+	if _, ok := m["-"]; ok {
+		return nil, nil
 	}
 	fieldType, err := New(stField.Type().String())
 	if err != nil {
