@@ -20,11 +20,9 @@ decoding is faster when you know the target type.
 
 Check out the [examples](./examples).
 
-Running the orm command on the `Person` struct in the `tests` package with `sqlite3` dialect, 
-will create a `personsqlite3` package, with ORM functions for the given struct.
-
-By doing this, given a working database engine, `db`, you could perform database operations with
-ORM semantics.
+Running the orm command on the `Person` struct in the `tests` package, 
+will create a `person_orm.go` file, with ORM functions for the given struct.
+Those functions can interact with a database object created from `orm.Open` function.
 
 Notice that all operations are typed, `Age` is an `int`, `Name` is a `string`, the `tests.Person`
 is used in the arguments and in the return values.
