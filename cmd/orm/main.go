@@ -15,6 +15,7 @@ import (
 var (
 	options struct {
 		types stringSlice
+		out   string
 	}
 )
 
@@ -35,6 +36,7 @@ func init() {
         - <pkg> can be either package name (e.x 'github.com/repository/project/package')
           or relative path (e.x './' or '../package').
         - <type> should be the type name.`)
+	flag.StringVar(&options.out, "out", "", "Output package or directory. If empty the type package will be used as the output package.")
 	flag.Parse()
 }
 
@@ -63,7 +65,7 @@ func main() {
 		dialects := dialect.All()
 
 		log.Printf("Generating code")
-		err = gen.Gen(g, dialects)
+		err = gen.Gen(g, options.out, dialects)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("[%s] generate code: %s", typeName, err))
 		}

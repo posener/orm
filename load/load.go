@@ -27,7 +27,7 @@ var (
 	cacheLock   sync.Mutex
 )
 
-func loadProgram(importPath string) (*loader.Program, error) {
+func Program(importPath string) (*loader.Program, error) {
 	cacheLock.Lock()
 	defer cacheLock.Unlock()
 	if p := importCache[importPath]; p != nil {
@@ -51,7 +51,7 @@ func (t *Naked) loadStruct(importPath string) error {
 	if importPath == "" {
 		importPath = "./"
 	}
-	p, err := loadProgram(importPath)
+	p, err := Program(importPath)
 	if err != nil {
 		return fmt.Errorf("loading program: %s", err)
 	}
