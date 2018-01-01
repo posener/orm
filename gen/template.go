@@ -2,6 +2,7 @@ package gen
 
 import (
 	"fmt"
+	"strings"
 	"text/template"
 )
 
@@ -9,6 +10,7 @@ var tpl = template.Must(template.New("").
 	Funcs(template.FuncMap{
 		"plus1":    func(x int) int { return x + 1 },
 		"backtick": func(s string) string { return fmt.Sprintf("`%s`", s) },
+		"repeat":   func(s string, n int) string { return strings.Repeat(s, n) },
 	}).Parse(`
 {{ $name := $.Graph.Type.Name -}}
 {{ $type := $.Graph.Type.Naked.Ext $.Package -}}
@@ -580,13 +582,12 @@ func {{$.Private}}ReturnObject(assignments runtime.Assignments, res sql.Result) 
 }
 
 {{ if $hasOneToManyRelation -}}
-// TODO: fix hash function
 func {{$.Private}}HashItem(item *{{$name}}) string {
-	var str string
-	{{ range $f := $.Graph.Type.PrimaryKeys -}}
-	str += fmt.Sprintf("%v", item.{{$f.AccessName}})
-	{{ end -}}
-	return str
+	return fmt.Sprintf("{{repeat "%v" (len $.Graph.Type.PrimaryKeys)}}",
+	{{- range $f := $.Graph.Type.PrimaryKeys -}}
+	{{if $f.Type.Pointer}}*{{end}}item.{{$f.AccessName}},
+	{{- end -}}
+	)
 }
 {{ end -}}
 
