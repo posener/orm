@@ -89,12 +89,6 @@ func (t *Naked) LoadFields(levels int) error {
 		return nil
 	}
 	for i := 0; i < t.st.NumFields(); i++ {
-		m := parseTags(t.st.Tag(i))
-		if m != nil && len(m) == 1 {
-			if _, ok := m["-"]; ok {
-				continue
-			}
-		}
 		field, err := newField(t, i)
 		if err != nil {
 			return err
