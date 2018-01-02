@@ -2,6 +2,7 @@ package graph
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/posener/orm/load"
 )
@@ -37,7 +38,7 @@ func New(tp *load.Type) (*Graph, error) {
 	// This does not include embedded types, which are loaded infinitely deep.
 	err := tp.LoadFields(3)
 	if err != nil {
-		return nil, fmt.Errorf("loading fields: %s", err)
+		return nil, fmt.Errorf("Loading fields: %s", err)
 	}
 
 	root := &Graph{Type: tp}
@@ -45,22 +46,26 @@ func New(tp *load.Type) (*Graph, error) {
 	for _, field := range tp.Fields {
 		switch {
 		case field.IsForwardReference():
-			root.Out = append(root.Out, Edge{
+			edge := Edge{
 				SrcField:     field,
 				LocalField:   field,
 				RelationType: &field.Type,
-			})
+			}
+			log.Printf("Forward relation: by field %s to type %s", edge.LocalField, edge.LocalField.Type.Ext(""))
+			root.Out = append(root.Out, edge)
 
 		case field.IsReversedReference():
 			srcField, err := findReversedSrcField(field)
 			if err != nil {
 				return nil, fmt.Errorf("field %v: %v", field, err)
 			}
-			root.In = append(root.In, Edge{
+			edge := Edge{
 				SrcField:     srcField,
 				LocalField:   field,
 				RelationType: tp,
-			})
+			}
+			log.Printf("Reverse relation: Field %s is pointed by field %s", edge.LocalField, edge.SrcField)
+			root.In = append(root.In, edge)
 		}
 	}
 	return root, nil

@@ -48,14 +48,14 @@ func main() {
 	var errors []string
 
 	for _, typeName := range options.types {
-		log.Printf("Loading type")
+		log.Printf("Loading go code")
 		tp, err := load.New(typeName)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("[%s] load type: %s", typeName, err))
 			continue
 		}
 
-		log.Printf("Calculating graph")
+		log.Printf("Calculating relations graph")
 		g, err := graph.New(tp)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("[%s] setting relations: %s", typeName, err))

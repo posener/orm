@@ -51,17 +51,13 @@ type ForeignKey struct {
 }
 
 func newField(parent *Naked, i int) (*Field, error) {
-
 	stField := parent.st.Field(i)
 	if !stField.Exported() {
 		return nil, nil
 	}
-	log.Printf("loading field %s", stField.Name())
 	m := tags.Parse(parent.st.Tag(i))[tagSQLType]
-	if m != nil && len(m) == 1 {
-		if _, ok := m["-"]; ok {
-			return nil, nil
-		}
+	if _, ok := m["-"]; ok {
+		return nil, nil
 	}
 	fieldType, err := New(stField.Type().String())
 	if err != nil {
@@ -77,7 +73,7 @@ func newField(parent *Naked, i int) (*Field, error) {
 
 	// ignore slice of basic type - not supported
 	if f.Type.Slice && f.Type.IsBasic() {
-		log.Printf("Ignoring field %s: slice of a basic type is not supported", f.Name())
+		log.Printf("[WARN] Ignoring field %s: slice of a basic type is not supported", f.Name())
 		return nil, nil
 	}
 
@@ -88,7 +84,6 @@ func newField(parent *Naked, i int) (*Field, error) {
 
 	// set primary key for parent type
 	if f.PrimaryKey || f.Unique {
-		log.Printf("Field %s: set as primary key", f)
 		f.ParentType.PrimaryKeys = append(f.ParentType.PrimaryKeys, f)
 	}
 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go/importer"
 	"go/types"
-	"log"
 	"sync"
 
 	"golang.org/x/tools/go/loader"
@@ -44,7 +43,6 @@ func Program(importPath string) (*loader.Program, error) {
 
 // loadStruct loads struct information from go package
 func (t *Naked) loadStruct(importPath string) error {
-	log.Printf("Loading struct %s", t)
 	structName := t.Name
 
 	// if import path is not define, try to import from local directory
@@ -53,11 +51,10 @@ func (t *Naked) loadStruct(importPath string) error {
 	}
 	p, err := Program(importPath)
 	if err != nil {
-		return fmt.Errorf("loading program: %s", err)
+		return fmt.Errorf("load program: %s", err)
 	}
 
-	for pkgName, pkg := range p.Imported {
-		log.Printf("scanning package: %s", pkgName)
+	for _, pkg := range p.Imported {
 		for _, scope := range pkg.Scopes {
 			st := lookup(scope.Parent(), structName)
 			if st != nil {
