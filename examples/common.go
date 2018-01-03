@@ -8,7 +8,7 @@ import (
 	"github.com/posener/orm"
 )
 
-func Conn(dbName string) orm.DB {
+func Conn(dbName string) orm.Conn {
 	addr := os.Getenv("MYSQL_ADDR")
 	if addr == "" {
 		return nil

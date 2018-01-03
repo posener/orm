@@ -24,7 +24,7 @@ type API interface {
 	// Name returns the name of the dialect
 	Name() string
 	// Create returns the SQL CREATE statement and arguments according to the given parameters
-	Create(orm.DB, *runtime.CreateParams) ([]string, error)
+	Create(orm.Conn, *runtime.CreateParams) ([]string, error)
 	// Insert returns the SQL INSERT statement and arguments according to the given parameters
 	Insert(*runtime.InsertParams) (string, []interface{})
 	// Select returns the SQL SELECT statement and arguments according to the given parameters
@@ -79,7 +79,7 @@ type dialect struct {
 }
 
 // Create returns the SQL CREATE statement and arguments according to the given parameters
-func (d *dialect) Create(db orm.DB, p *runtime.CreateParams) ([]string, error) {
+func (d *dialect) Create(conn orm.Conn, p *runtime.CreateParams) ([]string, error) {
 	table := new(migration.Table)
 	err := table.UnMarshal(p.MarshaledTable)
 	if err != nil {
@@ -87,7 +87,7 @@ func (d *dialect) Create(db orm.DB, p *runtime.CreateParams) ([]string, error) {
 	}
 
 	if p.AutoMigrate {
-		stmts, ok, err := d.autoMigrate(p.Ctx, db, p.Table, table)
+		stmts, ok, err := d.autoMigrate(p.Ctx, conn, p.Table, table)
 		if err != nil {
 			return nil, fmt.Errorf("automigration: %s", err)
 		}
@@ -103,8 +103,8 @@ func (d *dialect) Create(db orm.DB, p *runtime.CreateParams) ([]string, error) {
 	return []string{stmt}, nil
 }
 
-func (d *dialect) autoMigrate(ctx context.Context, db orm.DB, tableName string, want *migration.Table) ([]string, bool, error) {
-	got, err := migration.Load(ctx, db, tableName)
+func (d *dialect) autoMigrate(ctx context.Context, conn orm.Conn, tableName string, want *migration.Table) ([]string, bool, error) {
+	got, err := migration.Load(ctx, conn, tableName)
 	if err != nil {
 		// XXX: Here we assume error is: table does not exists
 		// if it is not, we should return the error and not nil

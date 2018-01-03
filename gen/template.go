@@ -70,10 +70,7 @@ func init() {
 	}
 }
 
-// {{$apiName}} is the interface of the ORM object
-type {{$apiName}} interface {
-	// Create returns a builder for creating an SQL table
-	Create() *{{$.Public}}CreateBuilder
+type {{$.Private}}API interface {
 	// Select returns a builder for selecting rows from an SQL table
 	Select(...{{$.Private}}Column) *{{$.Public}}SelectBuilder
 	// Insert returns a builder for inserting a row to an SQL table
@@ -84,9 +81,6 @@ type {{$apiName}} interface {
 	Delete() *{{$.Public}}DeleteBuilder
 	// Where returns a builder to build a where statement to be used in a Where function
 	Where() *{{$.Public}}WhereBuilder
-	// Drop returns a builder for dropping an SQL table
-	Drop() *{{$.Public}}DropBuilder
-
 	{{ if $.Graph.Type.PrimaryKeys -}}
 	// Get returns an object by primary key
 	// In case that the object was not found, it returns an error orm.ErrNotFound
@@ -94,15 +88,33 @@ type {{$apiName}} interface {
 	{{ end -}}
 }
 
+// {{$apiName}} is the interface of the ORM object
+type {{$apiName}} interface {
+	{{$.Private}}API
+	// Begin begins an SQL transaction and returns the transaction ORM object
+	Begin(context.Context, *sql.TxOptions) ({{$apiName}}Tx, error)
+	// Create returns a builder for creating an SQL table
+	Create() *{{$.Public}}CreateBuilder
+	// Drop returns a builder for dropping an SQL table
+	Drop() *{{$.Public}}DropBuilder
+}
+
+// {{$apiName}} is the interface of the ORM object
+type {{$apiName}}Tx interface {
+	{{$.Private}}API
+	Commit() error
+	Rollback() error
+}
+
 // New{{$apiName}} returns an conn object from a db instance
-func New{{$apiName}}(db orm.DB) ({{$apiName}}, error) {
-	d := dialect.Get(db.Driver())
+func New{{$apiName}}(conn orm.Conn) ({{$apiName}}, error) {
+	d := dialect.Get(conn.Driver())
 	if d == nil {
-		return nil, fmt.Errorf("dialect %s does not exists", db.Driver())
+		return nil, fmt.Errorf("dialect %s does not exists", conn.Driver())
 	}
 	return &{{$conn}}{
+		Conn:    conn,
 		dialect: d,
-		db: db,
 	}, nil
 }
 
@@ -111,8 +123,19 @@ func New{{$apiName}}(db orm.DB) ({{$apiName}}, error) {
 // to this struct, are done by an instance of this object.
 // To get an instance of orm use Open or New functions.
 type {{$conn}} struct {
+	orm.Conn
 	dialect dialect.API
-	db      orm.DB
+}
+
+func (c *{{$conn}}) Begin(ctx context.Context, opt *sql.TxOptions) ({{$apiName}}Tx, error) {
+	tx, err := c.Conn.Begin(ctx, opt)
+	if err != nil {
+		return nil, err
+	}
+	return &{{$conn}}{
+		Conn:    tx,
+		dialect: c.dialect,
+	}, nil
 }
 
 // Create returns a builder of an SQL CREATE statement
@@ -381,15 +404,15 @@ func (c *{{$conn}}) Get({{range $i, $pk := $.Graph.Type.PrimaryKeys}}key{{$i}} {
 // Exec creates a table for the given struct
 func (b *{{$.Public}}CreateBuilder) Exec() error {
 	b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
-	stmts, err := b.conn.dialect.Create(b.conn.db, &b.params)
+	stmts, err := b.conn.dialect.Create(b.conn.Conn, &b.params)
 	if err != nil {
 		return err
 	}
 	if len(stmts) == 0 {
 		return nil
 	}
-	b.conn.db.Logf("Create: '%v'", strings.Join(stmts, "; "))
-	tx, err := b.conn.db.BeginTx(b.params.Ctx, nil)
+	b.conn.Logf("Create: '%v'", strings.Join(stmts, "; "))
+	tx, err := b.conn.Conn.Begin(b.params.Ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -406,8 +429,8 @@ func (b *{{$.Public}}CreateBuilder) Exec() error {
 // query is used by the Select.Query and Select.Limit functions
 func (b *{{$.Public}}SelectBuilder) query() (*sql.Rows, error) {
 	stmt, args := b.conn.dialect.Select(&b.params)
-	b.conn.db.Logf("Query: '%v' %v", stmt, args)
-	return b.conn.db.QueryContext(b.params.Ctx, stmt, args...)
+	b.conn.Logf("Query: '%v' %v", stmt, args)
+	return b.conn.QueryContext(b.params.Ctx, stmt, args...)
 }
 
 // Exec inserts the data to the given database
@@ -417,8 +440,8 @@ func (b *{{$.Public}}InsertBuilder) Exec() (*{{$type}}, error) {
 	}
 	b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
 	stmt, args := b.conn.dialect.Insert(&b.params)
-	b.conn.db.Logf("Insert: '%v' %v", stmt, args)
-	res, err := b.conn.db.ExecContext(b.params.Ctx, stmt, args...)
+	b.conn.Logf("Insert: '%v' %v", stmt, args)
+	res, err := b.conn.ExecContext(b.params.Ctx, stmt, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -432,15 +455,15 @@ func (b *{{$.Public}}UpdateBuilder) Exec() (sql.Result, error) {
 	}
 	b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
 	stmt, args := b.conn.dialect.Update(&b.params)
-	b.conn.db.Logf("Update: '%v' %v", stmt, args)
-	return b.conn.db.ExecContext(b.params.Ctx, stmt, args...)
+	b.conn.Logf("Update: '%v' %v", stmt, args)
+	return b.conn.ExecContext(b.params.Ctx, stmt, args...)
 }
 
 // Exec runs the delete statement on a given database.
 func (b *{{$.Public}}DeleteBuilder) Exec() (sql.Result, error) {
 	stmt, args := b.conn.dialect.Delete(&b.params)
-	b.conn.db.Logf("Delete: '%v' %v", stmt, args)
-	return b.conn.db.ExecContext(runtime.ContextOrBackground(b.params.Ctx), stmt, args...)
+	b.conn.Logf("Delete: '%v' %v", stmt, args)
+	return b.conn.ExecContext(runtime.ContextOrBackground(b.params.Ctx), stmt, args...)
 }
 
 // Query the database
@@ -596,8 +619,8 @@ func {{$.Private}}HashItem(item *{{$name}}) string {
 // Exec runs the drop statement on a given database.
 func (b *{{$.Public}}DropBuilder) Exec() error {
 	stmt, args := b.conn.dialect.Drop(&b.params)
-	b.conn.db.Logf("Drop: '%v' %v", stmt, args)
-	_, err := b.conn.db.ExecContext(runtime.ContextOrBackground(b.params.Ctx), stmt, args...)
+	b.conn.Logf("Drop: '%v' %v", stmt, args)
+	_, err := b.conn.ExecContext(runtime.ContextOrBackground(b.params.Ctx), stmt, args...)
 	return err
 }
 

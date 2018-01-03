@@ -8,12 +8,12 @@ import (
 )
 
 // Load loads a table from an existing database
-func Load(ctx context.Context, db orm.DB, tableName string) (*Table, error) {
-	columns, err := columns(ctx, db, tableName)
+func Load(ctx context.Context, conn orm.Conn, tableName string) (*Table, error) {
+	columns, err := columns(ctx, conn, tableName)
 	if err != nil {
 		return nil, fmt.Errorf("get table %s columns information: %s", tableName, err)
 	}
-	indices, err := indices(ctx, db, tableName)
+	indices, err := indices(ctx, conn, tableName)
 	if err != nil {
 		return nil, fmt.Errorf("get table %s indicies information: %s", tableName, err)
 	}
@@ -61,8 +61,8 @@ func Load(ctx context.Context, db orm.DB, tableName string) (*Table, error) {
 }
 
 // columns returns all columns of a table by doing an SQL query
-func columns(ctx context.Context, db orm.DB, tableName string) ([]column, error) {
-	rows, err := db.QueryContext(ctx, fmt.Sprintf("DESCRIBE `%s`", tableName))
+func columns(ctx context.Context, conn orm.Conn, tableName string) ([]column, error) {
+	rows, err := conn.QueryContext(ctx, fmt.Sprintf("DESCRIBE `%s`", tableName))
 	if err != nil {
 		return nil, err
 	}
@@ -78,8 +78,8 @@ func columns(ctx context.Context, db orm.DB, tableName string) ([]column, error)
 	return cols, nil
 }
 
-func indices(ctx context.Context, db orm.DB, tableName string) ([]index, error) {
-	rows, err := db.QueryContext(ctx, fmt.Sprintf("SHOW INDEX FROM `%s`", tableName))
+func indices(ctx context.Context, conn orm.Conn, tableName string) ([]index, error) {
+	rows, err := conn.QueryContext(ctx, fmt.Sprintf("SHOW INDEX FROM `%s`", tableName))
 	if err != nil {
 		return nil, err
 	}
