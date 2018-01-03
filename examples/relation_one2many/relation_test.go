@@ -49,9 +49,7 @@ func ExampleRelationOne2Many() {
 	// is a one-to-many relationship.
 	// Creating the tables in another order will return an error: "a foreign key constraint fails"
 	examples.PanicOnErr(oneORM.Create().Exec())
-	defer oneORM.Drop().IfExists().Exec()
 	examples.PanicOnErr(otherManyORM.Create().Exec())
-	defer otherManyORM.Drop().IfExists().Exec()
 
 	// create one rows, relate to other-one rows
 	// to add the relationship, just pass an object with the right primary keys filled in,
