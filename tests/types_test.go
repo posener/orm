@@ -9,6 +9,8 @@ import (
 
 	"context"
 
+	"strings"
+
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm"
@@ -21,7 +23,8 @@ var mySQLAddr = os.Getenv("MYSQL_ADDR")
 var dbNames = []string{"sqlite3", "mysql"}
 
 func TestTypes(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	t.Parallel()
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		db := allDB(t, conn)
 
 		a := &All{
@@ -84,7 +87,8 @@ func TestTypes(t *testing.T) {
 }
 
 func TestAutoIncrement(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	t.Parallel()
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		db := allDB(t, conn)
 
 		a1, err := db.Insert().SetNotNil("1").Exec()
@@ -112,7 +116,8 @@ func TestAutoIncrement(t *testing.T) {
 }
 
 func TestFieldReservedName(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	t.Parallel()
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		db := allDB(t, conn)
 
 		_, err := db.Insert().SetSelect(42).SetNotNil("not-nil").Exec()
@@ -156,7 +161,8 @@ var (
 )
 
 func TestPersonSelect(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	t.Parallel()
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		db := personDB(t, conn)
 
 		_, err := db.Insert().SetName(p1.Name).SetAge(p1.Age).Exec()
@@ -256,7 +262,8 @@ func TestPersonSelect(t *testing.T) {
 }
 
 func TestCRUD(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	t.Parallel()
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		db := personDB(t, conn)
 
 		// prepare dataset
@@ -296,7 +303,8 @@ func TestCRUD(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	t.Parallel()
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		db := personDB(t, conn)
 
 		for i := 0; i < 100; i++ {
@@ -347,7 +355,8 @@ func TestCount(t *testing.T) {
 }
 
 func TestCreateDrop(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	t.Parallel()
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		db := personDB(t, conn)
 		assert.Nil(t, db.Create().IfNotExists().Exec())
 		assert.NotNil(t, db.Create().Exec())
@@ -358,7 +367,8 @@ func TestCreateDrop(t *testing.T) {
 }
 
 func TestFirst(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	t.Parallel()
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		db := personDB(t, conn)
 
 		_, err := db.Select().First()
@@ -395,7 +405,8 @@ func TestFirst(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	t.Parallel()
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		db := allDB(t, conn)
 
 		_, err := db.Get(1)
@@ -436,7 +447,7 @@ func TestNew(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func personDB(t *testing.T, conn orm.DB) PersonORM {
+func personDB(t *testing.T, conn orm.Conn) PersonORM {
 	t.Helper()
 	db, err := NewPersonORM(conn)
 	require.Nil(t, err)
@@ -445,7 +456,7 @@ func personDB(t *testing.T, conn orm.DB) PersonORM {
 	return db
 }
 
-func allDB(t *testing.T, conn orm.DB) AllORM {
+func allDB(t *testing.T, conn orm.Conn) AllORM {
 	t.Helper()
 	db, err := NewAllORM(conn)
 	require.Nil(t, err)
@@ -454,12 +465,21 @@ func allDB(t *testing.T, conn orm.DB) AllORM {
 	return db
 }
 
-func testDBs(t *testing.T, testFunc func(t *testing.T, conn orm.DB)) {
+func testDBs(t *testing.T, testFunc func(t *testing.T, conn orm.Conn)) {
 	t.Helper()
+	replacer := strings.NewReplacer(
+		"/", "_",
+		`"`, "",
+		"'", "",
+		" ", "_",
+	)
 	for _, name := range dbNames {
+		name := name
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			databaseName := "orm_test_" + replacer.Replace(t.Name())
 			var (
-				conn orm.DB
+				conn orm.Conn
 				err  error
 			)
 			switch name {
@@ -470,16 +490,16 @@ func testDBs(t *testing.T, testFunc func(t *testing.T, conn orm.DB)) {
 				ctx := context.Background()
 				conn, err = orm.Open(name, mySQLAddr)
 				require.Nil(t, err)
-				_, err = conn.ExecContext(ctx, "DROP DATABASE IF EXISTS test")
+				_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP DATABASE IF EXISTS `%s`", databaseName))
 				require.Nil(t, err)
-				_, err = conn.ExecContext(ctx, "CREATE DATABASE test")
+				_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE `%s`", databaseName))
 				require.Nil(t, err)
-				_, err = conn.ExecContext(ctx, "USE test")
+				_, err = conn.ExecContext(ctx, fmt.Sprintf("USE `%s`", databaseName))
 				require.Nil(t, err)
 
 			case "sqlite3":
-				os.Remove("test.db")
-				conn, err = orm.Open(name, "test.db")
+				os.Remove(fmt.Sprintf("/tmp/%s.db", databaseName))
+				conn, err = orm.Open(name, fmt.Sprintf("/tmp/%s.db", databaseName))
 				require.Nil(t, err)
 
 			default:

@@ -9,7 +9,7 @@ import (
 )
 
 func TestMigrations(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		if conn.Driver() == "sqlite3" {
 			t.Skip("sqlite migrations is not supported")
 		}

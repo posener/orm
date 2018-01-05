@@ -10,7 +10,7 @@ import (
 )
 
 func TestRelationOneToOne(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		aORM, _, cORM := orms(t, conn)
 
 		if conn.Driver() != "sqlite3" { // this is not enforced in sqlite3
@@ -90,7 +90,7 @@ func TestRelationOneToOne(t *testing.T) {
 }
 
 func TestRelationOneToMany(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		_, bORM, cORM := orms(t, conn)
 
 		b1, err := bORM.Insert().InsertB(&B{Name: "Marks", Hobbies: "drones"}).Exec()
@@ -165,7 +165,7 @@ func generateCs(t *testing.T, cORM CORM, bItem *B, count int) {
 }
 
 func TestRelationOneToOneNonPointerNested(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		a, err := NewA2ORM(conn)
 		require.Nil(t, err)
 		b, err := NewB2ORM(conn)
@@ -235,7 +235,7 @@ func TestRelationOneToOneNonPointerNested(t *testing.T) {
 }
 
 func TestBidirectionalOneToManyRelationship(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		a, err := NewA3ORM(conn)
 		require.Nil(t, err)
 		b, err := NewB3ORM(conn)
@@ -285,7 +285,7 @@ func TestBidirectionalOneToManyRelationship(t *testing.T) {
 }
 
 func TestFieldsWithTheSameType(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		a, err := NewA4ORM(conn)
 		require.Nil(t, err)
 		b, err := NewB4ORM(conn)
@@ -330,7 +330,7 @@ func TestFieldsWithTheSameType(t *testing.T) {
 }
 
 func TestSelfReferencing(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		a, err := NewA5ORM(conn)
 		require.Nil(t, err)
 
@@ -396,7 +396,7 @@ func insertA5(t *testing.T, a A5ORM, name string, left, right *A5) *A5 {
 }
 
 func TestMultiplePrimaryKeys(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		if conn.Driver() == "sqlite3" {
 			t.Skip("sqlite3 does not support string type primary keys")
 		}
@@ -441,7 +441,7 @@ func TestMultiplePrimaryKeys(t *testing.T) {
 }
 
 func TestMultiplePrimaryKeysOneToMany(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		if conn.Driver() == "sqlite3" {
 			t.Skip("sqlite3 does not support string type primary keys")
 		}
@@ -487,7 +487,7 @@ func TestMultiplePrimaryKeysOneToMany(t *testing.T) {
 }
 
 func TestReferencingField(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		a, err := NewA7ORM(conn)
 		require.Nil(t, err)
 		b, err := NewB7ORM(conn)
@@ -526,7 +526,7 @@ func TestReferencingField(t *testing.T) {
 	})
 }
 
-func orms(t *testing.T, conn orm.DB) (AORM, BORM, CORM) {
+func orms(t *testing.T, conn orm.Conn) (AORM, BORM, CORM) {
 	t.Helper()
 	a, err := NewAORM(conn)
 	require.Nil(t, err)

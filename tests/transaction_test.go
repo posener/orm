@@ -10,10 +10,12 @@ import (
 )
 
 func TestTransactions(t *testing.T) {
-	testDBs(t, func(t *testing.T, conn orm.DB) {
+	t.Parallel()
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		person, err := NewPersonORM(conn)
 		require.Nil(t, err)
 
+		require.Nil(t, person.Drop().IfExists().Exec())
 		require.Nil(t, person.Create().Exec())
 
 		ctx := context.Background()
@@ -28,7 +30,8 @@ func TestTransactions(t *testing.T) {
 		ps, err := person.Select().Query()
 		assert.Equal(t, 0, len(ps))
 
-		require.Nil(t, personTx.Commit())
+		err = personTx.Commit()
+		require.Nil(t, err)
 
 		ps, err = person.Select().Query()
 		assert.Equal(t, 1, len(ps))
