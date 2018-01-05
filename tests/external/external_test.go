@@ -11,7 +11,7 @@ import (
 
 // TestExternal tests an ORM generated with -out flag
 func TestExternal(t *testing.T) {
-	db, err := orm.Open("sqlite3", "mysql")
+	db, err := orm.Open("sqlite3", ":memory:")
 	require.Nil(t, err)
 	person, err := NewPersonORM(db)
 	require.Nil(t, err)
