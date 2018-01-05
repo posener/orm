@@ -411,7 +411,6 @@ func (b *{{$.Public}}CreateBuilder) Exec() error {
 	if len(stmts) == 0 {
 		return nil
 	}
-	b.conn.Logf("Create: '%v'", strings.Join(stmts, "; "))
 	tx, err := b.conn.Conn.Begin(b.params.Ctx, nil)
 	if err != nil {
 		return err
@@ -429,7 +428,6 @@ func (b *{{$.Public}}CreateBuilder) Exec() error {
 // query is used by the Select.Query and Select.Limit functions
 func (b *{{$.Public}}SelectBuilder) query() (*sql.Rows, error) {
 	stmt, args := b.conn.dialect.Select(&b.params)
-	b.conn.Logf("Query: '%v' %v", stmt, args)
 	return b.conn.QueryContext(b.params.Ctx, stmt, args...)
 }
 
@@ -440,7 +438,6 @@ func (b *{{$.Public}}InsertBuilder) Exec() (*{{$type}}, error) {
 	}
 	b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
 	stmt, args := b.conn.dialect.Insert(&b.params)
-	b.conn.Logf("Insert: '%v' %v", stmt, args)
 	res, err := b.conn.ExecContext(b.params.Ctx, stmt, args...)
 	if err != nil {
 		return nil, err
@@ -455,14 +452,12 @@ func (b *{{$.Public}}UpdateBuilder) Exec() (sql.Result, error) {
 	}
 	b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
 	stmt, args := b.conn.dialect.Update(&b.params)
-	b.conn.Logf("Update: '%v' %v", stmt, args)
 	return b.conn.ExecContext(b.params.Ctx, stmt, args...)
 }
 
 // Exec runs the delete statement on a given database.
 func (b *{{$.Public}}DeleteBuilder) Exec() (sql.Result, error) {
 	stmt, args := b.conn.dialect.Delete(&b.params)
-	b.conn.Logf("Delete: '%v' %v", stmt, args)
 	return b.conn.ExecContext(runtime.ContextOrBackground(b.params.Ctx), stmt, args...)
 }
 
@@ -619,7 +614,6 @@ func {{$.Private}}HashItem(item *{{$name}}) string {
 // Exec runs the drop statement on a given database.
 func (b *{{$.Public}}DropBuilder) Exec() error {
 	stmt, args := b.conn.dialect.Drop(&b.params)
-	b.conn.Logf("Drop: '%v' %v", stmt, args)
 	_, err := b.conn.ExecContext(runtime.ContextOrBackground(b.params.Ctx), stmt, args...)
 	return err
 }

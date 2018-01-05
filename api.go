@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"math/rand"
 )
 
 // Errors exported by ORM package
@@ -41,8 +43,6 @@ type Conn interface {
 	Driver() string
 	// Logger sets a logger for SQL queries
 	Logger(Logger)
-	// Logf write to logger
-	Logf(format string, args ...interface{})
 
 	// ExecContext executes an SQL statement
 	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
@@ -79,30 +79,47 @@ type conn struct {
 	*sql.Tx
 	name string
 	log  Logger
+	txID int
 }
 
 func (c *conn) Begin(ctx context.Context, opts *sql.TxOptions) (Conn, error) {
-	t, err := c.DB.BeginTx(ctx, opts)
+	tx, err := c.DB.BeginTx(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
-	tx := *c // copy connection object
-	tx.DB = nil
-	tx.Tx = t
-	return &tx, nil
+	conn := *c // copy connection object
+	conn.DB = nil
+	conn.Tx = tx
+	conn.txID = rand.Intn(9999)
+	c.logf(fmt.Sprintf("Tx[%d] started", conn.txID))
+	return &conn, nil
+}
+
+func (c *conn) Commit() error {
+	c.logf(fmt.Sprintf("Tx[%d] commit", c.txID))
+	return c.Tx.Commit()
+}
+
+func (c *conn) Rollback() error {
+	c.logf(fmt.Sprintf("Tx[%d] rollback", c.txID))
+	return c.Tx.Rollback()
 }
 
 func (c *conn) ExecContext(ctx context.Context, stmt string, args ...interface{}) (sql.Result, error) {
 	if c.Tx != nil {
+		c.logf("Tx[%d] exec: %s %s", c.txID, stmt, args)
 		return c.Tx.ExecContext(ctx, stmt, args...)
 	}
+	c.logf("Exec: %s %s", stmt, args)
 	return c.DB.ExecContext(ctx, stmt, args...)
 }
 
 func (c *conn) QueryContext(ctx context.Context, stmt string, args ...interface{}) (*sql.Rows, error) {
 	if c.Tx != nil {
+		c.logf("Tx[%d] query: %s %s", c.txID, stmt, args)
 		return c.Tx.QueryContext(ctx, stmt, args...)
 	}
+	c.logf("Query: %s %s", stmt, args)
 	return c.DB.QueryContext(ctx, stmt, args...)
 }
 
@@ -115,7 +132,7 @@ func (c *conn) Logger(log Logger) {
 	c.log = log
 }
 
-func (c *conn) Logf(format string, args ...interface{}) {
+func (c *conn) logf(format string, args ...interface{}) {
 	if c.log == nil {
 		return
 	}
