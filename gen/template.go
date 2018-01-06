@@ -70,9 +70,17 @@ func init() {
 	}
 }
 
+// {{$.Public}}SelectExecer executes select statements
+type {{$.Public}}SelectExecer interface {
+	Query() ([]{{$type}}, error)
+	Count() ([]{{$countStruct}}, error)
+	First() (*{{$type}}, error)
+	Joiner() {{$.Public}}Joiner
+}
+
 type {{$.Public}}API interface {
 	// Select returns a builder for selecting rows from an SQL table
-	Select(...{{$.Private}}OptSelect) *{{$.Public}}SelectExecer
+	Select(...{{$.Private}}OptSelect) {{$.Public}}SelectExecer
 	// Insert returns a builder for inserting a row to an SQL table
 	Insert() *{{$.Public}}InsertBuilder
 	// Update returns a builder for updating a row in an SQL table
@@ -148,11 +156,11 @@ func (c *{{$conn}}) Create() *{{$.Public}}CreateBuilder {
 	}
 }
 
-type {{$.Private}}OptSelect func(*{{$.Public}}SelectExecer)
+type {{$.Private}}OptSelect func(*{{$.Private}}Select)
 
 // Select returns a builder of an SQL SELECT statement
-func (c *{{$conn}}) Select(opts ...{{$.Private}}OptSelect) *{{$.Public}}SelectExecer {
-	s := &{{$.Public}}SelectExecer{
+func (c *{{$conn}}) Select(opts ...{{$.Private}}OptSelect) {{$.Public}}SelectExecer {
+	s := &{{$.Private}}Select{
 		params: runtime.SelectParams{
 			Table: {{$.Private}}Table,
 			OrderedColumns: {{$.Private}}OrderedColumns,
@@ -195,7 +203,7 @@ var {{$.Public}}Select = struct {
 	Context func(context.Context) {{$.Private}}OptSelect
 }{
 	Columns: func(cols ...{{$.Private}}Column) {{$.Private}}OptSelect {
-		return func(s *{{$.Public}}SelectExecer) {
+		return func(s *{{$.Private}}Select) {
 			s.params.Columns = make(map[string]bool, len(cols))
 			for _, col := range cols {
 				s.params.Columns[string(col)] = true
@@ -203,17 +211,17 @@ var {{$.Public}}Select = struct {
 		}
 	},
 	Where: func(where runtime.Where) {{$.Private}}OptSelect {
-		return func(s *{{$.Public}}SelectExecer) {
+		return func(s *{{$.Private}}Select) {
 			s.params.Where = where
 		}
 	},
 	Limit: func(limit int64) {{$.Private}}OptSelect {
-		return func(s *{{$.Public}}SelectExecer) {
+		return func(s *{{$.Private}}Select) {
 			s.params.Page.Limit = limit
 		}
 	},
 	Page: func(offset, limit int64) {{$.Private}}OptSelect {
-		return func(s *{{$.Public}}SelectExecer) {
+		return func(s *{{$.Private}}Select) {
 			s.params.Page.Offset = offset
 			s.params.Page.Limit = limit
 		}
@@ -221,7 +229,7 @@ var {{$.Public}}Select = struct {
 	{{ range $_, $e := $.Graph.Out -}}
 	{{ $f := $e.LocalField -}}
 	Join{{$f.Name}}: func(joiner {{$.Private}}{{$f.Type.Name}}Joiner) {{$.Private}}OptSelect {
-		return func(s *{{$.Public}}SelectExecer) {
+		return func(s *{{$.Private}}Select) {
 			s.scan{{$f.Name}} = joiner
 			s.params.Joins = append(s.params.Joins, runtime.JoinParams{
 				Pairings: []runtime.Pairing{
@@ -240,7 +248,7 @@ var {{$.Public}}Select = struct {
 	{{ range $_, $e := $.Graph.In -}}
 	{{ $f := $e.LocalField -}}
 	Join{{$f.Name}}: func(joiner {{$.Private}}{{$f.Type.Name}}Joiner) {{$.Private}}OptSelect {
-		return func(s *{{$.Public}}SelectExecer) {
+		return func(s *{{$.Private}}Select) {
 			s.scan{{$f.Name}} = joiner
 			s.params.Joins = append(s.params.Joins, runtime.JoinParams{
 				Pairings: []runtime.Pairing{
@@ -257,24 +265,24 @@ var {{$.Public}}Select = struct {
 	},
 	{{ end -}}
 	OrderBy: func(col {{$.Private}}Column, dir orm.OrderDir) {{$.Private}}OptSelect {
-		return func(s *{{$.Public}}SelectExecer) {
+		return func(s *{{$.Private}}Select) {
 			s.params.Orders.Add(string(col), dir)
 		}
 	},
 	GroupBy: func(col {{$.Private}}Column) {{$.Private}}OptSelect {
-		return func(s *{{$.Public}}SelectExecer) {
+		return func(s *{{$.Private}}Select) {
 			s.params.Groups.Add(string(col))
 		}
 	},
 	Context: func(ctx context.Context) {{$.Private}}OptSelect {
-		return func(s *{{$.Public}}SelectExecer) {
+		return func(s *{{$.Private}}Select) {
 			s.params.Ctx = ctx
 		}
 	},
 }
 
 // Joiner returns an object to be used in a join operation with {{$name}}
-func (b *{{$.Public}}SelectExecer) Joiner() {{$.Public}}Joiner {
+func (b *{{$.Private}}Select) Joiner() {{$.Public}}Joiner {
 	return &{{$.Private}}Joiner{builder: b}
 }
 
@@ -549,7 +557,7 @@ func (b *{{$.Public}}CreateBuilder) Exec() error {
 }
 
 // query is used by the Select.Query and Select.Limit functions
-func (b *{{$.Public}}SelectExecer) query() (*sql.Rows, error) {
+func (b *{{$.Private}}Select) query() (*sql.Rows, error) {
 	stmt, args := b.conn.dialect.Select(&b.params)
 	return b.conn.QueryContext(b.params.Ctx, stmt, args...)
 }
@@ -585,7 +593,7 @@ func (b *{{$.Public}}DeleteBuilder) Exec() (sql.Result, error) {
 }
 
 // Query the database
-func (b *{{$.Public}}SelectExecer) Query() ([]{{$type}}, error) {
+func (b *{{$.Private}}Select) Query() ([]{{$type}}, error) {
 	b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
 	rows, err := b.query()
 	if err != nil {
@@ -630,7 +638,7 @@ func (b *{{$.Public}}SelectExecer) Query() ([]{{$type}}, error) {
 }
 
 // Count add a count column to the query
-func (b *{{$.Public}}SelectExecer) Count() ([]{{$countStruct}}, error) {
+func (b *{{$.Private}}Select) Count() ([]{{$countStruct}}, error) {
 	b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
 	b.params.Count = true
 	rows, err := b.query()
@@ -678,8 +686,8 @@ func (b *{{$.Public}}SelectExecer) Count() ([]{{$countStruct}}, error) {
 // First returns the first row that matches the query.
 // If no row matches the query, an ErrNotFound will be returned.
 // This call cancels any paging that was set with the
-// {{$.Public}}SelectExecer previously.
-func (b *{{$.Public}}SelectExecer) First() (*{{$type}}, error) {
+// {{$.Private}}Select previously.
+func (b *{{$.Private}}Select) First() (*{{$type}}, error) {
 	b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
 	b.params.Page.Limit = 1
 	b.params.Page.Offset = 0
@@ -754,8 +762,8 @@ type {{$countStruct}} struct {
 	Count int64
 }
 
-// {{$.Public}}SelectExecer builds an SQL SELECT statement parameters
-type {{$.Public}}SelectExecer struct {
+// {{$.Private}}Select builds an SQL SELECT statement parameters
+type {{$.Private}}Select struct {
 	params runtime.SelectParams
 	conn *{{$conn}}
 	{{ range $_, $f := $.Graph.Type.References -}}
@@ -765,7 +773,7 @@ type {{$.Public}}SelectExecer struct {
 
 // {{$.Private}}Joiner represents a builder that exposes only Params and Scan method
 type {{$.Private}}Joiner struct {
-	builder *{{$.Public}}SelectExecer
+	builder *{{$.Private}}Select
 }
 
 func (j *{{$.Private}}Joiner) Params() runtime.SelectParams {
@@ -779,7 +787,7 @@ func (j *{{$.Private}}Joiner) Scan(dialect string, values []driver.Value{{if $ha
 // scan an SQL row to a {{$name}} struct
 // It returns the scanned {{$.Graph.Type.Ext $.Package}} and the number of scanned fields,
 // and an error in case of failure.
-func (s *{{$.Public}}SelectExecer) scan(dialect string, vals []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Package}}{{end}}) (*{{$.Graph.Type.Ext $.Package}}, int, error) {
+func (s *{{$.Private}}Select) scan(dialect string, vals []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Package}}{{end}}) (*{{$.Graph.Type.Ext $.Package}}, int, error) {
 	item, n, err := s.scanCount(dialect, vals{{if $hasOneToManyRelation}}, exists{{end}})
 	if err != nil {
 		return nil, n, err
@@ -788,7 +796,7 @@ func (s *{{$.Public}}SelectExecer) scan(dialect string, vals []driver.Value{{if 
 }
 
 // ScanCount scans an SQL row to a {{$countStruct}} struct
-func (s *{{$.Public}}SelectExecer) scanCount(dialect string, vals []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Package}}{{end}}) (*{{$countStruct}}, int, error) {
+func (s *{{$.Private}}Select) scanCount(dialect string, vals []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Package}}{{end}}) (*{{$countStruct}}, int, error) {
 	switch dialect {
 	{{ range $_, $dialect := $.Dialects -}}
 	case "{{$dialect.Name}}":
@@ -801,7 +809,7 @@ func (s *{{$.Public}}SelectExecer) scanCount(dialect string, vals []driver.Value
 
 {{ range $_, $dialect := $.Dialects }}
 // scan{{$dialect.Name}} scans {{$dialect.Name}} row to a {{$name}} struct
-func (s *{{$.Public}}SelectExecer) scan{{$dialect.Name}} (vals []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Package}}{{end}}) (*{{$countStruct}}, int, error) {
+func (s *{{$.Private}}Select) scan{{$dialect.Name}} (vals []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Package}}{{end}}) (*{{$countStruct}}, int, error) {
 	var (
 		row = new({{$countStruct}})
 		i int

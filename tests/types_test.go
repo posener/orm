@@ -164,7 +164,7 @@ func TestPersonSelect(t *testing.T) {
 		require.Nil(t, err)
 
 		tests := []struct {
-			q    *PersonSelectExecer
+			q    PersonSelectExecer
 			want []Person
 		}{
 			{
@@ -304,7 +304,7 @@ func TestCount(t *testing.T) {
 		}
 
 		tests := []struct {
-			q    *PersonSelectExecer
+			q    PersonSelectExecer
 			want []PersonCount
 		}{
 			{
