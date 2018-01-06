@@ -58,9 +58,9 @@ type Conn interface {
 	// It returns a new Conn object
 	// will panic if in current connection is a transaction
 	Begin(context.Context, *sql.TxOptions) (Conn, error)
-	// DBConn returns the underlying sql connection
+	// ConnDB returns the underlying sql connection
 	// Will panic if the current connection is a transaction
-	DBConn() *sql.DB
+	ConnDB() *sql.DB
 
 	// Transaction only functions
 
@@ -70,9 +70,9 @@ type Conn interface {
 	// Rollback a transaction
 	// Will panic if the current connection is not a transaction
 	Rollback() error
-	// TxConn returns the underlying sql transaction connection
+	// ConnTx returns the underlying sql transaction connection
 	// Will panic if the current connection is not a transaction
-	TxConn() *sql.Tx
+	ConnTx() *sql.Tx
 }
 
 // Open returns a new database for orm libraries
@@ -133,11 +133,11 @@ func (c *conn) QueryContext(ctx context.Context, stmt string, args ...interface{
 	return c.DB.QueryContext(ctx, stmt, args...)
 }
 
-func (c *conn) DBConn() *sql.DB {
+func (c *conn) ConnDB() *sql.DB {
 	return c.DB
 }
 
-func (c *conn) TxConn() *sql.Tx {
+func (c *conn) ConnTx() *sql.Tx {
 	return c.Tx
 }
 

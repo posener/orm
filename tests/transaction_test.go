@@ -2,10 +2,9 @@ package tests
 
 import (
 	"context"
-	"testing"
-
 	"runtime"
 	"strings"
+	"testing"
 
 	"github.com/posener/orm"
 	"github.com/stretchr/testify/assert"

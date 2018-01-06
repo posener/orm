@@ -2,12 +2,11 @@ package tests
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
 	"strings"
 	"testing"
-
-	"database/sql"
 
 	"github.com/posener/orm"
 	"github.com/stretchr/testify/require"
