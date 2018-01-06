@@ -78,6 +78,7 @@ type {{$.Public}}SelectExecer interface {
 	Joiner() {{$.Public}}Joiner
 }
 
+// {{$.Public}}API is API for ORM operations
 type {{$.Public}}API interface {
 	// Select returns a builder for selecting rows from an SQL table
 	Select(...{{$.Private}}OptSelect) {{$.Public}}SelectExecer
@@ -87,7 +88,7 @@ type {{$.Public}}API interface {
 	Update() *{{$.Public}}UpdateBuilder
 	// Delete returns a builder for deleting a row in an SQL table
 	Delete() *{{$.Public}}DeleteBuilder
-
+	// Where returns a builder to build a where statement to be used in a Where function
 	Where() *{{$.Public}}WhereBuilder
 	{{ if $.Graph.Type.PrimaryKeys -}}
 	// Get returns an object by primary key
