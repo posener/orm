@@ -25,11 +25,17 @@ func testDBs(t *testing.T, testFunc func(t *testing.T, conn orm.Conn)) {
 		"'", "",
 		" ", "_",
 	)
+	var options []orm.Option
+	if testing.Verbose() {
+		options = append(options, orm.OptLogger(t.Logf))
+	}
+
 	for _, name := range []string{"sqlite3", "mysql"} {
 		name := name
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			databaseName := "orm_test_" + testNameFixer.Replace(t.Name())
+			var address string
 			var (
 				conn orm.Conn
 				err  error
@@ -40,28 +46,24 @@ func testDBs(t *testing.T, testFunc func(t *testing.T, conn orm.Conn)) {
 					t.Skipf("Mysql environment is not set")
 				}
 				createMysqlTestDatabase(t, databaseName)
-				// create a new connection with the database name in the address
-				conn, err = orm.Open(name, mySQLAddr+databaseName)
-				require.Nil(t, err)
+				address = mySQLAddr + databaseName
 
 			case "sqlite3":
-				fileName := dbFileName(databaseName)
-				os.Remove(fileName)
-				conn, err = orm.Open(name, fileName)
-				require.Nil(t, err)
+				address = dbFileName(databaseName)
+				os.Remove(address)
 
 			default:
 				t.Fatalf("Unknown database name %s", name)
 			}
+
+			conn, err = orm.Open(name, address, options...)
+			require.Nil(t, err)
 
 			defer cleanUp(t, name, databaseName)
 
 			defer func() {
 				require.Nil(t, conn.Close())
 			}()
-			if testing.Verbose() {
-				conn.Logger(t.Logf)
-			}
 			testFunc(t, conn)
 		})
 	}
@@ -91,7 +93,7 @@ func cleanUp(t *testing.T, dbType, databaseName string) {
 		defer func() {
 			require.Nil(t, conn.Close())
 		}()
-		_, err = conn.Exec(fmt.Sprintf("DROP DATABASE `%s`", databaseName))
+		_, err = conn.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS `%s`", databaseName))
 		require.Nil(t, err)
 	case "sqlite3":
 		fileName := dbFileName(databaseName)

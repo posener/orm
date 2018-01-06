@@ -41,8 +41,6 @@ const (
 type Conn interface {
 	// Driver returns the SQL driver name
 	Driver() string
-	// Logger sets a logger for SQL queries
-	Logger(Logger)
 
 	// ExecContext executes an SQL statement
 	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
@@ -75,13 +73,30 @@ type Conn interface {
 	ConnTx() *sql.Tx
 }
 
+// Logger is a fmt.Printf - like function
+type Logger func(string, ...interface{})
+
 // Open returns a new database for orm libraries
-func Open(driverName, address string) (Conn, error) {
+func Open(driverName, address string, options ...Option) (Conn, error) {
 	sqlDB, err := sql.Open(driverName, address)
 	if err != nil {
 		return nil, err
 	}
-	return &conn{DB: sqlDB, name: driverName}, nil
+	c := &conn{DB: sqlDB, name: driverName}
+	for _, option := range options {
+		option(c)
+	}
+	return c, nil
+}
+
+// Option is a Conn modifier function that is used when opening a new connection
+type Option func(c *conn)
+
+// OptLogger sets a logger for the connection
+func OptLogger(log Logger) Option {
+	return func(c *conn) {
+		c.log = log
+	}
 }
 
 type conn struct {
@@ -145,16 +160,9 @@ func (c *conn) Driver() string {
 	return c.name
 }
 
-func (c *conn) Logger(log Logger) {
-	c.log = log
-}
-
 func (c *conn) logf(format string, args ...interface{}) {
 	if c.log == nil {
 		return
 	}
 	c.log(format, args...)
 }
-
-// Logger is a fmt.Printf - like function
-type Logger func(string, ...interface{})

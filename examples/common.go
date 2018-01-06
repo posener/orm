@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/labstack/gommon/log"
 	"github.com/posener/orm"
 )
 
@@ -14,7 +15,7 @@ func Conn(dbName string) orm.Conn {
 		return nil
 	}
 	ctx := context.Background()
-	conn, err := orm.Open("mysql", addr)
+	conn, err := orm.Open("mysql", addr, orm.OptLogger(log.Printf))
 	PanicOnErr(err)
 	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP DATABASE IF EXISTS `%s`", dbName))
 	PanicOnErr(err)
