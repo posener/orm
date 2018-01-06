@@ -1,4 +1,4 @@
-package mysql
+package postgres
 
 import (
 	"bytes"
@@ -16,19 +16,25 @@ type Dialect struct{}
 
 // Name returns the dialect name
 func (d *Dialect) Name() string {
-	return "mysql"
+	return "postgres"
 }
 
 func (d *Dialect) Translate(name string) string {
+	if name == "AUTO_INCREMENT" {
+		return ""
+	}
 	return name
 }
 
 func (d *Dialect) Quote(name string) string {
-	return fmt.Sprintf("`%s`", name)
+	return fmt.Sprintf(`"%s"`, name)
 }
 
 func (Dialect) GoTypeToColumnType(goTypeName string, options []string) *sqltypes.Type {
 	st := new(sqltypes.Type)
+	if hasAutoIncrement(options) {
+		return &sqltypes.Type{Name: "SERIAL"}
+	}
 	switch goTypeName {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
 		st.Name = sqltypes.Integer
@@ -40,7 +46,7 @@ func (Dialect) GoTypeToColumnType(goTypeName string, options []string) *sqltypes
 		st.Name = sqltypes.VarChar
 		st.Size = 255
 	case "[]byte":
-		st.Name = sqltypes.Blob
+		st.Name = sqltypes.Text
 	case "time.Time":
 		st.Name = sqltypes.TimeStamp
 		st.Size = 3
@@ -48,6 +54,15 @@ func (Dialect) GoTypeToColumnType(goTypeName string, options []string) *sqltypes
 		log.Fatalf("Unknown column type for %s", goTypeName)
 	}
 	return st
+}
+
+func hasAutoIncrement(options []string) bool {
+	for _, opt := range options {
+		if opt == "AUTO_INCREMENT" {
+			return true
+		}
+	}
+	return false
 }
 
 // ConvertValueCode returns go code for converting value returned from the

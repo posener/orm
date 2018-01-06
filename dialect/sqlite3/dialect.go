@@ -33,7 +33,7 @@ func (d *Dialect) Quote(name string) string {
 	return fmt.Sprintf("`%s`", name)
 }
 
-func (*Dialect) GoTypeToColumnType(goTypeName string) *sqltypes.Type {
+func (*Dialect) GoTypeToColumnType(goTypeName string, options []string) *sqltypes.Type {
 	st := new(sqltypes.Type)
 	switch goTypeName {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
@@ -59,7 +59,7 @@ func (*Dialect) GoTypeToColumnType(goTypeName string) *sqltypes.Type {
 func (d *Dialect) ConvertValueCode(field *load.Field) string {
 	sqlType := field.CustomType
 	if sqlType == nil {
-		sqlType = d.GoTypeToColumnType(field.Type.Naked.Ext(""))
+		sqlType = d.GoTypeToColumnType(field.Type.Naked.Ext(""), nil)
 	}
 	s := tmpltType{
 		Field:       field,

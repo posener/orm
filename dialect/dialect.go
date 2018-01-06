@@ -7,6 +7,7 @@ import (
 
 	"github.com/posener/orm"
 	"github.com/posener/orm/dialect/mysql"
+	"github.com/posener/orm/dialect/postgres"
 	"github.com/posener/orm/dialect/sqlite3"
 	"github.com/posener/orm/dialect/sqltypes"
 	"github.com/posener/orm/load"
@@ -43,7 +44,7 @@ type Dialect interface {
 	Name() string
 	// GoTypeToColumnType gets a string that represents a go basic type
 	// and returns an SQL type for a createColumn for a field of that type.
-	GoTypeToColumnType(string) *sqltypes.Type
+	GoTypeToColumnType(goType string, options []string) *sqltypes.Type
 	// Translate gets a MySQL statement and returns a corresponding statement
 	// in a specific dialect
 	Translate(string) string
@@ -55,8 +56,9 @@ type Dialect interface {
 }
 
 var dialects = map[string]API{
-	"mysql":   &dialect{name: "mysql", Dialect: new(mysql.Dialect)},
-	"sqlite3": &dialect{name: "sqlite3", Dialect: new(sqlite3.Dialect)},
+	"mysql":    &dialect{name: "mysql", Dialect: new(mysql.Dialect)},
+	"postgres": &dialect{name: "postgres", Dialect: new(postgres.Dialect)},
+	"sqlite3":  &dialect{name: "sqlite3", Dialect: new(sqlite3.Dialect)},
 }
 
 // All returns all available dialects

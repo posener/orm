@@ -8,13 +8,19 @@ import (
 	"strings"
 	"testing"
 
+	"net/url"
+
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm"
 	"github.com/stretchr/testify/require"
 )
 
 var (
-	mySQLAddr   = os.Getenv("MYSQL_ADDR")
-	skipCleanup = os.Getenv("SKIP_CLEANUP") != ""
+	mySQLAddr    = os.Getenv("MYSQL_ADDR")
+	postgresAddr = os.Getenv("POSTGRES_ADDR")
+	skipCleanup  = os.Getenv("SKIP_CLEANUP") != ""
 )
 
 func testDBs(t *testing.T, testFunc func(t *testing.T, conn orm.Conn)) {
@@ -30,27 +36,41 @@ func testDBs(t *testing.T, testFunc func(t *testing.T, conn orm.Conn)) {
 		options = append(options, orm.OptLogger(t.Logf))
 	}
 
-	for _, name := range []string{"sqlite3", "mysql"} {
+	for _, name := range []string{"sqlite3", "mysql", "postgres"} {
 		name := name
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			databaseName := "orm_test_" + testNameFixer.Replace(t.Name())
 			var address string
 			var (
-				conn orm.Conn
-				err  error
+				conn    orm.Conn
+				err     error
+				cleanup func()
 			)
 			switch name {
 			case "mysql":
 				if mySQLAddr == "" {
 					t.Skipf("Mysql environment is not set")
 				}
-				createMysqlTestDatabase(t, databaseName)
+				cleanup = createMysqlTestDatabase(t, databaseName)
 				address = mySQLAddr + databaseName
+
+			case "postgres":
+				if postgresAddr == "" {
+					t.Skipf("Postgres environment is not set")
+				}
+				cleanup = createPostgresTestDatabase(t, databaseName)
+				u, err := url.Parse(postgresAddr)
+				require.Nil(t, err)
+				u.Path = databaseName
+				address = u.String()
 
 			case "sqlite3":
 				address = dbFileName(databaseName)
 				os.Remove(address)
+				cleanup = func() {
+					os.Remove(address)
+				}
 
 			default:
 				t.Fatalf("Unknown database name %s", name)
@@ -59,7 +79,12 @@ func testDBs(t *testing.T, testFunc func(t *testing.T, conn orm.Conn)) {
 			conn, err = orm.Open(name, address, options...)
 			require.Nil(t, err)
 
-			defer cleanUp(t, name, databaseName)
+			defer func() {
+				if skipCleanup {
+					return
+				}
+				cleanup()
+			}()
 
 			defer func() {
 				require.Nil(t, conn.Close())
@@ -69,7 +94,7 @@ func testDBs(t *testing.T, testFunc func(t *testing.T, conn orm.Conn)) {
 	}
 }
 
-func createMysqlTestDatabase(t *testing.T, databaseName string) {
+func createMysqlTestDatabase(t *testing.T, databaseName string) func() {
 	ctx := context.Background()
 	conn, err := orm.Open("mysql", mySQLAddr)
 	require.Nil(t, err)
@@ -78,26 +103,32 @@ func createMysqlTestDatabase(t *testing.T, databaseName string) {
 	require.Nil(t, err)
 	_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE `%s`", databaseName))
 	require.Nil(t, err)
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("USE `%s`", databaseName))
-	require.Nil(t, err)
-}
-
-func cleanUp(t *testing.T, dbType, databaseName string) {
-	if skipCleanup {
-		return
-	}
-	switch dbType {
-	case "mysql":
-		conn, err := sql.Open(dbType, mySQLAddr)
+	return func() {
+		conn, err := sql.Open("mysql", mySQLAddr)
 		require.Nil(t, err)
 		defer func() {
 			require.Nil(t, conn.Close())
 		}()
 		_, err = conn.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS `%s`", databaseName))
 		require.Nil(t, err)
-	case "sqlite3":
-		fileName := dbFileName(databaseName)
-		os.Remove(fileName)
+	}
+}
+
+func createPostgresTestDatabase(t *testing.T, databaseName string) func() {
+	ctx := context.Background()
+	conn, err := orm.Open("postgres", postgresAddr)
+	require.Nil(t, err)
+	defer conn.Close()
+	conn.ExecContext(ctx, fmt.Sprintf(`DROP DATABASE "%s"`, databaseName))
+	conn.ExecContext(ctx, fmt.Sprintf(`CREATE DATABASE "%s"`, databaseName))
+	return func() {
+		conn, err := sql.Open("postgres", postgresAddr)
+		require.Nil(t, err)
+		defer func() {
+			require.Nil(t, conn.Close())
+		}()
+		_, err = conn.Exec(fmt.Sprintf(`DROP DATABASE "%s"`, databaseName))
+		require.Nil(t, err)
 	}
 }
 
