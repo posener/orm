@@ -49,6 +49,8 @@ type Conn interface {
 	// QueryContext executes an SQL query statement
 	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
 
+	// Non transactions functions
+
 	// Close database connection
 	// will panic if in current connection is a transaction
 	Close() error
@@ -56,6 +58,11 @@ type Conn interface {
 	// It returns a new Conn object
 	// will panic if in current connection is a transaction
 	Begin(context.Context, *sql.TxOptions) (Conn, error)
+	// DBConn returns the underlying sql connection
+	// Will panic if the current connection is a transaction
+	DBConn() *sql.DB
+
+	// Transactions functions
 
 	// Commit a transaction
 	// Will panic if the current connection is not a transaction
@@ -63,6 +70,9 @@ type Conn interface {
 	// Rollback a transaction
 	// Will panic if the current connection is not a transaction
 	Rollback() error
+	// TxConn returns the underlying sql transaction connection
+	// Will panic if the current connection is not a transaction
+	TxConn() *sql.Tx
 }
 
 // Open returns a new database for orm libraries
@@ -87,43 +97,50 @@ func (c *conn) Begin(ctx context.Context, opts *sql.TxOptions) (Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	conn := *c // copy connection object
-	conn.DB = nil
-	conn.Tx = tx
-	conn.txID = rand.Intn(9999)
-	c.logf(fmt.Sprintf("Tx[%d] started", conn.txID))
-	return &conn, nil
+	txConn := *c // copy connection object
+	txConn.DB = nil
+	txConn.Tx = tx
+	txConn.txID = rand.Intn(9999)
+	c.logf(fmt.Sprintf("Tx[%d] Begin", txConn.txID))
+	return &txConn, nil
 }
 
 func (c *conn) Commit() error {
-	c.logf(fmt.Sprintf("Tx[%d] commit", c.txID))
+	c.logf(fmt.Sprintf("Tx[%d] Commit", c.txID))
 	return c.Tx.Commit()
 }
 
 func (c *conn) Rollback() error {
-	c.logf(fmt.Sprintf("Tx[%d] rollback", c.txID))
+	c.logf(fmt.Sprintf("Tx[%d] Rollback", c.txID))
 	return c.Tx.Rollback()
 }
 
 func (c *conn) ExecContext(ctx context.Context, stmt string, args ...interface{}) (sql.Result, error) {
 	if c.Tx != nil {
-		c.logf("Tx[%d] exec: %s %s", c.txID, stmt, args)
+		c.logf("Tx[%d] Exec: %v %v", c.txID, stmt, args)
 		return c.Tx.ExecContext(ctx, stmt, args...)
 	}
-	c.logf("Exec: %s %s", stmt, args)
+	c.logf("Exec: %v %v", stmt, args)
 	return c.DB.ExecContext(ctx, stmt, args...)
 }
 
 func (c *conn) QueryContext(ctx context.Context, stmt string, args ...interface{}) (*sql.Rows, error) {
 	if c.Tx != nil {
-		c.logf("Tx[%d] query: %s %s", c.txID, stmt, args)
+		c.logf("Tx[%d] Query: %v %v", c.txID, stmt, args)
 		return c.Tx.QueryContext(ctx, stmt, args...)
 	}
-	c.logf("Query: %s %s", stmt, args)
+	c.logf("Query: %v %v", stmt, args)
 	return c.DB.QueryContext(ctx, stmt, args...)
 }
 
-// Driver returns the driver name
+func (c *conn) DBConn() *sql.DB {
+	return c.DB
+}
+
+func (c *conn) TxConn() *sql.Tx {
+	return c.Tx
+}
+
 func (c *conn) Driver() string {
 	return c.name
 }
