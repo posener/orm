@@ -35,15 +35,3 @@ func (t *Type) String() string {
 	}
 	return fmt.Sprintf("%s(%d)", t.Name, t.Size)
 }
-
-// List of SQL types
-const (
-	Integer   = "INTEGER"
-	Float     = "FLOAT"
-	Boolean   = "BOOLEAN"
-	Text      = "TEXT"
-	Blob      = "BLOB"
-	TimeStamp = "TIMESTAMP"
-	DateTime  = "DATETIME"
-	VarChar   = "VARCHAR"
-)

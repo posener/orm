@@ -4,11 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
-
-	"net/url"
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
@@ -36,7 +35,11 @@ func testDBs(t *testing.T, testFunc func(t *testing.T, conn orm.Conn)) {
 		options = append(options, orm.OptLogger(t.Logf))
 	}
 
-	for _, name := range []string{"sqlite3", "mysql", "postgres"} {
+	for _, name := range []string{
+		"sqlite3",
+		"mysql",
+		"postgres",
+	} {
 		name := name
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()

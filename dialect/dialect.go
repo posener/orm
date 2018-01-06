@@ -44,7 +44,7 @@ type Dialect interface {
 	Name() string
 	// GoTypeToColumnType gets a string that represents a go basic type
 	// and returns an SQL type for a createColumn for a field of that type.
-	GoTypeToColumnType(goType string, options []string) *sqltypes.Type
+	GoTypeToColumnType(goType string, autoIncrement bool) *sqltypes.Type
 	// Translate gets a MySQL statement and returns a corresponding statement
 	// in a specific dialect
 	Translate(string) string
@@ -53,6 +53,8 @@ type Dialect interface {
 	ConvertValueCode(*load.Field) string
 	// Quote returns the quoted form of an SQL variable
 	Quote(string) string
+	// ReplaceVars replaces question marks from sql query to the right variable of the dialect
+	ReplaceVars(s string) string
 }
 
 var dialects = map[string]API{
@@ -140,6 +142,7 @@ func (d *dialect) Insert(p *runtime.InsertParams) (string, []interface{}) {
 		d.assignColumns(p.Assignments),
 		runtime.QMarks(len(p.Assignments)),
 	)
+	stmt = d.ReplaceVars(stmt)
 
 	var args []interface{}
 	if p.Assignments != nil {
@@ -151,7 +154,7 @@ func (d *dialect) Insert(p *runtime.InsertParams) (string, []interface{}) {
 
 // Select returns the SQL SELECT statement and arguments according to the given parameters
 func (d *dialect) Select(p *runtime.SelectParams) (string, []interface{}) {
-	stmt := fmt.Sprintf("SELECT %s FROM %s %s %s %s %s %s",
+	stmt := d.ReplaceVars(fmt.Sprintf("SELECT %s FROM %s %s %s %s %s %s",
 		d.selectColumns(p),
 		d.Quote(p.Table),
 		d.join(p),
@@ -159,7 +162,7 @@ func (d *dialect) Select(p *runtime.SelectParams) (string, []interface{}) {
 		d.groupBy(p.Table, p.Groups),
 		d.orderBy(p.Table, p.Orders),
 		d.page(p.Page),
-	)
+	))
 
 	return stmt, collectWhereArgs(p)
 }
@@ -179,10 +182,10 @@ func collectWhereArgs(p *runtime.SelectParams) []interface{} {
 
 // Delete returns the SQL DELETE statement and arguments according to the given parameters
 func (d *dialect) Delete(p *runtime.DeleteParams) (string, []interface{}) {
-	stmt := fmt.Sprintf("DELETE FROM %s %s",
+	stmt := d.ReplaceVars(fmt.Sprintf("DELETE FROM %s %s",
 		d.Quote(p.Table),
 		d.where(p.Table, p.Where),
-	)
+	))
 
 	var args []interface{}
 	if p.Where != nil {
@@ -194,11 +197,11 @@ func (d *dialect) Delete(p *runtime.DeleteParams) (string, []interface{}) {
 
 // Update returns the SQL UPDATE statement and arguments according to the given parameters
 func (d *dialect) Update(p *runtime.UpdateParams) (string, []interface{}) {
-	stmt := fmt.Sprintf("UPDATE %s SET %s %s",
+	stmt := d.ReplaceVars(fmt.Sprintf("UPDATE %s SET %s %s",
 		d.Quote(p.Table),
 		d.assignSets(p.Assignments),
 		d.where(p.Table, p.Where),
-	)
+	))
 
 	var args []interface{}
 	if p.Assignments != nil {

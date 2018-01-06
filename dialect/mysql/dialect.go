@@ -27,22 +27,36 @@ func (d *Dialect) Quote(name string) string {
 	return fmt.Sprintf("`%s`", name)
 }
 
-func (Dialect) GoTypeToColumnType(goTypeName string, options []string) *sqltypes.Type {
+func (d *Dialect) ReplaceVars(s string) string {
+	return s
+}
+
+func (Dialect) GoTypeToColumnType(goTypeName string, autoIncrement bool) *sqltypes.Type {
 	st := new(sqltypes.Type)
 	switch goTypeName {
-	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
-		st.Name = sqltypes.Integer
-	case "float", "float8", "float16", "float32", "float64":
-		st.Name = sqltypes.Float
+	case "int", "int16", "int32":
+		st.Name = "int8"
+	case "int8":
+		st.Name = "TINYINT"
+	case "uint8":
+		st.Name = "TINYINT UNSIGNED"
+	case "uint", "uint16", "uint32":
+		st.Name = "INT UNSIGNED"
+	case "int64":
+		st.Name = "BIGINT"
+	case "uint64":
+		st.Name = "BIGINT UNSIGNED"
+	case "float32", "float64":
+		st.Name = "DOUBLE"
 	case "bool":
-		st.Name = sqltypes.Boolean
+		st.Name = "BOOLEAN"
 	case "string":
-		st.Name = sqltypes.VarChar
+		st.Name = "VARCHAR"
 		st.Size = 255
 	case "[]byte":
-		st.Name = sqltypes.Blob
+		st.Name = "LONGBLOB"
 	case "time.Time":
-		st.Name = sqltypes.TimeStamp
+		st.Name = "TIMESTAMP"
 		st.Size = 3
 	default:
 		log.Fatalf("Unknown column type for %s", goTypeName)
@@ -55,7 +69,7 @@ func (Dialect) GoTypeToColumnType(goTypeName string, options []string) *sqltypes
 func (d *Dialect) ConvertValueCode(field *load.Field) string {
 	sqlType := field.CustomType
 	if sqlType == nil {
-		sqlType = d.GoTypeToColumnType(field.Type.Naked.Ext(""), nil)
+		sqlType = d.GoTypeToColumnType(field.Type.Naked.Ext(""), false)
 	}
 	s := tmpltType{
 		Field:                  field,
@@ -107,7 +121,7 @@ func (d *Dialect) convertBytesFuncString(f *load.Field, sqlType *sqltypes.Type) 
 		return "[]byte(val)"
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
 		return fmt.Sprintf("%s(runtime.ParseInt(val))", tp)
-	case "float", "float8", "float16", "float32", "float64":
+	case "float32", "float64":
 		return fmt.Sprintf("%s(runtime.ParseFloat(val))", tp)
 	case "time.Time":
 		return fmt.Sprintf("runtime.ParseTime(val, %d)", sqlType.Size)
@@ -134,13 +148,15 @@ func (d *Dialect) convertIntFuncString(f *load.Field, sqlType *sqltypes.Type) st
 
 func (d *Dialect) convertType(f *load.Field, sqlType *sqltypes.Type) string {
 	switch sqlType.Name {
-	case sqltypes.Integer:
+	case "TINYINT", "INT", "BIGINT":
 		return "int64"
-	case sqltypes.Float:
+	case "TINYINT UNSIGNED", "INT UNSIGNED", "BIGINT UNSIGNED":
+		return "uint64"
+	case "DOUBLE":
 		return "float64"
-	case sqltypes.Text, sqltypes.Blob, sqltypes.VarChar:
+	case "LONGBLOB", "VARCHAR":
 		return "[]byte"
-	case sqltypes.Boolean:
+	case "BOOLEAN":
 		return "bool"
 	default:
 		return f.Type.Naked.Ext("")

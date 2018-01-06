@@ -591,11 +591,9 @@ func {{$.Private}}ReturnObject(assignments runtime.Assignments, res sql.Result) 
 		}
 	}
 	{{ if eq (len $.Graph.Type.PrimaryKeys) 1 -}}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return nil, err
+	if id, err := res.LastInsertId(); err == nil {
+		ret.{{(index $.Graph.Type.PrimaryKeys 0).AccessName}} = {{(index $.Graph.Type.PrimaryKeys 0).Type.Ext $.Package}}(id)
 	}
-	ret.{{(index $.Graph.Type.PrimaryKeys 0).AccessName}} = {{(index $.Graph.Type.PrimaryKeys 0).Type.Ext $.Package}}(id)
 	{{ end -}}
 	return ret, nil
 }

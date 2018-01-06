@@ -27,11 +27,19 @@ func (d *dialect) tableProperties(t *migration.Table) string {
 
 // createColumn is an SQL column definition, as given in the SQL CREATE statement
 func (d *dialect) createColumn(col migration.Column) string {
-	s := fmt.Sprintf("%s %s", d.Quote(col.Name), d.GoTypeToColumnType(col.GoType, col.Options))
+	s := fmt.Sprintf("%s %s", d.Quote(col.Name), d.GoTypeToColumnType(col.GoType, hasAutoIncrement(col.Options)))
 	for _, opt := range col.Options {
 		s += " " + d.Translate(opt)
 	}
 	return s
+}
+func hasAutoIncrement(options []string) bool {
+	for _, opt := range options {
+		if opt == "AUTO_INCREMENT" {
+			return true
+		}
+	}
+	return false
 }
 
 // foreignKey is teh FOREIGN KEY statement

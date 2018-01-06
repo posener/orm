@@ -20,34 +20,44 @@ func (d *Dialect) Name() string {
 }
 
 func (d *Dialect) Translate(name string) string {
-	switch name {
-	case "AUTO_INCREMENT":
-		// https://sqlite.org/autoinc.html
+	// https://sqlite.org/autoinc.html
+	if name == "AUTO_INCREMENT" {
 		return ""
-	default:
-		return name
 	}
+	return name
 }
 
 func (d *Dialect) Quote(name string) string {
 	return fmt.Sprintf("`%s`", name)
 }
 
-func (*Dialect) GoTypeToColumnType(goTypeName string, options []string) *sqltypes.Type {
+func (d *Dialect) ReplaceVars(s string) string {
+	return s
+}
+
+func (*Dialect) GoTypeToColumnType(goTypeName string, autoIncrement bool) *sqltypes.Type {
+	if autoIncrement {
+		if !strings.HasPrefix(goTypeName, "int") && !strings.HasPrefix(goTypeName, "uint") {
+			log.Panicf("Auto increment for type %v type is not supported", goTypeName)
+		}
+		return &sqltypes.Type{Name: "INTEGER"}
+	}
 	st := new(sqltypes.Type)
 	switch goTypeName {
-	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
-		st.Name = sqltypes.Integer
+	case "int", "int8", "int16", "int32", "uint", "uint8", "uint16", "uint32":
+		st.Name = "INTEGER"
+	case "int64", "uint64":
+		st.Name = "BIGINT"
 	case "float", "float8", "float16", "float32", "float64":
-		st.Name = sqltypes.Float
+		st.Name = "REAL"
 	case "bool":
-		st.Name = sqltypes.Boolean
+		st.Name = "BOOL"
 	case "string":
-		st.Name = sqltypes.Text
+		st.Name = "TEXT"
 	case "[]byte":
-		st.Name = sqltypes.Blob
+		st.Name = "BLOB"
 	case "time.Time":
-		st.Name = sqltypes.TimeStamp
+		st.Name = "DATETIME"
 	default:
 		log.Fatalf("Unknown column type for %s", goTypeName)
 	}
@@ -59,7 +69,7 @@ func (*Dialect) GoTypeToColumnType(goTypeName string, options []string) *sqltype
 func (d *Dialect) ConvertValueCode(field *load.Field) string {
 	sqlType := field.CustomType
 	if sqlType == nil {
-		sqlType = d.GoTypeToColumnType(field.Type.Naked.Ext(""), nil)
+		sqlType = d.GoTypeToColumnType(field.Type.Naked.Ext(""), false)
 	}
 	s := tmpltType{
 		Field:       field,
@@ -90,13 +100,13 @@ var tmplt = template.Must(template.New("sqlite3").Parse(`
 // convertType is the type of the field when returned by sql/driver from database
 func (d *Dialect) convertType(f *load.Field, sqlType *sqltypes.Type) string {
 	switch sqlType.Name {
-	case sqltypes.Integer:
+	case "INTEGER", "BIGINT":
 		return "int64"
-	case sqltypes.Float:
+	case "REAL":
 		return "float64"
-	case sqltypes.Text, sqltypes.Blob, sqltypes.VarChar:
+	case "TEXT", "BLOB":
 		return "[]byte"
-	case sqltypes.Boolean:
+	case "BOOL":
 		return "bool"
 	default:
 		return f.Type.Naked.Ext("")

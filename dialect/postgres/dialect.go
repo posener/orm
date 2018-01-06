@@ -7,6 +7,8 @@ import (
 	"log"
 	"strings"
 
+	"regexp"
+
 	"github.com/posener/orm/dialect/sqltypes"
 	"github.com/posener/orm/load"
 )
@@ -30,39 +32,48 @@ func (d *Dialect) Quote(name string) string {
 	return fmt.Sprintf(`"%s"`, name)
 }
 
-func (Dialect) GoTypeToColumnType(goTypeName string, options []string) *sqltypes.Type {
+var qMarkReplacer = regexp.MustCompile(`(\?)`)
+
+func (d *Dialect) ReplaceVars(s string) string {
+	i := 0
+	return qMarkReplacer.ReplaceAllStringFunc(s, func(string) string {
+		i++
+		return fmt.Sprintf("$%d", i)
+	})
+}
+
+func (Dialect) GoTypeToColumnType(goTypeName string, autoIncrement bool) *sqltypes.Type {
 	st := new(sqltypes.Type)
-	if hasAutoIncrement(options) {
-		return &sqltypes.Type{Name: "SERIAL"}
+	if autoIncrement {
+		switch goTypeName {
+		case "int", "int8", "int16", "int32", "uint", "uint8", "uint16":
+			return &sqltypes.Type{Name: "serial"}
+		case "int64", "uint32", "uint64":
+			return &sqltypes.Type{Name: "bigserial"}
+		default:
+			log.Fatalf("Auto increment on type %s is not supported", goTypeName)
+		}
 	}
 	switch goTypeName {
-	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
-		st.Name = sqltypes.Integer
-	case "float", "float8", "float16", "float32", "float64":
-		st.Name = sqltypes.Float
+	case "int", "int8", "int16", "int32", "uint", "uint8", "uint16":
+		st.Name = "integer"
+	case "int64", "uint32", "uint64":
+		st.Name = "bigint"
+	case "float32", "float64":
+		st.Name = "numeric"
 	case "bool":
-		st.Name = sqltypes.Boolean
+		st.Name = "boolean"
 	case "string":
-		st.Name = sqltypes.VarChar
+		st.Name = "varchar"
 		st.Size = 255
 	case "[]byte":
-		st.Name = sqltypes.Text
+		st.Name = "text"
 	case "time.Time":
-		st.Name = sqltypes.TimeStamp
-		st.Size = 3
+		st.Name = "timestamp with time zone"
 	default:
 		log.Fatalf("Unknown column type for %s", goTypeName)
 	}
 	return st
-}
-
-func hasAutoIncrement(options []string) bool {
-	for _, opt := range options {
-		if opt == "AUTO_INCREMENT" {
-			return true
-		}
-	}
-	return false
 }
 
 // ConvertValueCode returns go code for converting value returned from the
@@ -70,7 +81,7 @@ func hasAutoIncrement(options []string) bool {
 func (d *Dialect) ConvertValueCode(field *load.Field) string {
 	sqlType := field.CustomType
 	if sqlType == nil {
-		sqlType = d.GoTypeToColumnType(field.Type.Naked.Ext(""), nil)
+		sqlType = d.GoTypeToColumnType(field.Type.Naked.Ext(""), false)
 	}
 	s := tmpltType{
 		Field:                  field,
@@ -93,7 +104,7 @@ type tmpltType struct {
 	Field                  *load.Field
 }
 
-var tmplt = template.Must(template.New("mysql").Parse(`
+var tmplt = template.Must(template.New("postgres").Parse(`
 				switch val := vals[i].(type) {
 				case []byte:
 					tmp := {{.ConvertBytesFuncString}}
@@ -122,7 +133,7 @@ func (d *Dialect) convertBytesFuncString(f *load.Field, sqlType *sqltypes.Type) 
 		return "[]byte(val)"
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
 		return fmt.Sprintf("%s(runtime.ParseInt(val))", tp)
-	case "float", "float8", "float16", "float32", "float64":
+	case "float32", "float64":
 		return fmt.Sprintf("%s(runtime.ParseFloat(val))", tp)
 	case "time.Time":
 		return fmt.Sprintf("runtime.ParseTime(val, %d)", sqlType.Size)
@@ -149,13 +160,15 @@ func (d *Dialect) convertIntFuncString(f *load.Field, sqlType *sqltypes.Type) st
 
 func (d *Dialect) convertType(f *load.Field, sqlType *sqltypes.Type) string {
 	switch sqlType.Name {
-	case sqltypes.Integer:
+	case "integer", "bigint":
 		return "int64"
-	case sqltypes.Float:
+	case "numeric":
 		return "float64"
-	case sqltypes.Text, sqltypes.Blob, sqltypes.VarChar:
+	case "varchar":
+		return "string"
+	case "text":
 		return "[]byte"
-	case sqltypes.Boolean:
+	case "boolean":
 		return "bool"
 	default:
 		return f.Type.Naked.Ext("")
