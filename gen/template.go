@@ -46,17 +46,10 @@ const {{$.Private}}TableProperties = {{backtick $.Table.Marshal}}
 // {{$.Private}}Column is for table column names
 type {{$.Private}}Column string
 
-const (
-	{{ range $_, $f := $.Graph.Type.NonReferences -}}
-	// {{$.Public}}Col{{$f.Name}} is used to select the {{$f.Name}} column in SELECT queries
-	{{$.Public}}Col{{$f.Name}} {{$.Private}}Column = "{{$f.Column.Name}}"
-	{{ end -}}
-)
-
-// {{$.Private}}OrderedColumns is an oredered list of all the columns in the table
+// {{$.Private}}OrderedColumns is an ordered list of all the columns in the table
 var {{$.Private}}OrderedColumns = []string{
 	{{ range $_, $f := $.Graph.Type.NonReferences -}}
-	string({{$.Public}}Col{{$f.Name}}),
+	string({{$.Private}}ColumnsValues.{{$f.Name}}),
 	{{ end -}}
 }
 
@@ -119,6 +112,23 @@ type {{$.Public}}Conn struct {
 	{{$.Public}}DB
 	// S returns a struct that holds different select options
 	S {{$.Public}}SelectOpts
+	// Cols holds the column names of the SQL table of the type
+	Cols {{$.Private}}Columns
+}
+
+// {{$.Private}}Columns are SQL columns of {{$type}}
+type {{$.Private}}Columns struct {
+	{{ range $_, $f := $.Graph.Type.NonReferences -}}
+	// {{$f.Name}} is used to select the {{$f.Name}} column
+	{{$f.Name}} {{$.Private}}Column
+	{{ end -}}
+}
+
+// {{$.Private}}ColumnsValues holds the values of the column names
+var {{$.Private}}ColumnsValues = {{$.Private}}Columns {
+	{{ range $_, $f := $.Graph.Type.NonReferences -}}
+	{{$f.Name}}: {{$.Private}}Column("{{$f.Column.Name}}"),
+	{{ end -}}
 }
 
 // New{{$.Public}}ORM returns an conn object from a db instance
@@ -133,6 +143,7 @@ func New{{$.Public}}ORM(conn orm.Conn) (*{{$.Public}}Conn, error) {
 			dialect: d,
 		},
 		S: {{$.Private}}SelectOpts,
+		Cols: {{$.Private}}ColumnsValues,
 	}, nil
 }
 

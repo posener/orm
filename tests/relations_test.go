@@ -44,7 +44,7 @@ func TestRelationOneToOne(t *testing.T) {
 
 		// query with join, A.CPointer should be filled with aORM's properties
 		aItems, err = aORM.Select(
-			aORM.S.JoinCPointer(cORM.Select(cORM.S.Columns(CColName)).Joiner()),
+			aORM.S.JoinCPointer(cORM.Select(cORM.S.Columns(cORM.Cols.Name)).Joiner()),
 		).Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
@@ -56,8 +56,8 @@ func TestRelationOneToOne(t *testing.T) {
 
 		// query with join, A.CPointer should be filled with aORM's properties
 		aItems, err = aORM.Select(
-			aORM.S.Columns(AColName),
-			aORM.S.JoinCPointer(cORM.Select(cORM.S.Columns(CColYear)).Joiner()),
+			aORM.S.Columns(aORM.Cols.Name),
+			aORM.S.JoinCPointer(cORM.Select(cORM.S.Columns(cORM.Cols.Year)).Joiner()),
 		).Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
