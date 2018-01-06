@@ -15,7 +15,6 @@ var tpl = template.Must(template.New("").
 {{ $name := $.Graph.Type.Name -}}
 {{ $type := $.Graph.Type.Naked.Ext $.Package -}}
 {{ $hasOneToManyRelation := $.Graph.Type.HasOneToManyRelation -}}
-{{ $apiName := (print $name "ORM") -}}
 {{ $conn := (print $.Private "Conn") -}}
 {{ $countStruct := (print $name "Count") -}}
 
@@ -78,7 +77,7 @@ type {{$.Public}}SelectExecer interface {
 	Joiner() {{$.Public}}Joiner
 }
 
-// {{$.Public}}API is API for ORM operations
+// {{$.Public}}API is basic API for ORM operations
 type {{$.Public}}API interface {
 	// Select returns a builder for selecting rows from an SQL table
 	Select(...{{$.Private}}OptSelect) {{$.Public}}SelectExecer
@@ -97,38 +96,39 @@ type {{$.Public}}API interface {
 	{{ end -}}
 }
 
-// {{$apiName}} is the interface of the ORM object
-type {{$apiName}} interface {
+// {{$.Public}}DB is ORM operations with basic database operations
+type {{$.Public}}DB interface {
 	{{$.Public}}API
 	// Begin begins an SQL transaction and returns the transaction ORM object
-	Begin(context.Context, *sql.TxOptions) ({{$apiName}}Tx, error)
+	Begin(context.Context, *sql.TxOptions) ({{$.Public}}Tx, error)
 	// Create returns a builder for creating an SQL table
 	Create() *{{$.Public}}CreateBuilder
 	// Drop returns a builder for dropping an SQL table
 	Drop() *{{$.Public}}DropBuilder
 }
 
-// {{$apiName}} is the interface of the ORM object
-type {{$apiName}}Tx interface {
+// {{$.Public}}DB is ORM operations inside a DB transaction
+type {{$.Public}}Tx interface {
 	{{$.Public}}API
 	Commit() error
 	Rollback() error
 }
 
+// {{$.Public}}Conn contains ORM functionality for {{$type}}
 type {{$.Public}}Conn struct {
-	{{$apiName}}
+	{{$.Public}}DB
 	// S returns a struct that holds different select options
 	S {{$.Public}}SelectOpts
 }
 
-// New{{$apiName}} returns an conn object from a db instance
-func New{{$apiName}}(conn orm.Conn) (*{{$.Public}}Conn, error) {
+// New{{$.Public}}ORM returns an conn object from a db instance
+func New{{$.Public}}ORM(conn orm.Conn) (*{{$.Public}}Conn, error) {
 	d := dialect.Get(conn.Driver())
 	if d == nil {
 		return nil, fmt.Errorf("dialect %s does not exists", conn.Driver())
 	}
 	return &{{$.Public}}Conn{
-		{{$apiName}}: &{{$conn}}{
+		{{$.Public}}DB: &{{$conn}}{
 			Conn:    conn,
 			dialect: d,
 		},
@@ -145,7 +145,7 @@ type {{$conn}} struct {
 	dialect dialect.API
 }
 
-func (c *{{$conn}}) Begin(ctx context.Context, opt *sql.TxOptions) ({{$apiName}}Tx, error) {
+func (c *{{$conn}}) Begin(ctx context.Context, opt *sql.TxOptions) ({{$.Public}}Tx, error) {
 	tx, err := c.Conn.Begin(ctx, opt)
 	if err != nil {
 		return nil, err

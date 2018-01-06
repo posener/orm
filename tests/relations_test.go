@@ -148,7 +148,7 @@ func TestRelationOneToMany(t *testing.T) {
 	})
 }
 
-func generateCs(t *testing.T, cORM CORM, bItem *B, count int) {
+func generateCs(t *testing.T, cORM *CConn, bItem *B, count int) {
 	t.Helper()
 	var cItems []C
 	for i := 0; i < count; i++ {
@@ -391,7 +391,7 @@ func TestSelfReferencing(t *testing.T) {
 	})
 }
 
-func insertA5(t *testing.T, a A5ORM, name string, left, right *A5) *A5 {
+func insertA5(t *testing.T, a *A5Conn, name string, left, right *A5) *A5 {
 	t.Helper()
 	item, err := a.Insert().InsertA5(&A5{Name: name, Left: left, Right: right}).Exec()
 	require.Nil(t, err)
