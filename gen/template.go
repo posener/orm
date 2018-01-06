@@ -70,7 +70,7 @@ func init() {
 	}
 }
 
-type {{$.Private}}API interface {
+type {{$.Public}}API interface {
 	// Select returns a builder for selecting rows from an SQL table
 	Select(...{{$.Private}}Column) *{{$.Public}}SelectBuilder
 	// Insert returns a builder for inserting a row to an SQL table
@@ -90,7 +90,7 @@ type {{$.Private}}API interface {
 
 // {{$apiName}} is the interface of the ORM object
 type {{$apiName}} interface {
-	{{$.Private}}API
+	{{$.Public}}API
 	// Begin begins an SQL transaction and returns the transaction ORM object
 	Begin(context.Context, *sql.TxOptions) ({{$apiName}}Tx, error)
 	// Create returns a builder for creating an SQL table
@@ -101,7 +101,7 @@ type {{$apiName}} interface {
 
 // {{$apiName}} is the interface of the ORM object
 type {{$apiName}}Tx interface {
-	{{$.Private}}API
+	{{$.Public}}API
 	Commit() error
 	Rollback() error
 }
