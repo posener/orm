@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"math/rand"
 )
 
 // Errors exported by ORM package
@@ -34,51 +36,124 @@ const (
 	Desc OrderDir = "DESC"
 )
 
-// DB is SQL database interface
-type DB interface {
-	// *sql.DB APIs
-	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
-	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
-	BeginTx(context.Context, *sql.TxOptions) (*sql.Tx, error)
-	Close() error
-
+// Conn is a database connection interface
+// It has common functions for a database connection and a database transaction
+type Conn interface {
 	// Driver returns the SQL driver name
 	Driver() string
 	// Logger sets a logger for SQL queries
 	Logger(Logger)
-	// Logf write to logger
-	Logf(format string, args ...interface{})
+
+	// ExecContext executes an SQL statement
+	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
+	// QueryContext executes an SQL query statement
+	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
+
+	// Non transaction functions
+
+	// Close database connection
+	// will panic if in current connection is a transaction
+	Close() error
+	// Begin a database transaction
+	// It returns a new Conn object
+	// will panic if in current connection is a transaction
+	Begin(context.Context, *sql.TxOptions) (Conn, error)
+	// ConnDB returns the underlying sql connection
+	// Will panic if the current connection is a transaction
+	ConnDB() *sql.DB
+
+	// Transaction only functions
+
+	// Commit a transaction
+	// Will panic if the current connection is not a transaction
+	Commit() error
+	// Rollback a transaction
+	// Will panic if the current connection is not a transaction
+	Rollback() error
+	// ConnTx returns the underlying sql transaction connection
+	// Will panic if the current connection is not a transaction
+	ConnTx() *sql.Tx
 }
 
 // Open returns a new database for orm libraries
-func Open(driverName, address string) (DB, error) {
+func Open(driverName, address string) (Conn, error) {
 	sqlDB, err := sql.Open(driverName, address)
 	if err != nil {
 		return nil, err
 	}
-	return &db{DB: sqlDB, name: driverName}, nil
+	return &conn{DB: sqlDB, name: driverName}, nil
 }
 
-type db struct {
+type conn struct {
 	*sql.DB
+	*sql.Tx
 	name string
 	log  Logger
+	txID int
 }
 
-// Driver returns the driver name
-func (d *db) Driver() string {
-	return d.name
+func (c *conn) Begin(ctx context.Context, opts *sql.TxOptions) (Conn, error) {
+	tx, err := c.DB.BeginTx(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	txConn := *c // copy connection object
+	txConn.DB = nil
+	txConn.Tx = tx
+	txConn.txID = rand.Intn(9999)
+	c.logf(fmt.Sprintf("Tx[%d] Begin", txConn.txID))
+	return &txConn, nil
 }
 
-func (d *db) Logger(log Logger) {
-	d.log = log
+func (c *conn) Commit() error {
+	c.logf(fmt.Sprintf("Tx[%d] Commit", c.txID))
+	return c.Tx.Commit()
 }
 
-func (d *db) Logf(format string, args ...interface{}) {
-	if d.log == nil {
+func (c *conn) Rollback() error {
+	c.logf(fmt.Sprintf("Tx[%d] Rollback", c.txID))
+	return c.Tx.Rollback()
+}
+
+func (c *conn) ExecContext(ctx context.Context, stmt string, args ...interface{}) (sql.Result, error) {
+	if c.Tx != nil {
+		c.logf("Tx[%d] Exec: %v %v", c.txID, stmt, args)
+		return c.Tx.ExecContext(ctx, stmt, args...)
+	}
+	c.logf("Exec: %v %v", stmt, args)
+	return c.DB.ExecContext(ctx, stmt, args...)
+}
+
+func (c *conn) QueryContext(ctx context.Context, stmt string, args ...interface{}) (*sql.Rows, error) {
+	if c.Tx != nil {
+		c.logf("Tx[%d] Query: %v %v", c.txID, stmt, args)
+		return c.Tx.QueryContext(ctx, stmt, args...)
+	}
+	c.logf("Query: %v %v", stmt, args)
+	return c.DB.QueryContext(ctx, stmt, args...)
+}
+
+func (c *conn) ConnDB() *sql.DB {
+	return c.DB
+}
+
+func (c *conn) ConnTx() *sql.Tx {
+	return c.Tx
+}
+
+func (c *conn) Driver() string {
+	return c.name
+}
+
+func (c *conn) Logger(log Logger) {
+	c.log = log
+}
+
+func (c *conn) logf(format string, args ...interface{}) {
+	if c.log == nil {
 		return
 	}
-	d.log(format, args...)
+	c.log(format, args...)
 }
 
 // Logger is a fmt.Printf - like function
