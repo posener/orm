@@ -15,7 +15,6 @@ var tpl = template.Must(template.New("").
 {{ $name := $.Graph.Type.Name -}}
 {{ $type := $.Graph.Type.Naked.Ext $.Package -}}
 {{ $hasOneToManyRelation := $.Graph.Type.HasOneToManyRelation -}}
-{{ $apiName := (print $name "ORM") -}}
 {{ $conn := (print $.Private "Conn") -}}
 {{ $countStruct := (print $name "Count") -}}
 
@@ -47,17 +46,10 @@ const {{$.Private}}TableProperties = {{backtick $.Table.Marshal}}
 // {{$.Private}}Column is for table column names
 type {{$.Private}}Column string
 
-const (
-	{{ range $_, $f := $.Graph.Type.NonReferences -}}
-	// {{$.Public}}Col{{$f.Name}} is used to select the {{$f.Name}} column in SELECT queries
-	{{$.Public}}Col{{$f.Name}} {{$.Private}}Column = "{{$f.Column.Name}}"
-	{{ end -}}
-)
-
-// {{$.Private}}OrderedColumns is an oredered list of all the columns in the table
+// {{$.Private}}OrderedColumns is an ordered list of all the columns in the table
 var {{$.Private}}OrderedColumns = []string{
 	{{ range $_, $f := $.Graph.Type.NonReferences -}}
-	string({{$.Public}}Col{{$f.Name}}),
+	string({{$.Private}}ColumnsValues.{{$f.Name}}),
 	{{ end -}}
 }
 
@@ -78,7 +70,7 @@ type {{$.Public}}SelectExecer interface {
 	Joiner() {{$.Public}}Joiner
 }
 
-// {{$.Public}}API is API for ORM operations
+// {{$.Public}}API is basic API for ORM operations
 type {{$.Public}}API interface {
 	// Select returns a builder for selecting rows from an SQL table
 	Select(...{{$.Private}}OptSelect) {{$.Public}}SelectExecer
@@ -97,33 +89,61 @@ type {{$.Public}}API interface {
 	{{ end -}}
 }
 
-// {{$apiName}} is the interface of the ORM object
-type {{$apiName}} interface {
+// {{$.Public}}DB is ORM operations with basic database operations
+type {{$.Public}}DB interface {
 	{{$.Public}}API
 	// Begin begins an SQL transaction and returns the transaction ORM object
-	Begin(context.Context, *sql.TxOptions) ({{$apiName}}Tx, error)
+	Begin(context.Context, *sql.TxOptions) ({{$.Public}}Tx, error)
 	// Create returns a builder for creating an SQL table
 	Create() *{{$.Public}}CreateBuilder
 	// Drop returns a builder for dropping an SQL table
 	Drop() *{{$.Public}}DropBuilder
 }
 
-// {{$apiName}} is the interface of the ORM object
-type {{$apiName}}Tx interface {
+// {{$.Public}}DB is ORM operations inside a DB transaction
+type {{$.Public}}Tx interface {
 	{{$.Public}}API
 	Commit() error
 	Rollback() error
 }
 
-// New{{$apiName}} returns an conn object from a db instance
-func New{{$apiName}}(conn orm.Conn) ({{$apiName}}, error) {
+// {{$.Public}}Conn contains ORM functionality for {{$type}}
+type {{$.Public}}Conn struct {
+	{{$.Public}}DB
+	// S returns a struct that holds different select options
+	S {{$.Public}}SelectOpts
+	// Cols holds the column names of the SQL table of the type
+	Cols {{$.Private}}Columns
+}
+
+// {{$.Private}}Columns are SQL columns of {{$type}}
+type {{$.Private}}Columns struct {
+	{{ range $_, $f := $.Graph.Type.NonReferences -}}
+	// {{$f.Name}} is used to select the {{$f.Name}} column
+	{{$f.Name}} {{$.Private}}Column
+	{{ end -}}
+}
+
+// {{$.Private}}ColumnsValues holds the values of the column names
+var {{$.Private}}ColumnsValues = {{$.Private}}Columns {
+	{{ range $_, $f := $.Graph.Type.NonReferences -}}
+	{{$f.Name}}: {{$.Private}}Column("{{$f.Column.Name}}"),
+	{{ end -}}
+}
+
+// New{{$.Public}}ORM returns an conn object from a db instance
+func New{{$.Public}}ORM(conn orm.Conn) (*{{$.Public}}Conn, error) {
 	d := dialect.Get(conn.Driver())
 	if d == nil {
 		return nil, fmt.Errorf("dialect %s does not exists", conn.Driver())
 	}
-	return &{{$conn}}{
-		Conn:    conn,
-		dialect: d,
+	return &{{$.Public}}Conn{
+		{{$.Public}}DB: &{{$conn}}{
+			Conn:    conn,
+			dialect: d,
+		},
+		S: {{$.Private}}SelectOpts,
+		Cols: {{$.Private}}ColumnsValues,
 	}, nil
 }
 
@@ -136,7 +156,7 @@ type {{$conn}} struct {
 	dialect dialect.API
 }
 
-func (c *{{$conn}}) Begin(ctx context.Context, opt *sql.TxOptions) ({{$apiName}}Tx, error) {
+func (c *{{$conn}}) Begin(ctx context.Context, opt *sql.TxOptions) ({{$.Public}}Tx, error) {
 	tx, err := c.Conn.Begin(ctx, opt)
 	if err != nil {
 		return nil, err
@@ -146,7 +166,6 @@ func (c *{{$conn}}) Begin(ctx context.Context, opt *sql.TxOptions) ({{$apiName}}
 	return &retConn, nil
 }
 
-// Create returns a builder of an SQL CREATE statement
 func (c *{{$conn}}) Create() *{{$.Public}}CreateBuilder {
 	return &{{$.Public}}CreateBuilder{
 		params: runtime.CreateParams{
@@ -159,7 +178,6 @@ func (c *{{$conn}}) Create() *{{$.Public}}CreateBuilder {
 
 type {{$.Private}}OptSelect func(*{{$.Private}}Select)
 
-// Select returns a builder of an SQL SELECT statement
 func (c *{{$conn}}) Select(opts ...{{$.Private}}OptSelect) {{$.Public}}SelectExecer {
 	s := &{{$.Private}}Select{
 		params: runtime.SelectParams{
@@ -174,7 +192,7 @@ func (c *{{$conn}}) Select(opts ...{{$.Private}}OptSelect) {{$.Public}}SelectExe
 	return s
 }
 
-var {{$.Public}}Select = struct {
+type {{$.Public}}SelectOpts struct {
 	// Columns enable selection of specific columns in the returned structs
 	// only the given columns will be filed with values from the database.
 	Columns func(cols ...{{$.Private}}Column) {{$.Private}}OptSelect
@@ -202,7 +220,9 @@ var {{$.Public}}Select = struct {
 	GroupBy func(col {{$.Private}}Column) {{$.Private}}OptSelect
 	// Context sets the context for the SQL query
 	Context func(context.Context) {{$.Private}}OptSelect
-}{
+}
+
+var {{$.Private}}SelectOpts = {{$.Public}}SelectOpts {
 	Columns: func(cols ...{{$.Private}}Column) {{$.Private}}OptSelect {
 		return func(s *{{$.Private}}Select) {
 			s.params.Columns = make(map[string]bool, len(cols))
@@ -517,7 +537,7 @@ func (b *{{$.Public}}DropBuilder) Context(ctx context.Context) *{{$.Public}}Drop
 // === Get ===
 
 func (c *{{$conn}}) Get({{range $i, $pk := $.Graph.Type.PrimaryKeys}}key{{$i}} {{$pk.Type.Ext $.Package}},{{end}}) (*{{$type}}, error) {
-	return c.Select({{$.Public}}Select.Where(
+	return c.Select({{$.Private}}SelectOpts.Where(
 	{{- range $i, $pk := $.Graph.Type.PrimaryKeys -}}
 		c.Where().{{$pk.Name}}(orm.OpEq, key{{$i}})
 		{{- if ne (plus1 $i) (len $.Graph.Type.PrimaryKeys) -}}

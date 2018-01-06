@@ -87,7 +87,7 @@ func ExampleRelationOne2Many() {
 	// relationships:
 
 	ones, err = oneORM.Select(
-		OneSelect.JoinOtherMany(otherManyORM.Select().Joiner()),
+		oneORM.S.JoinOtherMany(otherManyORM.Select().Joiner()),
 	).Query()
 
 	var otherMany []string
@@ -101,13 +101,13 @@ func ExampleRelationOne2Many() {
 
 	ones, err = oneORM.Select(
 		// choose only o3 from all the "ones"
-		OneSelect.Where(oneORM.Where().Name(orm.OpEq, "o3")),
+		oneORM.S.Where(oneORM.Where().Name(orm.OpEq, "o3")),
 		// Filter One.OtherMany to have only OtherMany.ID < 10
 		// Nested join, join One from OtherMany
-		OneSelect.JoinOtherMany(
+		oneORM.S.JoinOtherMany(
 			otherManyORM.Select(
-				OtherManySelect.Where(otherManyORM.Where().ID(orm.OpLt, 10)),
-				OtherManySelect.JoinMyOne(oneORM.Select().Joiner()),
+				otherManyORM.S.Where(otherManyORM.Where().ID(orm.OpLt, 10)),
+				otherManyORM.S.JoinMyOne(oneORM.Select().Joiner()),
 			).Joiner(),
 		),
 	).Query()
