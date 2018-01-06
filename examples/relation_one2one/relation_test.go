@@ -77,18 +77,21 @@ func ExampleRelationOne2One() {
 	// The select statement builder have a a join function, for each of the struct
 	// relationships:
 
-	ones, err = oneORM.Select().
-		JoinOtherOne(otherOneORM.Select().Joiner()).
-		Query()
+	ones, err = oneORM.Select(
+		OneSelect.JoinOtherOne(otherOneORM.Select().Joiner()),
+	).Query()
 
 	fmt.Println("3. one with join's references:", ones[0].OtherOne.Name)
 
 	// All the select operations: Where, GroupBy, OrderBy, Page, and so, can be give to the
 	// joined selector as well, and joins can be also applied recursively
-	ones, err = oneORM.Select().
-		JoinOtherOne(otherOneORM.Select().
-			Where(otherOneORM.Where().ID(orm.OpLt, 3)).Joiner()).
-		Query()
+	ones, err = oneORM.Select(
+		OneSelect.JoinOtherOne(
+			otherOneORM.Select(
+				OtherOneSelect.Where(otherOneORM.Where().ID(orm.OpLt, 3)),
+			).Joiner(),
+		),
+	).Query()
 
 	// we expect to have only 2 entries:
 	fmt.Println("4. complex join len:", len(ones))

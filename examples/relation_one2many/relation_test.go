@@ -86,9 +86,9 @@ func ExampleRelationOne2Many() {
 	// The select statement builder have a a join function, for each of the struct
 	// relationships:
 
-	ones, err = oneORM.Select().
-		JoinOtherMany(otherManyORM.Select().Joiner()).
-		Query()
+	ones, err = oneORM.Select(
+		OneSelect.JoinOtherMany(otherManyORM.Select().Joiner()),
+	).Query()
 
 	var otherMany []string
 	for _, om := range ones[0].OtherMany {
@@ -99,16 +99,18 @@ func ExampleRelationOne2Many() {
 	// All the select operations: Where, GroupBy, OrderBy, Page, and so, can be give to the
 	// joined selector as well, and joins can be also applied recursively
 
-	ones, err = oneORM.Select().
+	ones, err = oneORM.Select(
 		// choose only o3 from all the "ones"
-		Where(oneORM.Where().Name(orm.OpEq, "o3")).
+		OneSelect.Where(oneORM.Where().Name(orm.OpEq, "o3")),
 		// Filter One.OtherMany to have only OtherMany.ID < 10
 		// Nested join, join One from OtherMany
-		JoinOtherMany(otherManyORM.Select().
-			Where(otherManyORM.Where().ID(orm.OpLt, 10)).
-			JoinMyOne(oneORM.Select().Joiner()).
-			Joiner()).
-		Query()
+		OneSelect.JoinOtherMany(
+			otherManyORM.Select(
+				OtherManySelect.Where(otherManyORM.Where().ID(orm.OpLt, 10)),
+				OtherManySelect.JoinMyOne(oneORM.Select().Joiner()),
+			).Joiner(),
+		),
+	).Query()
 
 	// we expect to have only one entry:
 	fmt.Println("4. complex join len:", len(ones))
