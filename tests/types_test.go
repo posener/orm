@@ -90,14 +90,14 @@ func TestAutoIncrement(t *testing.T) {
 		require.Nil(t, err)
 		assert.Equal(t, 2, a2.Auto)
 
-		alls, err := db.Select(AllSelect.OrderBy(AllColAuto, orm.Asc)).Query()
+		alls, err := db.Select(db.S.OrderBy(AllColAuto, orm.Asc)).Query()
 		require.Nil(t, err)
 		require.Equal(t, 2, len(alls))
 
 		assert.Equal(t, 1, alls[0].Auto)
 		assert.Equal(t, 2, alls[1].Auto)
 
-		alls, err = db.Select(AllSelect.OrderBy(AllColAuto, orm.Desc)).Query()
+		alls, err = db.Select(db.S.OrderBy(AllColAuto, orm.Desc)).Query()
 		require.Nil(t, err)
 		require.Equal(t, 2, len(alls))
 
@@ -115,12 +115,12 @@ func TestFieldReservedName(t *testing.T) {
 		require.Nil(t, err)
 
 		alls, err := db.Select(
-			AllSelect.Columns(AllColSelect),
-			AllSelect.Where(db.Where().Select(orm.OpEq, 42).
+			db.S.Columns(AllColSelect),
+			db.S.Where(db.Where().Select(orm.OpEq, 42).
 				Or(db.Where().SelectBetween(10, 50)).
 				Or(db.Where().SelectIn(11, 12))),
-			AllSelect.OrderBy(AllColSelect, orm.Desc),
-			AllSelect.GroupBy(AllColSelect),
+			db.S.OrderBy(AllColSelect, orm.Desc),
+			db.S.GroupBy(AllColSelect),
 		).Query()
 		require.Nil(t, err)
 		require.Equal(t, 1, len(alls))
@@ -130,7 +130,7 @@ func TestFieldReservedName(t *testing.T) {
 		require.Nil(t, err)
 		assertRowsAffected(t, 1, res)
 
-		alls, err = db.Select(AllSelect.Columns(AllColSelect)).Query()
+		alls, err = db.Select(db.S.Columns(AllColSelect)).Query()
 		require.Nil(t, err)
 		require.Equal(t, 1, len(alls))
 		assert.Equal(t, 11, alls[0].Select)
@@ -139,7 +139,7 @@ func TestFieldReservedName(t *testing.T) {
 		require.Nil(t, err)
 		assertRowsAffected(t, 1, res)
 
-		alls, err = db.Select(AllSelect.Columns(AllColSelect)).Query()
+		alls, err = db.Select(db.S.Columns(AllColSelect)).Query()
 		require.Nil(t, err)
 		require.Equal(t, 0, len(alls))
 	})
@@ -172,70 +172,70 @@ func TestPersonSelect(t *testing.T) {
 				want: []Person{p1, p2, p3},
 			},
 			{
-				q:    db.Select(PersonSelect.Columns(PersonColName)),
+				q:    db.Select(db.S.Columns(PersonColName)),
 				want: []Person{{Name: "moshe"}, {Name: "haim"}, {Name: "zvika"}},
 			},
 			{
-				q:    db.Select(PersonSelect.Columns(PersonColAge)),
+				q:    db.Select(db.S.Columns(PersonColAge)),
 				want: []Person{{Age: 1}, {Age: 2}, {Age: 3}},
 			},
 			{
-				q:    db.Select(PersonSelect.Columns(PersonColAge, PersonColName)),
+				q:    db.Select(db.S.Columns(PersonColAge, PersonColName)),
 				want: []Person{p1, p2, p3},
 			},
 			{
-				q:    db.Select(PersonSelect.Columns(PersonColAge, PersonColName)),
+				q:    db.Select(db.S.Columns(PersonColAge, PersonColName)),
 				want: []Person{p1, p2, p3},
 			},
 			{
-				q:    db.Select(PersonSelect.Where(db.Where().Name(orm.OpEq, "moshe"))),
+				q:    db.Select(db.S.Where(db.Where().Name(orm.OpEq, "moshe"))),
 				want: []Person{p1},
 			},
 			{
-				q:    db.Select(PersonSelect.Where(db.Where().Name(orm.OpEq, "moshe").Or(db.Where().Age(orm.OpEq, 2)))),
+				q:    db.Select(db.S.Where(db.Where().Name(orm.OpEq, "moshe").Or(db.Where().Age(orm.OpEq, 2)))),
 				want: []Person{p1, p2},
 			},
 			{
-				q:    db.Select(PersonSelect.Where(db.Where().Name(orm.OpEq, "moshe").And(db.Where().Age(orm.OpEq, 1)))),
+				q:    db.Select(db.S.Where(db.Where().Name(orm.OpEq, "moshe").And(db.Where().Age(orm.OpEq, 1)))),
 				want: []Person{p1},
 			},
 			{
-				q: db.Select(PersonSelect.Where(db.Where().Name(orm.OpEq, "moshe").And(db.Where().Age(orm.OpEq, 2)))),
+				q: db.Select(db.S.Where(db.Where().Name(orm.OpEq, "moshe").And(db.Where().Age(orm.OpEq, 2)))),
 			},
 			{
-				q:    db.Select(PersonSelect.Where(db.Where().Age(orm.OpGE, 2))),
+				q:    db.Select(db.S.Where(db.Where().Age(orm.OpGE, 2))),
 				want: []Person{p2, p3},
 			},
 			{
-				q:    db.Select(PersonSelect.Where(db.Where().Age(orm.OpGt, 2))),
+				q:    db.Select(db.S.Where(db.Where().Age(orm.OpGt, 2))),
 				want: []Person{p3},
 			},
 			{
-				q:    db.Select(PersonSelect.Where(db.Where().Age(orm.OpLE, 2))),
+				q:    db.Select(db.S.Where(db.Where().Age(orm.OpLE, 2))),
 				want: []Person{p1, p2},
 			},
 			{
-				q:    db.Select(PersonSelect.Where(db.Where().Age(orm.OpLt, 2))),
+				q:    db.Select(db.S.Where(db.Where().Age(orm.OpLt, 2))),
 				want: []Person{p1},
 			},
 			{
-				q:    db.Select(PersonSelect.Where(db.Where().Name(orm.OpNe, "moshe"))),
+				q:    db.Select(db.S.Where(db.Where().Name(orm.OpNe, "moshe"))),
 				want: []Person{p2, p3},
 			},
 			{
-				q:    db.Select(PersonSelect.Where(db.Where().NameIn("moshe", "haim"))),
+				q:    db.Select(db.S.Where(db.Where().NameIn("moshe", "haim"))),
 				want: []Person{p1, p2},
 			},
 			{
-				q:    db.Select(PersonSelect.Where(db.Where().AgeBetween(0, 2))),
+				q:    db.Select(db.S.Where(db.Where().AgeBetween(0, 2))),
 				want: []Person{p1, p2},
 			},
 			{
-				q:    db.Select(PersonSelect.Limit(2)),
+				q:    db.Select(db.S.Limit(2)),
 				want: []Person{p1, p2},
 			},
 			{
-				q:    db.Select(PersonSelect.Page(1, 1)),
+				q:    db.Select(db.S.Page(1, 1)),
 				want: []Person{p2},
 			},
 		}
@@ -277,7 +277,7 @@ func TestCRUD(t *testing.T) {
 			t.Fatal(err)
 		}
 		assert.Equal(t, []Person{p2, p3}, ps)
-		ps, err = db.Select(PersonSelect.Where(db.Where().Name(orm.OpEq, "moshe"))).Query()
+		ps, err = db.Select(db.S.Where(db.Where().Name(orm.OpEq, "moshe"))).Query()
 		require.Nil(t, err)
 		assert.Equal(t, []Person(nil), ps)
 
@@ -287,7 +287,7 @@ func TestCRUD(t *testing.T) {
 		require.Nil(t, err)
 		assertRowsAffected(t, 1, res)
 
-		ps, err = db.Select(PersonSelect.Where(db.Where().Name(orm.OpEq, "Jenny"))).Query()
+		ps, err = db.Select(db.S.Where(db.Where().Name(orm.OpEq, "Jenny"))).Query()
 		require.Nil(t, err)
 		assert.Equal(t, []Person{{Name: "Jenny", Age: 3}}, ps)
 	})
@@ -312,14 +312,14 @@ func TestCount(t *testing.T) {
 				want: []PersonCount{{Count: 100}},
 			},
 			{
-				q:    db.Select(PersonSelect.Where(db.Where().Age(orm.OpLt, 10))),
+				q:    db.Select(db.S.Where(db.Where().Age(orm.OpLt, 10))),
 				want: []PersonCount{{Count: 50}},
 			},
 			{
 				q: db.Select(
-					PersonSelect.Columns(PersonColAge),
-					PersonSelect.GroupBy(PersonColAge),
-					PersonSelect.Where(db.Where().AgeIn(1, 3, 12)),
+					db.S.Columns(PersonColAge),
+					db.S.GroupBy(PersonColAge),
+					db.S.Where(db.Where().AgeIn(1, 3, 12)),
 				),
 				want: []PersonCount{
 					{Person: &Person{Age: 1}, Count: 5},
@@ -329,10 +329,10 @@ func TestCount(t *testing.T) {
 			},
 			{
 				q: db.Select(
-					PersonSelect.Columns(PersonColAge),
-					PersonSelect.GroupBy(PersonColAge),
-					PersonSelect.Where(db.Where().AgeIn(1, 3, 12)),
-					PersonSelect.OrderBy(PersonColAge, orm.Desc),
+					db.S.Columns(PersonColAge),
+					db.S.GroupBy(PersonColAge),
+					db.S.Where(db.Where().AgeIn(1, 3, 12)),
+					db.S.OrderBy(PersonColAge, orm.Desc),
 				),
 				want: []PersonCount{
 					{Person: &Person{Age: 12}, Count: 5},
@@ -390,15 +390,15 @@ func TestFirst(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, &smith, got)
 
-		got, err = db.Select(PersonSelect.Where(db.Where().Age(orm.OpEq, 12))).First()
+		got, err = db.Select(db.S.Where(db.Where().Age(orm.OpEq, 12))).First()
 		assert.Nil(t, err)
 		assert.Equal(t, &john, got)
 
-		got, err = db.Select(PersonSelect.OrderBy(PersonColAge, orm.Asc)).First()
+		got, err = db.Select(db.S.OrderBy(PersonColAge, orm.Asc)).First()
 		assert.Nil(t, err)
 		assert.Equal(t, &john, got)
 
-		got, err = db.Select(PersonSelect.OrderBy(PersonColAge, orm.Desc)).First()
+		got, err = db.Select(db.S.OrderBy(PersonColAge, orm.Desc)).First()
 		assert.Nil(t, err)
 		assert.Equal(t, &smith, got)
 	})
@@ -447,7 +447,7 @@ func TestNew(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func personDB(t *testing.T, conn orm.Conn) PersonORM {
+func personDB(t *testing.T, conn orm.Conn) *PersonConn {
 	t.Helper()
 	db, err := NewPersonORM(conn)
 	require.Nil(t, err)
@@ -456,7 +456,7 @@ func personDB(t *testing.T, conn orm.Conn) PersonORM {
 	return db
 }
 
-func allDB(t *testing.T, conn orm.Conn) AllORM {
+func allDB(t *testing.T, conn orm.Conn) *AllConn {
 	t.Helper()
 	db, err := NewAllORM(conn)
 	require.Nil(t, err)

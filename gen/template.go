@@ -115,15 +115,24 @@ type {{$apiName}}Tx interface {
 	Rollback() error
 }
 
+type {{$.Public}}Conn struct {
+	{{$apiName}}
+	// S returns a struct that holds different select options
+	S {{$.Public}}SelectOpts
+}
+
 // New{{$apiName}} returns an conn object from a db instance
-func New{{$apiName}}(conn orm.Conn) ({{$apiName}}, error) {
+func New{{$apiName}}(conn orm.Conn) (*{{$.Public}}Conn, error) {
 	d := dialect.Get(conn.Driver())
 	if d == nil {
 		return nil, fmt.Errorf("dialect %s does not exists", conn.Driver())
 	}
-	return &{{$conn}}{
-		Conn:    conn,
-		dialect: d,
+	return &{{$.Public}}Conn{
+		{{$apiName}}: &{{$conn}}{
+			Conn:    conn,
+			dialect: d,
+		},
+		S: {{$.Private}}SelectOpts,
 	}, nil
 }
 
@@ -146,7 +155,6 @@ func (c *{{$conn}}) Begin(ctx context.Context, opt *sql.TxOptions) ({{$apiName}}
 	return &retConn, nil
 }
 
-// Create returns a builder of an SQL CREATE statement
 func (c *{{$conn}}) Create() *{{$.Public}}CreateBuilder {
 	return &{{$.Public}}CreateBuilder{
 		params: runtime.CreateParams{
@@ -159,7 +167,6 @@ func (c *{{$conn}}) Create() *{{$.Public}}CreateBuilder {
 
 type {{$.Private}}OptSelect func(*{{$.Private}}Select)
 
-// Select returns a builder of an SQL SELECT statement
 func (c *{{$conn}}) Select(opts ...{{$.Private}}OptSelect) {{$.Public}}SelectExecer {
 	s := &{{$.Private}}Select{
 		params: runtime.SelectParams{
@@ -174,7 +181,7 @@ func (c *{{$conn}}) Select(opts ...{{$.Private}}OptSelect) {{$.Public}}SelectExe
 	return s
 }
 
-var {{$.Public}}Select = struct {
+type {{$.Public}}SelectOpts struct {
 	// Columns enable selection of specific columns in the returned structs
 	// only the given columns will be filed with values from the database.
 	Columns func(cols ...{{$.Private}}Column) {{$.Private}}OptSelect
@@ -202,7 +209,9 @@ var {{$.Public}}Select = struct {
 	GroupBy func(col {{$.Private}}Column) {{$.Private}}OptSelect
 	// Context sets the context for the SQL query
 	Context func(context.Context) {{$.Private}}OptSelect
-}{
+}
+
+var {{$.Private}}SelectOpts = {{$.Public}}SelectOpts {
 	Columns: func(cols ...{{$.Private}}Column) {{$.Private}}OptSelect {
 		return func(s *{{$.Private}}Select) {
 			s.params.Columns = make(map[string]bool, len(cols))
@@ -517,7 +526,7 @@ func (b *{{$.Public}}DropBuilder) Context(ctx context.Context) *{{$.Public}}Drop
 // === Get ===
 
 func (c *{{$conn}}) Get({{range $i, $pk := $.Graph.Type.PrimaryKeys}}key{{$i}} {{$pk.Type.Ext $.Package}},{{end}}) (*{{$type}}, error) {
-	return c.Select({{$.Public}}Select.Where(
+	return c.Select({{$.Private}}SelectOpts.Where(
 	{{- range $i, $pk := $.Graph.Type.PrimaryKeys -}}
 		c.Where().{{$pk.Name}}(orm.OpEq, key{{$i}})
 		{{- if ne (plus1 $i) (len $.Graph.Type.PrimaryKeys) -}}

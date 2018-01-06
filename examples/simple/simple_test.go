@@ -87,7 +87,7 @@ func ExampleSimpleUsage() {
 	// gets two typed arguments, no strings, no interface{}
 	// The where statement can have OR and AND operator for applying several conditions
 	simples, err = sorm.Select(
-		SimpleSelect.Where(sorm.Where().Field3(orm.OpEq, true)),
+		sorm.S.Where(sorm.Where().Field3(orm.OpEq, true)),
 	).Query()
 	examples.PanicOnErr(err)
 
@@ -96,7 +96,7 @@ func ExampleSimpleUsage() {
 	fmt.Println("Select where len:", len(simples))
 
 	// We can group by and order by. Let's try:
-	simples, err = sorm.Select(SimpleSelect.GroupBy(SimpleColField2)).Query()
+	simples, err = sorm.Select(sorm.S.GroupBy(SimpleColField2)).Query()
 
 	// We expect the select length to be 1 since both rows have the same value in field2
 	fmt.Println("Select group len:", len(simples))
