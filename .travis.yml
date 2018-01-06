@@ -11,7 +11,7 @@ services:
 env:
   global:
     - TRAVIS=1
-    - MYSQL_ADDR=root:@(127.0.0.1:3306)
+    - MYSQL_ADDR=root:@(127.0.0.1:3306)/
 
 before_install:
   - go get -u ./...
