@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 var typeFormat = regexp.MustCompile(`([^(]+)(\((\d+)\))?`)
@@ -26,10 +27,14 @@ func New(s string) (*Type, error) {
 		t.Name = m[1]
 		t.Size, _ = strconv.Atoi(m[3])
 	}
+	t.Name = strings.ToLower(t.Name)
 	return t, nil
 }
 
 func (t *Type) String() string {
+	if t == nil {
+		return ""
+	}
 	if t.Size == 0 {
 		return t.Name
 	}

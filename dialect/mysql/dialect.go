@@ -37,26 +37,26 @@ func (Dialect) GoTypeToColumnType(goTypeName string, autoIncrement bool) *sqltyp
 	case "int", "int16", "int32":
 		st.Name = "int8"
 	case "int8":
-		st.Name = "TINYINT"
+		st.Name = "tinyint"
 	case "uint8":
-		st.Name = "TINYINT UNSIGNED"
+		st.Name = "tinyint unsigned"
 	case "uint", "uint16", "uint32":
-		st.Name = "INT UNSIGNED"
+		st.Name = "int unsigned"
 	case "int64":
-		st.Name = "BIGINT"
+		st.Name = "bigint"
 	case "uint64":
-		st.Name = "BIGINT UNSIGNED"
+		st.Name = "bigint unsigned"
 	case "float32", "float64":
-		st.Name = "DOUBLE"
+		st.Name = "double"
 	case "bool":
-		st.Name = "BOOLEAN"
+		st.Name = "boolean"
 	case "string":
-		st.Name = "VARCHAR"
+		st.Name = "varchar"
 		st.Size = 255
 	case "[]byte":
-		st.Name = "LONGBLOB"
+		st.Name = "longblob"
 	case "time.Time":
-		st.Name = "TIMESTAMP"
+		st.Name = "timestamp"
 		st.Size = 3
 	default:
 		log.Fatalf("Unknown column type for %s", goTypeName)

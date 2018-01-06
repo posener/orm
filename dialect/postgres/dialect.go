@@ -106,21 +106,11 @@ type tmpltType struct {
 
 var tmplt = template.Must(template.New("postgres").Parse(`
 				switch val := vals[i].(type) {
-				case []byte:
-					tmp := {{.ConvertBytesFuncString}}
-					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer}}&{{end}}tmp
-				{{ if ne .ConvertType "[]byte" -}}
 				case {{.ConvertType}}:
 					tmp := {{.Field.Type.Naked.Ext .Field.ParentType.Package}}(val)
 					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer }}&{{end}}tmp
-				{{ end -}}
-				{{ if and (ne .ConvertType "int64") .ConvertIntFuncString -}}
-				case int64:
-					tmp := {{.ConvertIntFuncString}}
-					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer}}&{{end}}tmp
-				{{ end -}}
 				default:
-					return nil, 0, runtime.ErrConvert("{{.Field.AccessName}}", i, vals[i], "{{.ConvertType}}, []byte, (int64?)")
+					return nil, 0, runtime.ErrConvert("{{.Field.AccessName}}", i, vals[i], "{{.ConvertType}}")
 				}
 `))
 
@@ -164,10 +154,8 @@ func (d *Dialect) convertType(f *load.Field, sqlType *sqltypes.Type) string {
 		return "int64"
 	case "numeric":
 		return "float64"
-	case "varchar":
+	case "varchar", "text":
 		return "string"
-	case "text":
-		return "[]byte"
 	case "boolean":
 		return "bool"
 	default:
