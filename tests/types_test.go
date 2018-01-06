@@ -20,8 +20,6 @@ import (
 
 var mySQLAddr = os.Getenv("MYSQL_ADDR")
 
-var dbNames = []string{"sqlite3", "mysql"}
-
 func TestTypes(t *testing.T) {
 	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
@@ -473,7 +471,7 @@ func testDBs(t *testing.T, testFunc func(t *testing.T, conn orm.Conn)) {
 		"'", "",
 		" ", "_",
 	)
-	for _, name := range dbNames {
+	for _, name := range []string{"sqlite3", "mysql"} {
 		name := name
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
