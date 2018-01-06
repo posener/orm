@@ -132,10 +132,9 @@ func (c *{{$conn}}) Begin(ctx context.Context, opt *sql.TxOptions) ({{$apiName}}
 	if err != nil {
 		return nil, err
 	}
-	return &{{$conn}}{
-		Conn:    tx,
-		dialect: c.dialect,
-	}, nil
+	retConn := *c
+	retConn.Conn = tx
+	return &retConn, nil
 }
 
 // Create returns a builder of an SQL CREATE statement

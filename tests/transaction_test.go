@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"runtime"
+	"strings"
+
 	"github.com/posener/orm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,6 +21,9 @@ func TestTransactions(t *testing.T) {
 		require.Nil(t, person.Drop().IfExists().Exec())
 		require.Nil(t, person.Create().Exec())
 
+		ps, err := person.Select().Query()
+		assert.Equal(t, 0, len(ps))
+
 		ctx := context.Background()
 
 		t.Logf("Transaction commit")
@@ -26,14 +32,21 @@ func TestTransactions(t *testing.T) {
 		require.Nil(t, err)
 
 		_, err = personTx.Insert().SetName("John").SetAge(23).Exec()
+		require.Nil(t, err)
 
-		ps, err := person.Select().Query()
+		ps, err = personTx.Select().Query()
+		require.Nil(t, err)
+		assert.Equal(t, 1, len(ps))
+
+		ps, err = person.Select().Query()
+		require.Nil(t, err)
 		assert.Equal(t, 0, len(ps))
 
 		err = personTx.Commit()
 		require.Nil(t, err)
 
 		ps, err = person.Select().Query()
+		require.Nil(t, err)
 		assert.Equal(t, 1, len(ps))
 
 		t.Logf("Transaction rollback")
@@ -44,15 +57,20 @@ func TestTransactions(t *testing.T) {
 		_, err = personTx.Insert().SetName("Bill").SetAge(46).Exec()
 
 		ps, err = person.Select().Query()
+		require.Nil(t, err)
 		assert.Equal(t, 1, len(ps))
 
 		require.Nil(t, personTx.Rollback())
 
 		ps, err = person.Select().Query()
+		require.Nil(t, err)
 		assert.Equal(t, 1, len(ps))
 
-		t.Logf("Transaction context cancel")
+		if strings.HasPrefix(runtime.Version(), "go1.9") {
+			t.Skip("Go 1.9 leaves a transaction connection open after cancel() is called")
+		}
 
+		t.Logf("Transaction context cancel")
 		ctx, cancel := context.WithCancel(ctx)
 
 		personTx, err = person.Begin(ctx, nil)
@@ -61,12 +79,14 @@ func TestTransactions(t *testing.T) {
 		_, err = personTx.Insert().SetName("Bill").SetAge(46).Exec()
 
 		ps, err = person.Select().Query()
+		require.Nil(t, err)
 		assert.Equal(t, 1, len(ps))
 
 		cancel()
 		require.NotNil(t, personTx.Commit())
 
 		ps, err = person.Select().Query()
+		require.Nil(t, err)
 		assert.Equal(t, 1, len(ps))
 
 	})

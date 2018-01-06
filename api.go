@@ -49,7 +49,7 @@ type Conn interface {
 	// QueryContext executes an SQL query statement
 	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
 
-	// Non transactions functions
+	// Non transaction functions
 
 	// Close database connection
 	// will panic if in current connection is a transaction
@@ -62,7 +62,7 @@ type Conn interface {
 	// Will panic if the current connection is a transaction
 	DBConn() *sql.DB
 
-	// Transactions functions
+	// Transaction only functions
 
 	// Commit a transaction
 	// Will panic if the current connection is not a transaction

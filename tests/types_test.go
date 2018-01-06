@@ -3,13 +3,8 @@ package tests
 import (
 	"database/sql"
 	"fmt"
-	"os"
 	"testing"
 	"time"
-
-	"context"
-
-	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
@@ -17,8 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-var mySQLAddr = os.Getenv("MYSQL_ADDR")
 
 func TestTypes(t *testing.T) {
 	t.Parallel()
@@ -461,55 +454,4 @@ func allDB(t *testing.T, conn orm.Conn) AllORM {
 	err = db.Create().Exec()
 	require.Nil(t, err)
 	return db
-}
-
-func testDBs(t *testing.T, testFunc func(t *testing.T, conn orm.Conn)) {
-	t.Helper()
-	replacer := strings.NewReplacer(
-		"/", "_",
-		`"`, "",
-		"'", "",
-		" ", "_",
-	)
-	for _, name := range []string{"sqlite3", "mysql"} {
-		name := name
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-			databaseName := "orm_test_" + replacer.Replace(t.Name())
-			var (
-				conn orm.Conn
-				err  error
-			)
-			switch name {
-			case "mysql":
-				if mySQLAddr == "" {
-					t.Skipf("mysql environment is not set")
-				}
-				ctx := context.Background()
-				conn, err = orm.Open(name, mySQLAddr)
-				require.Nil(t, err)
-				_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP DATABASE IF EXISTS `%s`", databaseName))
-				require.Nil(t, err)
-				_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE `%s`", databaseName))
-				require.Nil(t, err)
-				_, err = conn.ExecContext(ctx, fmt.Sprintf("USE `%s`", databaseName))
-				require.Nil(t, err)
-
-			case "sqlite3":
-				os.Remove(fmt.Sprintf("/tmp/%s.db", databaseName))
-				conn, err = orm.Open(name, fmt.Sprintf("/tmp/%s.db", databaseName))
-				require.Nil(t, err)
-
-			default:
-				panic("unknown db")
-			}
-
-			defer conn.Close()
-			if testing.Verbose() {
-				conn.Logger(t.Logf)
-			}
-			testFunc(t, conn)
-
-		})
-	}
 }
