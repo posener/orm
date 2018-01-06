@@ -2,7 +2,6 @@ package examples
 
 import (
 	"fmt"
-	"log"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/posener/orm"
@@ -30,8 +29,6 @@ func ExampleRelationOne2One() {
 		return // mysql address was not defined
 	}
 	defer conn.Close()
-
-	conn.Logger(log.Printf)
 
 	oneORM, err := NewOneORM(conn)
 	examples.PanicOnErr(err)

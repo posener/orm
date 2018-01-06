@@ -36,8 +36,12 @@ import (
 )
 
 func main() {
-	db, err := orm.Open("mysql", "user:password@(127.0.0.1:3306)/db")
+	// Open an SQL connection to a mysql database
+	// We can set a connection logger with an optional OptLogger function which will log
+	// all executed SQL statements with our favorite logger.
+	db, err := orm.Open("mysql", "user:password@(127.0.0.1:3306)/db", orm.OptLogger(log.Printf))
 	defer db.Close()
+	
 	// NewPersonORM was generated with the `orm` command line.
 	// It returns an object that interacts with the database.
 	// This was generated for a struct:
@@ -45,12 +49,6 @@ func main() {
 	//      Name       string
 	//      Age        int
 	// }
-	
-	// Set a logger to log SQL commands
-	db.Logger(log.Printf)
-	
-	// Create an ORM object, an object to interact with a person table
-	// in a database.
 	person, err := NewPersonORM(db)
 	
 	// Create a table:

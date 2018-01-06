@@ -3,7 +3,6 @@ package simple
 import (
 	"context"
 	"fmt"
-	"log"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/posener/orm"
@@ -24,9 +23,6 @@ func ExampleSimpleUsage() {
 		return // mysql address was not defined
 	}
 	defer conn.Close()
-
-	// Logger sets a logger to log SQL commands before being executed
-	conn.Logger(log.Printf)
 
 	// Create an ORM controller for the Simple struct
 	sorm, err := NewSimpleORM(conn)
