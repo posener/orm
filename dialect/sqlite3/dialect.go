@@ -51,7 +51,7 @@ func (*Dialect) GoTypeToColumnType(goTypeName string, autoIncrement bool) *sqlty
 	case "float", "float8", "float16", "float32", "float64":
 		st.Name = "real"
 	case "bool":
-		st.Name = "bool"
+		st.Name = "boolean"
 	case "string":
 		st.Name = "text"
 	case "[]byte":
@@ -89,9 +89,10 @@ type tmpltType struct {
 }
 
 var tmplt = template.Must(template.New("sqlite3").Parse(`
-				val, ok := vals[i].({{.ConvertType}})
+				{{ $convertType := .ConvertType }}
+				val, ok := vals[i].({{$convertType}})
 				if !ok {
-					return nil, 0, runtime.ErrConvert("{{.Field.AccessName}}", i, vals[i], "{{.Field.Type.Ext .Field.ParentType.Package}}")
+					return nil, 0, dialect.ErrConvert("{{.Field.AccessName}}", i, vals[i], "{{$convertType}}")
 				}
 				tmp := {{.Field.Type.Naked.Ext .Field.ParentType.Package}}(val)
 				row.{{.Field.AccessName}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
@@ -104,9 +105,9 @@ func (d *Dialect) convertType(f *load.Field, sqlType *sqltypes.Type) string {
 		return "int64"
 	case "real":
 		return "float64"
-	case "text", "blob":
+	case "text", "blob", "varchar":
 		return "[]byte"
-	case "bool":
+	case "boolean":
 		return "bool"
 	default:
 		return f.Type.Naked.Ext("")

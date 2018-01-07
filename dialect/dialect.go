@@ -6,13 +6,12 @@ import (
 	"strings"
 
 	"github.com/posener/orm"
+	"github.com/posener/orm/dialect/migration"
 	"github.com/posener/orm/dialect/mysql"
 	"github.com/posener/orm/dialect/postgres"
 	"github.com/posener/orm/dialect/sqlite3"
 	"github.com/posener/orm/dialect/sqltypes"
 	"github.com/posener/orm/load"
-	"github.com/posener/orm/runtime"
-	"github.com/posener/orm/runtime/migration"
 )
 
 const SQLite3 = "sqlite3"
@@ -25,17 +24,17 @@ type API interface {
 	// Name returns the name of the dialect
 	Name() string
 	// Create returns the SQL CREATE statement and arguments according to the given parameters
-	Create(orm.Conn, *runtime.CreateParams) ([]string, error)
+	Create(orm.Conn, *CreateParams) ([]string, error)
 	// Insert returns the SQL INSERT statement and arguments according to the given parameters
-	Insert(*runtime.InsertParams) (string, []interface{})
+	Insert(*InsertParams) (string, []interface{})
 	// Select returns the SQL SELECT statement and arguments according to the given parameters
-	Select(*runtime.SelectParams) (string, []interface{})
+	Select(*SelectParams) (string, []interface{})
 	// Delete returns the SQL DELETE statement and arguments according to the given parameters
-	Delete(*runtime.DeleteParams) (string, []interface{})
+	Delete(*DeleteParams) (string, []interface{})
 	// Update returns the SQL UPDATE statement and arguments according to the given parameters
-	Update(*runtime.UpdateParams) (string, []interface{})
+	Update(*UpdateParams) (string, []interface{})
 	// Drop returns the SQL DROP statement and arguments according to the given parameters
-	Drop(*runtime.DropParams) (string, []interface{})
+	Drop(*DropParams) (string, []interface{})
 }
 
 // Dialect is an interface for a dialect for generating ORM code
@@ -83,7 +82,7 @@ type dialect struct {
 }
 
 // Create returns the SQL CREATE statement and arguments according to the given parameters
-func (d *dialect) Create(conn orm.Conn, p *runtime.CreateParams) ([]string, error) {
+func (d *dialect) Create(conn orm.Conn, p *CreateParams) ([]string, error) {
 	table := new(migration.Table)
 	err := table.UnMarshal(p.MarshaledTable)
 	if err != nil {
@@ -136,11 +135,11 @@ func (d *dialect) autoMigrate(ctx context.Context, conn orm.Conn, tableName stri
 }
 
 // Insert returns the SQL INSERT statement and arguments according to the given parameters
-func (d *dialect) Insert(p *runtime.InsertParams) (string, []interface{}) {
+func (d *dialect) Insert(p *InsertParams) (string, []interface{}) {
 	stmt := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",
 		d.Quote(p.Table),
 		d.assignColumns(p.Assignments),
-		runtime.QMarks(len(p.Assignments)),
+		QMarks(len(p.Assignments)),
 	)
 	stmt = d.ReplaceVars(stmt)
 
@@ -153,7 +152,7 @@ func (d *dialect) Insert(p *runtime.InsertParams) (string, []interface{}) {
 }
 
 // Select returns the SQL SELECT statement and arguments according to the given parameters
-func (d *dialect) Select(p *runtime.SelectParams) (string, []interface{}) {
+func (d *dialect) Select(p *SelectParams) (string, []interface{}) {
 	stmt := d.ReplaceVars(fmt.Sprintf("SELECT %s FROM %s %s %s %s %s %s",
 		d.selectColumns(p),
 		d.Quote(p.Table),
@@ -169,7 +168,7 @@ func (d *dialect) Select(p *runtime.SelectParams) (string, []interface{}) {
 
 // collectWhereArgs collects arguments for WHERE statement from
 // select params and all its nested join options
-func collectWhereArgs(p *runtime.SelectParams) []interface{} {
+func collectWhereArgs(p *SelectParams) []interface{} {
 	var args []interface{}
 	if p.Where != nil {
 		args = append(args, p.Where.Args()...)
@@ -181,7 +180,7 @@ func collectWhereArgs(p *runtime.SelectParams) []interface{} {
 }
 
 // Delete returns the SQL DELETE statement and arguments according to the given parameters
-func (d *dialect) Delete(p *runtime.DeleteParams) (string, []interface{}) {
+func (d *dialect) Delete(p *DeleteParams) (string, []interface{}) {
 	stmt := d.ReplaceVars(fmt.Sprintf("DELETE FROM %s %s",
 		d.Quote(p.Table),
 		d.where(p.Table, p.Where),
@@ -196,7 +195,7 @@ func (d *dialect) Delete(p *runtime.DeleteParams) (string, []interface{}) {
 }
 
 // Update returns the SQL UPDATE statement and arguments according to the given parameters
-func (d *dialect) Update(p *runtime.UpdateParams) (string, []interface{}) {
+func (d *dialect) Update(p *UpdateParams) (string, []interface{}) {
 	stmt := d.ReplaceVars(fmt.Sprintf("UPDATE %s SET %s %s",
 		d.Quote(p.Table),
 		d.assignSets(p.Assignments),
@@ -215,7 +214,7 @@ func (d *dialect) Update(p *runtime.UpdateParams) (string, []interface{}) {
 }
 
 // Drop returns the SQL DROP statement and arguments according to the given parameters
-func (d *dialect) Drop(p *runtime.DropParams) (string, []interface{}) {
+func (d *dialect) Drop(p *DropParams) (string, []interface{}) {
 	stmt := fmt.Sprintf("DROP TABLE %s %s",
 		d.ifExists(p.IfExists),
 		d.Quote(p.Table),
@@ -224,11 +223,11 @@ func (d *dialect) Drop(p *runtime.DropParams) (string, []interface{}) {
 }
 
 // join extract SQL join list statement
-func (d *dialect) join(p *runtime.SelectParams) string {
+func (d *dialect) join(p *SelectParams) string {
 	return strings.Join(d.joinParts(p.Table, p), " ")
 }
 
-func (d *dialect) joinParts(table string, p *runtime.SelectParams) []string {
+func (d *dialect) joinParts(table string, p *SelectParams) []string {
 	joins := p.Joins
 	if len(joins) == 0 {
 		return nil

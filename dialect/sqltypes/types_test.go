@@ -15,11 +15,11 @@ func TestNew(t *testing.T) {
 	}{
 		{
 			s:    "VARCHAR(42)",
-			want: &Type{Name: "VARCHAR", Size: 42},
+			want: &Type{Name: "varchar", Size: 42},
 		},
 		{
 			s:    "INTEGER",
-			want: &Type{Name: "INTEGER"},
+			want: &Type{Name: "integer"},
 		},
 		{
 			s:       "",

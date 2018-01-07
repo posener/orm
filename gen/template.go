@@ -30,7 +30,6 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"github.com/posener/orm"
-	"github.com/posener/orm/runtime"
 	"github.com/posener/orm/dialect"
 	{{ range $_, $import := $.Graph.Type.Imports -}}
 	"{{$import}}"
@@ -65,7 +64,7 @@ func init() {
 	var v interface{} = &{{$type}}{}
 
 	// override tableName if the type implement the TableNamer interface
-	if namer, ok := v.(runtime.TableNamer); ok {
+	if namer, ok := v.(dialect.TableNamer); ok {
 		{{$.Private}}Table = namer.TableName()
 	}
 }
@@ -140,7 +139,7 @@ func (c *{{$conn}}) Begin(ctx context.Context, opt *sql.TxOptions) ({{$apiName}}
 // Create returns a builder of an SQL CREATE statement
 func (c *{{$conn}}) Create() *{{$.Public}}CreateBuilder {
 	return &{{$.Public}}CreateBuilder{
-		params: runtime.CreateParams{
+		params: dialect.CreateParams{
 			Table: {{$.Private}}Table,
 			MarshaledTable: {{$.Private}}TableProperties,
 		},
@@ -151,7 +150,7 @@ func (c *{{$conn}}) Create() *{{$.Public}}CreateBuilder {
 // Select returns a builder of an SQL SELECT statement
 func (c *{{$conn}}) Select(cols ...{{$.Private}}Column) *{{$.Public}}SelectBuilder {
 	s := &{{$.Public}}SelectBuilder{
-		params: runtime.SelectParams{
+		params: dialect.SelectParams{
 			Table: {{$.Private}}Table,
 			OrderedColumns: {{$.Private}}OrderedColumns,
 		},
@@ -167,7 +166,7 @@ func (c *{{$conn}}) Select(cols ...{{$.Private}}Column) *{{$.Public}}SelectBuild
 // Insert returns a builder of an SQL INSERT statement
 func (c *{{$conn}}) Insert() *{{$.Public}}InsertBuilder {
 	return &{{$.Public}}InsertBuilder{
-		params: runtime.InsertParams{Table: {{$.Private}}Table},
+		params: dialect.InsertParams{Table: {{$.Private}}Table},
 		conn: c,
 	}
 }
@@ -175,7 +174,7 @@ func (c *{{$conn}}) Insert() *{{$.Public}}InsertBuilder {
 // Update returns a builder of an SQL UPDATE statement
 func (c *{{$conn}}) Update() *{{$.Public}}UpdateBuilder {
 	return &{{$.Public}}UpdateBuilder{
-		params: runtime.UpdateParams{Table: {{$.Private}}Table},
+		params: dialect.UpdateParams{Table: {{$.Private}}Table},
 		conn: c,
 	}
 }
@@ -183,7 +182,7 @@ func (c *{{$conn}}) Update() *{{$.Public}}UpdateBuilder {
 // Delete returns a builder of an SQL DELETE statement
 func (c *{{$conn}}) Delete() *{{$.Public}}DeleteBuilder {
 	return &{{$.Public}}DeleteBuilder{
-		params: runtime.DeleteParams{Table: {{$.Private}}Table},
+		params: dialect.DeleteParams{Table: {{$.Private}}Table},
 		conn: c,
 	}
 }
@@ -191,7 +190,7 @@ func (c *{{$conn}}) Delete() *{{$.Public}}DeleteBuilder {
 // Where returns a builder of an SQL WHERE statement
 func (c *{{$conn}}) Drop() *{{$.Public}}DropBuilder {
 	return &{{$.Public}}DropBuilder{
-		params: runtime.DropParams{
+		params: dialect.DropParams{
 			Table: {{$.Private}}Table,
 		},
 		conn: c,
@@ -207,7 +206,7 @@ func (c *{{$conn}}) Where() *{{$.Public}}WhereBuilder {
 
 // {{$.Public}}CreateBuilder builds an SQL CREATE statement parameters
 type {{$.Public}}CreateBuilder struct {
-	params runtime.CreateParams
+	params dialect.CreateParams
 	conn   *{{$conn}}
 }
 
@@ -233,7 +232,7 @@ func (b *{{$.Public}}CreateBuilder) Context(ctx context.Context) *{{$.Public}}Cr
 
 // {{$.Public}}InsertBuilder builds an INSERT statement parameters
 type {{$.Public}}InsertBuilder struct {
-	params runtime.InsertParams
+	params dialect.InsertParams
 	conn   *{{$conn}}
 }
 
@@ -285,12 +284,12 @@ func (b *{{$.Public}}InsertBuilder) Set{{$f.Name}}(value {{$f.Type.Ext $.Package
 
 // {{$.Public}}UpdateBuilder builds SQL INSERT statement parameters
 type {{$.Public}}UpdateBuilder struct {
-	params runtime.UpdateParams
+	params dialect.UpdateParams
 	conn   *{{$conn}}
 }
 
 // Where sets the WHERE statement to the SQL query
-func (b *{{$.Public}}UpdateBuilder) Where(where runtime.Where) *{{$.Public}}UpdateBuilder {
+func (b *{{$.Public}}UpdateBuilder) Where(where dialect.Where) *{{$.Public}}UpdateBuilder {
 	b.params.Where = where
 	return b
 }
@@ -343,12 +342,12 @@ func (b *{{$.Public}}UpdateBuilder) Set{{$f.Name}}(value {{$f.Type.Ext $.Package
 
 // {{$.Public}}DeleteBuilder builds SQL DELETE statement parameters
 type {{$.Public}}DeleteBuilder struct {
-	params runtime.DeleteParams
+	params dialect.DeleteParams
 	conn   *{{$conn}}
 }
 
 // Where applies where conditions on the SQL query
-func (b *{{$.Public}}DeleteBuilder) Where(w runtime.Where) *{{$.Public}}DeleteBuilder {
+func (b *{{$.Public}}DeleteBuilder) Where(w dialect.Where) *{{$.Public}}DeleteBuilder {
 	b.params.Where = w
 	return b
 }
@@ -363,7 +362,7 @@ func (b *{{$.Public}}DeleteBuilder) Context(ctx context.Context) *{{$.Public}}De
 
 // {{$.Public}}DropBuilder builds an SQL DROP statement parameters
 type {{$.Public}}DropBuilder struct {
-	params runtime.DropParams
+	params dialect.DropParams
 	conn   *{{$conn}}
 }
 
@@ -402,7 +401,7 @@ func (c *{{$conn}}) Get({{range $i, $pk := $.Graph.Type.PrimaryKeys}}key{{$i}} {
 
 // Exec creates a table for the given struct
 func (b *{{$.Public}}CreateBuilder) Exec() error {
-	b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
+	b.params.Ctx = dialect.ContextOrBackground(b.params.Ctx)
 	stmts, err := b.conn.dialect.Create(b.conn.Conn, &b.params)
 	if err != nil {
 		return err
@@ -435,7 +434,7 @@ func (b *{{$.Public}}InsertBuilder) Exec() (*{{$type}}, error) {
 	if len(b.params.Assignments) == 0 {
 		return nil, fmt.Errorf("nothing to insert")
 	}
-	b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
+	b.params.Ctx = dialect.ContextOrBackground(b.params.Ctx)
 	stmt, args := b.conn.dialect.Insert(&b.params)
 	res, err := b.conn.ExecContext(b.params.Ctx, stmt, args...)
 	if err != nil {
@@ -449,7 +448,7 @@ func (b *{{$.Public}}UpdateBuilder) Exec() (sql.Result, error) {
 	if len(b.params.Assignments) == 0 {
 		return nil, fmt.Errorf("nothing to update")
 	}
-	b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
+	b.params.Ctx = dialect.ContextOrBackground(b.params.Ctx)
 	stmt, args := b.conn.dialect.Update(&b.params)
 	return b.conn.ExecContext(b.params.Ctx, stmt, args...)
 }
@@ -457,12 +456,12 @@ func (b *{{$.Public}}UpdateBuilder) Exec() (sql.Result, error) {
 // Exec runs the delete statement on a given database.
 func (b *{{$.Public}}DeleteBuilder) Exec() (sql.Result, error) {
 	stmt, args := b.conn.dialect.Delete(&b.params)
-	return b.conn.ExecContext(runtime.ContextOrBackground(b.params.Ctx), stmt, args...)
+	return b.conn.ExecContext(dialect.ContextOrBackground(b.params.Ctx), stmt, args...)
 }
 
 // Query the database
 func (b *{{$.Public}}SelectBuilder) Query() ([]{{$type}}, error) {
-	b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
+	b.params.Ctx = dialect.ContextOrBackground(b.params.Ctx)
 	rows, err := b.query()
 	if err != nil {
 		return nil, err
@@ -481,7 +480,7 @@ func (b *{{$.Public}}SelectBuilder) Query() ([]{{$type}}, error) {
 		if err := b.params.Ctx.Err(); err != nil  {
 			return nil, err
 		}
-		item, _, err := b.scan(b.conn.dialect.Name(), runtime.Values(*rows){{if $hasOneToManyRelation}}, exists{{end}})
+		item, _, err := b.scan(b.conn.dialect.Name(), dialect.Values(*rows){{if $hasOneToManyRelation}}, exists{{end}})
 		if err != nil {
 			return nil, err
 		}
@@ -507,7 +506,7 @@ func (b *{{$.Public}}SelectBuilder) Query() ([]{{$type}}, error) {
 
 // Count add a count column to the query
 func (b *{{$.Public}}SelectBuilder) Count() ([]{{$countStruct}}, error) {
-	b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
+	b.params.Ctx = dialect.ContextOrBackground(b.params.Ctx)
 	b.params.Count = true
 	rows, err := b.query()
 	if err != nil {
@@ -527,7 +526,7 @@ func (b *{{$.Public}}SelectBuilder) Count() ([]{{$countStruct}}, error) {
 		if err := b.params.Ctx.Err(); err != nil  {
 			return nil, err
 		}
-		item, _, err := b.scanCount(b.conn.dialect.Name(), runtime.Values(*rows){{if $hasOneToManyRelation}}, exists{{end}})
+		item, _, err := b.scanCount(b.conn.dialect.Name(), dialect.Values(*rows){{if $hasOneToManyRelation}}, exists{{end}})
 		if err != nil {
 			return nil, err
 		}
@@ -556,7 +555,7 @@ func (b *{{$.Public}}SelectBuilder) Count() ([]{{$countStruct}}, error) {
 // This call cancels any paging that was set with the
 // {{$.Public}}SelectBuilder previously.
 func (b *{{$.Public}}SelectBuilder) First() (*{{$type}}, error) {
-	b.params.Ctx = runtime.ContextOrBackground(b.params.Ctx)
+	b.params.Ctx = dialect.ContextOrBackground(b.params.Ctx)
 	b.params.Page.Limit = 1
 	b.params.Page.Offset = 0
 	rows, err := b.query()
@@ -569,7 +568,7 @@ func (b *{{$.Public}}SelectBuilder) First() (*{{$type}}, error) {
 	if !found {
 		return nil, orm.ErrNotFound
 	}
-	item, _, err := b.scan(b.conn.dialect.Name(), runtime.Values(*rows){{if $hasOneToManyRelation}}, nil{{end}})
+	item, _, err := b.scan(b.conn.dialect.Name(), dialect.Values(*rows){{if $hasOneToManyRelation}}, nil{{end}})
 	if err != nil {
 		return nil, err
 	}
@@ -578,7 +577,7 @@ func (b *{{$.Public}}SelectBuilder) First() (*{{$type}}, error) {
 
 // {{$.Private}}ReturnObject builds {{$type}} from assignment values
 // and from the sql result ID, for returning an object from INSERT transactions
-func {{$.Private}}ReturnObject(assignments runtime.Assignments, res sql.Result) (*{{$type}}, error) {
+func {{$.Private}}ReturnObject(assignments dialect.Assignments, res sql.Result) (*{{$type}}, error) {
 	ret := new({{$type}})
 	for _, assign := range assignments {
 		switch assign.Column {
@@ -611,14 +610,14 @@ func {{$.Private}}HashItem(item *{{$name}}) string {
 // Exec runs the drop statement on a given database.
 func (b *{{$.Public}}DropBuilder) Exec() error {
 	stmt, args := b.conn.dialect.Drop(&b.params)
-	_, err := b.conn.ExecContext(runtime.ContextOrBackground(b.params.Ctx), stmt, args...)
+	_, err := b.conn.ExecContext(dialect.ContextOrBackground(b.params.Ctx), stmt, args...)
 	return err
 }
 
 // {{$.Graph.Type.Naked.Name}}Joiner is an interface for joining a {{$name}} in a SELECT statement
 // in another type
 type {{$name}}Joiner interface {
-	Params() runtime.SelectParams
+	Params() dialect.SelectParams
 	Scan(dialect string, values []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$type}}{{end}}) (*{{$type}}, int, error)
 }
 
@@ -630,7 +629,7 @@ type {{$countStruct}} struct {
 
 // {{$.Public}}SelectBuilder builds an SQL SELECT statement parameters
 type {{$.Public}}SelectBuilder struct {
-	params runtime.SelectParams
+	params dialect.SelectParams
 	conn *{{$conn}}
 	{{ range $_, $f := $.Graph.Type.References -}}
 	scan{{$f.Name}} {{$.Private}}{{$f.Type.Naked.Name}}Joiner
@@ -642,7 +641,7 @@ type {{$.Private}}Joiner struct {
 	builder *{{$.Public}}SelectBuilder
 }
 
-func (j *{{$.Private}}Joiner) Params() runtime.SelectParams {
+func (j *{{$.Private}}Joiner) Params() dialect.SelectParams {
 	return j.builder.params
 }
 
@@ -656,7 +655,7 @@ func (b *{{$.Public}}SelectBuilder) Joiner() {{$.Public}}Joiner {
 }
 
 // Where applies where conditions on the query
-func (b *{{$.Public}}SelectBuilder) Where(where runtime.Where) *{{$.Public}}SelectBuilder {
+func (b *{{$.Public}}SelectBuilder) Where(where dialect.Where) *{{$.Public}}SelectBuilder {
 	b.params.Where = where
 	return b
 }
@@ -678,7 +677,7 @@ func (b *{{$.Public}}SelectBuilder) Page(offset, limit int64) *{{$.Public}}Selec
 // {{$.Private}}{{$refType.Name}}Joiner is a scanner that defined by .Select().Joiner()
 // of an ORM object for type {{$refType.Name}}
 type {{$.Private}}{{$refType.Name}}Joiner interface {
-	Params() runtime.SelectParams
+	Params() dialect.SelectParams
 	Scan(dialect string, values []driver.Value{{if $refType.HasOneToManyRelation}}, exists map[string]*{{$refType.Ext $.Package}}{{end}}) (*{{$refType.Ext $.Package}}, int, error)
 }
 {{ end -}}
@@ -689,8 +688,8 @@ type {{$.Private}}{{$refType.Name}}Joiner interface {
 // Based on a forward relation
 func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(joiner {{$.Private}}{{$f.Type.Name}}Joiner) *{{$.Public}}SelectBuilder {
 	b.scan{{$f.Name}} = joiner
-	b.params.Joins = append(b.params.Joins, runtime.JoinParams{
-		Pairings: []runtime.Pairing{
+	b.params.Joins = append(b.params.Joins, dialect.JoinParams{
+		Pairings: []dialect.Pairing{
 			{{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
 			{
 				Column: "{{(index $e.SrcField.Columns $i).Name}}",
@@ -710,8 +709,8 @@ func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(joiner {{$.Private}}{{$f.Typ
 // Based on a reversed relation
 func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(joiner {{$.Private}}{{$f.Type.Name}}Joiner) *{{$.Public}}SelectBuilder {
 	b.scan{{$f.Name}} = joiner
-	b.params.Joins = append(b.params.Joins, runtime.JoinParams{
-		Pairings: []runtime.Pairing{
+	b.params.Joins = append(b.params.Joins, dialect.JoinParams{
+		Pairings: []dialect.Pairing{
 			{{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
 			{
 				Column: "{{$pk.Column.Name}}",
@@ -804,9 +803,9 @@ func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{
 		case int64:
 			row.Count = val
 		case []byte:
-			row.Count = runtime.ParseInt(val)
+			row.Count = dialect.ParseInt(val)
 		default:
-			return nil, 0, runtime.ErrConvert("COUNT(*)", i, vals[i], "int64, []byte")
+			return nil, 0, dialect.ErrConvert("COUNT(*)", i, vals[i], "int64, []byte")
 		}
 		i++
 	}
@@ -847,22 +846,22 @@ type {{$.Public}}WhereBuilder struct {}
 
 {{ range $_, $f := $.Graph.Type.NonReferences -}}
 // {{$.Public}}Where{{$f.Name}} adds a condition on {{$f.Name}} to the WHERE statement
-func (*{{$.Public}}WhereBuilder) {{$f.Name}}(op orm.Op, val {{$f.Type.Ext $.Package}}) runtime.Where {
-	return runtime.NewWhere(op, "{{$f.Column.Name}}", val)
+func (*{{$.Public}}WhereBuilder) {{$f.Name}}(op orm.Op, val {{$f.Type.Ext $.Package}}) dialect.Where {
+	return dialect.NewWhere(op, "{{$f.Column.Name}}", val)
 }
 
 // {{$.Public}}Where{{$f.Name}}In adds an IN condition on {{$f.Name}} to the WHERE statement
-func (*{{$.Public}}WhereBuilder) {{$f.Name}}In(vals ...{{$f.Type.Ext $.Package}}) runtime.Where {
+func (*{{$.Public}}WhereBuilder) {{$f.Name}}In(vals ...{{$f.Type.Ext $.Package}}) dialect.Where {
 	args := make([]interface{}, len(vals))
 	for i := range vals {
 		args[i] = vals[i]
 	}
-	return runtime.NewWhereIn("{{$f.Column.Name}}", args...)
+	return dialect.NewWhereIn("{{$f.Column.Name}}", args...)
 }
 
 // {{$.Public}}Where{{$f.Name}}Between adds a BETWEEN condition on {{$f.Name}} to the WHERE statement
-func (*{{$.Public}}WhereBuilder) {{$f.Name}}Between(low, high {{$f.Type.Ext $.Package}}) runtime.Where {
-	return runtime.NewWhereBetween("{{$f.Column.Name}}", low, high)
+func (*{{$.Public}}WhereBuilder) {{$f.Name}}Between(low, high {{$f.Type.Ext $.Package}}) dialect.Where {
+	return dialect.NewWhereBetween("{{$f.Column.Name}}", low, high)
 }
 {{ end -}}
 `))

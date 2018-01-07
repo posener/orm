@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/posener/orm/runtime"
-	"github.com/posener/orm/runtime/migration"
+	"github.com/posener/orm/dialect/migration"
 )
 
 // tableProperties returns all properties of SQL table, as should be given in the table CREATE statement
@@ -53,7 +52,7 @@ func (d *dialect) foreignKey(fk migration.ForeignKey) string {
 }
 
 // selectColumns returns the columns selected for an SQL SELECT query
-func (d *dialect) selectColumns(p *runtime.SelectParams) string {
+func (d *dialect) selectColumns(p *SelectParams) string {
 	parts := d.columnsParts(p.Table, p)
 
 	// we can add COUNT(*) only once and it work only on the most upper level
@@ -64,7 +63,7 @@ func (d *dialect) selectColumns(p *runtime.SelectParams) string {
 	return strings.Join(parts, ", ")
 }
 
-func (d *dialect) columnsParts(table string, p *runtime.SelectParams) []string {
+func (d *dialect) columnsParts(table string, p *SelectParams) []string {
 	var (
 		parts  []string
 		exists = make(map[string]bool)
@@ -94,7 +93,7 @@ func (d *dialect) columnsCollect(table string, cols []string) []string {
 
 // whereJoin takes SelectParams and traverse all the join options
 // it concat all the conditions with an AND operator
-func (d *dialect) whereJoin(table string, p *runtime.SelectParams) string {
+func (d *dialect) whereJoin(table string, p *SelectParams) string {
 	stmt := d.whereJoinRec(table, p)
 	if stmt == "" {
 		return ""
@@ -103,10 +102,10 @@ func (d *dialect) whereJoin(table string, p *runtime.SelectParams) string {
 }
 
 // whereJoinRec returns a WHERE statement for a recursive join statement
-func (d *dialect) whereJoinRec(table string, p *runtime.SelectParams) string {
+func (d *dialect) whereJoinRec(table string, p *SelectParams) string {
 	var parts []string
 	if p.Where != nil {
-		if w := p.Where.Statement(table); w != "" {
+		if w := p.Where.Statement(table, d); w != "" {
 			parts = append(parts, w)
 		}
 	}
@@ -120,11 +119,11 @@ func (d *dialect) whereJoinRec(table string, p *runtime.SelectParams) string {
 }
 
 // where returns an SQL WHERE statement
-func (d *dialect) where(table string, c runtime.StatementArger) string {
+func (d *dialect) where(table string, c StatementArger) string {
 	if c == nil {
 		return ""
 	}
-	where := c.Statement(table)
+	where := c.Statement(table, d)
 	if len(where) == 0 {
 		return ""
 	}
@@ -132,7 +131,7 @@ func (d *dialect) where(table string, c runtime.StatementArger) string {
 }
 
 // groupBy formats an SQL GROUP BY statement
-func (d *dialect) groupBy(table string, groups []runtime.Group) string {
+func (d *dialect) groupBy(table string, groups []Group) string {
 	if len(groups) == 0 {
 		return ""
 	}
@@ -146,7 +145,7 @@ func (d *dialect) groupBy(table string, groups []runtime.Group) string {
 }
 
 // orderBy formats an SQL ORDER BY statement
-func (d *dialect) orderBy(table string, orders []runtime.Order) string {
+func (d *dialect) orderBy(table string, orders []Order) string {
 	if len(orders) == 0 {
 		return ""
 	}
@@ -161,7 +160,7 @@ func (d *dialect) orderBy(table string, orders []runtime.Order) string {
 }
 
 // page formats an SQL LIMIT...OFFSET statement
-func (d *dialect) page(p runtime.Page) string {
+func (d *dialect) page(p Page) string {
 	if p.Limit == 0 { // why would someone ask for a page of zero size?
 		return ""
 	}
@@ -173,7 +172,7 @@ func (d *dialect) page(p runtime.Page) string {
 }
 
 // assignSets formats a list of assignments for SQL UPDATE SET statements
-func (d *dialect) assignSets(a runtime.Assignments) string {
+func (d *dialect) assignSets(a Assignments) string {
 	if len(a) == 0 {
 		return ""
 	}
@@ -188,7 +187,7 @@ func (d *dialect) assignSets(a runtime.Assignments) string {
 
 // assignColumns gets an assignment list and formats the assign createColumn names
 // for an SQL INSERT STATEMENT
-func (d *dialect) assignColumns(a runtime.Assignments) string {
+func (d *dialect) assignColumns(a Assignments) string {
 	if len(a) == 0 {
 		return ""
 	}

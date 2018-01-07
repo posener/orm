@@ -56,7 +56,7 @@ func (Dialect) GoTypeToColumnType(goTypeName string, autoIncrement bool) *sqltyp
 	case "[]byte":
 		st.Name = "longblob"
 	case "time.Time":
-		st.Name = "timestamp"
+		st.Name = "datetime"
 		st.Size = 3
 	default:
 		log.Fatalf("Unknown column type for %s", goTypeName)
@@ -108,7 +108,7 @@ var tmplt = template.Must(template.New("mysql").Parse(`
 					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer}}&{{end}}tmp
 				{{ end -}}
 				default:
-					return nil, 0, runtime.ErrConvert("{{.Field.AccessName}}", i, vals[i], "{{.ConvertType}}, []byte, (int64?)")
+					return nil, 0, dialect.ErrConvert("{{.Field.AccessName}}", i, vals[i], "{{.ConvertType}}, []byte, (int64?)")
 				}
 `))
 
@@ -120,13 +120,13 @@ func (d *Dialect) convertBytesFuncString(f *load.Field, sqlType *sqltypes.Type) 
 	case "[]byte":
 		return "[]byte(val)"
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
-		return fmt.Sprintf("%s(runtime.ParseInt(val))", tp)
+		return fmt.Sprintf("%s(dialect.ParseInt(val))", tp)
 	case "float32", "float64":
-		return fmt.Sprintf("%s(runtime.ParseFloat(val))", tp)
+		return fmt.Sprintf("%s(dialect.ParseFloat(val))", tp)
 	case "time.Time":
-		return fmt.Sprintf("runtime.ParseTime(val, %d)", sqlType.Size)
+		return fmt.Sprintf("dialect.ParseTime(val, %d)", sqlType.Size)
 	case "bool":
-		return "runtime.ParseBool(val)"
+		return "dialect.ParseBool(val)"
 	default:
 		return fmt.Sprintf("%s(val)", tp)
 	}
@@ -148,15 +148,15 @@ func (d *Dialect) convertIntFuncString(f *load.Field, sqlType *sqltypes.Type) st
 
 func (d *Dialect) convertType(f *load.Field, sqlType *sqltypes.Type) string {
 	switch sqlType.Name {
-	case "TINYINT", "INT", "BIGINT":
+	case "tinyint", "int", "bigint":
 		return "int64"
-	case "TINYINT UNSIGNED", "INT UNSIGNED", "BIGINT UNSIGNED":
+	case "tinyint unsigned", "int unsigned", "bigint unsigned":
 		return "uint64"
-	case "DOUBLE":
+	case "double":
 		return "float64"
-	case "LONGBLOB", "VARCHAR":
+	case "longblob", "varchar":
 		return "[]byte"
-	case "BOOLEAN":
+	case "boolean":
 		return "bool"
 	default:
 		return f.Type.Naked.Ext("")

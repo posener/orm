@@ -110,7 +110,7 @@ var tmplt = template.Must(template.New("postgres").Parse(`
 					tmp := {{.Field.Type.Naked.Ext .Field.ParentType.Package}}(val)
 					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer }}&{{end}}tmp
 				default:
-					return nil, 0, runtime.ErrConvert("{{.Field.AccessName}}", i, vals[i], "{{.ConvertType}}")
+					return nil, 0, dialect.ErrConvert("{{.Field.AccessName}}", i, vals[i], "{{.ConvertType}}")
 				}
 `))
 
@@ -122,13 +122,13 @@ func (d *Dialect) convertBytesFuncString(f *load.Field, sqlType *sqltypes.Type) 
 	case "[]byte":
 		return "[]byte(val)"
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
-		return fmt.Sprintf("%s(runtime.ParseInt(val))", tp)
+		return fmt.Sprintf("%s(dialect.ParseInt(val))", tp)
 	case "float32", "float64":
-		return fmt.Sprintf("%s(runtime.ParseFloat(val))", tp)
+		return fmt.Sprintf("%s(dialect.ParseFloat(val))", tp)
 	case "time.Time":
-		return fmt.Sprintf("runtime.ParseTime(val, %d)", sqlType.Size)
+		return fmt.Sprintf("dialect.ParseTime(val, %d)", sqlType.Size)
 	case "bool":
-		return "runtime.ParseBool(val)"
+		return "dialect.ParseBool(val)"
 	default:
 		return fmt.Sprintf("%s(val)", tp)
 	}
