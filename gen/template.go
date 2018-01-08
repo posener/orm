@@ -10,7 +10,7 @@ var tpl = template.Must(template.New("").
 	Funcs(template.FuncMap{
 		"plus1":    func(x int) int { return x + 1 },
 		"backtick": func(s string) string { return fmt.Sprintf("`%s`", s) },
-		"repeat":   func(s string, n int) string { return strings.Repeat(s, n) },
+		"repeat":   strings.Repeat,
 	}).Parse(`
 {{ $name := $.Graph.Type.Name -}}
 {{ $type := $.Graph.Type.Naked.Ext $.Package -}}
