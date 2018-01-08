@@ -14,8 +14,6 @@ import (
 	"github.com/posener/orm/load"
 )
 
-const SQLite3 = "sqlite3"
-
 // dialect is an interface to represent an SQL dialect
 // Objects that implement this interface, can convert query params, such as SelectParams or
 // UpdateParams, and convert them to an SQL statement and a list of arguments, which can be used
@@ -136,12 +134,11 @@ func (d *dialect) autoMigrate(ctx context.Context, conn orm.Conn, tableName stri
 
 // Insert returns the SQL INSERT statement and arguments according to the given parameters
 func (d *dialect) Insert(p *InsertParams) (string, []interface{}) {
-	stmt := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",
+	stmt := d.ReplaceVars(fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",
 		d.Quote(p.Table),
 		d.assignColumns(p.Assignments),
 		QMarks(len(p.Assignments)),
-	)
-	stmt = d.ReplaceVars(stmt)
+	))
 
 	var args []interface{}
 	if p.Assignments != nil {
@@ -158,8 +155,8 @@ func (d *dialect) Select(p *SelectParams) (string, []interface{}) {
 		d.Quote(p.Table),
 		d.join(p),
 		d.whereJoin(p.Table, p),
-		d.groupBy(p.Table, p.Groups),
-		d.orderBy(p.Table, p.Orders),
+		d.groupBy(p.Table, p),
+		d.orderBy(p.Table, p),
 		d.page(p.Page),
 	))
 
@@ -247,18 +244,9 @@ func (d *dialect) joinParts(table string, p *SelectParams) []string {
 		recursive = append(recursive, d.joinParts(j.TableName(table), &j.SelectParams)...)
 	}
 
-	tablesStmt := strings.Join(tables, ", ")
-	condStmt := strings.Join(conds, " AND ")
-
-	// sqlite3 requires the table statement not to be in braces
-	if d.name != SQLite3 {
-		tablesStmt = "(" + tablesStmt + ")"
+	var joinStmt string
+	for i := range tables {
+		joinStmt += fmt.Sprintf("LEFT OUTER JOIN %s ON (%s) ", tables[i], conds[i])
 	}
-
-	// We want to use a left join, so also if no matching rows from the joined
-	// table will be found, we will still have the row with an empty value of
-	// the parent table.
-	joinStmt := fmt.Sprintf("LEFT OUTER JOIN %s ON (%s)", tablesStmt, condStmt)
-
 	return append([]string{joinStmt}, recursive...)
 }

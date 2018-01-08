@@ -417,7 +417,7 @@ func TestGet(t *testing.T) {
 		a1Insert, err := db.Insert().InsertAll(&All{NotNil: "A1"}).Exec()
 		require.Nil(t, err)
 
-		// postgress does not fill auto fields
+		// postgres does not fill auto fields and has non empty bytes from response
 		if conn.Driver() == "postgres" {
 			a0Insert.Auto = 1
 			a0Insert.VarCharByte = []byte("")

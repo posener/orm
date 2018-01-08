@@ -131,32 +131,49 @@ func (d *dialect) where(table string, c StatementArger) string {
 }
 
 // groupBy formats an SQL GROUP BY statement
-func (d *dialect) groupBy(table string, groups []Group) string {
-	if len(groups) == 0 {
+func (d *dialect) groupBy(table string, p *SelectParams) string {
+	stmt := d.groupByRec(table, p)
+	if stmt == "" {
 		return ""
 	}
-	b := bytes.NewBufferString("GROUP BY ")
-	for i := range groups {
-		b.WriteString(fmt.Sprintf("%s.%s, ", d.Quote(table), d.Quote(groups[i].Column)))
-	}
+	return "GROUP BY " + stmt
+}
 
-	s := b.String()
-	return s[:len(s)-2]
+func (d *dialect) groupByRec(table string, p *SelectParams) string {
+	var parts []string
+	for _, group := range p.Groups {
+		parts = append(parts, fmt.Sprintf("%s.%s", d.Quote(table), d.Quote(group.Column)))
+	}
+	for _, join := range p.Joins {
+		joinOrder := d.groupByRec(join.TableName(table), &join.SelectParams)
+		if joinOrder != "" {
+			parts = append(parts, joinOrder)
+		}
+	}
+	return strings.Join(parts, ", ")
 }
 
 // orderBy formats an SQL ORDER BY statement
-func (d *dialect) orderBy(table string, orders []Order) string {
-	if len(orders) == 0 {
+func (d *dialect) orderBy(table string, p *SelectParams) string {
+	stmt := d.orderByRec(table, p)
+	if stmt == "" {
 		return ""
 	}
+	return "ORDER BY " + stmt
+}
 
-	b := bytes.NewBufferString("ORDER BY ")
-	for i := range orders {
-		b.WriteString(fmt.Sprintf("%s.%s %s, ", d.Quote(table), d.Quote(orders[i].Column), orders[i].Dir))
+func (d *dialect) orderByRec(table string, p *SelectParams) string {
+	var parts []string
+	for _, order := range p.Orders {
+		parts = append(parts, fmt.Sprintf("%s.%s %s", d.Quote(table), d.Quote(order.Column), order.Dir))
 	}
-
-	s := b.String()
-	return s[:len(s)-2]
+	for _, join := range p.Joins {
+		joinOrder := d.orderByRec(join.TableName(table), &join.SelectParams)
+		if joinOrder != "" {
+			parts = append(parts, joinOrder)
+		}
+	}
+	return strings.Join(parts, ", ")
 }
 
 // page formats an SQL LIMIT...OFFSET statement
