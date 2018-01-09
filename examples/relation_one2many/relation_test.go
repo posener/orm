@@ -2,8 +2,9 @@ package relation_one2many
 
 import (
 	"fmt"
+	"log"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm"
 	"github.com/posener/orm/examples"
 )
@@ -29,10 +30,8 @@ import (
 //	MyOneIs *One
 //}
 func ExampleRelationOne2Many() {
-	conn := examples.Conn("one2many")
-	if conn == nil {
-		return // mysql address was not defined
-	}
+	conn, err := orm.Open("sqlite3", ":memory:", orm.OptLogger(log.Printf))
+	examples.PanicOnErr(err)
 	defer conn.Close()
 
 	oneORM, err := NewOneORM(conn)

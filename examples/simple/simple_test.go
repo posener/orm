@@ -3,8 +3,9 @@ package simple
 import (
 	"context"
 	"fmt"
+	"log"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm"
 	"github.com/posener/orm/examples"
 )
@@ -18,10 +19,8 @@ import (
 //	Field3 bool
 //}
 func ExampleSimpleUsage() {
-	conn := examples.Conn("simple")
-	if conn == nil {
-		return // mysql address was not defined
-	}
+	conn, err := orm.Open("sqlite3", ":memory:", orm.OptLogger(log.Printf))
+	examples.PanicOnErr(err)
 	defer conn.Close()
 
 	// Create an ORM controller for the Simple struct
