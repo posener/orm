@@ -31,8 +31,8 @@ func (d *Dialect) Quote(name string) string {
 	return fmt.Sprintf("`%s`", name)
 }
 
-func (d *Dialect) ReplaceVars(s string) string {
-	return s
+func (d *Dialect) Var(int) string {
+	return "?"
 }
 
 func (*Dialect) GoTypeToColumnType(goTypeName string, autoIncrement bool) *sqltypes.Type {

@@ -7,8 +7,6 @@ import (
 	"log"
 	"strings"
 
-	"regexp"
-
 	"github.com/posener/orm/dialect/sqltypes"
 	"github.com/posener/orm/load"
 )
@@ -32,14 +30,8 @@ func (d *Dialect) Quote(name string) string {
 	return fmt.Sprintf(`"%s"`, name)
 }
 
-var qMarkReplacer = regexp.MustCompile(`(\?)`)
-
-func (d *Dialect) ReplaceVars(s string) string {
-	i := 0
-	return qMarkReplacer.ReplaceAllStringFunc(s, func(string) string {
-		i++
-		return fmt.Sprintf("$%d", i)
-	})
+func (d *Dialect) Var(i int) string {
+	return fmt.Sprintf("$%d", i)
 }
 
 func (Dialect) GoTypeToColumnType(goTypeName string, autoIncrement bool) *sqltypes.Type {

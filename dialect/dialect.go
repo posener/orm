@@ -3,7 +3,6 @@ package dialect
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/posener/orm"
 	"github.com/posener/orm/dialect/migration"
@@ -51,7 +50,7 @@ type Dialect interface {
 	// Quote returns the quoted form of an SQL variable
 	Quote(string) string
 	// ReplaceVars replaces question marks from sql query to the right variable of the dialect
-	ReplaceVars(s string) string
+	Var(int) string
 }
 
 var dialects = map[string]API{
@@ -96,12 +95,16 @@ func (d *dialect) Create(conn orm.Conn, p *CreateParams) ([]string, error) {
 			return stmts, nil
 		}
 	}
-	stmt := fmt.Sprintf("CREATE TABLE %s %s (%s)",
-		d.ifNotExists(p.IfNotExists),
-		d.Quote(p.Table),
-		d.tableProperties(table),
-	)
-	return []string{stmt}, nil
+
+	b := newBuilder(d, "CREATE TABLE")
+	if p.IfNotExists {
+		b.Append("IF NOT EXISTS")
+	}
+	b.Append(d.Quote(p.Table))
+	b.Open()
+	tableProperties(b, table)
+	b.Close()
+	return []string{b.Statement()}, nil
 }
 
 func (d *dialect) autoMigrate(ctx context.Context, conn orm.Conn, tableName string, want *migration.Table) ([]string, bool, error) {
@@ -122,131 +125,292 @@ func (d *dialect) autoMigrate(ctx context.Context, conn orm.Conn, tableName stri
 
 	var stmts []string
 	for _, col := range diff.Columns {
-		stmts = append(stmts, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s",
-			d.Quote(tableName), d.createColumn(col)))
+		b := newBuilder(d, "ALTER TABLE")
+		b.Append(b.Quote(tableName))
+		b.Append("ADD COLUMN")
+		createColumn(b, col)
+		stmts = append(stmts, b.Statement())
 	}
 	for _, fk := range diff.ForeignKeys {
-		stmts = append(stmts, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s",
-			d.Quote(tableName), d.foreignKey(fk)))
+		b := newBuilder(d, "ALTER TABLE")
+		b.Append(b.Quote(tableName))
+		b.Append("ADD CONSTRAINT")
+		foreignKey(b, fk)
+		stmts = append(stmts, b.Statement())
 	}
 	return stmts, true, nil
 }
 
 // Insert returns the SQL INSERT statement and arguments according to the given parameters
 func (d *dialect) Insert(p *InsertParams) (string, []interface{}) {
-	stmt := d.ReplaceVars(fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",
-		d.Quote(p.Table),
-		d.assignColumns(p.Assignments),
-		QMarks(len(p.Assignments)),
-	))
-
-	var args []interface{}
-	if p.Assignments != nil {
-		args = append(args, p.Assignments.Args()...)
+	b := newBuilder(d, "INSERT INTO")
+	b.Append(d.Quote(p.Table))
+	b.Open()
+	for i, assignment := range p.Assignments {
+		b.Append(d.Quote(assignment.Column))
+		if i != len(p.Assignments)-1 {
+			b.Comma()
+		}
 	}
-
-	return stmt, args
+	b.Close()
+	b.Append("VALUES")
+	b.Open()
+	for i, arg := range p.Assignments.Args() {
+		b.Var(arg)
+		if i != len(p.Assignments.Args())-1 {
+			b.Comma()
+		}
+	}
+	b.Close()
+	return b.Statement(), b.Args()
 }
 
 // Select returns the SQL SELECT statement and arguments according to the given parameters
 func (d *dialect) Select(p *SelectParams) (string, []interface{}) {
-	stmt := d.ReplaceVars(fmt.Sprintf("SELECT %s FROM %s %s %s %s %s %s",
-		d.selectColumns(p),
-		d.Quote(p.Table),
-		d.join(p),
-		d.whereJoin(p.Table, p),
-		d.groupBy(p.Table, p),
-		d.orderBy(p.Table, p),
-		d.page(p.Page),
-	))
-
-	return stmt, collectWhereArgs(p)
-}
-
-// collectWhereArgs collects arguments for WHERE statement from
-// select params and all its nested join options
-func collectWhereArgs(p *SelectParams) []interface{} {
-	var args []interface{}
-	if p.Where != nil {
-		args = append(args, p.Where.Args()...)
-	}
-	for _, join := range p.Joins {
-		args = append(args, collectWhereArgs(&join.SelectParams)...)
-	}
-	return args
+	b := newBuilder(d, "SELECT")
+	selectColumns(b, p)
+	b.Append("FROM")
+	b.Append(d.Quote(p.Table))
+	join(b, p)
+	where(b, p.Table, p.Where, p.Joins)
+	groupBy(b, p.Table, p)
+	orderBy(b, p.Table, p)
+	page(b, p.Page)
+	return b.Statement(), b.Args()
 }
 
 // Delete returns the SQL DELETE statement and arguments according to the given parameters
 func (d *dialect) Delete(p *DeleteParams) (string, []interface{}) {
-	stmt := d.ReplaceVars(fmt.Sprintf("DELETE FROM %s %s",
-		d.Quote(p.Table),
-		d.where(p.Table, p.Where),
-	))
-
-	var args []interface{}
-	if p.Where != nil {
-		args = append(args, p.Where.Args()...)
-	}
-
-	return stmt, args
+	b := newBuilder(d, "DELETE FROM")
+	b.Append(d.Quote(p.Table))
+	where(b, p.Table, p.Where, nil)
+	return b.Statement(), b.Args()
 }
 
 // Update returns the SQL UPDATE statement and arguments according to the given parameters
 func (d *dialect) Update(p *UpdateParams) (string, []interface{}) {
-	stmt := d.ReplaceVars(fmt.Sprintf("UPDATE %s SET %s %s",
-		d.Quote(p.Table),
-		d.assignSets(p.Assignments),
-		d.where(p.Table, p.Where),
-	))
-
-	var args []interface{}
-	if p.Assignments != nil {
-		args = append(args, p.Assignments.Args()...)
+	b := newBuilder(d, "UPDATE")
+	b.Append(d.Quote(p.Table))
+	b.Append("SET")
+	for i, assign := range p.Assignments {
+		b.Append(d.Quote(assign.Column))
+		b.Append("=")
+		b.Var(assign.ColumnValue)
+		if i != len(p.Assignments)-1 {
+			b.Comma()
+		}
 	}
-	if p.Where != nil {
-		args = append(args, p.Where.Args()...)
-	}
-
-	return stmt, args
+	where(b, p.Table, p.Where, nil)
+	return b.Statement(), b.Args()
 }
 
 // Drop returns the SQL DROP statement and arguments according to the given parameters
 func (d *dialect) Drop(p *DropParams) (string, []interface{}) {
-	stmt := fmt.Sprintf("DROP TABLE %s %s",
-		d.ifExists(p.IfExists),
-		d.Quote(p.Table),
-	)
-	return stmt, nil
+	b := newBuilder(d, "DROP TABLE")
+	if p.IfExists {
+		b.Append("IF EXISTS")
+	}
+	b.Append(d.Quote(p.Table))
+	return b.Statement(), b.Args()
+}
+
+// tableProperties returns all properties of SQL table, as should be given in the table CREATE statement
+func tableProperties(b *builder, t *migration.Table) {
+	for i, col := range t.Columns {
+		createColumn(b, col)
+		if i != len(t.Columns)-1 {
+			b.Comma()
+		}
+	}
+	if len(t.PrimaryKeys) > 0 {
+		b.Comma()
+		b.Append("PRIMARY KEY")
+		b.Open()
+		quoteSlice(b, t.PrimaryKeys)
+		b.Close()
+	}
+	if len(t.ForeignKeys) > 0 {
+		b.Comma()
+		for i, fk := range t.ForeignKeys {
+			foreignKey(b, fk)
+			if i != len(t.ForeignKeys)-1 {
+				b.Comma()
+			}
+		}
+	}
+}
+
+// createColumn is an SQL column definition, as given in the SQL CREATE statement
+func createColumn(b *builder, col migration.Column) {
+	b.Append(b.Quote(col.Name))
+	b.Append(b.GoTypeToColumnType(col.GoType, hasAutoIncrement(col.Options)).String())
+	for _, opt := range col.Options {
+		b.Append(b.Translate(opt))
+	}
+}
+
+// foreignKey is teh FOREIGN KEY statement
+func foreignKey(b *builder, fk migration.ForeignKey) {
+	b.Append("FOREIGN KEY")
+	b.Open()
+	quoteSlice(b, fk.Columns)
+	b.Close()
+	b.Append("REFERENCES")
+	b.Append(b.Quote(fk.Table))
+	b.Open()
+	quoteSlice(b, fk.ForeignColumns)
+	b.Close()
+}
+
+func hasAutoIncrement(options []string) bool {
+	for _, opt := range options {
+		if opt == "AUTO_INCREMENT" {
+			return true
+		}
+	}
+	return false
+}
+
+// selectColumns returns the columns selected for an SQL SELECT query
+func selectColumns(b *builder, p *SelectParams) {
+	noColumn := columnsColumnRec(b, p.Table, p, true)
+
+	if p.Count {
+		if !noColumn {
+			b.Comma()
+		}
+		b.Append("COUNT(*)")
+	}
+}
+
+func columnsColumnRec(b *builder, table string, p *SelectParams, first bool) bool {
+	cols := p.SelectedColumns()
+	for _, col := range cols {
+		if !first {
+			b.Comma()
+		}
+		b.Append(fmt.Sprintf("%s.%s", b.Quote(table), b.Quote(col)))
+		first = false
+	}
+	for _, join := range p.Joins {
+		if !columnsColumnRec(b, join.TableName(table), &join.SelectParams, first) {
+			first = false
+		}
+	}
+	return first
+}
+
+// where returns a WHERE statement
+func where(b *builder, table string, w Where, j []JoinParams) {
+	whereRec(b, table, w, j, true)
+}
+
+// whereRec returns a WHERE statement for a recursive join statement
+// it concat all the conditions with an AND operator
+func whereRec(b *builder, table string, w Where, joins []JoinParams, first bool) {
+	if w != nil {
+		if first {
+			b.Append("WHERE")
+		} else {
+			b.Append("AND")
+		}
+		first = false
+		w.Build(table, b)
+	}
+	for _, join := range joins {
+		whereRec(b, join.TableName(table), join.SelectParams.Where, join.SelectParams.Joins, first)
+	}
+}
+
+// groupBy formats an SQL GROUP BY statement
+func groupBy(b *builder, table string, p *SelectParams) {
+	groupByRec(b, table, p, true)
+}
+
+func groupByRec(b *builder, table string, p *SelectParams, first bool) {
+	for _, group := range p.Groups {
+		if first {
+			b.Append("GROUP BY")
+		} else {
+			b.Comma()
+		}
+		first = false
+		b.Append(fmt.Sprintf("%s.%s", b.Quote(table), b.Quote(group.Column)))
+	}
+	for _, join := range p.Joins {
+		groupByRec(b, join.TableName(table), &join.SelectParams, first)
+	}
+}
+
+// orderBy formats an SQL ORDER BY statement
+func orderBy(b *builder, table string, p *SelectParams) {
+	orderByRec(b, table, p, true)
+}
+
+func orderByRec(b *builder, table string, p *SelectParams, first bool) {
+	for _, order := range p.Orders {
+		if first {
+			b.Append("ORDER BY")
+		} else {
+			b.Comma()
+		}
+		first = false
+		b.Append(fmt.Sprintf("%s.%s", b.Quote(table), b.Quote(order.Column)))
+		b.Append(string(order.Dir))
+	}
+	for _, join := range p.Joins {
+		orderByRec(b, join.TableName(table), &join.SelectParams, first)
+	}
+}
+
+// page formats an SQL LIMIT...OFFSET statement
+func page(b *builder, p Page) {
+	if p.Limit == 0 { // why would someone ask for a page of zero size?
+		return
+	}
+	b.Append(fmt.Sprintf("LIMIT %d", p.Limit))
+	if p.Offset != 0 {
+		b.Append(fmt.Sprintf("OFFSET %d", p.Offset))
+	}
 }
 
 // join extract SQL join list statement
-func (d *dialect) join(p *SelectParams) string {
-	return strings.Join(d.joinParts(p.Table, p), " ")
+func join(b *builder, p *SelectParams) {
+	joinRec(b, p.Table, p)
 }
 
-func (d *dialect) joinParts(table string, p *SelectParams) []string {
+func joinRec(b *builder, table string, p *SelectParams) {
 	joins := p.Joins
 	if len(joins) == 0 {
-		return nil
+		return
 	}
-	var (
-		tables    []string
-		conds     []string
-		recursive []string
-	)
 	for _, j := range joins {
+		b.Append("LEFT OUTER JOIN")
 		joinTable := j.TableName(table)
-		tables = append(tables, fmt.Sprintf("%s AS %s", d.Quote(j.Table), d.Quote(joinTable)))
-		for _, pairing := range j.Pairings {
-			conds = append(conds, fmt.Sprintf("%s.%s = %s.%s",
-				d.Quote(table), d.Quote(pairing.Column), d.Quote(joinTable), d.Quote(pairing.JoinedColumn)))
-		}
-		recursive = append(recursive, d.joinParts(j.TableName(table), &j.SelectParams)...)
-	}
+		b.Append(b.Quote(j.Table))
+		b.Append("AS")
+		b.Append(b.Quote(joinTable))
+		b.Append("ON")
+		b.Open()
 
-	var joinStmt string
-	for i := range tables {
-		joinStmt += fmt.Sprintf("LEFT OUTER JOIN %s ON (%s) ", tables[i], conds[i])
+		for i, pairing := range j.Pairings {
+			if i > 0 {
+				b.Append("AND")
+			}
+			b.Append(fmt.Sprintf("%s.%s", b.Quote(table), b.Quote(pairing.Column)))
+			b.Append("=")
+			b.Append(fmt.Sprintf("%s.%s", b.Quote(joinTable), b.Quote(pairing.JoinedColumn)))
+		}
+		b.Close()
+		joinRec(b, j.TableName(table), &j.SelectParams)
 	}
-	return append([]string{joinStmt}, recursive...)
+}
+
+func quoteSlice(b *builder, s []string) {
+	for i := range s {
+		b.Append(b.Quote(s[i]))
+		if i != len(s)-1 {
+			b.Comma()
+		}
+	}
 }
