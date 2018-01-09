@@ -63,6 +63,7 @@ func NewTable(gr *graph.Graph) *Table {
 				Name:    sqlColumn.Name,
 				GoType:  f.Type.Naked.Ext(""),
 				Options: options(f),
+				SQLType: f.CustomType.String(),
 			})
 		}
 		if f.PrimaryKey {

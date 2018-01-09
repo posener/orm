@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/posener/orm/dialect"
+	"github.com/posener/orm/dialect/migration"
 	"github.com/posener/orm/graph"
 	"github.com/posener/orm/load"
-	"github.com/posener/orm/runtime/migration"
 )
 
 var goPaths []string

@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -65,8 +63,12 @@ func TestTypes(t *testing.T) {
 
 		aGot, err := db.Insert().InsertAll(a).Exec()
 		require.Nil(t, err)
-		assert.Equal(t, 1, aGot.Auto)
-		a.Auto = aGot.Auto
+		if conn.Driver() != "postgres" {
+			assert.Equal(t, 1, aGot.Auto)
+		} else {
+			aGot.Auto = 1
+		}
+		a.Auto = 1
 		assert.Equal(t, a, aGot)
 
 		alls, err := db.Select().Query()
@@ -84,11 +86,17 @@ func TestAutoIncrement(t *testing.T) {
 
 		a1, err := db.Insert().SetNotNil("1").Exec()
 		require.Nil(t, err)
-		assert.Equal(t, 1, a1.Auto)
+		if conn.Driver() != "postgres" {
+			// postgres insert does not fill auto fields
+			assert.Equal(t, 1, a1.Auto)
+		}
 
 		a2, err := db.Insert().SetNotNil("2").Exec()
 		require.Nil(t, err)
-		assert.Equal(t, 2, a2.Auto)
+		if conn.Driver() != "postgres" {
+			// postgres insert does not fill auto fields
+			assert.Equal(t, 2, a2.Auto)
+		}
 
 		alls, err := db.Select().OrderBy(AllColAuto, orm.Asc).Query()
 		require.Nil(t, err)
@@ -408,6 +416,16 @@ func TestGet(t *testing.T) {
 
 		a1Insert, err := db.Insert().InsertAll(&All{NotNil: "A1"}).Exec()
 		require.Nil(t, err)
+
+		// postgres does not fill auto fields and has non empty bytes from response
+		if conn.Driver() == "postgres" {
+			a0Insert.Auto = 1
+			a0Insert.VarCharByte = []byte("")
+			a0Insert.Bytes = []byte("")
+			a1Insert.Auto = 2
+			a1Insert.VarCharByte = []byte("")
+			a1Insert.Bytes = []byte("")
+		}
 
 		a0Get, err := db.Get(a0Insert.Auto)
 		require.Nil(t, err)

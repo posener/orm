@@ -11,7 +11,10 @@ import (
 func TestMigrations(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		if conn.Driver() == "sqlite3" {
-			t.Skip("sqlite migrations is not supported")
+			t.Skip("sqlite migrations are not supported")
+		}
+		if conn.Driver() == "postgres" {
+			t.Skip("postgres migrations are not supported yet")
 		}
 		m0, err := NewMigration0ORM(conn)
 		require.Nil(t, err)

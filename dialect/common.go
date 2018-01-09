@@ -1,4 +1,4 @@
-package runtime
+package dialect
 
 import (
 	"context"
@@ -17,16 +17,6 @@ const errConvert = "converting %s: column %d with value %v (type %T) to %s"
 
 func ErrConvert(field string, index int, value interface{}, to string) error {
 	return fmt.Errorf(errConvert, field, index, value, value, to)
-}
-
-// QMarks is a helper function for concatenating question mark for an SQL statement
-func QMarks(n int) string {
-	if n == 0 {
-		return ""
-	}
-	qMark := strings.Repeat("?, ", n)
-	qMark = qMark[:len(qMark)-2] // remove last ", "
-	return qMark
 }
 
 // Values is a hack to the sql.Rows struct

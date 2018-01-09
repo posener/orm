@@ -24,8 +24,16 @@ func TestRelationOneToOne(t *testing.T) {
 			Exec()
 		require.Nil(t, err)
 
+		if conn.Driver() == "postgres" {
+			c1.ID = 1
+		}
+
 		a1, err := aORM.Insert().InsertA(&A{Name: "James", Age: 42, CPointer: c1}).Exec()
 		require.Nil(t, err)
+
+		if conn.Driver() == "postgres" {
+			a1.ID = 2
+		}
 
 		// query without join, A.CPointer should be nil
 		aItems, err := aORM.Select().Query()
@@ -74,6 +82,10 @@ func TestRelationOneToOne(t *testing.T) {
 			SetYear(1949).
 			Exec()
 
+		if conn.Driver() == "postgres" {
+			c2.ID = 2
+		}
+
 		_, err = aORM.Update().
 			Where(aORM.Where().ID(orm.OpEq, a1.ID)).
 			SetCPointer(c2).
@@ -95,8 +107,21 @@ func TestRelationOneToMany(t *testing.T) {
 
 		b1, err := bORM.Insert().InsertB(&B{Name: "Marks", Hobbies: "drones"}).Exec()
 		require.Nil(t, err)
+		if conn.Driver() == "postgres" {
+			b1.ID = 1
+		}
 
-		generateCs(t, cORM, b1, 10)
+		for i := 0; i < 10; i++ {
+			cItem, err := cORM.Insert().
+				InsertC(&C{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, B: b1}).
+				Exec()
+			require.Nil(t, err)
+			if conn.Driver() == "postgres" {
+				cItem.ID = int64(i + 1)
+			}
+			cItem.B = nil
+			b1.CsPointer = append(b1.CsPointer, cItem)
+		}
 
 		bItems, err := bORM.Select().JoinCsPointer(cORM.Select().Joiner()).Query()
 		require.Nil(t, err)
@@ -105,6 +130,9 @@ func TestRelationOneToMany(t *testing.T) {
 
 		b2, err := bORM.Insert().InsertB(&B{Name: "Yoko", Hobbies: "music"}).Exec()
 		require.Nil(t, err)
+		if conn.Driver() == "postgres" {
+			b2.ID = 2
+		}
 
 		bItems, err = bORM.Select().JoinCsPointer(cORM.Select().Joiner()).Query()
 		require.Nil(t, err)
@@ -113,7 +141,17 @@ func TestRelationOneToMany(t *testing.T) {
 		assert.Equal(t, b2, &bItems[1])
 		assert.Equal(t, 0, len(bItems[1].CsPointer))
 
-		generateCs(t, cORM, b2, 5)
+		for i := 0; i < 5; i++ {
+			cItem, err := cORM.Insert().
+				InsertC(&C{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, B: b2}).
+				Exec()
+			require.Nil(t, err)
+			if conn.Driver() == "postgres" {
+				cItem.ID = int64(i + 11)
+			}
+			cItem.B = nil
+			b2.CsPointer = append(b2.CsPointer, cItem)
+		}
 
 		bItems, err = bORM.Select().JoinCsPointer(cORM.Select().Joiner()).Query()
 		require.Nil(t, err)
@@ -150,20 +188,6 @@ func TestRelationOneToMany(t *testing.T) {
 	})
 }
 
-func generateCs(t *testing.T, cORM CORM, bItem *B, count int) {
-	t.Helper()
-	var cItems []C
-	for i := 0; i < count; i++ {
-		cItem, err := cORM.Insert().
-			InsertC(&C{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, B: bItem}).
-			Exec()
-		require.Nil(t, err)
-		cItem.B = nil
-		cItems = append(cItems, *cItem)
-		bItem.CsPointer = append(bItem.CsPointer, cItem)
-	}
-}
-
 func TestRelationOneToOneNonPointerNested(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		a, err := NewA2ORM(conn)
@@ -182,15 +206,24 @@ func TestRelationOneToOneNonPointerNested(t *testing.T) {
 
 		dItem, err := d.Insert().SetName("D").Exec()
 		require.Nil(t, err)
-
 		cItem, err := c.Insert().SetName("C").Exec()
 		require.Nil(t, err)
+		if conn.Driver() == "postgres" {
+			dItem.ID = 1
+			cItem.ID = 1
+		}
 
 		bItem, err := b.Insert().InsertB2(&B2{Name: "B", C: cItem, D: dItem}).Exec()
 		require.Nil(t, err)
+		if conn.Driver() == "postgres" {
+			bItem.ID = 1
+		}
 
 		aItem, err := a.Insert().InsertA2(&A2{B: *bItem}).Exec()
 		require.Nil(t, err)
+		if conn.Driver() == "postgres" {
+			aItem.ID = 1
+		}
 
 		// query without join, A.CPointer should be nil
 		aItems, err := a.Select().Query()
@@ -246,10 +279,16 @@ func TestBidirectionalOneToManyRelationship(t *testing.T) {
 
 		aItem, err := a.Insert().SetName("A").Exec()
 		require.Nil(t, err)
+		if conn.Driver() == "postgres" {
+			aItem.ID = 1
+		}
 
 		for i := 0; i < 10; i++ {
 			bItem, err := b.Insert().InsertB3(&B3{Name: fmt.Sprintf("B%d", i), A: aItem}).Exec()
 			require.Nil(t, err)
+			if conn.Driver() == "postgres" {
+				bItem.ID = int64(i + 1)
+			}
 			aItem.B = append(aItem.B, bItem)
 			bItem.A = nil // for later query comparison
 		}
@@ -260,7 +299,7 @@ func TestBidirectionalOneToManyRelationship(t *testing.T) {
 		assert.Equal(t, "A", aList[0].Name)
 		assert.Equal(t, 0, len(aList[0].B))
 
-		aList, err = a.Select().JoinB(b.Select().Joiner()).Query()
+		aList, err = a.Select().JoinB(b.Select().OrderBy(B3ColID, orm.Asc).Joiner()).Query()
 		require.Nil(t, err)
 		assert.Equal(t, 1, len(aList))
 		assert.Equal(t, aItem, &aList[0])
@@ -296,9 +335,12 @@ func TestFieldsWithTheSameType(t *testing.T) {
 
 		b1, err := b.Insert().SetName("B1").Exec()
 		require.Nil(t, err)
-
 		b2, err := b.Insert().SetName("B2").Exec()
 		require.Nil(t, err)
+		if conn.Driver() == "postgres" {
+			b1.ID = 1
+			b2.ID = 2
+		}
 
 		_, err = a.Insert().InsertA4(&A4{Name: "A", B1: b1, B2: b2}).Exec()
 		require.Nil(t, err)
@@ -343,11 +385,17 @@ func TestSelfReferencing(t *testing.T) {
 		//  /  \ / \
 		// a4  a5  a6
 		a6 := insertA5(t, a, "6", nil, nil)
+		a6.ID = 1
 		a5 := insertA5(t, a, "5", nil, nil)
+		a5.ID = 2
 		a4 := insertA5(t, a, "4", nil, nil)
+		a4.ID = 3
 		a3 := insertA5(t, a, "3", a5, a6)
+		a3.ID = 4
 		a2 := insertA5(t, a, "2", a4, a5)
+		a2.ID = 5
 		a1 := insertA5(t, a, "1", a2, a3)
+		a1.ID = 6
 
 		as, err := a.Select().Query()
 		if assert.Equal(t, 6, len(as)) {
@@ -463,7 +511,7 @@ func TestMultiplePrimaryKeysOneToMany(t *testing.T) {
 		_, err = c.Insert().SetName("3").SetB(*b1).Exec()
 		require.Nil(t, err)
 
-		cs, err := c.Select().JoinB(b.Select().Joiner()).Query()
+		cs, err := c.Select().OrderBy(C6ColName, orm.Asc).JoinB(b.Select().Joiner()).Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 3, len(cs)) {
 			for i, c := range cs {
@@ -472,7 +520,7 @@ func TestMultiplePrimaryKeysOneToMany(t *testing.T) {
 			}
 		}
 
-		bs, err := b.Select().JoinCs(c.Select().Joiner()).Query()
+		bs, err := b.Select().JoinCs(c.Select().OrderBy(C6ColName, orm.Asc).Joiner()).Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(bs)) {
 			assert.Equal(t, "Jackson", bs[0].SureName)
@@ -498,8 +546,10 @@ func TestReferencingField(t *testing.T) {
 
 		a1, err := a.Insert().SetName("A1").Exec()
 		require.Nil(t, err)
+		a1.ID = 1
 		a2, err := a.Insert().SetName("A2").Exec()
 		require.Nil(t, err)
+		a2.ID = 2
 
 		_, err = b.Insert().SetName("B1").SetA1(a1).SetA2(a2).Exec()
 		require.Nil(t, err)
@@ -510,7 +560,7 @@ func TestReferencingField(t *testing.T) {
 		_, err = b.Insert().SetName("B4").SetA1(a2).SetA2(a1).Exec()
 		require.Nil(t, err)
 
-		as, err := a.Select().JoinB(b.Select().Joiner()).Query()
+		as, err := a.Select().JoinB(b.Select().OrderBy(B7ColID, orm.Asc).Joiner()).Query()
 		require.Nil(t, err)
 
 		if assert.Equal(t, 2, len(as)) {

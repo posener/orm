@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 var typeFormat = regexp.MustCompile(`([^(]+)(\((\d+)\))?`)
@@ -26,24 +27,16 @@ func New(s string) (*Type, error) {
 		t.Name = m[1]
 		t.Size, _ = strconv.Atoi(m[3])
 	}
+	t.Name = strings.ToLower(t.Name)
 	return t, nil
 }
 
 func (t *Type) String() string {
+	if t == nil {
+		return ""
+	}
 	if t.Size == 0 {
 		return t.Name
 	}
 	return fmt.Sprintf("%s(%d)", t.Name, t.Size)
 }
-
-// List of SQL types
-const (
-	Integer   = "INTEGER"
-	Float     = "FLOAT"
-	Boolean   = "BOOLEAN"
-	Text      = "TEXT"
-	Blob      = "BLOB"
-	TimeStamp = "TIMESTAMP"
-	DateTime  = "DATETIME"
-	VarChar   = "VARCHAR"
-)
