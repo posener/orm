@@ -13,6 +13,12 @@ import (
 	"github.com/posener/orm/load"
 )
 
+const (
+	Mysql    = "mysql"
+	Postgres = "postgres"
+	Sqlite3  = "sqlite3"
+)
+
 // dialect is an interface to represent an SQL dialect
 // Objects that implement this interface, can convert query params, such as SelectParams or
 // UpdateParams, and convert them to an SQL statement and a list of arguments, which can be used
@@ -54,9 +60,9 @@ type Dialect interface {
 }
 
 var dialects = map[string]API{
-	"mysql":    &dialect{name: "mysql", Dialect: new(mysql.Dialect)},
-	"postgres": &dialect{name: "postgres", Dialect: new(postgres.Dialect)},
-	"sqlite3":  &dialect{name: "sqlite3", Dialect: new(sqlite3.Dialect)},
+	Mysql:    &dialect{name: Mysql, Dialect: new(mysql.Dialect)},
+	Postgres: &dialect{name: Postgres, Dialect: new(postgres.Dialect)},
+	Sqlite3:  &dialect{name: Sqlite3, Dialect: new(sqlite3.Dialect)},
 }
 
 // All returns all available dialects
@@ -162,6 +168,16 @@ func (d *dialect) Insert(p *InsertParams) (string, []interface{}) {
 		}
 	}
 	b.Close()
+
+	for i, col := range p.RetColumns {
+		if i == 0 {
+			b.Append("RETURNING")
+		} else {
+			b.Comma()
+		}
+		b.Append(b.Quote(col))
+	}
+
 	return b.Statement(), b.Args()
 }
 

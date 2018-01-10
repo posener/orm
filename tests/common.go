@@ -13,6 +13,7 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm"
+	"github.com/posener/orm/dialect"
 	"github.com/stretchr/testify/require"
 )
 
@@ -35,12 +36,8 @@ func testDBs(t *testing.T, testFunc func(t *testing.T, conn orm.Conn)) {
 		options = append(options, orm.OptLogger(t.Logf))
 	}
 
-	for _, name := range []string{
-		"sqlite3",
-		"mysql",
-		"postgres",
-	} {
-		name := name
+	for _, d := range dialect.All() {
+		name := d.Name()
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			databaseName := "orm_test_" + testNameFixer.Replace(t.Name())
@@ -102,9 +99,9 @@ func createMysqlTestDatabase(t *testing.T, databaseName string) func() {
 	conn, err := orm.Open("mysql", mySQLAddr)
 	require.Nil(t, err)
 	defer conn.Close()
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP DATABASE IF EXISTS `%s`", databaseName))
+	_, err = conn.Exec(ctx, fmt.Sprintf("DROP DATABASE IF EXISTS `%s`", databaseName))
 	require.Nil(t, err)
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE `%s`", databaseName))
+	_, err = conn.Exec(ctx, fmt.Sprintf("CREATE DATABASE `%s`", databaseName))
 	require.Nil(t, err)
 	return func() {
 		conn, err := sql.Open("mysql", mySQLAddr)
@@ -122,8 +119,8 @@ func createPostgresTestDatabase(t *testing.T, databaseName string) func() {
 	conn, err := orm.Open("postgres", postgresAddr)
 	require.Nil(t, err)
 	defer conn.Close()
-	conn.ExecContext(ctx, fmt.Sprintf(`DROP DATABASE "%s"`, databaseName))
-	conn.ExecContext(ctx, fmt.Sprintf(`CREATE DATABASE "%s"`, databaseName))
+	conn.Exec(ctx, fmt.Sprintf(`DROP DATABASE "%s"`, databaseName))
+	conn.Exec(ctx, fmt.Sprintf(`CREATE DATABASE "%s"`, databaseName))
 	return func() {
 		conn, err := sql.Open("postgres", postgresAddr)
 		require.Nil(t, err)

@@ -4,16 +4,17 @@ import (
 	"testing"
 
 	"github.com/posener/orm"
+	"github.com/posener/orm/dialect"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMigrations(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
-		if conn.Driver() == "sqlite3" {
+		if conn.Driver() == dialect.Sqlite3 {
 			t.Skip("sqlite migrations are not supported")
 		}
-		if conn.Driver() == "postgres" {
+		if conn.Driver() == dialect.Postgres {
 			t.Skip("postgres migrations are not supported yet")
 		}
 		m0, err := NewMigration0ORM(conn)
