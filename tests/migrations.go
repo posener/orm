@@ -22,7 +22,7 @@ func (*Migration1) TableName() string {
 type Migration2 struct {
 	A  string
 	B  string
-	D  string `sql:"not null"`
+	D  string
 	P1 *C2
 }
 
@@ -33,7 +33,7 @@ func (*Migration2) TableName() string {
 type Migration3 struct {
 	A      string
 	B      string
-	D      string `sql:"not null"`
+	D      string
 	P1, P2 *C2
 }
 

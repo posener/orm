@@ -459,11 +459,11 @@ func TestColumnsJoin(t *testing.T) {
 			d := Get("mysql").(*dialect)
 
 			cols := newBuilder(d, "")
-			selectColumns(cols, &tt.p)
+			cols.selectColumns(&tt.p)
 			assert.Equal(t, tt.wantCols, strings.Trim(cols.Statement(), " "))
 
 			j := newBuilder(d, "")
-			join(j, &tt.p)
+			j.join(&tt.p)
 			assert.Equal(t, tt.wantJoin, strings.Trim(j.Statement(), " "))
 		})
 	}
