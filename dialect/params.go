@@ -26,6 +26,9 @@ type InsertParams struct {
 	Table string
 	// Assignments are values to store in the new row
 	Assignments Assignments
+	// RetColumns are columns to return
+	// used in postgres dialect
+	RetColumns []string
 	// Ctx is a context parameter for the query
 	// even though it is not recommended to store context in a struct, here the struct
 	// actually represents an arguments list, passed to a function.

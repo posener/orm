@@ -24,16 +24,8 @@ func TestRelationOneToOne(t *testing.T) {
 			Exec()
 		require.Nil(t, err)
 
-		if conn.Driver() == "postgres" {
-			c1.ID = 1
-		}
-
 		a1, err := aORM.Insert().InsertA(&A{Name: "James", Age: 42, CPointer: c1}).Exec()
 		require.Nil(t, err)
-
-		if conn.Driver() == "postgres" {
-			a1.ID = 2
-		}
 
 		// query without join, A.CPointer should be nil
 		aItems, err := aORM.Select().Query()
@@ -82,10 +74,6 @@ func TestRelationOneToOne(t *testing.T) {
 			SetYear(1949).
 			Exec()
 
-		if conn.Driver() == "postgres" {
-			c2.ID = 2
-		}
-
 		_, err = aORM.Update().
 			Where(aORM.Where().ID(orm.OpEq, a1.ID)).
 			SetCPointer(c2).
@@ -107,18 +95,12 @@ func TestRelationOneToMany(t *testing.T) {
 
 		b1, err := bORM.Insert().InsertB(&B{Name: "Marks", Hobbies: "drones"}).Exec()
 		require.Nil(t, err)
-		if conn.Driver() == "postgres" {
-			b1.ID = 1
-		}
 
 		for i := 0; i < 10; i++ {
 			cItem, err := cORM.Insert().
 				InsertC(&C{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, B: b1}).
 				Exec()
 			require.Nil(t, err)
-			if conn.Driver() == "postgres" {
-				cItem.ID = int64(i + 1)
-			}
 			cItem.B = nil
 			b1.CsPointer = append(b1.CsPointer, cItem)
 		}
@@ -130,9 +112,6 @@ func TestRelationOneToMany(t *testing.T) {
 
 		b2, err := bORM.Insert().InsertB(&B{Name: "Yoko", Hobbies: "music"}).Exec()
 		require.Nil(t, err)
-		if conn.Driver() == "postgres" {
-			b2.ID = 2
-		}
 
 		bItems, err = bORM.Select().JoinCsPointer(cORM.Select().Joiner()).Query()
 		require.Nil(t, err)
@@ -146,9 +125,6 @@ func TestRelationOneToMany(t *testing.T) {
 				InsertC(&C{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, B: b2}).
 				Exec()
 			require.Nil(t, err)
-			if conn.Driver() == "postgres" {
-				cItem.ID = int64(i + 11)
-			}
 			cItem.B = nil
 			b2.CsPointer = append(b2.CsPointer, cItem)
 		}
@@ -208,22 +184,12 @@ func TestRelationOneToOneNonPointerNested(t *testing.T) {
 		require.Nil(t, err)
 		cItem, err := c.Insert().SetName("C").Exec()
 		require.Nil(t, err)
-		if conn.Driver() == "postgres" {
-			dItem.ID = 1
-			cItem.ID = 1
-		}
 
 		bItem, err := b.Insert().InsertB2(&B2{Name: "B", C: cItem, D: dItem}).Exec()
 		require.Nil(t, err)
-		if conn.Driver() == "postgres" {
-			bItem.ID = 1
-		}
 
 		aItem, err := a.Insert().InsertA2(&A2{B: *bItem}).Exec()
 		require.Nil(t, err)
-		if conn.Driver() == "postgres" {
-			aItem.ID = 1
-		}
 
 		// query without join, A.CPointer should be nil
 		aItems, err := a.Select().Query()
@@ -279,16 +245,10 @@ func TestBidirectionalOneToManyRelationship(t *testing.T) {
 
 		aItem, err := a.Insert().SetName("A").Exec()
 		require.Nil(t, err)
-		if conn.Driver() == "postgres" {
-			aItem.ID = 1
-		}
 
 		for i := 0; i < 10; i++ {
 			bItem, err := b.Insert().InsertB3(&B3{Name: fmt.Sprintf("B%d", i), A: aItem}).Exec()
 			require.Nil(t, err)
-			if conn.Driver() == "postgres" {
-				bItem.ID = int64(i + 1)
-			}
 			aItem.B = append(aItem.B, bItem)
 			bItem.A = nil // for later query comparison
 		}
@@ -337,10 +297,6 @@ func TestFieldsWithTheSameType(t *testing.T) {
 		require.Nil(t, err)
 		b2, err := b.Insert().SetName("B2").Exec()
 		require.Nil(t, err)
-		if conn.Driver() == "postgres" {
-			b1.ID = 1
-			b2.ID = 2
-		}
 
 		_, err = a.Insert().InsertA4(&A4{Name: "A", B1: b1, B2: b2}).Exec()
 		require.Nil(t, err)
@@ -385,17 +341,11 @@ func TestSelfReferencing(t *testing.T) {
 		//  /  \ / \
 		// a4  a5  a6
 		a6 := insertA5(t, a, "6", nil, nil)
-		a6.ID = 1
 		a5 := insertA5(t, a, "5", nil, nil)
-		a5.ID = 2
 		a4 := insertA5(t, a, "4", nil, nil)
-		a4.ID = 3
 		a3 := insertA5(t, a, "3", a5, a6)
-		a3.ID = 4
 		a2 := insertA5(t, a, "2", a4, a5)
-		a2.ID = 5
 		a1 := insertA5(t, a, "1", a2, a3)
-		a1.ID = 6
 
 		as, err := a.Select().Query()
 		if assert.Equal(t, 6, len(as)) {
@@ -546,10 +496,8 @@ func TestReferencingField(t *testing.T) {
 
 		a1, err := a.Insert().SetName("A1").Exec()
 		require.Nil(t, err)
-		a1.ID = 1
 		a2, err := a.Insert().SetName("A2").Exec()
 		require.Nil(t, err)
-		a2.ID = 2
 
 		_, err = b.Insert().SetName("B1").SetA1(a1).SetA2(a2).Exec()
 		require.Nil(t, err)

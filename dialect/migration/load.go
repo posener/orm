@@ -62,7 +62,7 @@ func Load(ctx context.Context, conn orm.Conn, tableName string) (*Table, error) 
 
 // columns returns all columns of a table by doing an SQL query
 func columns(ctx context.Context, conn orm.Conn, tableName string) ([]column, error) {
-	rows, err := conn.QueryContext(ctx, fmt.Sprintf("DESCRIBE `%s`", tableName))
+	rows, err := conn.Query(ctx, fmt.Sprintf("DESCRIBE `%s`", tableName))
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func columns(ctx context.Context, conn orm.Conn, tableName string) ([]column, er
 }
 
 func indices(ctx context.Context, conn orm.Conn, tableName string) ([]index, error) {
-	rows, err := conn.QueryContext(ctx, fmt.Sprintf("SHOW INDEX FROM `%s`", tableName))
+	rows, err := conn.Query(ctx, fmt.Sprintf("SHOW INDEX FROM `%s`", tableName))
 	if err != nil {
 		return nil, err
 	}
