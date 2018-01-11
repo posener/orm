@@ -14,9 +14,6 @@ func TestMigrations(t *testing.T) {
 		if conn.Driver() == dialect.Sqlite3 {
 			t.Skip("sqlite migrations are not supported")
 		}
-		if conn.Driver() == dialect.Postgres {
-			t.Skip("postgres migrations are not supported yet")
-		}
 		m0, err := NewMigration0ORM(conn)
 		require.Nil(t, err)
 		m1, err := NewMigration1ORM(conn)

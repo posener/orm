@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var typeFormat = regexp.MustCompile(`([^(]+)(\((\d+)\))?`)
+var typeFormat = regexp.MustCompile(`([^(]+)(\((\d*)\))?`)
 
 // Type represents an SQL column type
 type Type struct {

@@ -84,7 +84,7 @@ func (p *SelectParams) SelectedColumns() []string {
 }
 
 // JoinParams are parameters to perform a join operation
-// Field SelectParams is used to perform select operations on the join struct's field.
+// Name SelectParams is used to perform select operations on the join struct's field.
 // Pairings describe the relation between the join's fields
 type JoinParams struct {
 	SelectParams

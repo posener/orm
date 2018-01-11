@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/posener/orm/dialect"
-	"github.com/posener/orm/dialect/migration"
 	"github.com/posener/orm/graph"
 	"github.com/posener/orm/load"
 )
@@ -30,7 +29,7 @@ type TemplateData struct {
 	Dialects []dialect.API
 	Public   string
 	Private  string
-	Table    *migration.Table
+	Table    *dialect.Table
 	Package  string
 }
 
@@ -60,7 +59,7 @@ func Gen(g *graph.Graph, out string, dialects []dialect.API) error {
 		Dialects: dialects,
 		Public:   g.Name,
 		Private:  strings.ToLower(g.Name),
-		Table:    migration.NewTable(g),
+		Table:    dialect.NewTable(g),
 		Package:  outPkg,
 	}
 

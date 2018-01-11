@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/posener/orm"
-	"github.com/posener/orm/dialect/migration"
 	"github.com/posener/orm/dialect/mysql"
 	"github.com/posener/orm/dialect/postgres"
 	"github.com/posener/orm/dialect/sqlite3"
@@ -86,7 +85,7 @@ type dialect struct {
 
 // Create returns the SQL CREATE statement and arguments according to the given parameters
 func (d *dialect) Create(conn orm.Conn, p *CreateParams) ([]string, error) {
-	table := new(migration.Table)
+	table := new(Table)
 	err := table.UnMarshal(p.MarshaledTable)
 	if err != nil {
 		return nil, err
@@ -108,16 +107,17 @@ func (d *dialect) Create(conn orm.Conn, p *CreateParams) ([]string, error) {
 	}
 	b.Append(d.Quote(p.Table))
 	b.Open()
-	tableProperties(b, table)
+	b.tableProperties(table)
 	b.Close()
 	return []string{b.Statement()}, nil
 }
 
-func (d *dialect) autoMigrate(ctx context.Context, conn orm.Conn, tableName string, want *migration.Table) ([]string, bool, error) {
-	got, err := migration.Load(ctx, conn, tableName)
+func (d *dialect) autoMigrate(ctx context.Context, conn orm.Conn, tableName string, want *Table) ([]string, bool, error) {
+	got, err := d.loadTable(ctx, conn, tableName)
 	if err != nil {
-		// XXX: Here we assume error is: table does not exists
-		// if it is not, we should return the error and not nil
+		return nil, false, err
+	}
+	if got == nil {
 		return nil, false, nil
 	}
 	diff, err := got.Diff(want)
@@ -134,14 +134,14 @@ func (d *dialect) autoMigrate(ctx context.Context, conn orm.Conn, tableName stri
 		b := newBuilder(d, "ALTER TABLE")
 		b.Append(b.Quote(tableName))
 		b.Append("ADD COLUMN")
-		createColumn(b, col)
+		b.createColumn(col)
 		stmts = append(stmts, b.Statement())
 	}
 	for _, fk := range diff.ForeignKeys {
 		b := newBuilder(d, "ALTER TABLE")
 		b.Append(b.Quote(tableName))
-		b.Append("ADD CONSTRAINT")
-		foreignKey(b, fk)
+		b.Append("ADD")
+		b.foreignKey(fk)
 		stmts = append(stmts, b.Statement())
 	}
 	return stmts, true, nil
@@ -184,14 +184,14 @@ func (d *dialect) Insert(p *InsertParams) (string, []interface{}) {
 // Select returns the SQL SELECT statement and arguments according to the given parameters
 func (d *dialect) Select(p *SelectParams) (string, []interface{}) {
 	b := newBuilder(d, "SELECT")
-	selectColumns(b, p)
+	b.selectColumns(p)
 	b.Append("FROM")
 	b.Append(d.Quote(p.Table))
-	join(b, p)
-	where(b, p.Table, p.Where, p.Joins)
-	groupBy(b, p.Table, p)
-	orderBy(b, p.Table, p)
-	page(b, p.Page)
+	b.join(p)
+	b.where(p.Table, p.Where, p.Joins)
+	b.groupBy(p.Table, p)
+	b.orderBy(p.Table, p)
+	b.page(p.Page)
 	return b.Statement(), b.Args()
 }
 
@@ -199,7 +199,7 @@ func (d *dialect) Select(p *SelectParams) (string, []interface{}) {
 func (d *dialect) Delete(p *DeleteParams) (string, []interface{}) {
 	b := newBuilder(d, "DELETE FROM")
 	b.Append(d.Quote(p.Table))
-	where(b, p.Table, p.Where, nil)
+	b.where(p.Table, p.Where, nil)
 	return b.Statement(), b.Args()
 }
 
@@ -216,7 +216,7 @@ func (d *dialect) Update(p *UpdateParams) (string, []interface{}) {
 			b.Comma()
 		}
 	}
-	where(b, p.Table, p.Where, nil)
+	b.where(p.Table, p.Where, nil)
 	return b.Statement(), b.Args()
 }
 
@@ -231,9 +231,9 @@ func (d *dialect) Drop(p *DropParams) (string, []interface{}) {
 }
 
 // tableProperties returns all properties of SQL table, as should be given in the table CREATE statement
-func tableProperties(b *builder, t *migration.Table) {
+func (b *builder) tableProperties(t *Table) {
 	for i, col := range t.Columns {
-		createColumn(b, col)
+		b.createColumn(col)
 		if i != len(t.Columns)-1 {
 			b.Comma()
 		}
@@ -242,13 +242,13 @@ func tableProperties(b *builder, t *migration.Table) {
 		b.Comma()
 		b.Append("PRIMARY KEY")
 		b.Open()
-		quoteSlice(b, t.PrimaryKeys)
+		b.quoteSlice(t.PrimaryKeys)
 		b.Close()
 	}
 	if len(t.ForeignKeys) > 0 {
 		b.Comma()
 		for i, fk := range t.ForeignKeys {
-			foreignKey(b, fk)
+			b.foreignKey(fk)
 			if i != len(t.ForeignKeys)-1 {
 				b.Comma()
 			}
@@ -257,7 +257,7 @@ func tableProperties(b *builder, t *migration.Table) {
 }
 
 // createColumn is an SQL column definition, as given in the SQL CREATE statement
-func createColumn(b *builder, col migration.Column) {
+func (b *builder) createColumn(col Column) {
 	b.Append(b.Quote(col.Name))
 	b.Append(b.GoTypeToColumnType(col.GoType, hasAutoIncrement(col.Options)).String())
 	for _, opt := range col.Options {
@@ -266,15 +266,15 @@ func createColumn(b *builder, col migration.Column) {
 }
 
 // foreignKey is teh FOREIGN KEY statement
-func foreignKey(b *builder, fk migration.ForeignKey) {
+func (b *builder) foreignKey(fk ForeignKey) {
 	b.Append("FOREIGN KEY")
 	b.Open()
-	quoteSlice(b, fk.Columns)
+	b.quoteSlice(fk.Columns)
 	b.Close()
 	b.Append("REFERENCES")
 	b.Append(b.Quote(fk.Table))
 	b.Open()
-	quoteSlice(b, fk.ForeignColumns)
+	b.quoteSlice(fk.ForeignColumns)
 	b.Close()
 }
 
@@ -288,8 +288,8 @@ func hasAutoIncrement(options []string) bool {
 }
 
 // selectColumns returns the columns selected for an SQL SELECT query
-func selectColumns(b *builder, p *SelectParams) {
-	noColumn := columnsColumnRec(b, p.Table, p, true)
+func (b *builder) selectColumns(p *SelectParams) {
+	noColumn := b.columnsColumnRec(p.Table, p, true)
 
 	if p.Count {
 		if !noColumn {
@@ -299,7 +299,7 @@ func selectColumns(b *builder, p *SelectParams) {
 	}
 }
 
-func columnsColumnRec(b *builder, table string, p *SelectParams, first bool) bool {
+func (b *builder) columnsColumnRec(table string, p *SelectParams, first bool) bool {
 	cols := p.SelectedColumns()
 	for _, col := range cols {
 		if !first {
@@ -309,7 +309,7 @@ func columnsColumnRec(b *builder, table string, p *SelectParams, first bool) boo
 		first = false
 	}
 	for _, join := range p.Joins {
-		if !columnsColumnRec(b, join.TableName(table), &join.SelectParams, first) {
+		if !b.columnsColumnRec(join.TableName(table), &join.SelectParams, first) {
 			first = false
 		}
 	}
@@ -317,13 +317,13 @@ func columnsColumnRec(b *builder, table string, p *SelectParams, first bool) boo
 }
 
 // where returns a WHERE statement
-func where(b *builder, table string, w Where, j []JoinParams) {
-	whereRec(b, table, w, j, true)
+func (b *builder) where(table string, w Where, j []JoinParams) {
+	b.whereRec(table, w, j, true)
 }
 
 // whereRec returns a WHERE statement for a recursive join statement
 // it concat all the conditions with an AND operator
-func whereRec(b *builder, table string, w Where, joins []JoinParams, first bool) {
+func (b *builder) whereRec(table string, w Where, joins []JoinParams, first bool) {
 	if w != nil {
 		if first {
 			b.Append("WHERE")
@@ -334,16 +334,16 @@ func whereRec(b *builder, table string, w Where, joins []JoinParams, first bool)
 		w.Build(table, b)
 	}
 	for _, join := range joins {
-		whereRec(b, join.TableName(table), join.SelectParams.Where, join.SelectParams.Joins, first)
+		b.whereRec(join.TableName(table), join.SelectParams.Where, join.SelectParams.Joins, first)
 	}
 }
 
 // groupBy formats an SQL GROUP BY statement
-func groupBy(b *builder, table string, p *SelectParams) {
-	groupByRec(b, table, p, true)
+func (b *builder) groupBy(table string, p *SelectParams) {
+	b.groupByRec(table, p, true)
 }
 
-func groupByRec(b *builder, table string, p *SelectParams, first bool) {
+func (b *builder) groupByRec(table string, p *SelectParams, first bool) {
 	for _, group := range p.Groups {
 		if first {
 			b.Append("GROUP BY")
@@ -354,16 +354,16 @@ func groupByRec(b *builder, table string, p *SelectParams, first bool) {
 		b.Append(fmt.Sprintf("%s.%s", b.Quote(table), b.Quote(group.Column)))
 	}
 	for _, join := range p.Joins {
-		groupByRec(b, join.TableName(table), &join.SelectParams, first)
+		b.groupByRec(join.TableName(table), &join.SelectParams, first)
 	}
 }
 
 // orderBy formats an SQL ORDER BY statement
-func orderBy(b *builder, table string, p *SelectParams) {
-	orderByRec(b, table, p, true)
+func (b *builder) orderBy(table string, p *SelectParams) {
+	b.orderByRec(table, p, true)
 }
 
-func orderByRec(b *builder, table string, p *SelectParams, first bool) {
+func (b *builder) orderByRec(table string, p *SelectParams, first bool) {
 	for _, order := range p.Orders {
 		if first {
 			b.Append("ORDER BY")
@@ -375,12 +375,12 @@ func orderByRec(b *builder, table string, p *SelectParams, first bool) {
 		b.Append(string(order.Dir))
 	}
 	for _, join := range p.Joins {
-		orderByRec(b, join.TableName(table), &join.SelectParams, first)
+		b.orderByRec(join.TableName(table), &join.SelectParams, first)
 	}
 }
 
 // page formats an SQL LIMIT...OFFSET statement
-func page(b *builder, p Page) {
+func (b *builder) page(p Page) {
 	if p.Limit == 0 { // why would someone ask for a page of zero size?
 		return
 	}
@@ -391,11 +391,11 @@ func page(b *builder, p Page) {
 }
 
 // join extract SQL join list statement
-func join(b *builder, p *SelectParams) {
-	joinRec(b, p.Table, p)
+func (b *builder) join(p *SelectParams) {
+	b.joinRec(p.Table, p)
 }
 
-func joinRec(b *builder, table string, p *SelectParams) {
+func (b *builder) joinRec(table string, p *SelectParams) {
 	joins := p.Joins
 	if len(joins) == 0 {
 		return
@@ -418,11 +418,11 @@ func joinRec(b *builder, table string, p *SelectParams) {
 			b.Append(fmt.Sprintf("%s.%s", b.Quote(joinTable), b.Quote(pairing.JoinedColumn)))
 		}
 		b.Close()
-		joinRec(b, j.TableName(table), &j.SelectParams)
+		b.joinRec(j.TableName(table), &j.SelectParams)
 	}
 }
 
-func quoteSlice(b *builder, s []string) {
+func (b *builder) quoteSlice(s []string) {
 	for i := range s {
 		b.Append(b.Quote(s[i]))
 		if i != len(s)-1 {

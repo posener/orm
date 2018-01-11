@@ -1,4 +1,4 @@
-package migration
+package dialect
 
 import (
 	"encoding/json"
