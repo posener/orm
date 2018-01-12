@@ -47,17 +47,21 @@ const {{$.Private}}TableProperties = {{backtick $.Table.Marshal}}
 // {{$.Private}}Column is for table column names
 type {{$.Private}}Column string
 
-const (
+var {{$.Public}}Col = struct {
 	{{ range $_, $f := $.Graph.Type.NonReferences -}}
-	// {{$.Public}}Col{{$f.Name}} is used to select the {{$f.Name}} column in SELECT queries
-	{{$.Public}}Col{{$f.Name}} {{$.Private}}Column = "{{$f.Column.Name}}"
+	// {{$f.Name}} is used to select the {{$f.Name}} column
+	{{$f.Name}} {{$.Private}}Column
 	{{ end -}}
-)
+}{
+	{{ range $_, $f := $.Graph.Type.NonReferences -}}
+	{{$f.Name}}: "{{$f.Column.Name}}",
+	{{ end -}}
+}
 
-// {{$.Private}}OrderedColumns is an oredered list of all the columns in the table
+// {{$.Private}}OrderedColumns is an ordered list of all the columns in the table
 var {{$.Private}}OrderedColumns = []string{
 	{{ range $_, $f := $.Graph.Type.NonReferences -}}
-	string({{$.Public}}Col{{$f.Name}}),
+	string({{$.Public}}Col.{{$f.Name}}),
 	{{ end -}}
 }
 
@@ -70,9 +74,48 @@ func init() {
 	}
 }
 
+// {{$.Public}}SelectExecer executes select statements
+type {{$.Public}}SelectExecer interface {
+	Query() ([]{{$type}}, error)
+	Count() ([]{{$countStruct}}, error)
+	First() (*{{$type}}, error)
+	Joiner() {{$.Public}}Joiner
+}
+
+type {{$.Private}}OptSelect func(*{{$.Private}}Select)
+
+// {{$.Public}}API is API for ORM operations
 type {{$.Public}}API interface {
 	// Select returns a builder for selecting rows from an SQL table
-	Select(...{{$.Private}}Column) *{{$.Public}}SelectBuilder
+	Select(...{{$.Private}}OptSelect) {{$.Public}}SelectExecer
+	// SelectColumns enable selection of specific columns in the returned structs
+	// only the given columns will be filed with values from the database.
+	SelectColumns (cols ...{{$.Private}}Column) {{$.Private}}OptSelect
+	// SelectWhere applies where conditions on the query
+	SelectWhere (where dialect.Where) {{$.Private}}OptSelect
+	// Limit applies rows limit on the query response
+	SelectLimit (limit int64) {{$.Private}}OptSelect
+	// SelectPage applies rows offset and limit on the query response
+	SelectPage (offset, limit int64) {{$.Private}}OptSelect
+	{{ range $_, $e := $.Graph.Out -}}
+	{{ $f := $e.LocalField -}}
+	// SelectJoin{{$f.Name}} add a join query for {{$f.Name}}
+	// Based on a forward relation
+	SelectJoin{{$f.Name}} (joiner {{$.Private}}{{$f.Type.Name}}Joiner) {{$.Private}}OptSelect
+	{{ end -}}
+	{{ range $_, $e := $.Graph.In -}}
+	{{ $f := $e.LocalField -}}
+	// SelectJoin{{$f.Name}} add a join query for {{$f.Name}}
+	// Based on a reversed relation
+	SelectJoin{{$f.Name}} (joiner {{$.Private}}{{$f.Type.Name}}Joiner) {{$.Private}}OptSelect
+	{{ end -}}
+	// SelectOrderBy set order to the query results according to column
+	SelectOrderBy (col {{$.Private}}Column, dir orm.OrderDir) {{$.Private}}OptSelect
+	// SelectGroupBy make the query group by column
+	SelectGroupBy (col {{$.Private}}Column) {{$.Private}}OptSelect
+	// SelectContext sets the context for the SQL query
+	SelectContext (context.Context) {{$.Private}}OptSelect
+
 	// Insert returns a builder for inserting a row to an SQL table
 	Insert() *{{$.Public}}InsertBuilder
 	// Update returns a builder for updating a row in an SQL table
@@ -149,20 +192,120 @@ func (c *{{$conn}}) Create() *{{$.Public}}CreateBuilder {
 }
 
 // Select returns a builder of an SQL SELECT statement
-func (c *{{$conn}}) Select(cols ...{{$.Private}}Column) *{{$.Public}}SelectBuilder {
-	s := &{{$.Public}}SelectBuilder{
+func (c *{{$conn}}) Select(opts ...{{$.Private}}OptSelect) {{$.Public}}SelectExecer {
+	s := &{{$.Private}}Select{
 		params: dialect.SelectParams{
 			Table: {{$.Private}}Table,
 			OrderedColumns: {{$.Private}}OrderedColumns,
 		},
 		conn: c,
 	}
-	s.params.Columns = make(map[string]bool, len(cols))
-	for _, col := range cols {
-		s.params.Columns[string(col)] = true
+	for _, opt := range opts {
+		opt(s)
 	}
 	return s
 }
+
+func (c *{{$conn}}) SelectColumns(cols ...{{$.Private}}Column) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.params.Columns = make(map[string]bool, len(cols))
+		for _, col := range cols {
+			s.params.Columns[string(col)] = true
+		}
+	}
+}
+
+func (c *{{$conn}}) SelectWhere(where dialect.Where) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.params.Where = where
+	}
+}
+
+func (c *{{$conn}}) SelectLimit(limit int64) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.params.Page.Limit = limit
+	}
+}
+
+func (c *{{$conn}}) SelectPage(offset, limit int64) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.params.Page.Offset = offset
+		s.params.Page.Limit = limit
+	}
+}
+
+{{ range $_, $e := $.Graph.Out -}}
+{{ $f := $e.LocalField -}}
+func (c *{{$conn}}) SelectJoin{{$f.Name}}(joiner {{$.Private}}{{$f.Type.Name}}Joiner) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.scan{{$f.Name}} = joiner
+		s.params.Joins = append(s.params.Joins, dialect.JoinParams{
+			Pairings: []dialect.Pairing{
+				{{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
+				{
+					Column: "{{(index $e.SrcField.Columns $i).Name}}",
+					JoinedColumn: "{{$pk.Column.Name}}",
+				},
+				{{ end -}}
+			},
+			SelectParams: joiner.Params(),
+		})
+	}
+}
+{{ end -}}
+
+{{ range $_, $e := $.Graph.In -}}
+{{ $f := $e.LocalField -}}
+func (c *{{$conn}}) SelectJoin{{$f.Name}}(joiner {{$.Private}}{{$f.Type.Name}}Joiner) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.scan{{$f.Name}} = joiner
+		s.params.Joins = append(s.params.Joins, dialect.JoinParams{
+			Pairings: []dialect.Pairing{
+				{{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
+				{
+					Column: "{{$pk.Column.Name}}",
+					JoinedColumn: "{{(index $e.SrcField.Columns $i).Name}}",
+				},
+				{{ end -}}
+			},
+			SelectParams: joiner.Params(),
+		})
+	}
+}
+{{ end -}}
+
+func (c *{{$conn}}) SelectOrderBy(col {{$.Private}}Column, dir orm.OrderDir) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.params.Orders.Add(string(col), dir)
+	}
+}
+func (c *{{$conn}}) SelectGroupBy(col {{$.Private}}Column) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.params.Groups.Add(string(col))
+	}
+}
+
+func (c *{{$conn}}) SelectContext(ctx context.Context) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.params.Ctx = ctx
+	}
+}
+
+
+// Joiner returns an object to be used in a join operation with {{$name}}
+func (b *{{$.Private}}Select) Joiner() {{$.Public}}Joiner {
+	return &{{$.Private}}Joiner{builder: b}
+}
+
+
+{{ range $_, $refType := $.Graph.Type.ReferencedTypes -}}
+// {{$.Private}}{{$refType.Name}}Joiner is a scanner that defined by .Select().Joiner()
+// of an ORM object for type {{$refType.Name}}
+type {{$.Private}}{{$refType.Name}}Joiner interface {
+	Params() dialect.SelectParams
+	Scan(dialect string, values []driver.Value{{if $refType.HasOneToManyRelation}}, exists map[string]*{{$refType.Ext $.Package}}{{end}}) (*{{$refType.Ext $.Package}}, int, error)
+}
+{{ end -}}
 
 // Insert returns a builder of an SQL INSERT statement
 func (c *{{$conn}}) Insert() *{{$.Public}}InsertBuilder {
@@ -384,7 +527,7 @@ func (b *{{$.Public}}DropBuilder) Context(ctx context.Context) *{{$.Public}}Drop
 // === Get ===
 
 func (c *{{$conn}}) Get({{range $i, $pk := $pks}}key{{$i}} {{$pk.Type.Ext $.Package}},{{end}}) (*{{$type}}, error) {
-	return c.Select().Where(
+	return c.Select(c.SelectWhere(
 	{{- range $i, $pk := $pks -}}
 		c.Where().{{$pk.Name}}(orm.OpEq, key{{$i}})
 		{{- if ne (plus1 $i) (len $pks) -}}
@@ -396,7 +539,7 @@ func (c *{{$conn}}) Get({{range $i, $pk := $pks}}key{{$i}} {{$pk.Type.Ext $.Pack
 	)
 	{{- end -}}
 	{{- end -}}
-	).First()
+	)).First()
 }
 {{ end -}}
 
@@ -425,7 +568,7 @@ func (b *{{$.Public}}CreateBuilder) Exec() error {
 }
 
 // query is used by the Select.Query and Select.Limit functions
-func (b *{{$.Public}}SelectBuilder) query() (*sql.Rows, error) {
+func (b *{{$.Private}}Select) query() (*sql.Rows, error) {
 	stmt, args := b.conn.dialect.Select(&b.params)
 	return b.conn.Query(b.params.Ctx, stmt, args...)
 }
@@ -491,7 +634,7 @@ func (b *{{$.Public}}DeleteBuilder) Exec() (sql.Result, error) {
 }
 
 // Query the database
-func (b *{{$.Public}}SelectBuilder) Query() ([]{{$type}}, error) {
+func (b *{{$.Private}}Select) Query() ([]{{$type}}, error) {
 	b.params.Ctx = dialect.ContextOrBackground(b.params.Ctx)
 	rows, err := b.query()
 	if err != nil {
@@ -536,7 +679,7 @@ func (b *{{$.Public}}SelectBuilder) Query() ([]{{$type}}, error) {
 }
 
 // Count add a count column to the query
-func (b *{{$.Public}}SelectBuilder) Count() ([]{{$countStruct}}, error) {
+func (b *{{$.Private}}Select) Count() ([]{{$countStruct}}, error) {
 	b.params.Ctx = dialect.ContextOrBackground(b.params.Ctx)
 	b.params.Count = true
 	rows, err := b.query()
@@ -584,8 +727,8 @@ func (b *{{$.Public}}SelectBuilder) Count() ([]{{$countStruct}}, error) {
 // First returns the first row that matches the query.
 // If no row matches the query, an ErrNotFound will be returned.
 // This call cancels any paging that was set with the
-// {{$.Public}}SelectBuilder previously.
-func (b *{{$.Public}}SelectBuilder) First() (*{{$type}}, error) {
+// {{$.Private}}Select previously.
+func (b *{{$.Private}}Select) First() (*{{$type}}, error) {
 	b.params.Ctx = dialect.ContextOrBackground(b.params.Ctx)
 	b.params.Page.Limit = 1
 	b.params.Page.Offset = 0
@@ -653,8 +796,8 @@ type {{$countStruct}} struct {
 	Count int64
 }
 
-// {{$.Public}}SelectBuilder builds an SQL SELECT statement parameters
-type {{$.Public}}SelectBuilder struct {
+// {{$.Private}}Select builds an SQL SELECT statement parameters
+type {{$.Private}}Select struct {
 	params dialect.SelectParams
 	conn *{{$conn}}
 	{{ range $_, $f := $.Graph.Type.References -}}
@@ -664,7 +807,7 @@ type {{$.Public}}SelectBuilder struct {
 
 // {{$.Private}}Joiner represents a builder that exposes only Params and Scan method
 type {{$.Private}}Joiner struct {
-	builder *{{$.Public}}SelectBuilder
+	builder *{{$.Private}}Select
 }
 
 func (j *{{$.Private}}Joiner) Params() dialect.SelectParams {
@@ -675,103 +818,10 @@ func (j *{{$.Private}}Joiner) Scan(dialect string, values []driver.Value{{if $ha
 	return j.builder.scan(dialect, values{{if $hasOneToManyRelation}}, exists{{end}})
 }
 
-// Joiner returns an object to be used in a join operation with {{$name}}
-func (b *{{$.Public}}SelectBuilder) Joiner() {{$.Public}}Joiner {
-	return &{{$.Private}}Joiner{builder: b}
-}
-
-// Where applies where conditions on the query
-func (b *{{$.Public}}SelectBuilder) Where(where dialect.Where) *{{$.Public}}SelectBuilder {
-	b.params.Where = where
-	return b
-}
-
-// Limit applies rows limit on the query response
-func (b *{{$.Public}}SelectBuilder) Limit(limit int64) *{{$.Public}}SelectBuilder {
-	b.params.Page.Limit = limit
-	return b
-}
-
-// Page applies rows offset and limit on the query response
-func (b *{{$.Public}}SelectBuilder) Page(offset, limit int64) *{{$.Public}}SelectBuilder {
-	b.params.Page.Offset = offset
-	b.params.Page.Limit = limit
-	return b
-}
-
-{{ range $_, $refType := $.Graph.Type.ReferencedTypes -}}
-// {{$.Private}}{{$refType.Name}}Joiner is a scanner that defined by .Select().Joiner()
-// of an ORM object for type {{$refType.Name}}
-type {{$.Private}}{{$refType.Name}}Joiner interface {
-	Params() dialect.SelectParams
-	Scan(dialect string, values []driver.Value{{if $refType.HasOneToManyRelation}}, exists map[string]*{{$refType.Ext $.Package}}{{end}}) (*{{$refType.Ext $.Package}}, int, error)
-}
-{{ end -}}
-
-{{ range $_, $e := $.Graph.Out -}}
-{{ $f := $e.LocalField -}}
-// Join{{$f.Name}} add a join query for {{$f.Name}}
-// Based on a forward relation
-func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(joiner {{$.Private}}{{$f.Type.Name}}Joiner) *{{$.Public}}SelectBuilder {
-	b.scan{{$f.Name}} = joiner
-	b.params.Joins = append(b.params.Joins, dialect.JoinParams{
-		Pairings: []dialect.Pairing{
-			{{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
-			{
-				Column: "{{(index $e.SrcField.Columns $i).Name}}",
-				JoinedColumn: "{{$pk.Column.Name}}",
-			},
-			{{ end -}}
-		},
-		SelectParams: joiner.Params(),
-	})
-	return b
-}
-{{ end -}}
-
-{{ range $_, $e := $.Graph.In -}}
-{{ $f := $e.LocalField -}}
-// Join{{$f.Name}} add a join query for {{$f.Name}}
-// Based on a reversed relation
-func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(joiner {{$.Private}}{{$f.Type.Name}}Joiner) *{{$.Public}}SelectBuilder {
-	b.scan{{$f.Name}} = joiner
-	b.params.Joins = append(b.params.Joins, dialect.JoinParams{
-		Pairings: []dialect.Pairing{
-			{{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
-			{
-				Column: "{{$pk.Column.Name}}",
-				JoinedColumn: "{{(index $e.SrcField.Columns $i).Name}}",
-			},
-			{{ end -}}
-		},
-		SelectParams: joiner.Params(),
-	})
-	return b
-}
-{{ end -}}
-
-// OrderBy set order to the query results according to column
-func (b *{{$.Public}}SelectBuilder) OrderBy(col {{$.Private}}Column, dir orm.OrderDir) *{{$.Public}}SelectBuilder {
-	b.params.Orders.Add(string(col), dir)
-	return b
-}
-
-// GroupBy make the query group by column
-func (b *{{$.Public}}SelectBuilder) GroupBy(col {{$.Private}}Column) *{{$.Public}}SelectBuilder {
-	b.params.Groups.Add(string(col))
-	return b
-}
-
-// Context sets the context for the SQL query
-func (b *{{$.Public}}SelectBuilder) Context(ctx context.Context) *{{$.Public}}SelectBuilder {
-	b.params.Ctx = ctx
-	return b
-}
-
 // scan an SQL row to a {{$name}} struct
 // It returns the scanned {{$.Graph.Type.Ext $.Package}} and the number of scanned fields,
 // and an error in case of failure.
-func (s *{{$.Public}}SelectBuilder) scan(dialect string, vals []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Package}}{{end}}) (*{{$.Graph.Type.Ext $.Package}}, int, error) {
+func (s *{{$.Private}}Select) scan(dialect string, vals []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Package}}{{end}}) (*{{$.Graph.Type.Ext $.Package}}, int, error) {
 	item, n, err := s.scanCount(dialect, vals{{if $hasOneToManyRelation}}, exists{{end}})
 	if err != nil {
 		return nil, n, err
@@ -780,7 +830,7 @@ func (s *{{$.Public}}SelectBuilder) scan(dialect string, vals []driver.Value{{if
 }
 
 // ScanCount scans an SQL row to a {{$countStruct}} struct
-func (s *{{$.Public}}SelectBuilder) scanCount(dialect string, vals []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Package}}{{end}}) (*{{$countStruct}}, int, error) {
+func (s *{{$.Private}}Select) scanCount(dialect string, vals []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Package}}{{end}}) (*{{$countStruct}}, int, error) {
 	switch dialect {
 	{{ range $_, $dialect := $.Dialects -}}
 	case "{{$dialect.Name}}":
@@ -793,7 +843,7 @@ func (s *{{$.Public}}SelectBuilder) scanCount(dialect string, vals []driver.Valu
 
 {{ range $_, $dialect := $.Dialects }}
 // scan{{$dialect.Name}} scans {{$dialect.Name}} row to a {{$name}} struct
-func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Package}}{{end}}) (*{{$countStruct}}, int, error) {
+func (s *{{$.Private}}Select) scan{{$dialect.Name}} (vals []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Package}}{{end}}) (*{{$countStruct}}, int, error) {
 	var (
 		row = new({{$countStruct}})
 		i int
