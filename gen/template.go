@@ -47,17 +47,21 @@ const {{$.Private}}TableProperties = {{backtick $.Table.Marshal}}
 // {{$.Private}}Column is for table column names
 type {{$.Private}}Column string
 
-const (
+var {{$.Public}}Col = struct {
 	{{ range $_, $f := $.Graph.Type.NonReferences -}}
-	// {{$.Public}}Col{{$f.Name}} is used to select the {{$f.Name}} column in SELECT queries
-	{{$.Public}}Col{{$f.Name}} {{$.Private}}Column = "{{$f.Column.Name}}"
+	// {{$f.Name}} is used to select the {{$f.Name}} column
+	{{$f.Name}} {{$.Private}}Column
 	{{ end -}}
-)
+}{
+	{{ range $_, $f := $.Graph.Type.NonReferences -}}
+	{{$f.Name}}: "{{$f.Column.Name}}",
+	{{ end -}}
+}
 
-// {{$.Private}}OrderedColumns is an oredered list of all the columns in the table
+// {{$.Private}}OrderedColumns is an ordered list of all the columns in the table
 var {{$.Private}}OrderedColumns = []string{
 	{{ range $_, $f := $.Graph.Type.NonReferences -}}
-	string({{$.Public}}Col{{$f.Name}}),
+	string({{$.Public}}Col.{{$f.Name}}),
 	{{ end -}}
 }
 

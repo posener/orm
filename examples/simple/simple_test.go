@@ -95,7 +95,7 @@ func ExampleSimpleUsage() {
 	fmt.Println("Select where len:", len(simples))
 
 	// We can group by and order by. Let's try:
-	simples, err = sorm.Select(SimpleSelect.GroupBy(SimpleColField2)).Query()
+	simples, err = sorm.Select(SimpleSelect.GroupBy(SimpleCol.Field2)).Query()
 
 	// We expect the select length to be 1 since both rows have the same value in field2
 	fmt.Println("Select group len:", len(simples))

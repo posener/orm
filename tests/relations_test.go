@@ -44,7 +44,7 @@ func TestRelationOneToOne(t *testing.T) {
 
 		// query with join, A.CPointer should be filled with aORM's properties
 		aItems, err = aORM.Select(
-			ASelect.JoinCPointer(cORM.Select(CSelect.Columns(CColName)).Joiner()),
+			ASelect.JoinCPointer(cORM.Select(CSelect.Columns(CCol.Name)).Joiner()),
 		).Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
@@ -56,8 +56,8 @@ func TestRelationOneToOne(t *testing.T) {
 
 		// query with join, A.CPointer should be filled with aORM's properties
 		aItems, err = aORM.Select(
-			ASelect.Columns(AColName),
-			ASelect.JoinCPointer(cORM.Select(CSelect.Columns(CColYear)).Joiner()),
+			ASelect.Columns(ACol.Name),
+			ASelect.JoinCPointer(cORM.Select(CSelect.Columns(CCol.Year)).Joiner()),
 		).Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
@@ -259,7 +259,7 @@ func TestBidirectionalOneToManyRelationship(t *testing.T) {
 		assert.Equal(t, "A", aList[0].Name)
 		assert.Equal(t, 0, len(aList[0].B))
 
-		aList, err = a.Select(A3Select.JoinB(b.Select(B3Select.OrderBy(B3ColID, orm.Asc)).Joiner())).Query()
+		aList, err = a.Select(A3Select.JoinB(b.Select(B3Select.OrderBy(B3Col.ID, orm.Asc)).Joiner())).Query()
 		require.Nil(t, err)
 		assert.Equal(t, 1, len(aList))
 		assert.Equal(t, aItem, &aList[0])
@@ -465,7 +465,7 @@ func TestMultiplePrimaryKeysOneToMany(t *testing.T) {
 		require.Nil(t, err)
 
 		cs, err := c.Select(
-			C6Select.OrderBy(C6ColName, orm.Asc),
+			C6Select.OrderBy(C6Col.Name, orm.Asc),
 			C6Select.JoinB(b.Select().Joiner()),
 		).Query()
 		require.Nil(t, err)
@@ -476,7 +476,7 @@ func TestMultiplePrimaryKeysOneToMany(t *testing.T) {
 			}
 		}
 
-		bs, err := b.Select(B6Select.JoinCs(c.Select(C6Select.OrderBy(C6ColName, orm.Asc)).Joiner())).Query()
+		bs, err := b.Select(B6Select.JoinCs(c.Select(C6Select.OrderBy(C6Col.Name, orm.Asc)).Joiner())).Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(bs)) {
 			assert.Equal(t, "Jackson", bs[0].SureName)
@@ -514,7 +514,7 @@ func TestReferencingField(t *testing.T) {
 		_, err = b.Insert().SetName("B4").SetA1(a2).SetA2(a1).Exec()
 		require.Nil(t, err)
 
-		as, err := a.Select(A7Select.JoinB(b.Select(B7Select.OrderBy(B7ColID, orm.Asc)).Joiner())).Query()
+		as, err := a.Select(A7Select.JoinB(b.Select(B7Select.OrderBy(B7Col.ID, orm.Asc)).Joiner())).Query()
 		require.Nil(t, err)
 
 		if assert.Equal(t, 2, len(as)) {
