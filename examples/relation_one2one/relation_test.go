@@ -77,7 +77,7 @@ func ExampleRelationOne2One() {
 	// relationships:
 
 	ones, err = oneORM.Select(
-		OneSelect.JoinOtherOne(otherOneORM.Select().Joiner()),
+		oneORM.SelectJoinOtherOne(otherOneORM.Select().Joiner()),
 	).Query()
 
 	fmt.Println("3. one with join's references:", ones[0].OtherOne.Name)
@@ -85,9 +85,9 @@ func ExampleRelationOne2One() {
 	// All the select operations: Where, GroupBy, OrderBy, Page, and so, can be give to the
 	// joined selector as well, and joins can be also applied recursively
 	ones, err = oneORM.Select(
-		OneSelect.JoinOtherOne(
+		oneORM.SelectJoinOtherOne(
 			otherOneORM.Select(
-				OtherOneSelect.Where(otherOneORM.Where().ID(orm.OpLt, 3)),
+				otherOneORM.SelectWhere(otherOneORM.Where().ID(orm.OpLt, 3)),
 			).Joiner(),
 		),
 	).Query()

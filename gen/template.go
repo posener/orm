@@ -82,10 +82,40 @@ type {{$.Public}}SelectExecer interface {
 	Joiner() {{$.Public}}Joiner
 }
 
+type {{$.Private}}OptSelect func(*{{$.Private}}Select)
+
 // {{$.Public}}API is API for ORM operations
 type {{$.Public}}API interface {
 	// Select returns a builder for selecting rows from an SQL table
 	Select(...{{$.Private}}OptSelect) {{$.Public}}SelectExecer
+	// SelectColumns enable selection of specific columns in the returned structs
+	// only the given columns will be filed with values from the database.
+	SelectColumns (cols ...{{$.Private}}Column) {{$.Private}}OptSelect
+	// SelectWhere applies where conditions on the query
+	SelectWhere (where dialect.Where) {{$.Private}}OptSelect
+	// Limit applies rows limit on the query response
+	SelectLimit (limit int64) {{$.Private}}OptSelect
+	// SelectPage applies rows offset and limit on the query response
+	SelectPage (offset, limit int64) {{$.Private}}OptSelect
+	{{ range $_, $e := $.Graph.Out -}}
+	{{ $f := $e.LocalField -}}
+	// SelectJoin{{$f.Name}} add a join query for {{$f.Name}}
+	// Based on a forward relation
+	SelectJoin{{$f.Name}} (joiner {{$.Private}}{{$f.Type.Name}}Joiner) {{$.Private}}OptSelect
+	{{ end -}}
+	{{ range $_, $e := $.Graph.In -}}
+	{{ $f := $e.LocalField -}}
+	// SelectJoin{{$f.Name}} add a join query for {{$f.Name}}
+	// Based on a reversed relation
+	SelectJoin{{$f.Name}} (joiner {{$.Private}}{{$f.Type.Name}}Joiner) {{$.Private}}OptSelect
+	{{ end -}}
+	// SelectOrderBy set order to the query results according to column
+	SelectOrderBy (col {{$.Private}}Column, dir orm.OrderDir) {{$.Private}}OptSelect
+	// SelectGroupBy make the query group by column
+	SelectGroupBy (col {{$.Private}}Column) {{$.Private}}OptSelect
+	// SelectContext sets the context for the SQL query
+	SelectContext (context.Context) {{$.Private}}OptSelect
+
 	// Insert returns a builder for inserting a row to an SQL table
 	Insert() *{{$.Public}}InsertBuilder
 	// Update returns a builder for updating a row in an SQL table
@@ -161,8 +191,6 @@ func (c *{{$conn}}) Create() *{{$.Public}}CreateBuilder {
 	}
 }
 
-type {{$.Private}}OptSelect func(*{{$.Private}}Select)
-
 // Select returns a builder of an SQL SELECT statement
 func (c *{{$conn}}) Select(opts ...{{$.Private}}OptSelect) {{$.Public}}SelectExecer {
 	s := &{{$.Private}}Select{
@@ -178,113 +206,91 @@ func (c *{{$conn}}) Select(opts ...{{$.Private}}OptSelect) {{$.Public}}SelectExe
 	return s
 }
 
-var {{$.Public}}Select = struct {
-	// Columns enable selection of specific columns in the returned structs
-	// only the given columns will be filed with values from the database.
-	Columns func(cols ...{{$.Private}}Column) {{$.Private}}OptSelect
-	// Where applies where conditions on the query
-	Where func(where dialect.Where) {{$.Private}}OptSelect
-	// Limit applies rows limit on the query response
-	Limit func(limit int64) {{$.Private}}OptSelect
-	// Page applies rows offset and limit on the query response
-	Page func(offset, limit int64) {{$.Private}}OptSelect
-	{{ range $_, $e := $.Graph.Out -}}
-	{{ $f := $e.LocalField -}}
-	// Join{{$f.Name}} add a join query for {{$f.Name}}
-	// Based on a forward relation
-	Join{{$f.Name}} func(joiner {{$.Private}}{{$f.Type.Name}}Joiner) {{$.Private}}OptSelect
-	{{ end -}}
-	{{ range $_, $e := $.Graph.In -}}
-	{{ $f := $e.LocalField -}}
-	// Join{{$f.Name}} add a join query for {{$f.Name}}
-	// Based on a reversed relation
-	Join{{$f.Name}} func(joiner {{$.Private}}{{$f.Type.Name}}Joiner) {{$.Private}}OptSelect
-	{{ end -}}
-	// OrderBy set order to the query results according to column
-	OrderBy func(col {{$.Private}}Column, dir orm.OrderDir) {{$.Private}}OptSelect
-	// GroupBy make the query group by column
-	GroupBy func(col {{$.Private}}Column) {{$.Private}}OptSelect
-	// Context sets the context for the SQL query
-	Context func(context.Context) {{$.Private}}OptSelect
-}{
-	Columns: func(cols ...{{$.Private}}Column) {{$.Private}}OptSelect {
-		return func(s *{{$.Private}}Select) {
-			s.params.Columns = make(map[string]bool, len(cols))
-			for _, col := range cols {
-				s.params.Columns[string(col)] = true
-			}
+func (c *{{$conn}}) SelectColumns(cols ...{{$.Private}}Column) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.params.Columns = make(map[string]bool, len(cols))
+		for _, col := range cols {
+			s.params.Columns[string(col)] = true
 		}
-	},
-	Where: func(where dialect.Where) {{$.Private}}OptSelect {
-		return func(s *{{$.Private}}Select) {
-			s.params.Where = where
-		}
-	},
-	Limit: func(limit int64) {{$.Private}}OptSelect {
-		return func(s *{{$.Private}}Select) {
-			s.params.Page.Limit = limit
-		}
-	},
-	Page: func(offset, limit int64) {{$.Private}}OptSelect {
-		return func(s *{{$.Private}}Select) {
-			s.params.Page.Offset = offset
-			s.params.Page.Limit = limit
-		}
-	},
-	{{ range $_, $e := $.Graph.Out -}}
-	{{ $f := $e.LocalField -}}
-	Join{{$f.Name}}: func(joiner {{$.Private}}{{$f.Type.Name}}Joiner) {{$.Private}}OptSelect {
-		return func(s *{{$.Private}}Select) {
-			s.scan{{$f.Name}} = joiner
-			s.params.Joins = append(s.params.Joins, dialect.JoinParams{
-				Pairings: []dialect.Pairing{
-					{{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
-					{
-						Column: "{{(index $e.SrcField.Columns $i).Name}}",
-						JoinedColumn: "{{$pk.Column.Name}}",
-					},
-					{{ end -}}
-				},
-				SelectParams: joiner.Params(),
-			})
-		}
-	},
-	{{ end -}}
-	{{ range $_, $e := $.Graph.In -}}
-	{{ $f := $e.LocalField -}}
-	Join{{$f.Name}}: func(joiner {{$.Private}}{{$f.Type.Name}}Joiner) {{$.Private}}OptSelect {
-		return func(s *{{$.Private}}Select) {
-			s.scan{{$f.Name}} = joiner
-			s.params.Joins = append(s.params.Joins, dialect.JoinParams{
-				Pairings: []dialect.Pairing{
-					{{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
-					{
-						Column: "{{$pk.Column.Name}}",
-						JoinedColumn: "{{(index $e.SrcField.Columns $i).Name}}",
-					},
-					{{ end -}}
-				},
-				SelectParams: joiner.Params(),
-			})
-		}
-	},
-	{{ end -}}
-	OrderBy: func(col {{$.Private}}Column, dir orm.OrderDir) {{$.Private}}OptSelect {
-		return func(s *{{$.Private}}Select) {
-			s.params.Orders.Add(string(col), dir)
-		}
-	},
-	GroupBy: func(col {{$.Private}}Column) {{$.Private}}OptSelect {
-		return func(s *{{$.Private}}Select) {
-			s.params.Groups.Add(string(col))
-		}
-	},
-	Context: func(ctx context.Context) {{$.Private}}OptSelect {
-		return func(s *{{$.Private}}Select) {
-			s.params.Ctx = ctx
-		}
-	},
+	}
 }
+
+func (c *{{$conn}}) SelectWhere(where dialect.Where) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.params.Where = where
+	}
+}
+
+func (c *{{$conn}}) SelectLimit(limit int64) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.params.Page.Limit = limit
+	}
+}
+
+func (c *{{$conn}}) SelectPage(offset, limit int64) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.params.Page.Offset = offset
+		s.params.Page.Limit = limit
+	}
+}
+
+{{ range $_, $e := $.Graph.Out -}}
+{{ $f := $e.LocalField -}}
+func (c *{{$conn}}) SelectJoin{{$f.Name}}(joiner {{$.Private}}{{$f.Type.Name}}Joiner) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.scan{{$f.Name}} = joiner
+		s.params.Joins = append(s.params.Joins, dialect.JoinParams{
+			Pairings: []dialect.Pairing{
+				{{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
+				{
+					Column: "{{(index $e.SrcField.Columns $i).Name}}",
+					JoinedColumn: "{{$pk.Column.Name}}",
+				},
+				{{ end -}}
+			},
+			SelectParams: joiner.Params(),
+		})
+	}
+}
+{{ end -}}
+
+{{ range $_, $e := $.Graph.In -}}
+{{ $f := $e.LocalField -}}
+func (c *{{$conn}}) SelectJoin{{$f.Name}}(joiner {{$.Private}}{{$f.Type.Name}}Joiner) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.scan{{$f.Name}} = joiner
+		s.params.Joins = append(s.params.Joins, dialect.JoinParams{
+			Pairings: []dialect.Pairing{
+				{{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
+				{
+					Column: "{{$pk.Column.Name}}",
+					JoinedColumn: "{{(index $e.SrcField.Columns $i).Name}}",
+				},
+				{{ end -}}
+			},
+			SelectParams: joiner.Params(),
+		})
+	}
+}
+{{ end -}}
+
+func (c *{{$conn}}) SelectOrderBy(col {{$.Private}}Column, dir orm.OrderDir) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.params.Orders.Add(string(col), dir)
+	}
+}
+func (c *{{$conn}}) SelectGroupBy(col {{$.Private}}Column) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.params.Groups.Add(string(col))
+	}
+}
+
+func (c *{{$conn}}) SelectContext(ctx context.Context) {{$.Private}}OptSelect {
+	return func(s *{{$.Private}}Select) {
+		s.params.Ctx = ctx
+	}
+}
+
 
 // Joiner returns an object to be used in a join operation with {{$name}}
 func (b *{{$.Private}}Select) Joiner() {{$.Public}}Joiner {
@@ -521,7 +527,7 @@ func (b *{{$.Public}}DropBuilder) Context(ctx context.Context) *{{$.Public}}Drop
 // === Get ===
 
 func (c *{{$conn}}) Get({{range $i, $pk := $pks}}key{{$i}} {{$pk.Type.Ext $.Package}},{{end}}) (*{{$type}}, error) {
-	return c.Select({{$.Public}}Select.Where(
+	return c.Select(c.SelectWhere(
 	{{- range $i, $pk := $pks -}}
 		c.Where().{{$pk.Name}}(orm.OpEq, key{{$i}})
 		{{- if ne (plus1 $i) (len $pks) -}}
