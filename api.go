@@ -42,10 +42,10 @@ type Conn interface {
 	// Driver returns the SQL driver name
 	Driver() string
 
-	// ExecContext executes an SQL statement
-	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
-	// QueryContext executes an SQL query statement
-	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
+	// SQL DB actions
+	Exec(context.Context, string, ...interface{}) (sql.Result, error)
+	Query(context.Context, string, ...interface{}) (*sql.Rows, error)
+	QueryRow(context.Context, string, ...interface{}) *sql.Row
 
 	// Non transaction functions
 
@@ -130,7 +130,7 @@ func (c *conn) Rollback() error {
 	return c.Tx.Rollback()
 }
 
-func (c *conn) ExecContext(ctx context.Context, stmt string, args ...interface{}) (sql.Result, error) {
+func (c *conn) Exec(ctx context.Context, stmt string, args ...interface{}) (sql.Result, error) {
 	if c.Tx != nil {
 		c.logf("Tx[%d] Exec: %v %v", c.txID, stmt, args)
 		return c.Tx.ExecContext(ctx, stmt, args...)
@@ -139,13 +139,22 @@ func (c *conn) ExecContext(ctx context.Context, stmt string, args ...interface{}
 	return c.DB.ExecContext(ctx, stmt, args...)
 }
 
-func (c *conn) QueryContext(ctx context.Context, stmt string, args ...interface{}) (*sql.Rows, error) {
+func (c *conn) Query(ctx context.Context, stmt string, args ...interface{}) (*sql.Rows, error) {
 	if c.Tx != nil {
 		c.logf("Tx[%d] Query: %v %v", c.txID, stmt, args)
 		return c.Tx.QueryContext(ctx, stmt, args...)
 	}
 	c.logf("Query: %v %v", stmt, args)
 	return c.DB.QueryContext(ctx, stmt, args...)
+}
+
+func (c *conn) QueryRow(ctx context.Context, stmt string, args ...interface{}) *sql.Row {
+	if c.Tx != nil {
+		c.logf("Tx[%d] QueryRow: %v %v", c.txID, stmt, args)
+		return c.Tx.QueryRowContext(ctx, stmt, args...)
+	}
+	c.logf("QueryRow: %v %v", stmt, args)
+	return c.DB.QueryRowContext(ctx, stmt, args...)
 }
 
 func (c *conn) ConnDB() *sql.DB {

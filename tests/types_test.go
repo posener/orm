@@ -6,9 +6,8 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/posener/orm"
+	"github.com/posener/orm/dialect"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -66,7 +65,7 @@ func TestTypes(t *testing.T) {
 		aGot, err := db.Insert().InsertAll(a).Exec()
 		require.Nil(t, err)
 		assert.Equal(t, 1, aGot.Auto)
-		a.Auto = aGot.Auto
+		a.Auto = 1
 		assert.Equal(t, a, aGot)
 
 		alls, err := db.Select().Query()
@@ -417,6 +416,14 @@ func TestGet(t *testing.T) {
 
 		a1Insert, err := db.Insert().InsertAll(&All{NotNil: "A1"}).Exec()
 		require.Nil(t, err)
+
+		// postgres has non empty bytes from response
+		if conn.Driver() == dialect.Postgres {
+			a0Insert.VarCharByte = []byte("")
+			a0Insert.Bytes = []byte("")
+			a1Insert.VarCharByte = []byte("")
+			a1Insert.Bytes = []byte("")
+		}
 
 		a0Get, err := db.Get(a0Insert.Auto)
 		require.Nil(t, err)

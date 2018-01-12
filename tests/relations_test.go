@@ -93,7 +93,14 @@ func TestRelationOneToMany(t *testing.T) {
 		b1, err := bORM.Insert().InsertB(&B{Name: "Marks", Hobbies: "drones"}).Exec()
 		require.Nil(t, err)
 
-		generateCs(t, cORM, b1, 10)
+		for i := 0; i < 10; i++ {
+			cItem, err := cORM.Insert().
+				InsertC(&C{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, B: b1}).
+				Exec()
+			require.Nil(t, err)
+			cItem.B = nil
+			b1.CsPointer = append(b1.CsPointer, cItem)
+		}
 
 		bItems, err := bORM.Select(BSelect.JoinCsPointer(cORM.Select().Joiner())).Query()
 		require.Nil(t, err)
@@ -110,7 +117,14 @@ func TestRelationOneToMany(t *testing.T) {
 		assert.Equal(t, b2, &bItems[1])
 		assert.Equal(t, 0, len(bItems[1].CsPointer))
 
-		generateCs(t, cORM, b2, 5)
+		for i := 0; i < 5; i++ {
+			cItem, err := cORM.Insert().
+				InsertC(&C{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, B: b2}).
+				Exec()
+			require.Nil(t, err)
+			cItem.B = nil
+			b2.CsPointer = append(b2.CsPointer, cItem)
+		}
 
 		bItems, err = bORM.Select(BSelect.JoinCsPointer(cORM.Select().Joiner())).Query()
 		require.Nil(t, err)
@@ -148,20 +162,6 @@ func TestRelationOneToMany(t *testing.T) {
 	})
 }
 
-func generateCs(t *testing.T, cORM CORM, bItem *B, count int) {
-	t.Helper()
-	var cItems []C
-	for i := 0; i < count; i++ {
-		cItem, err := cORM.Insert().
-			InsertC(&C{Name: fmt.Sprintf("Book %d", i), Year: 2000 - i, B: bItem}).
-			Exec()
-		require.Nil(t, err)
-		cItem.B = nil
-		cItems = append(cItems, *cItem)
-		bItem.CsPointer = append(bItem.CsPointer, cItem)
-	}
-}
-
 func TestRelationOneToOneNonPointerNested(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		a, err := NewA2ORM(conn)
@@ -180,7 +180,6 @@ func TestRelationOneToOneNonPointerNested(t *testing.T) {
 
 		dItem, err := d.Insert().SetName("D").Exec()
 		require.Nil(t, err)
-
 		cItem, err := c.Insert().SetName("C").Exec()
 		require.Nil(t, err)
 
@@ -260,7 +259,7 @@ func TestBidirectionalOneToManyRelationship(t *testing.T) {
 		assert.Equal(t, "A", aList[0].Name)
 		assert.Equal(t, 0, len(aList[0].B))
 
-		aList, err = a.Select(A3Select.JoinB(b.Select().Joiner())).Query()
+		aList, err = a.Select(A3Select.JoinB(b.Select(B3Select.OrderBy(B3ColID, orm.Asc)).Joiner())).Query()
 		require.Nil(t, err)
 		assert.Equal(t, 1, len(aList))
 		assert.Equal(t, aItem, &aList[0])
@@ -296,7 +295,6 @@ func TestFieldsWithTheSameType(t *testing.T) {
 
 		b1, err := b.Insert().SetName("B1").Exec()
 		require.Nil(t, err)
-
 		b2, err := b.Insert().SetName("B2").Exec()
 		require.Nil(t, err)
 
@@ -466,7 +464,10 @@ func TestMultiplePrimaryKeysOneToMany(t *testing.T) {
 		_, err = c.Insert().SetName("3").SetB(*b1).Exec()
 		require.Nil(t, err)
 
-		cs, err := c.Select(C6Select.JoinB(b.Select().Joiner())).Query()
+		cs, err := c.Select(
+			C6Select.OrderBy(C6ColName, orm.Asc),
+			C6Select.JoinB(b.Select().Joiner()),
+		).Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 3, len(cs)) {
 			for i, c := range cs {
@@ -475,7 +476,7 @@ func TestMultiplePrimaryKeysOneToMany(t *testing.T) {
 			}
 		}
 
-		bs, err := b.Select(B6Select.JoinCs(c.Select().Joiner())).Query()
+		bs, err := b.Select(B6Select.JoinCs(c.Select(C6Select.OrderBy(C6ColName, orm.Asc)).Joiner())).Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(bs)) {
 			assert.Equal(t, "Jackson", bs[0].SureName)
@@ -513,7 +514,7 @@ func TestReferencingField(t *testing.T) {
 		_, err = b.Insert().SetName("B4").SetA1(a2).SetA2(a1).Exec()
 		require.Nil(t, err)
 
-		as, err := a.Select(A7Select.JoinB(b.Select().Joiner())).Query()
+		as, err := a.Select(A7Select.JoinB(b.Select(B7Select.OrderBy(B7ColID, orm.Asc)).Joiner())).Query()
 		require.Nil(t, err)
 
 		if assert.Equal(t, 2, len(as)) {

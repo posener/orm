@@ -1,4 +1,4 @@
-package mysql
+package postgres
 
 import (
 	"bytes"
@@ -16,48 +16,52 @@ type Dialect struct{}
 
 // Name returns the dialect name
 func (d *Dialect) Name() string {
-	return "mysql"
+	return "postgres"
 }
 
 func (d *Dialect) Translate(name string) string {
+	if name == "AUTO_INCREMENT" {
+		return ""
+	}
 	return name
 }
 
 func (d *Dialect) Quote(name string) string {
-	return fmt.Sprintf("`%s`", name)
+	return fmt.Sprintf(`"%s"`, name)
 }
 
 func (d *Dialect) Var(i int) string {
-	return "?"
+	return fmt.Sprintf("$%d", i)
 }
 
 func (Dialect) GoTypeToColumnType(goTypeName string, autoIncrement bool) *sqltypes.Type {
 	st := new(sqltypes.Type)
+	if autoIncrement {
+		switch goTypeName {
+		case "int", "int8", "int16", "int32", "uint", "uint8", "uint16":
+			return &sqltypes.Type{Name: "serial"}
+		case "int64", "uint32", "uint64":
+			return &sqltypes.Type{Name: "bigserial"}
+		default:
+			log.Fatalf("Auto increment on type %s is not supported", goTypeName)
+		}
+	}
 	switch goTypeName {
-	case "int", "int16", "int32":
-		st.Name = "int8"
-	case "int8":
-		st.Name = "tinyint"
-	case "uint8":
-		st.Name = "tinyint unsigned"
-	case "uint", "uint16", "uint32":
-		st.Name = "int unsigned"
-	case "int64":
+	case "int", "int8", "int16", "int32", "uint", "uint8", "uint16":
+		st.Name = "integer"
+	case "int64", "uint32", "uint64":
 		st.Name = "bigint"
-	case "uint64":
-		st.Name = "bigint unsigned"
 	case "float32", "float64":
-		st.Name = "double"
+		st.Name = "numeric"
 	case "bool":
 		st.Name = "boolean"
 	case "string":
 		st.Name = "varchar"
 		st.Size = 255
 	case "[]byte":
-		st.Name = "longblob"
+		st.Name = "text"
 	case "time.Time":
-		st.Name = "datetime"
-		st.Size = 3
+		st.Name = "timestamp with time zone"
 	default:
 		log.Fatalf("Unknown column type for %s", goTypeName)
 	}
@@ -92,23 +96,13 @@ type tmpltType struct {
 	Field                  *load.Field
 }
 
-var tmplt = template.Must(template.New("mysql").Parse(`
+var tmplt = template.Must(template.New("postgres").Parse(`
 				switch val := vals[i].(type) {
-				case []byte:
-					tmp := {{.ConvertBytesFuncString}}
-					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer}}&{{end}}tmp
-				{{ if ne .ConvertType "[]byte" -}}
 				case {{.ConvertType}}:
 					tmp := {{.Field.Type.Naked.Ext .Field.ParentType.Package}}(val)
 					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer }}&{{end}}tmp
-				{{ end -}}
-				{{ if and (ne .ConvertType "int64") .ConvertIntFuncString -}}
-				case int64:
-					tmp := {{.ConvertIntFuncString}}
-					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer}}&{{end}}tmp
-				{{ end -}}
 				default:
-					return nil, 0, dialect.ErrConvert("{{.Field.AccessName}}", i, vals[i], "{{.ConvertType}}, []byte, (int64?)")
+					return nil, 0, dialect.ErrConvert("{{.Field.AccessName}}", i, vals[i], "{{.ConvertType}}")
 				}
 `))
 
@@ -148,14 +142,12 @@ func (d *Dialect) convertIntFuncString(f *load.Field, sqlType *sqltypes.Type) st
 
 func (d *Dialect) convertType(f *load.Field, sqlType *sqltypes.Type) string {
 	switch sqlType.Name {
-	case "tinyint", "int", "bigint":
+	case "integer", "bigint":
 		return "int64"
-	case "tinyint unsigned", "int unsigned", "bigint unsigned":
-		return "uint64"
-	case "double":
+	case "numeric":
 		return "float64"
-	case "longblob", "varchar":
-		return "[]byte"
+	case "varchar", "text":
+		return "string"
 	case "boolean":
 		return "bool"
 	default:

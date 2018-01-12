@@ -127,6 +127,7 @@ type MyType struct {
 ### Currently Supported Dialects:
 
 - [x] mysql
+- [x] postgres
 - [x] sqlite
 
 ### Compare with other Go ORMs 
