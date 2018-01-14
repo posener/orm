@@ -10,6 +10,7 @@ import (
 )
 
 func TestRelationOneToOne(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		aORM, _, cORM := orms(t, conn)
 
@@ -90,6 +91,7 @@ func TestRelationOneToOne(t *testing.T) {
 }
 
 func TestRelationOneToMany(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		_, bORM, cORM := orms(t, conn)
 
@@ -165,6 +167,7 @@ func TestRelationOneToMany(t *testing.T) {
 }
 
 func TestRelationOneToOneNonPointerNested(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		a, err := NewA2ORM(conn)
 		require.Nil(t, err)
@@ -234,6 +237,7 @@ func TestRelationOneToOneNonPointerNested(t *testing.T) {
 }
 
 func TestBidirectionalOneToManyRelationship(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		a, err := NewA3ORM(conn)
 		require.Nil(t, err)
@@ -284,6 +288,7 @@ func TestBidirectionalOneToManyRelationship(t *testing.T) {
 }
 
 func TestFieldsWithTheSameType(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		a, err := NewA4ORM(conn)
 		require.Nil(t, err)
@@ -328,6 +333,7 @@ func TestFieldsWithTheSameType(t *testing.T) {
 }
 
 func TestSelfReferencing(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		a, err := NewA5ORM(conn)
 		require.Nil(t, err)
@@ -394,6 +400,7 @@ func insertA5(t *testing.T, a A5ORM, name string, left, right *A5) *A5 {
 }
 
 func TestMultiplePrimaryKeys(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		if conn.Driver() == "sqlite3" {
 			t.Skip("sqlite3 does not support string type primary keys")
@@ -439,6 +446,7 @@ func TestMultiplePrimaryKeys(t *testing.T) {
 }
 
 func TestMultiplePrimaryKeysOneToMany(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		if conn.Driver() == "sqlite3" {
 			t.Skip("sqlite3 does not support string type primary keys")
@@ -485,6 +493,7 @@ func TestMultiplePrimaryKeysOneToMany(t *testing.T) {
 }
 
 func TestReferencingField(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		a, err := NewA7ORM(conn)
 		require.Nil(t, err)

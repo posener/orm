@@ -87,6 +87,5 @@ func TestTransactions(t *testing.T) {
 		ps, err = person.Select().Query()
 		require.Nil(t, err)
 		assert.Equal(t, 1, len(ps))
-
 	})
 }
