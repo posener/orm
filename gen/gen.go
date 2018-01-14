@@ -1,6 +1,7 @@
 package gen
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -153,9 +154,11 @@ func outPkg(outDir string) (string, error) {
 }
 
 func format(path string) error {
-	_, err := exec.Command("goimports", "-w", path).CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("failed formatting package: %s", err)
+	cmd := exec.Command("goimports", "-w", path)
+	stdErr := bytes.NewBuffer(nil)
+	cmd.Stderr = stdErr
+	if cmd.Run() != nil {
+		return fmt.Errorf("failed formatting package:\n%s", stdErr)
 	}
 	return nil
 }
