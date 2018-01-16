@@ -26,12 +26,13 @@ func init() {
 // TemplateData arguments for the templates
 type TemplateData struct {
 	// The name	of the new created package
-	Graph    *graph.Graph
-	Dialects []dialect.API
-	Public   string
-	Private  string
-	Table    *dialect.Table
-	Package  string
+	Graph          *graph.Graph
+	Dialects       []dialect.API
+	Public         string
+	Private        string
+	Table          dialect.Table
+	RelationTables map[string]dialect.Table
+	Package        string
 }
 
 // Gen generates all the ORM files for a given struct in a given package.
@@ -56,12 +57,13 @@ func Gen(g *graph.Graph, out string, dialects []dialect.API) error {
 	}
 
 	data := TemplateData{
-		Graph:    g,
-		Dialects: dialects,
-		Public:   g.Name,
-		Private:  strings.ToLower(g.Name),
-		Table:    dialect.NewTable(g),
-		Package:  outPkg,
+		Graph:          g,
+		Dialects:       dialects,
+		Public:         g.Name,
+		Private:        strings.ToLower(g.Name),
+		Table:          dialect.NewTable(g),
+		RelationTables: dialect.RelationTables(g),
+		Package:        outPkg,
 	}
 
 	ormFileName := strings.ToLower(g.Name + "_orm.go")

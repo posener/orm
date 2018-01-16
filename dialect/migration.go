@@ -18,7 +18,7 @@ type Table struct {
 }
 
 // Marshal returns a string of Table
-func (t *Table) Marshal() string {
+func (t Table) Marshal() string {
 	b, err := json.Marshal(t)
 	if err != nil {
 		panic(err)
@@ -54,8 +54,8 @@ func (f *ForeignKey) hash() string {
 }
 
 // NewTable returns table structure to be used for generated code
-func NewTable(gr *graph.Graph) *Table {
-	t := new(Table)
+func NewTable(gr *graph.Graph) Table {
+	t := Table{}
 	for _, f := range gr.Fields {
 		if !f.IsReference() {
 			sqlColumn := f.Columns()[0]
@@ -78,6 +78,41 @@ func NewTable(gr *graph.Graph) *Table {
 		t.ForeignKeys = append(t.ForeignKeys, fk)
 	}
 	return t
+}
+
+func RelationTables(gr *graph.Graph) map[string]Table {
+	var tables = make(map[string]Table)
+	for _, e := range gr.RelTable {
+		tables[e.Field.RelationTable()] = relationTable(e.Field)
+	}
+	return tables
+}
+
+func relationTable(f *load.Field) Table {
+	var t1, t2 = f.RelationTypes()
+
+	table := Table{}
+
+	for _, t := range []*load.Naked{t1, t2} {
+		var foreignColumns, columns []string
+		for _, pk := range t.PrimaryKeys {
+			columnName := fmt.Sprintf("%s_%s", t.Table(), pk.Column().Name)
+			table.Columns = append(table.Columns, Column{
+				Name:    columnName,
+				GoType:  pk.Type.Naked.Ext(""),
+				SQLType: pk.CustomType.String(),
+			})
+			columns = append(columns, columnName)
+			foreignColumns = append(foreignColumns, pk.Column().Name)
+		}
+
+		table.ForeignKeys = append(table.ForeignKeys, ForeignKey{
+			Table:          t.Table(),
+			Columns:        columns,
+			ForeignColumns: foreignColumns,
+		})
+	}
+	return table
 }
 
 func options(f *load.Field) []string {
@@ -103,7 +138,7 @@ func options(f *load.Field) []string {
 func foreignKey(outEdge graph.Edge) (cols []Column, fk ForeignKey) {
 	fk.Table = outEdge.RelationType.Table()
 	dstFields := outEdge.RelationType.PrimaryKeys
-	for i, col := range outEdge.SrcField.Columns() {
+	for i, col := range outEdge.Field.Columns() {
 		cols = append(cols, Column{
 			Name:   col.Name,
 			GoType: dstFields[i].Type.Naked.Ext(""),

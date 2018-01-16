@@ -36,12 +36,18 @@ type Field struct {
 	Unique bool
 	// Default sets a default value for this column
 	Default string
-	// ReferencingFieldName is to used when type A has a one-to-many relationship
+	// RelationField is to used when type A has a one-to-many relationship
 	// to type B, and type B has more than one fields that reference type A.
 	// in this case, the one-to-many field in A, for example 'Bs []B' should add
 	// a tag with the name of the field in B that referencing it. So if type
-	// B hash 'A1, A2 A', type B should add tag `sql:"referencing field:A1"`.
-	ReferencingFieldName string
+	// B hash 'A1, A2 A', type B should add tag `sql:"relation field:A1"`.
+	RelationField string
+	// CustomRelationName is used to define a many-to-many relations with matching fields
+	// in the related types.
+	// If a file `Bs []B` in type A should be relation to field `As []A` in type B,
+	// a common `relation name` tag could be given to those two fields, and a many
+	// to many relation between those fields will be created.
+	CustomRelationName string
 }
 
 // ForeignKey is a definition of how a column is a foreign key of another column
@@ -119,8 +125,10 @@ func (f *Field) parseTags(tag map[string]string) error {
 			f.Unique = true
 		case "default":
 			f.Default = value
-		case "referencing field", "referencing_field":
-			f.ReferencingFieldName = value
+		case "relation field", "relation_field":
+			f.RelationField = value
+		case "relation name", "relation_name":
+			f.CustomRelationName = value
 		}
 	}
 	return nil
@@ -164,6 +172,29 @@ func (f *Field) Columns() []SQLColumn {
 	return []SQLColumn{f.column()}
 }
 
+func (f *Field) RelationTable() string {
+	if f.CustomRelationName != "" {
+		return f.CustomRelationName
+	}
+	t1, t2 := f.RelationTypes()
+	return fmt.Sprintf("rel_%s_%s", t1.Table(), t2.Table())
+}
+
+func (f *Field) RelationName() string {
+	if f.CustomRelationName != "" {
+		return strings.ToUpper(string(f.CustomRelationName[0])) + f.CustomRelationName[1:]
+	}
+	return fmt.Sprintf("Relation%s", f.Name())
+}
+
+func (f *Field) RelationTypes() (first, second *Naked) {
+	first, second = f.ParentType, f.Type.Naked
+	if strings.Compare(first.Table(), second.Table()) != -1 {
+		first, second = second, first
+	}
+	return
+}
+
 // Column returns the SQL column name of a field
 func (f *Field) Column() SQLColumn {
 	if f.IsReference() {
@@ -191,11 +222,4 @@ type SQLColumn struct {
 
 func (f *Field) String() string {
 	return fmt.Sprintf("%s#%s", f.ParentType.Ext(""), f.Name())
-}
-
-// PrivateName returns the name of the field with the first letter as a lower case
-// so it could be used as a private variable name
-func (f *Field) PrivateName() string {
-	name := f.Name()
-	return strings.ToLower(name[:1]) + name[1:]
 }

@@ -85,3 +85,24 @@ func binary(l Where, r Where, op string) Where {
 		b.Close()
 	})
 }
+
+func Or(w ...Where) Where {
+	return multi("OR", w...)
+}
+
+func And(w ...Where) Where {
+	return multi("AND", w...)
+}
+
+func multi(op string, w ...Where) Where {
+	return whereFunc(func(table string, b *builder) {
+		for i, wi := range w {
+			b.Open()
+			wi.Build(table, b)
+			b.Close()
+			if i != len(w)-1 {
+				b.Append(op)
+			}
+		}
+	})
+}

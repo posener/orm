@@ -9,12 +9,16 @@ import (
 
 // CreateParams holds parameters for an SQL CREATE statement
 type CreateParams struct {
-	Table          string
-	MarshaledTable string
+	Table                   string
+	MarshaledTable          string
+	MarshaledRelationTables map[string]string
 	// IfNotExists determines to create the table only if it does not exists
 	IfNotExists bool
 	// AutoMigrate perform auto-migration of table scheme
 	AutoMigrate bool
+	// Relations makes the create operation create relation tables and not
+	// the type actual table
+	Relations bool
 	// Ctx is a context parameter for the query
 	// even though it is not recommended to store context in a struct, here the struct
 	// actually represents an arguments list, passed to a function.

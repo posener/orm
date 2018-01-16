@@ -85,14 +85,21 @@ type dialect struct {
 
 // Create returns the SQL CREATE statement and arguments according to the given parameters
 func (d *dialect) Create(conn orm.Conn, p *CreateParams) ([]string, error) {
+	if p.Relations {
+		return d.createRelationTables(conn, p)
+	}
+	return d.create(conn, p, p.Table, p.MarshaledTable)
+}
+
+func (d *dialect) create(conn orm.Conn, p *CreateParams, tableName, tableProperties string) ([]string, error) {
 	table := new(Table)
-	err := table.UnMarshal(p.MarshaledTable)
+	err := table.UnMarshal(tableProperties)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unmarshalling table properties: %s", err)
 	}
 
 	if p.AutoMigrate {
-		stmts, ok, err := d.autoMigrate(p.Ctx, conn, p.Table, table)
+		stmts, ok, err := d.autoMigrate(p.Ctx, conn, tableName, table)
 		if err != nil {
 			return nil, fmt.Errorf("automigration: %s", err)
 		}
@@ -105,11 +112,23 @@ func (d *dialect) Create(conn orm.Conn, p *CreateParams) ([]string, error) {
 	if p.IfNotExists {
 		b.Append("IF NOT EXISTS")
 	}
-	b.Append(d.Quote(p.Table))
+	b.Append(d.Quote(tableName))
 	b.Open()
 	b.tableProperties(table)
 	b.Close()
 	return []string{b.Statement()}, nil
+}
+
+func (d *dialect) createRelationTables(conn orm.Conn, p *CreateParams) ([]string, error) {
+	var stmts []string
+	for name, props := range p.MarshaledRelationTables {
+		stmt, err := d.create(conn, p, name, props)
+		if err != nil {
+			return nil, fmt.Errorf("creating table %s: %s", name, err)
+		}
+		stmts = append(stmts, stmt...)
+	}
+	return stmts, nil
 }
 
 func (d *dialect) autoMigrate(ctx context.Context, conn orm.Conn, tableName string, want *Table) ([]string, bool, error) {

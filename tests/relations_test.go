@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -529,6 +530,51 @@ func TestReferencingField(t *testing.T) {
 				assert.Equal(t, "B3", as[1].B[0].Name)
 				assert.Equal(t, "B4", as[1].B[1].Name)
 			}
+		}
+	})
+}
+
+func TestRelationTable(t *testing.T) {
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
+		a, err := NewA8ORM(conn)
+		require.Nil(t, err)
+		b, err := NewB8ORM(conn)
+		require.Nil(t, err)
+
+		require.Nil(t, a.Create().Exec())
+		require.Nil(t, b.Create().Exec())
+		require.Nil(t, a.Create().Relations().Exec())
+
+		a1, err := a.Insert().SetName("a1").Exec()
+		require.Nil(t, err)
+		b1, err := b.Insert().SetName("b1").Exec()
+		require.Nil(t, err)
+		b2, err := b.Insert().SetName("b2").Exec()
+		require.Nil(t, err)
+		b3, err := b.Insert().SetName("b3").Exec()
+		require.Nil(t, err)
+
+		t.Log("Add 3 relations between a and 3 bs and test query")
+
+		require.Nil(t, a.RelationB().Add(context.Background(), a1.ID, b1.ID))
+		require.Nil(t, a.RelationB().Add(context.Background(), a1.ID, b2.ID))
+		require.Nil(t, a.RelationB().Add(context.Background(), a1.ID, b3.ID))
+
+		a1.B = []B8{*b1, *b2, *b3}
+		as, err := a.Select().JoinB(b.Select().Joiner()).Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(as)) {
+			assert.Equal(t, a1, &as[0])
+		}
+
+		t.Log("Remove one of the relations and test query")
+
+		require.Nil(t, a.RelationB().Remove(context.Background(), a1.ID, b2.ID))
+		a1.B = []B8{*b1, *b3}
+		as, err = a.Select().JoinB(b.Select().Joiner()).Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(as)) {
+			assert.Equal(t, a1, &as[0])
 		}
 	})
 }

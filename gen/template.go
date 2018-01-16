@@ -8,9 +8,10 @@ import (
 
 var tpl = template.Must(template.New("").
 	Funcs(template.FuncMap{
-		"plus1":    func(x int) int { return x + 1 },
-		"backtick": func(s string) string { return fmt.Sprintf("`%s`", s) },
-		"repeat":   strings.Repeat,
+		"inc":          func(x int) int { return x + 1 },
+		"backtick":     func(s string) string { return fmt.Sprintf("`%s`", s) },
+		"repeat":       strings.Repeat,
+		"uncapitalize": func(s string) string { return strings.ToLower(string(s[0])) + s[1:] },
 	}).Parse(`
 {{ $name := $.Graph.Type.Name -}}
 {{ $type := $.Graph.Type.Naked.Ext $.Package -}}
@@ -44,6 +45,12 @@ var {{$.Private}}Table = "{{$.Graph.Type.Table}}"
 // used for table creation and migration.
 const {{$.Private}}TableProperties = {{backtick $.Table.Marshal}}
 
+var {{$.Private}}RelationTablesProperties = map[string]string{
+	{{ range $name, $table := $.RelationTables -}}
+	"{{$name}}": {{backtick $table.Marshal}},
+	{{ end -}}
+}
+
 // {{$.Private}}Column is for table column names
 type {{$.Private}}Column string
 
@@ -54,7 +61,7 @@ const (
 	{{ end -}}
 )
 
-// {{$.Private}}OrderedColumns is an oredered list of all the columns in the table
+// {{$.Private}}OrderedColumns is an ordered list of all the columns in the table
 var {{$.Private}}OrderedColumns = []string{
 	{{ range $_, $f := $.Graph.Type.NonReferences -}}
 	string({{$.Public}}Col{{$f.Name}}),
@@ -84,7 +91,12 @@ type {{$.Public}}API interface {
 	{{ if $pks -}}
 	// Get returns an object by primary key
 	// In case that the object was not found, it returns an error orm.ErrNotFound
-	Get({{range $_, $pk := $pks}}{{$pk.PrivateName}} {{$pk.Type.Ext $.Package}},{{end}}) (*{{$type}}, error)
+	Get({{range $_, $pk := $pks}}{{uncapitalize $pk.Name}} {{$pk.Type.Ext $.Package}},{{end}}) (*{{$type}}, error)
+	{{ end -}}
+
+	{{ range $_, $edge := $.Graph.RelTable -}}
+	// {{$edge.Field.RelationName}} returns a relation handler for {{$edge.Field.Type.Name}}
+	{{$edge.Field.RelationName}}() *{{$.Public}}{{$edge.Field.RelationName}}
 	{{ end -}}
 }
 
@@ -143,6 +155,7 @@ func (c *{{$conn}}) Create() *{{$.Public}}CreateBuilder {
 		params: dialect.CreateParams{
 			Table: {{$.Private}}Table,
 			MarshaledTable: {{$.Private}}TableProperties,
+			MarshaledRelationTables: {{$.Private}}RelationTablesProperties,
 		},
 		conn: c,
 	}
@@ -222,6 +235,14 @@ func (b *{{$.Public}}CreateBuilder) AutoMigrate() *{{$.Public}}CreateBuilder {
 	b.params.AutoMigrate = true
 	return b
 }
+
+{{ if $.Graph.RelTable }}
+// Relations makes Exec create relation tables instead of the type table
+func (b *{{$.Public}}CreateBuilder) Relations() *{{$.Public}}CreateBuilder {
+	b.params.Relations = true
+	return b
+}
+{{ end -}}
 
 // Context sets the context for the SQL query
 func (b *{{$.Public}}CreateBuilder) Context(ctx context.Context) *{{$.Public}}CreateBuilder {
@@ -387,12 +408,12 @@ func (c *{{$conn}}) Get({{range $i, $pk := $pks}}key{{$i}} {{$pk.Type.Ext $.Pack
 	return c.Select().Where(
 	{{- range $i, $pk := $pks -}}
 		c.Where().{{$pk.Name}}(orm.OpEq, key{{$i}})
-		{{- if ne (plus1 $i) (len $pks) -}}
+		{{- if ne (inc $i) (len $pks) -}}
 		.And(
 		{{- end -}}
 	{{end}}
 	{{- range $i, $_ := $pks -}}
-	{{- if ne (plus1 $i) (len $pks) -}}
+	{{- if ne (inc $i) (len $pks) -}}
 	)
 	{{- end -}}
 	{{- end -}}
@@ -709,7 +730,7 @@ type {{$.Private}}{{$refType.Name}}Joiner interface {
 {{ end -}}
 
 {{ range $_, $e := $.Graph.Out -}}
-{{ $f := $e.LocalField -}}
+{{ $f := $e.Field -}}
 // Join{{$f.Name}} add a join query for {{$f.Name}}
 // Based on a forward relation
 func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(joiner {{$.Private}}{{$f.Type.Name}}Joiner) *{{$.Public}}SelectBuilder {
@@ -718,7 +739,7 @@ func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(joiner {{$.Private}}{{$f.Typ
 		Pairings: []dialect.Pairing{
 			{{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
 			{
-				Column: "{{(index $e.SrcField.Columns $i).Name}}",
+				Column: "{{(index $e.Field.Columns $i).Name}}",
 				JoinedColumn: "{{$pk.Column.Name}}",
 			},
 			{{ end -}}
@@ -730,22 +751,62 @@ func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(joiner {{$.Private}}{{$f.Typ
 {{ end -}}
 
 {{ range $_, $e := $.Graph.In -}}
-{{ $f := $e.LocalField -}}
+{{ $f := $e.Field -}}
 // Join{{$f.Name}} add a join query for {{$f.Name}}
 // Based on a reversed relation
 func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(joiner {{$.Private}}{{$f.Type.Name}}Joiner) *{{$.Public}}SelectBuilder {
 	b.scan{{$f.Name}} = joiner
-	b.params.Joins = append(b.params.Joins, dialect.JoinParams{
-		Pairings: []dialect.Pairing{
-			{{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
-			{
-				Column: "{{$pk.Column.Name}}",
-				JoinedColumn: "{{(index $e.SrcField.Columns $i).Name}}",
+	b.params.Joins = append(b.params.Joins,
+		dialect.JoinParams{
+			Pairings: []dialect.Pairing{
+				{{ range $i, $pk := $e.RelationType.PrimaryKeys -}}
+				{
+					Column: "{{$pk.Column.Name}}",
+					JoinedColumn: "{{(index $e.SrcField.Columns $i).Name}}",
+				},
+				{{ end -}}
 			},
-			{{ end -}}
+			SelectParams: joiner.Params(),
 		},
-		SelectParams: joiner.Params(),
-	})
+	)
+	return b
+}
+{{ end -}}
+
+{{ range $_, $e := $.Graph.RelTable -}}
+{{ $f := $e.Field -}}
+// Join{{$f.Name}} add a join query for {{$f.Name}}
+// Based on a relation table
+func (b *{{$.Public}}SelectBuilder) Join{{$f.Name}}(joiner {{$.Private}}{{$f.Type.Name}}Joiner) *{{$.Public}}SelectBuilder {
+	b.scan{{$f.Name}} = joiner
+	b.params.Joins = append(b.params.Joins, 
+		dialect.JoinParams{
+			Pairings: []dialect.Pairing{
+				{{ range $i, $pk := $f.ParentType.PrimaryKeys -}}
+				{
+					Column: "{{$pk.Column.Name}}",
+					JoinedColumn: "{{$f.ParentType.Table}}_{{$pk.Column.Name}}",
+				},
+				{{ end -}}
+			},
+			SelectParams: dialect.SelectParams{
+				Table: "{{$e.Field.RelationTable}}",
+				Joins: []dialect.JoinParams{
+					{
+						Pairings: []dialect.Pairing{
+							{{ range $i, $pk := $f.Type.PrimaryKeys -}}
+							{
+								Column: "{{$f.Type.Table}}_{{$pk.Column.Name}}",
+								JoinedColumn: "{{$pk.Column.Name}}",
+							},
+							{{ end -}}
+						},
+						SelectParams: joiner.Params(),
+					},
+				},
+			},
+		},
+	)
 	return b
 }
 {{ end -}}
@@ -888,6 +949,69 @@ func (*{{$.Public}}WhereBuilder) {{$f.Name}}In(vals ...{{$f.Type.Ext $.Package}}
 // {{$.Public}}Where{{$f.Name}}Between adds a BETWEEN condition on {{$f.Name}} to the WHERE statement
 func (*{{$.Public}}WhereBuilder) {{$f.Name}}Between(low, high {{$f.Type.Ext $.Package}}) dialect.Where {
 	return dialect.NewWhereBetween("{{$f.Column.Name}}", low, high)
+}
+{{ end -}}
+
+{{ range $_, $edge := $.Graph.RelTable -}}
+{{ $relName := (print $.Public $edge.Field.RelationName) -}}
+{{ $localPks := $edge.Field.ParentType.PrimaryKeys -}}
+{{ $remotePks := $edge.Field.Type.PrimaryKeys -}}
+func (c *{{$conn}}) {{$edge.Field.RelationName}}() *{{$relName}} {
+	return &{{$relName}}{conn: c}
+}
+
+type {{$relName}} struct {
+	conn *{{$conn}}
+}
+
+func (r *{{$relName}}) Add(ctx context.Context,
+	{{- range $_, $pk := $localPks -}}
+	{{uncapitalize $edge.Field.ParentType.Name}}{{$pk.Name}} {{$pk.Type.Naked.Ext $.Package}},
+	{{- end -}}
+	{{- range $_, $pk := $remotePks -}}
+	{{uncapitalize $edge.Field.Type.Name}}{{$pk.Name}} {{$pk.Type.Naked.Ext $.Package}},
+	{{- end -}}
+	) error {
+	stmt, args := r.conn.dialect.Insert(&dialect.InsertParams{
+		Table: "{{$edge.Field.RelationTable}}",
+		Assignments: dialect.Assignments{
+			{{ range $_, $pk := $localPks -}}
+			{{ $tp := $edge.Field.ParentType -}}
+			{Column: "{{$tp.Table}}_{{$pk.Column.Name}}", ColumnValue: {{uncapitalize $tp.Name}}{{$pk.Name}}},
+			{{ end -}}
+			{{ range $_, $pk := $remotePks -}}
+			{{ $tp := $edge.Field.Type -}}
+			{Column: "{{$tp.Table}}_{{$pk.Column.Name}}", ColumnValue: {{uncapitalize $tp.Name}}{{$pk.Name}}},
+			{{ end -}}
+		},
+	})
+	_, err := r.conn.Exec(ctx, stmt, args...)
+	return err
+}
+
+func (r *{{$relName}}) Remove(ctx context.Context,
+	{{- range $_, $pk := $edge.Field.ParentType.PrimaryKeys -}}
+	{{uncapitalize $edge.Field.ParentType.Name}}{{$pk.Name}} {{$pk.Type.Naked.Ext $.Package}},
+	{{- end -}}
+	{{- range $_, $pk := $edge.Field.Type.PrimaryKeys -}}
+	{{uncapitalize $edge.Field.Type.Name}}{{$pk.Name}} {{$pk.Type.Naked.Ext $.Package}},
+	{{- end -}}
+	) error {
+	stmt, args := r.conn.dialect.Delete(&dialect.DeleteParams{
+		Table: "{{$edge.Field.RelationTable}}",
+		Where: dialect.And(
+			{{ range $_, $pk := $localPks -}}
+			{{ $tp := $edge.Field.ParentType -}}
+			dialect.NewWhere(orm.OpEq, "{{$tp.Table}}_{{$pk.Column.Name}}", {{uncapitalize $tp.Name}}{{$pk.Name}}),
+			{{ end -}}
+			{{ range $_, $pk := $remotePks -}}
+			{{ $tp := $edge.Field.Type -}}
+			dialect.NewWhere(orm.OpEq, "{{$tp.Table}}_{{$pk.Column.Name}}", {{uncapitalize $tp.Name}}{{$pk.Name}}),
+			{{ end -}}
+		),
+	})
+	_, err := r.conn.Exec(ctx, stmt, args...)
+	return err
 }
 {{ end -}}
 `))
