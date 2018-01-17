@@ -182,7 +182,7 @@ func (f *Field) RelationTable() string {
 
 func (f *Field) RelationName() string {
 	if f.CustomRelationName != "" {
-		return strings.ToUpper(string(f.CustomRelationName[0])) + f.CustomRelationName[1:]
+		return "Relation" + f.CustomRelationName
 	}
 	return fmt.Sprintf("Relation%s", f.Name())
 }

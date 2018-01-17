@@ -399,7 +399,7 @@ func TestGet(t *testing.T) {
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		db := allDB(t, conn)
 
-		_, err := db.Get(1)
+		_, err := db.Get(1).Exec()
 		assert.Equal(t, orm.ErrNotFound, err)
 
 		a0Insert, err := db.Insert().InsertAll(&All{NotNil: "A0"}).Exec()
@@ -416,11 +416,11 @@ func TestGet(t *testing.T) {
 			a1Insert.Bytes = []byte("")
 		}
 
-		a0Get, err := db.Get(a0Insert.Auto)
+		a0Get, err := db.Get(a0Insert.Auto).Exec()
 		require.Nil(t, err)
 		assert.Equal(t, a0Insert, a0Get)
 
-		a1Get, err := db.Get(a1Insert.Auto)
+		a1Get, err := db.Get(a1Insert.Auto).Exec()
 		require.Nil(t, err)
 		assert.Equal(t, a1Insert, a1Get)
 	})

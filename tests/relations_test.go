@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -556,9 +555,9 @@ func TestRelationTable(t *testing.T) {
 
 		t.Log("Add 3 relations between a and 3 bs and test query")
 
-		require.Nil(t, a.RelationB().Add(context.Background(), a1.ID, b1.ID))
-		require.Nil(t, a.RelationB().Add(context.Background(), a1.ID, b2.ID))
-		require.Nil(t, a.RelationB().Add(context.Background(), a1.ID, b3.ID))
+		require.Nil(t, a.RelationB().Add(a1.ID, b1.ID))
+		require.Nil(t, a.RelationB().Add(a1.ID, b2.ID))
+		require.Nil(t, a.RelationB().Add(a1.ID, b3.ID))
 
 		a1.B = []B8{*b1, *b2, *b3}
 		as, err := a.Select().JoinB(b.Select().Joiner()).Query()
@@ -569,7 +568,7 @@ func TestRelationTable(t *testing.T) {
 
 		t.Log("Remove one of the relations and test query")
 
-		require.Nil(t, a.RelationB().Remove(context.Background(), a1.ID, b2.ID))
+		require.Nil(t, a.RelationB().Remove(a1.ID, b2.ID))
 		a1.B = []B8{*b1, *b3}
 		as, err = a.Select().JoinB(b.Select().Joiner()).Query()
 		require.Nil(t, err)
@@ -609,13 +608,13 @@ func TestRelationManyToMany(t *testing.T) {
 
 		t.Log("Add different relations and test query")
 
-		require.Nil(t, a.RelationB1().Add(context.Background(), a1.ID, b1.ID))
-		require.Nil(t, a.RelationB1().Add(context.Background(), a1.ID, b2.ID))
-		require.Nil(t, a.RelationB1().Add(context.Background(), a1.ID, b3.ID))
+		require.Nil(t, a.RelationB1().Add(a1.ID, b1.ID))
+		require.Nil(t, a.RelationB1().Add(a1.ID, b2.ID))
+		require.Nil(t, a.RelationB1().Add(a1.ID, b3.ID))
 
-		require.Nil(t, a.Ab_relation().Add(context.Background(), a1.ID, b4.ID))
-		require.Nil(t, a.Ab_relation().Add(context.Background(), a1.ID, b5.ID))
-		require.Nil(t, b.Ab_relation().Add(context.Background(), b6.ID, a1.ID))
+		require.Nil(t, a.Relationab_relation().Add(a1.ID, b4.ID))
+		require.Nil(t, a.Relationab_relation().Add(a1.ID, b5.ID))
+		require.Nil(t, b.Relationab_relation().Add(b6.ID, a1.ID))
 
 		a1.B1 = []B9{*b1, *b2, *b3}
 		a1.B2 = []B9{*b4, *b5, *b6}
@@ -630,8 +629,8 @@ func TestRelationManyToMany(t *testing.T) {
 
 		t.Log("Remove one of the relations and test query")
 
-		require.Nil(t, a.RelationB1().Remove(context.Background(), a1.ID, b2.ID))
-		require.Nil(t, a.Ab_relation().Remove(context.Background(), a1.ID, b5.ID))
+		require.Nil(t, a.RelationB1().Remove(a1.ID, b2.ID))
+		require.Nil(t, a.Relationab_relation().Remove(a1.ID, b5.ID))
 		a1.B1 = []B9{*b1, *b3}
 		a1.B2 = []B9{*b4, *b6}
 		as, err = a.Select().

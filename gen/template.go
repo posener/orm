@@ -90,14 +90,15 @@ type {{$.Public}}API interface {
 	// Where returns a builder to build a where statement to be used in a Where function
 	Where() *{{$.Public}}WhereBuilder
 	{{ if $pks -}}
-	// Get returns an object by primary key
+	// Get returns a builder for getting an object by primary key
+	// It is a shortcut for writing a select with where statement and get the first.
 	// In case that the object was not found, it returns an error orm.ErrNotFound
-	Get({{range $_, $pk := $pks}}{{uncapitalize $pk.Name}} {{$pk.Type.Ext $.Package}},{{end}}) (*{{$type}}, error)
+	Get({{range $_, $pk := $pks}}{{uncapitalize $pk.Name}} {{$pk.Type.Ext $.Package}},{{end}}) *{{$.Public}}GetBuilder
 	{{ end -}}
 
 	{{ range $_, $edge := $.Graph.RelTable -}}
 	// {{$edge.Field.RelationName}} returns a relation handler for {{$edge.Field.Type.Name}}
-	{{$edge.Field.RelationName}}() *{{$.Public}}{{$edge.Field.RelationName}}
+	{{$edge.Field.RelationName}}() *{{$.Public}}{{$edge.Field.RelationName}}Builder
 	{{ end -}}
 }
 
@@ -400,27 +401,6 @@ func (b *{{$.Public}}DropBuilder) Context(ctx context.Context) *{{$.Public}}Drop
 	b.params.Ctx = ctx
 	return b
 }
-
-{{ if $pks -}}
-
-// === Get ===
-
-func (c *{{$conn}}) Get({{range $i, $pk := $pks}}key{{$i}} {{$pk.Type.Ext $.Package}},{{end}}) (*{{$type}}, error) {
-	return c.Select().Where(
-	{{- range $i, $pk := $pks -}}
-		c.Where().{{$pk.Name}}(orm.OpEq, key{{$i}})
-		{{- if ne (inc $i) (len $pks) -}}
-		.And(
-		{{- end -}}
-	{{end}}
-	{{- range $i, $_ := $pks -}}
-	{{- if ne (inc $i) (len $pks) -}}
-	)
-	{{- end -}}
-	{{- end -}}
-	).First()
-}
-{{ end -}}
 
 // Exec creates a table for the given struct
 func (b *{{$.Public}}CreateBuilder) Exec() error {
@@ -941,8 +921,56 @@ func (*{{$.Public}}WhereBuilder) {{$f.Name}}Between(low, high {{$f.Type.Ext $.Pa
 }
 {{ end -}}
 
+
+{{ if $pks -}}
+// === GetBuilder ===
+
+func (c *{{$conn}}) Get({{range $i, $pk := $pks}}key{{$i}} {{$pk.Type.Ext $.Package}},{{end}}) *{{.Public}}GetBuilder {
+	return &{{$.Public}}GetBuilder{
+		conn: c,
+		{{ range $i, $pk := $pks -}}
+		key{{$i}}: key{{$i}},
+		{{ end -}}
+	}
+}
+
+type {{$.Public}}GetBuilder struct {
+	conn *{{$conn}}
+	ctx context.Context
+
+	{{ range $i, $pk := $pks -}}
+	key{{$i}} {{$pk.Type.Ext $.Package}}
+	{{ end -}}
+}
+
+func (g *{{$.Public}}GetBuilder) Context(ctx context.Context) *{{$.Public}}GetBuilder {
+	g.ctx = ctx
+	return g
+}
+
+func (g *{{$.Public}}GetBuilder) Exec() (*{{$type}}, error) {
+	return g.conn.Select().
+		Context(dialect.ContextOrBackground(g.ctx)).
+		Where(
+		{{- range $i, $pk := $pks -}}
+			g.conn.Where().{{$pk.Name}}(orm.OpEq, g.key{{$i}})
+			{{- if ne (inc $i) (len $pks) -}}
+			.And(
+			{{- end -}}
+		{{end}}
+		{{- range $i, $_ := $pks -}}
+		{{- if ne (inc $i) (len $pks) -}}
+		)
+		{{- end -}}
+		{{- end -}}
+		).
+		First()
+}
+{{ end -}}
+
+
 {{ range $_, $edge := $.Graph.RelTable -}}
-{{ $relName := (print $.Public $edge.Field.RelationName) -}}
+{{ $relName := (print $.Public $edge.Field.RelationName "Builder") -}}
 {{ $localPks := $edge.Field.ParentType.PrimaryKeys -}}
 {{ $remotePks := $edge.Field.Type.PrimaryKeys -}}
 func (c *{{$conn}}) {{$edge.Field.RelationName}}() *{{$relName}} {
@@ -951,9 +979,15 @@ func (c *{{$conn}}) {{$edge.Field.RelationName}}() *{{$relName}} {
 
 type {{$relName}} struct {
 	conn *{{$conn}}
+	ctx context.Context
 }
 
-func (r *{{$relName}}) Add(ctx context.Context,
+func (r *{{$relName}}) Context(ctx context.Context) *{{$relName}} {
+	r.ctx = ctx
+	return r
+}
+
+func (r *{{$relName}}) Add(
 	{{- range $_, $pk := $localPks -}}
 	{{uncapitalize $edge.Field.ParentType.Name}}{{$pk.Name}} {{$pk.Type.Naked.Ext $.Package}},
 	{{- end -}}
@@ -974,11 +1008,11 @@ func (r *{{$relName}}) Add(ctx context.Context,
 			{{ end -}}
 		},
 	})
-	_, err := r.conn.Exec(ctx, stmt, args...)
+	_, err := r.conn.Exec(dialect.ContextOrBackground(r.ctx), stmt, args...)
 	return err
 }
 
-func (r *{{$relName}}) Remove(ctx context.Context,
+func (r *{{$relName}}) Remove(
 	{{- range $_, $pk := $edge.Field.ParentType.PrimaryKeys -}}
 	{{uncapitalize $edge.Field.ParentType.Name}}{{$pk.Name}} {{$pk.Type.Naked.Ext $.Package}},
 	{{- end -}}
@@ -999,7 +1033,7 @@ func (r *{{$relName}}) Remove(ctx context.Context,
 			{{ end -}}
 		),
 	})
-	_, err := r.conn.Exec(ctx, stmt, args...)
+	_, err := r.conn.Exec(dialect.ContextOrBackground(r.ctx), stmt, args...)
 	return err
 }
 {{ end -}}
