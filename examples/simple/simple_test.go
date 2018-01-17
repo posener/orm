@@ -98,6 +98,7 @@ func ExampleSimpleUsage() {
 	simples, err = sorm.Select().
 		GroupBy(SimpleColField2).
 		Query()
+	examples.PanicOnErr(err)
 
 	// We expect the select length to be 1 since both rows have the same value in field2
 	fmt.Println("Select group len:", len(simples))

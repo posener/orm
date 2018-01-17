@@ -99,7 +99,7 @@ type JoinParams struct {
 // this is useful in case several fields referencing the same table
 func (j *JoinParams) TableName(parentTable string) string {
 	parts := make([]string, 0, len(j.Pairings)+1)
-	parts = append(parts, parentTable)
+	parts = append(parts, parentTable, j.Table)
 	for _, pairing := range j.Pairings {
 		parts = append(parts, pairing.Column)
 	}

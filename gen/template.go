@@ -9,6 +9,7 @@ import (
 var tpl = template.Must(template.New("").
 	Funcs(template.FuncMap{
 		"inc":          func(x int) int { return x + 1 },
+		"dec":          func(x int) int { return x - 1 },
 		"backtick":     func(s string) string { return fmt.Sprintf("`%s`", s) },
 		"repeat":       strings.Repeat,
 		"uncapitalize": func(s string) string { return strings.ToLower(string(s[0])) + s[1:] },
@@ -512,7 +513,7 @@ func (b *{{$.Public}}DeleteBuilder) Exec() (sql.Result, error) {
 }
 
 // Query the database
-func (b *{{$.Public}}SelectBuilder) Query() ([]{{$type}}, error) {
+func (b *{{$.Public}}SelectBuilder) Query() ([]*{{$type}}, error) {
 	b.params.Ctx = dialect.ContextOrBackground(b.params.Ctx)
 	rows, err := b.query()
 	if err != nil {
@@ -521,37 +522,22 @@ func (b *{{$.Public}}SelectBuilder) Query() ([]{{$type}}, error) {
 	defer rows.Close()
 
 	var (
-		items []{{$type}}
-		{{ if $hasOneToManyRelation -}}
+		items []*{{$type}}
 		// exists is a mapping from primary key to already parsed structs
-		exists = make(map[string]*{{$type}})
-		{{ end -}}
+		exists = make(map[string]interface{})
 	)
 	for rows.Next() {
 		// check context cancellation
 		if err := b.params.Ctx.Err(); err != nil  {
 			return nil, err
 		}
-		item, _, err := b.scan(b.conn.dialect.Name(), dialect.Values(*rows){{if $hasOneToManyRelation}}, exists{{end}})
+		item, _, err := b.scan(b.conn.dialect.Name(), dialect.Values(*rows), exists)
 		if err != nil {
 			return nil, err
 		}
-
-		{{ if $hasOneToManyRelation -}}
-		hash := {{$.Private}}HashItem(item)
-		if exist := exists[hash]; exist != nil {
-			{{ range $_, $f := $.Graph.Type.References -}}
-			{{ if $f.Type.Slice -}}
-			exist.{{$f.Name}} = append(exist.{{$f.Name}}, item.{{$f.Name}}...)
-			{{ end -}}
-			{{ end -}}
-		} else {
-			items = append(items, *item)
-			exists[hash] = &items[len(items)-1]
+		if item != nil {
+			items = append(items, item)
 		}
-		{{ else -}}
-		items = append(items, *item)
-		{{ end -}}
 	}
 	return items, rows.Err()
 }
@@ -568,36 +554,21 @@ func (b *{{$.Public}}SelectBuilder) Count() ([]{{$countStruct}}, error) {
 
 	var (
 		items []{{$countStruct}}
-		{{ if $hasOneToManyRelation -}}
 		// exists is a mapping from primary key to already parsed structs
-		exists = make(map[string]*{{$type}})
-		{{ end -}}
+		exists = make(map[string]interface{})
 	)
 	for rows.Next() {
 		// check context cancellation
 		if err := b.params.Ctx.Err(); err != nil  {
 			return nil, err
 		}
-		item, _, err := b.scanCount(b.conn.dialect.Name(), dialect.Values(*rows){{if $hasOneToManyRelation}}, exists{{end}})
+		item, _, err := b.scanCount(b.conn.dialect.Name(), dialect.Values(*rows), exists)
 		if err != nil {
 			return nil, err
 		}
-
-		{{ if $hasOneToManyRelation -}}
-		hash := {{$.Private}}HashItem(item.{{$name}})
-		if exist := exists[hash]; exist != nil {
-			{{ range $_, $f := $.Graph.Type.References -}}
-			{{ if $f.Type.Slice -}}
-			exist.{{$f.Name}} = append(exist.{{$f.Name}}, item.{{$f.Name}}...)
-			{{ end -}}
-			{{ end -}}
-		} else {
+		if item != nil {
 			items = append(items, *item)
-			exists[hash] = items[len(items)-1].{{$name}}
 		}
-		{{ else -}}
-		items = append(items, *item)
-		{{ end -}}
 	}
 	return items, rows.Err()
 }
@@ -620,7 +591,7 @@ func (b *{{$.Public}}SelectBuilder) First() (*{{$type}}, error) {
 	if !found {
 		return nil, orm.ErrNotFound
 	}
-	item, _, err := b.scan(b.conn.dialect.Name(), dialect.Values(*rows){{if $hasOneToManyRelation}}, nil{{end}})
+	item, _, err := b.scan(b.conn.dialect.Name(), dialect.Values(*rows), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -644,16 +615,6 @@ func {{$.Private}}ReturnObject(assignments dialect.Assignments) *{{$type}} {
 	return ret
 }
 
-{{ if $hasOneToManyRelation -}}
-func {{$.Private}}HashItem(item *{{$name}}) string {
-	return fmt.Sprintf("{{repeat "%v" (len $pks)}}",
-	{{- range $f := $pks -}}
-	{{if $f.Type.Pointer}}*{{end}}item.{{$f.AccessName}},
-	{{- end -}}
-	)
-}
-{{ end -}}
-
 // Exec runs the drop statement on a given database.
 func (b *{{$.Public}}DropBuilder) Exec() error {
 	stmt, args := b.conn.dialect.Drop(&b.params)
@@ -665,7 +626,7 @@ func (b *{{$.Public}}DropBuilder) Exec() error {
 // in another type
 type {{$name}}Joiner interface {
 	Params() dialect.SelectParams
-	Scan(dialect string, values []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$type}}{{end}}) (*{{$type}}, int, error)
+	Scan(dialect string, values []driver.Value, exists map[string]interface{}) (*{{$type}}, int, error)
 }
 
 // {{$countStruct}} is a struct for counting rows of type {{$name}}
@@ -692,8 +653,8 @@ func (j *{{$.Private}}Joiner) Params() dialect.SelectParams {
 	return j.builder.params
 }
 
-func (j *{{$.Private}}Joiner) Scan(dialect string, values []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$type}}{{end}}) (*{{$type}}, int, error) {
-	return j.builder.scan(dialect, values{{if $hasOneToManyRelation}}, exists{{end}})
+func (j *{{$.Private}}Joiner) Scan(dialect string, values []driver.Value, exists map[string]interface{}) (*{{$type}}, int, error) {
+	return j.builder.scan(dialect, values, exists)
 }
 
 // Joiner returns an object to be used in a join operation with {{$name}}
@@ -725,7 +686,7 @@ func (b *{{$.Public}}SelectBuilder) Page(offset, limit int64) *{{$.Public}}Selec
 // of an ORM object for type {{$refType.Name}}
 type {{$.Private}}{{$refType.Name}}Joiner interface {
 	Params() dialect.SelectParams
-	Scan(dialect string, values []driver.Value{{if $refType.HasOneToManyRelation}}, exists map[string]*{{$refType.Ext $.Package}}{{end}}) (*{{$refType.Ext $.Package}}, int, error)
+	Scan(dialect string, values []driver.Value, exists map[string]interface{}) (*{{$refType.Ext $.Package}}, int, error)
 }
 {{ end -}}
 
@@ -832,8 +793,8 @@ func (b *{{$.Public}}SelectBuilder) Context(ctx context.Context) *{{$.Public}}Se
 // scan an SQL row to a {{$name}} struct
 // It returns the scanned {{$.Graph.Type.Ext $.Package}} and the number of scanned fields,
 // and an error in case of failure.
-func (s *{{$.Public}}SelectBuilder) scan(dialect string, vals []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Package}}{{end}}) (*{{$.Graph.Type.Ext $.Package}}, int, error) {
-	item, n, err := s.scanCount(dialect, vals{{if $hasOneToManyRelation}}, exists{{end}})
+func (b *{{$.Public}}SelectBuilder) scan(dialect string, vals []driver.Value, exists map[string]interface{}) (*{{$.Graph.Type.Ext $.Package}}, int, error) {
+	item, n, err := b.scanCount(dialect, vals, exists)
 	if err != nil {
 		return nil, n, err
 	}
@@ -841,51 +802,79 @@ func (s *{{$.Public}}SelectBuilder) scan(dialect string, vals []driver.Value{{if
 }
 
 // ScanCount scans an SQL row to a {{$countStruct}} struct
-func (s *{{$.Public}}SelectBuilder) scanCount(dialect string, vals []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Package}}{{end}}) (*{{$countStruct}}, int, error) {
+func (b *{{$.Public}}SelectBuilder) scanCount(dialect string, vals []driver.Value, exists map[string]interface{}) (*{{$countStruct}}, int, error) {
 	switch dialect {
 	{{ range $_, $dialect := $.Dialects -}}
 	case "{{$dialect.Name}}":
-		return s.scan{{$dialect.Name}}(vals{{if $hasOneToManyRelation}}, exists{{end}})
+		return b.scan{{$dialect.Name}}(vals, exists)
 	{{ end -}}
 	default:
 		return nil, 0, fmt.Errorf("unsupported dialect %s", dialect)
 	}
 }
 
+
+{{ if len $pks -}}
+func {{$.Private}}HashItem(item *{{$name}}) string {
+	return fmt.Sprintf("{{$.Private}}/{{repeat "%v" (len $pks)}}",
+	{{- range $f := $pks -}}
+	{{if $f.Type.Pointer}}*{{end}}item.{{$f.AccessName}},
+	{{- end -}}
+	)
+}
+{{ end -}}
+
+type {{$.Private}}Exists struct{
+	self *{{$type}}
+	related map[string]interface{}
+}
+
 {{ range $_, $dialect := $.Dialects }}
 // scan{{$dialect.Name}} scans {{$dialect.Name}} row to a {{$name}} struct
-func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{if $hasOneToManyRelation}}, exists map[string]*{{$.Graph.Type.Ext $.Package}}{{end}}) (*{{$countStruct}}, int, error) {
+func (b *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value, exists map[string]interface{}) (*{{$countStruct}}, int, error) {
 	var (
 		row = new({{$countStruct}})
 		i int
-		rowExists bool
+		skipRow = false
 		allNils = true
-		all = s.params.SelectAll()
+		all = b.params.SelectAll()
+		{{ if $.Graph.Type.References -}}
+		existingRow = &{{$.Private}}Exists{related: make(map[string]interface{})}
+		{{ end -}}
 	)
 	row.{{$name}} = new({{$type}})
 	{{ range $i, $f := $.Graph.Type.NonReferences -}}
 	// scan column {{$i}}
-	if all || s.params.Columns["{{$f.Column.Name}}"] {
+	if all || b.params.Columns["{{$f.Column.Name}}"] {
 		if i >= len(vals) {
 			return nil, 0, fmt.Errorf("not enough columns returned: %d", len(vals))
 		}
-		if vals[i] != nil && !rowExists {
+		if vals[i] != nil && !skipRow {
 			allNils = false
 {{ $dialect.ConvertValueCode $f -}}
 		}
-		{{ if and $hasOneToManyRelation (or $f.Unique $f.PrimaryKey) -}}
-		// check if we scanned this item in previous rows. If we did, set rowExists,
-		// so other columns in this table won't be evaluated. We only need values
-		// from other tables.
-		if exists[{{$.Private}}HashItem(row.{{$name}})] != nil {
-			rowExists = true
+		{{ if or $f.Unique $f.PrimaryKey -}}
+		{{/* Test if the field is the last primary key */}}
+		{{ if eq $f.Name (index $pks (dec (len $pks))).Name -}}
+		{{ if $hasOneToManyRelation -}}
+		hash := {{$.Private}}HashItem(row.{{$name}}) 
+		// check if we scanned this item in previous rows. If we did, set existingRow
+		// so other columns in this table won't be evaluated. And joined items could
+		// be joined to the already scanned item.
+		if exists[hash] == nil {
+			exists[hash] = &{{$.Private}}Exists{self: row.{{$name}}, related: make(map[string]interface{})}
+		} else {
+			skipRow = true	
 		}
+		existingRow = exists[hash].(*{{$.Private}}Exists)
+		{{ end -}}
+		{{ end -}}
 		{{ end -}}
 		i++
 	}
 	{{ end -}}
 
-	if s.params.Count {
+	if b.params.Count {
 		switch val := vals[i].(type) {
 		case int64:
 			row.Count = val
@@ -898,8 +887,8 @@ func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{
 	}
 
 	{{ range $_, $f := $.Graph.Type.References -}}
-	if s := s.scan{{$f.Name}}; s != nil {
-		tmp, n, err := s.Scan("{{$dialect.Name}}", vals[i:]{{if $f.Type.HasOneToManyRelation}}, nil{{end}})
+	if b := b.scan{{$f.Name}}; b != nil {
+		tmp, n, err := b.Scan("{{$dialect.Name}}", vals[i:], existingRow.related)
 		if err != nil {
 			return nil, 0, fmt.Errorf("sub scanning {{$f.AccessName}}, cols [%d:%d]: %s", i, len(vals), err)
 		}
@@ -909,7 +898,7 @@ func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{
 		// is nil also.
 		if tmp != nil {
 			{{ if $f.Type.Slice -}}
-			row.{{$f.AccessName}} = append(row.{{$f.AccessName}}, {{if not $f.Type.Pointer}}*{{end}}tmp)
+			existingRow.self.{{$f.AccessName}} = append(existingRow.self.{{$f.AccessName}}, {{if not $f.Type.Pointer}}*{{end}}tmp)
 			{{ else -}}
 			row.{{$f.AccessName}} = {{ if not $f.Type.Pointer}}*{{end}}tmp
 			{{ end -}}
@@ -921,7 +910,7 @@ func (s *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value{{
 	// If all values were nil, there was not any actual row returned,
 	// this could happen in case that the scanned row is the right table in case of an
 	// outer left join statement. We set the result to nil, so it ill be discarded.
-	if allNils {
+	if allNils || skipRow {
 		row.{{$name}} = nil
 	}
 

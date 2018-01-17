@@ -88,6 +88,7 @@ func ExampleRelationOne2Many() {
 	ones, err = oneORM.Select().
 		JoinOtherMany(otherManyORM.Select().Joiner()).
 		Query()
+	examples.PanicOnErr(err)
 
 	var otherMany []string
 	for _, om := range ones[0].OtherMany {
@@ -108,6 +109,7 @@ func ExampleRelationOne2Many() {
 			JoinMyOne(oneORM.Select().Joiner()).
 			Joiner()).
 		Query()
+	examples.PanicOnErr(err)
 
 	// we expect to have only one entry:
 	fmt.Println("4. complex join len:", len(ones))

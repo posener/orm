@@ -72,7 +72,7 @@ func TestTypes(t *testing.T) {
 		require.Nil(t, err)
 		require.Equal(t, 1, len(alls))
 
-		assert.Equal(t, a, &alls[0])
+		assert.Equal(t, a, alls[0])
 	})
 }
 
@@ -145,9 +145,9 @@ func TestFieldReservedName(t *testing.T) {
 }
 
 var (
-	p1 = Person{Name: "moshe", Age: 1}
-	p2 = Person{Name: "haim", Age: 2}
-	p3 = Person{Name: "zvika", Age: 3}
+	p1 = &Person{Name: "moshe", Age: 1}
+	p2 = &Person{Name: "haim", Age: 2}
+	p3 = &Person{Name: "zvika", Age: 3}
 )
 
 func TestPersonSelect(t *testing.T) {
@@ -159,83 +159,83 @@ func TestPersonSelect(t *testing.T) {
 		require.Nil(t, err)
 		_, err = db.Insert().SetName(p2.Name).SetAge(p2.Age).Exec()
 		require.Nil(t, err)
-		_, err = db.Insert().InsertPerson(&p3).Exec()
+		_, err = db.Insert().InsertPerson(p3).Exec()
 		require.Nil(t, err)
 
 		tests := []struct {
 			q    *PersonSelectBuilder
-			want []Person
+			want []*Person
 		}{
 			{
 				q:    db.Select(),
-				want: []Person{p1, p2, p3},
+				want: []*Person{p1, p2, p3},
 			},
 			{
 				q:    db.Select(PersonColName),
-				want: []Person{{Name: "moshe"}, {Name: "haim"}, {Name: "zvika"}},
+				want: []*Person{{Name: "moshe"}, {Name: "haim"}, {Name: "zvika"}},
 			},
 			{
 				q:    db.Select(PersonColAge),
-				want: []Person{{Age: 1}, {Age: 2}, {Age: 3}},
+				want: []*Person{{Age: 1}, {Age: 2}, {Age: 3}},
 			},
 			{
 				q:    db.Select(PersonColAge, PersonColName),
-				want: []Person{p1, p2, p3},
+				want: []*Person{p1, p2, p3},
 			},
 			{
 				q:    db.Select(PersonColAge, PersonColName),
-				want: []Person{p1, p2, p3},
+				want: []*Person{p1, p2, p3},
 			},
 			{
 				q:    db.Select().Where(db.Where().Name(orm.OpEq, "moshe")),
-				want: []Person{p1},
+				want: []*Person{p1},
 			},
 			{
 				q:    db.Select().Where(db.Where().Name(orm.OpEq, "moshe").Or(db.Where().Age(orm.OpEq, 2))),
-				want: []Person{p1, p2},
+				want: []*Person{p1, p2},
 			},
 			{
 				q:    db.Select().Where(db.Where().Name(orm.OpEq, "moshe").And(db.Where().Age(orm.OpEq, 1))),
-				want: []Person{p1},
+				want: []*Person{p1},
 			},
 			{
 				q: db.Select().Where(db.Where().Name(orm.OpEq, "moshe").And(db.Where().Age(orm.OpEq, 2))),
 			},
 			{
 				q:    db.Select().Where(db.Where().Age(orm.OpGE, 2)),
-				want: []Person{p2, p3},
+				want: []*Person{p2, p3},
 			},
 			{
 				q:    db.Select().Where(db.Where().Age(orm.OpGt, 2)),
-				want: []Person{p3},
+				want: []*Person{p3},
 			},
 			{
 				q:    db.Select().Where(db.Where().Age(orm.OpLE, 2)),
-				want: []Person{p1, p2},
+				want: []*Person{p1, p2},
 			},
 			{
 				q:    db.Select().Where(db.Where().Age(orm.OpLt, 2)),
-				want: []Person{p1},
+				want: []*Person{p1},
 			},
 			{
 				q:    db.Select().Where(db.Where().Name(orm.OpNe, "moshe")),
-				want: []Person{p2, p3},
+				want: []*Person{p2, p3},
 			},
 			{
 				q:    db.Select().Where(db.Where().NameIn("moshe", "haim")),
-				want: []Person{p1, p2},
+				want: []*Person{p1, p2},
 			},
 			{
 				q:    db.Select().Where(db.Where().AgeBetween(0, 2)),
-				want: []Person{p1, p2},
+				want: []*Person{p1, p2},
 			},
 			{
 				q:    db.Select().Limit(2),
-				want: []Person{p1, p2},
+				want: []*Person{p1, p2},
 			},
 			{
 				q:    db.Select().Page(1, 1),
-				want: []Person{p2},
+				want: []*Person{p2},
 			},
 		}
 
@@ -257,14 +257,14 @@ func TestCRUD(t *testing.T) {
 		db := personDB(t, conn)
 
 		// prepare dataset
-		for _, p := range []Person{p1, p2, p3} {
-			_, err := db.Insert().InsertPerson(&p).Exec()
+		for _, p := range []*Person{p1, p2, p3} {
+			_, err := db.Insert().InsertPerson(p).Exec()
 			require.Nil(t, err)
 		}
 
 		ps, err := db.Select().Query()
 		require.Nil(t, err)
-		assert.Equal(t, []Person{p1, p2, p3}, ps)
+		assert.Equal(t, []*Person{p1, p2, p3}, ps)
 
 		// Test delete
 		delete := db.Delete().Where(db.Where().Name(orm.OpEq, "moshe"))
@@ -275,10 +275,10 @@ func TestCRUD(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		assert.Equal(t, []Person{p2, p3}, ps)
+		assert.Equal(t, []*Person{p2, p3}, ps)
 		ps, err = db.Select().Where(db.Where().Name(orm.OpEq, "moshe")).Query()
 		require.Nil(t, err)
-		assert.Equal(t, []Person(nil), ps)
+		assert.Equal(t, []*Person(nil), ps)
 
 		// Test Update
 		update := db.Update().SetName("Jenny").Where(db.Where().Name(orm.OpEq, "zvika"))
@@ -288,7 +288,7 @@ func TestCRUD(t *testing.T) {
 
 		ps, err = db.Select().Where(db.Where().Name(orm.OpEq, "Jenny")).Query()
 		require.Nil(t, err)
-		assert.Equal(t, []Person{{Name: "Jenny", Age: 3}}, ps)
+		assert.Equal(t, []*Person{{Name: "Jenny", Age: 3}}, ps)
 	})
 }
 
@@ -364,33 +364,33 @@ func TestFirst(t *testing.T) {
 		_, err := db.Select().First()
 		assert.Equal(t, orm.ErrNotFound, err)
 
-		smith := Person{Name: "Smith", Age: 99}
-		_, err = db.Insert().InsertPerson(&smith).Exec()
+		smith := &Person{Name: "Smith", Age: 99}
+		_, err = db.Insert().InsertPerson(smith).Exec()
 		require.Nil(t, err)
 
 		got, err := db.Select().First()
 		assert.Nil(t, err)
-		assert.Equal(t, &smith, got)
+		assert.Equal(t, smith, got)
 
-		john := Person{Name: "John", Age: 12}
-		_, err = db.Insert().InsertPerson(&john).Exec()
+		john := &Person{Name: "John", Age: 12}
+		_, err = db.Insert().InsertPerson(john).Exec()
 		require.Nil(t, err)
 
 		got, err = db.Select().First()
 		assert.Nil(t, err)
-		assert.Equal(t, &smith, got)
+		assert.Equal(t, smith, got)
 
 		got, err = db.Select().Where(db.Where().Age(orm.OpEq, 12)).First()
 		assert.Nil(t, err)
-		assert.Equal(t, &john, got)
+		assert.Equal(t, john, got)
 
 		got, err = db.Select().OrderBy(PersonColAge, orm.Asc).First()
 		assert.Nil(t, err)
-		assert.Equal(t, &john, got)
+		assert.Equal(t, john, got)
 
 		got, err = db.Select().OrderBy(PersonColAge, orm.Desc).First()
 		assert.Nil(t, err)
-		assert.Equal(t, &smith, got)
+		assert.Equal(t, smith, got)
 	})
 }
 
