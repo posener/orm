@@ -10,6 +10,7 @@ import (
 )
 
 func TestMigrations(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		if conn.Driver() == dialect.Sqlite3 {
 			t.Skip("sqlite migrations are not supported")

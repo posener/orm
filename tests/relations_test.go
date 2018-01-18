@@ -10,6 +10,7 @@ import (
 )
 
 func TestRelationOneToOne(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		aORM, _, cORM := orms(t, conn)
 
@@ -41,7 +42,7 @@ func TestRelationOneToOne(t *testing.T) {
 			Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
-			assert.Equal(t, a1, &aItems[0])
+			assert.Equal(t, a1, aItems[0])
 		}
 
 		// query with join, A.CPointer should be filled with aORM's properties
@@ -90,6 +91,7 @@ func TestRelationOneToOne(t *testing.T) {
 }
 
 func TestRelationOneToMany(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		_, bORM, cORM := orms(t, conn)
 
@@ -108,7 +110,7 @@ func TestRelationOneToMany(t *testing.T) {
 		bItems, err := bORM.Select().JoinCsPointer(cORM.Select().Joiner()).Query()
 		require.Nil(t, err)
 		require.Equal(t, 1, len(bItems))
-		assert.Equal(t, b1, &bItems[0])
+		assert.Equal(t, b1, bItems[0])
 
 		b2, err := bORM.Insert().InsertB(&B{Name: "Yoko", Hobbies: "music"}).Exec()
 		require.Nil(t, err)
@@ -116,8 +118,8 @@ func TestRelationOneToMany(t *testing.T) {
 		bItems, err = bORM.Select().JoinCsPointer(cORM.Select().Joiner()).Query()
 		require.Nil(t, err)
 		require.Equal(t, 2, len(bItems))
-		assert.Equal(t, b1, &bItems[0])
-		assert.Equal(t, b2, &bItems[1])
+		assert.Equal(t, b1, bItems[0])
+		assert.Equal(t, b2, bItems[1])
 		assert.Equal(t, 0, len(bItems[1].CsPointer))
 
 		for i := 0; i < 5; i++ {
@@ -132,8 +134,8 @@ func TestRelationOneToMany(t *testing.T) {
 		bItems, err = bORM.Select().JoinCsPointer(cORM.Select().Joiner()).Query()
 		require.Nil(t, err)
 		require.Equal(t, 2, len(bItems))
-		assert.Equal(t, b1, &bItems[0])
-		assert.Equal(t, b2, &bItems[1])
+		assert.Equal(t, b1, bItems[0])
+		assert.Equal(t, b2, bItems[1])
 
 		bItems, err = bORM.Select().
 			Where(bORM.Where().Name(orm.OpEq, "Yoko")).
@@ -146,7 +148,7 @@ func TestRelationOneToMany(t *testing.T) {
 		require.Nil(t, err)
 		require.Equal(t, 1, len(bItems))
 		b2.CsPointer = b2.CsPointer[2:4]
-		assert.Equal(t, b2, &bItems[0])
+		assert.Equal(t, b2, bItems[0])
 
 		// test update of reference
 		cORM.Update().
@@ -165,6 +167,7 @@ func TestRelationOneToMany(t *testing.T) {
 }
 
 func TestRelationOneToOneNonPointerNested(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		a, err := NewA2ORM(conn)
 		require.Nil(t, err)
@@ -208,7 +211,7 @@ func TestRelationOneToOneNonPointerNested(t *testing.T) {
 			Query()
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
-			assert.Equal(t, aItem, &aItems[0])
+			assert.Equal(t, aItem, aItems[0])
 		}
 
 		// test nested join only one side
@@ -220,7 +223,7 @@ func TestRelationOneToOneNonPointerNested(t *testing.T) {
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
 			aItem.B.D = nil
-			assert.Equal(t, aItem, &aItems[0])
+			assert.Equal(t, aItem, aItems[0])
 		}
 
 		// test one level join
@@ -228,12 +231,13 @@ func TestRelationOneToOneNonPointerNested(t *testing.T) {
 		require.Nil(t, err)
 		if assert.Equal(t, 1, len(aItems)) {
 			aItem.B.C = nil
-			assert.Equal(t, aItem, &aItems[0])
+			assert.Equal(t, aItem, aItems[0])
 		}
 	})
 }
 
 func TestBidirectionalOneToManyRelationship(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		a, err := NewA3ORM(conn)
 		require.Nil(t, err)
@@ -262,7 +266,7 @@ func TestBidirectionalOneToManyRelationship(t *testing.T) {
 		aList, err = a.Select().JoinB(b.Select().OrderBy(B3ColID, orm.Asc).Joiner()).Query()
 		require.Nil(t, err)
 		assert.Equal(t, 1, len(aList))
-		assert.Equal(t, aItem, &aList[0])
+		assert.Equal(t, aItem, aList[0])
 
 		bList, err := b.Select().Query()
 		require.Nil(t, err)
@@ -284,6 +288,7 @@ func TestBidirectionalOneToManyRelationship(t *testing.T) {
 }
 
 func TestFieldsWithTheSameType(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		a, err := NewA4ORM(conn)
 		require.Nil(t, err)
@@ -328,6 +333,7 @@ func TestFieldsWithTheSameType(t *testing.T) {
 }
 
 func TestSelfReferencing(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		a, err := NewA5ORM(conn)
 		require.Nil(t, err)
@@ -394,6 +400,7 @@ func insertA5(t *testing.T, a A5ORM, name string, left, right *A5) *A5 {
 }
 
 func TestMultiplePrimaryKeys(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		if conn.Driver() == "sqlite3" {
 			t.Skip("sqlite3 does not support string type primary keys")
@@ -439,6 +446,7 @@ func TestMultiplePrimaryKeys(t *testing.T) {
 }
 
 func TestMultiplePrimaryKeysOneToMany(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		if conn.Driver() == "sqlite3" {
 			t.Skip("sqlite3 does not support string type primary keys")
@@ -485,6 +493,7 @@ func TestMultiplePrimaryKeysOneToMany(t *testing.T) {
 }
 
 func TestReferencingField(t *testing.T) {
+	t.Parallel()
 	testDBs(t, func(t *testing.T, conn orm.Conn) {
 		a, err := NewA7ORM(conn)
 		require.Nil(t, err)
@@ -521,6 +530,240 @@ func TestReferencingField(t *testing.T) {
 				assert.Equal(t, "B4", as[1].B[1].Name)
 			}
 		}
+	})
+}
+
+func TestRelationTable(t *testing.T) {
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
+		a, err := NewA8ORM(conn)
+		require.Nil(t, err)
+		b, err := NewB8ORM(conn)
+		require.Nil(t, err)
+
+		require.Nil(t, a.Create().Exec())
+		require.Nil(t, b.Create().Exec())
+		require.Nil(t, a.Create().Relations().Exec())
+
+		a1, err := a.Insert().SetName("a1").Exec()
+		require.Nil(t, err)
+		b1, err := b.Insert().SetName("b1").Exec()
+		require.Nil(t, err)
+		b2, err := b.Insert().SetName("b2").Exec()
+		require.Nil(t, err)
+		b3, err := b.Insert().SetName("b3").Exec()
+		require.Nil(t, err)
+
+		t.Log("Add 3 relations between a and 3 bs and test query")
+
+		require.Nil(t, a.RelationB().Add(a1.ID, b1.ID))
+		require.Nil(t, a.RelationB().Add(a1.ID, b2.ID))
+		require.Nil(t, a.RelationB().Add(a1.ID, b3.ID))
+
+		a1.B = []B8{*b1, *b2, *b3}
+		as, err := a.Select().JoinB(b.Select().Joiner()).Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(as)) {
+			assert.Equal(t, a1, as[0])
+		}
+
+		t.Log("Remove one of the relations and test query")
+
+		require.Nil(t, a.RelationB().Remove(a1.ID, b2.ID))
+		a1.B = []B8{*b1, *b3}
+		as, err = a.Select().JoinB(b.Select().Joiner()).Query()
+		require.Nil(t, err)
+		if assert.Equal(t, 1, len(as)) {
+			assert.Equal(t, a1, as[0])
+		}
+	})
+}
+
+func TestRelationManyToMany(t *testing.T) {
+	testDBs(t, func(t *testing.T, conn orm.Conn) {
+		a, err := NewA9ORM(conn)
+		require.Nil(t, err)
+		b, err := NewB9ORM(conn)
+		require.Nil(t, err)
+
+		require.Nil(t, a.Create().Exec())
+		require.Nil(t, b.Create().Exec())
+		require.Nil(t, a.Create().Relations().Exec())
+		require.Nil(t, b.Create().Relations().IfNotExists().Exec())
+
+		a1, err := a.Insert().SetName("a1").Exec()
+		require.Nil(t, err)
+		a2, err := a.Insert().SetName("a2").Exec()
+		require.Nil(t, err)
+
+		b1, err := b.Insert().SetName("b1").Exec()
+		require.Nil(t, err)
+		b2, err := b.Insert().SetName("b2").Exec()
+		require.Nil(t, err)
+		b3, err := b.Insert().SetName("b3").Exec()
+		require.Nil(t, err)
+
+		b4, err := b.Insert().SetName("b4").Exec()
+		require.Nil(t, err)
+		b5, err := b.Insert().SetName("b5").Exec()
+		require.Nil(t, err)
+		b6, err := b.Insert().SetName("b6").Exec()
+		require.Nil(t, err)
+
+		t.Log("Add different relations and test query")
+
+		// Set As and Bs with the following relationships
+		// a1 = {B1: [b1,b2,b3], ab:[b4,b5,b6]}
+		// a2 = {B1: [b2,b3], ab:[b5]}
+		// ab is mutual relationship so:
+		// b1 = {A1: [a1]}
+		// b2 = {A1: [a2]}
+		// b4 = {A1: [a1,a2], ab: [a1]}
+		// b5 = {A1: [a2], ab: [a1,a2]
+		// b6 = {ab: [a2]
+
+		require.Nil(t, a.RelationB1().Add(a1.ID, b1.ID))
+		require.Nil(t, a.RelationB1().Add(a1.ID, b2.ID))
+		require.Nil(t, a.RelationB1().Add(a1.ID, b3.ID))
+
+		require.Nil(t, a.RelationB1().Add(a2.ID, b2.ID))
+		require.Nil(t, a.RelationB1().Add(a2.ID, b3.ID))
+
+		require.Nil(t, a.Relationab_relation().Add(a1.ID, b4.ID))
+		require.Nil(t, a.Relationab_relation().Add(a1.ID, b5.ID))
+		require.Nil(t, b.Relationab_relation().Add(b6.ID, a1.ID))
+
+		require.Nil(t, a.Relationab_relation().Add(a2.ID, b5.ID))
+
+		require.Nil(t, b.RelationA1().Add(b1.ID, a1.ID))
+		require.Nil(t, b.RelationA1().Add(b2.ID, a2.ID))
+		require.Nil(t, b.RelationA1().Add(b4.ID, a1.ID))
+		require.Nil(t, b.RelationA1().Add(b4.ID, a2.ID))
+		require.Nil(t, b.RelationA1().Add(b5.ID, a2.ID))
+
+		// query A to B direction
+		as, err := a.Select().
+			OrderBy(A9ColID, orm.Asc).
+			JoinB1(b.Select().OrderBy(B9ColID, orm.Asc).Joiner()).
+			JoinAB(b.Select().OrderBy(B9ColID, orm.Asc).Joiner()).
+			Query()
+		require.Nil(t, err)
+		assert.Equal(t,
+			[]*A9{
+				{
+					ID: 1, Name: "a1",
+					B1: []B9{*b1, *b2, *b3},
+					AB: []B9{*b4, *b5, *b6},
+				},
+				{
+					ID: 2, Name: "a2",
+					B1: []B9{*b2, *b3},
+					AB: []B9{*b5},
+				},
+			},
+			as)
+
+		// query B to A direction
+		bs, err := b.Select().
+			OrderBy(B9ColID, orm.Asc).
+			JoinA1(a.Select().OrderBy(A9ColID, orm.Asc).Joiner()).
+			JoinBA(a.Select().OrderBy(A9ColID, orm.Asc).Joiner()).
+			Query()
+		require.Nil(t, err)
+		assert.Equal(t,
+			[]*B9{
+				{
+					ID: 1, Name: "b1",
+					A1: []A9{*a1},
+				},
+				{
+					ID: 2, Name: "b2",
+					A1: []A9{*a2},
+				},
+				{
+					ID: 3, Name: "b3",
+				},
+				{
+					ID: 4, Name: "b4",
+					A1: []A9{*a1, *a2},
+					BA: []A9{*a1},
+				},
+				{
+					ID: 5, Name: "b5",
+					A1: []A9{*a2},
+					BA: []A9{*a1, *a2},
+				},
+				{
+					ID: 6, Name: "b6",
+					BA: []A9{*a1},
+				},
+			},
+			bs)
+
+		t.Log("Remove one of the relations and test query")
+
+		require.Nil(t, a.RelationB1().Remove(a1.ID, b2.ID))
+		require.Nil(t, a.Relationab_relation().Remove(a1.ID, b5.ID))
+
+		require.Nil(t, b.RelationA1().Remove(b4.ID, a1.ID))
+
+		// query A to B direction
+		as, err = a.Select().
+			OrderBy(A9ColID, orm.Asc).
+			JoinB1(b.Select().OrderBy(B9ColID, orm.Asc).Joiner()).
+			JoinAB(b.Select().OrderBy(B9ColID, orm.Asc).Joiner()).
+			Query()
+		require.Nil(t, err)
+		assert.Equal(t,
+			[]*A9{
+				{
+					ID: 1, Name: "a1",
+					B1: []B9{*b1, *b3},
+					AB: []B9{*b4, *b6},
+				},
+				{
+					ID: 2, Name: "a2",
+					B1: []B9{*b2, *b3},
+					AB: []B9{*b5},
+				},
+			},
+			as)
+
+		// query B to A direction
+		bs, err = b.Select().
+			OrderBy(B9ColID, orm.Asc).
+			JoinA1(a.Select().OrderBy(A9ColID, orm.Asc).Joiner()).
+			JoinBA(a.Select().OrderBy(A9ColID, orm.Asc).Joiner()).
+			Query()
+		require.Nil(t, err)
+		assert.Equal(t,
+			[]*B9{
+				{
+					ID: 1, Name: "b1",
+					A1: []A9{*a1},
+				},
+				{
+					ID: 2, Name: "b2",
+					A1: []A9{*a2},
+				},
+				{
+					ID: 3, Name: "b3",
+				},
+				{
+					ID: 4, Name: "b4",
+					A1: []A9{*a2},
+					BA: []A9{*a1},
+				},
+				{
+					ID: 5, Name: "b5",
+					A1: []A9{*a2},
+					BA: []A9{*a2},
+				},
+				{
+					ID: 6, Name: "b6",
+					BA: []A9{*a1},
+				},
+			},
+			bs)
 	})
 }
 

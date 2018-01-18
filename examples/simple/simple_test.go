@@ -64,14 +64,14 @@ func ExampleSimpleUsage() {
 	// Lets get an object from the database.
 	// If we want a specific object, we can use the Get function, and give as argument
 	// the object's primary key or keys (in case of multiple primary keys)
-	getSimple2, err := sorm.Get(2)
+	getSimple2, err := sorm.Get(2).Exec()
 	examples.PanicOnErr(err)
 
 	// This time we expect the ID to be 2
 	fmt.Println("getSimple2.ID:", getSimple2.ID)
 
 	// If we try and get an object that the key is not in the table, we will get a not found error
-	_, err = sorm.Get(3)
+	_, err = sorm.Get(3).Exec()
 	fmt.Println("Error:", err.Error())
 
 	// Listing objects is done with the Select function
@@ -98,6 +98,7 @@ func ExampleSimpleUsage() {
 	simples, err = sorm.Select().
 		GroupBy(SimpleColField2).
 		Query()
+	examples.PanicOnErr(err)
 
 	// We expect the select length to be 1 since both rows have the same value in field2
 	fmt.Println("Select group len:", len(simples))
@@ -111,7 +112,7 @@ func ExampleSimpleUsage() {
 	examples.PanicOnErr(err)
 
 	// Check the new values:
-	simple1Updated, err := sorm.Get(1)
+	simple1Updated, err := sorm.Get(1).Exec()
 	examples.PanicOnErr(err)
 
 	fmt.Println("Updated:", simple1Updated.Field1, simple1Updated.Field2, simple1Updated.Field3)
@@ -120,7 +121,7 @@ func ExampleSimpleUsage() {
 	_, err = sorm.Delete().Where(sorm.Where().Field1(orm.OpEq, "updated")).Exec()
 	examples.PanicOnErr(err)
 
-	_, err = sorm.Get(1)
+	_, err = sorm.Get(1).Exec()
 	fmt.Println("Should not be found:", err.Error())
 
 	// Output: simple1.ID: 1

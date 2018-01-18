@@ -9,12 +9,23 @@ import (
 
 // CreateParams holds parameters for an SQL CREATE statement
 type CreateParams struct {
-	Table          string
+	Table string
+	// MarshaledTable is a json string representing a table
+	// The representation is of type Table, and created by the function Marshal
+	// of that type.
+	// It is given from the auto generated code.
 	MarshaledTable string
+	// MarshaledRelationTables is a map between a relation table name and
+	// a json string representing a type Table, generated with the function Table.Marshal.
+	// It is given from the auto generated code.
+	MarshaledRelationTables map[string]string
 	// IfNotExists determines to create the table only if it does not exists
 	IfNotExists bool
 	// AutoMigrate perform auto-migration of table scheme
 	AutoMigrate bool
+	// Relations makes the create operation create relation tables and not
+	// the type actual table
+	Relations bool
 	// Ctx is a context parameter for the query
 	// even though it is not recommended to store context in a struct, here the struct
 	// actually represents an arguments list, passed to a function.
@@ -95,7 +106,7 @@ type JoinParams struct {
 // this is useful in case several fields referencing the same table
 func (j *JoinParams) TableName(parentTable string) string {
 	parts := make([]string, 0, len(j.Pairings)+1)
-	parts = append(parts, parentTable)
+	parts = append(parts, parentTable, j.Table)
 	for _, pairing := range j.Pairings {
 		parts = append(parts, pairing.Column)
 	}

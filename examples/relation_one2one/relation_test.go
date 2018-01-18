@@ -79,6 +79,7 @@ func ExampleRelationOne2One() {
 	ones, err = oneORM.Select().
 		JoinOtherOne(otherOneORM.Select().Joiner()).
 		Query()
+	examples.PanicOnErr(err)
 
 	fmt.Println("3. one with join's references:", ones[0].OtherOne.Name)
 
@@ -88,6 +89,7 @@ func ExampleRelationOne2One() {
 		JoinOtherOne(otherOneORM.Select().
 			Where(otherOneORM.Where().ID(orm.OpLt, 3)).Joiner()).
 		Query()
+	examples.PanicOnErr(err)
 
 	// we expect to have only 2 entries:
 	fmt.Println("4. complex join len:", len(ones))

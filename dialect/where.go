@@ -51,6 +51,16 @@ func NewWhereBetween(variable string, low, high interface{}) Where {
 	})
 }
 
+// Or apply an AND condition between WHERE statement
+func Or(w ...Where) Where {
+	return concat("OR", w...)
+}
+
+// And apply an AND condition between WHERE statement
+func And(w ...Where) Where {
+	return concat("AND", w...)
+}
+
 // Where are options for SQL WHERE statement
 type whereFunc func(table string, b *builder)
 
@@ -63,7 +73,7 @@ func (w whereFunc) Or(right Where) Where {
 	if w == nil {
 		return right
 	}
-	return binary(w, right, "OR")
+	return Or(w, right)
 }
 
 // And applies an and condition between two where conditions
@@ -71,17 +81,19 @@ func (w whereFunc) And(right Where) Where {
 	if w == nil {
 		return right
 	}
-	return binary(w, right, "AND")
+	return And(w, right)
 }
 
-func binary(l Where, r Where, op string) Where {
+// concat concatenate Where statement with an operation
+func concat(op string, w ...Where) Where {
 	return whereFunc(func(table string, b *builder) {
-		b.Open()
-		l.Build(table, b)
-		b.Close()
-		b.Append(op)
-		b.Open()
-		r.Build(table, b)
-		b.Close()
+		for i, wi := range w {
+			b.Open()
+			wi.Build(table, b)
+			b.Close()
+			if i != len(w)-1 {
+				b.Append(op)
+			}
+		}
 	})
 }

@@ -1,6 +1,6 @@
 package tests
 
-//go:generate ../orm -type A,B,C,A2,B2,C2,D2,A3,B3,A4,B4,A5,A6,B6,C6,A7,B7
+//go:generate ../orm -type A,B,C,A2,B2,C2,D2,A3,B3,A4,B4,A5,A6,B6,C6,A7,B7,A8,B8,A9,B9
 
 // A, B, C test simple one-to-one (A->C) and one-to-many(B->C) relationships
 type A struct {
@@ -98,16 +98,43 @@ type C6 struct {
 	B    B6
 }
 
-// A7,B7 test functionality of 'referencing field'
+// A7,B7 test functionality of 'relation field'
 // A7 has one-to-many relationship to B7, and B7 has several A7 reverse references
 type A7 struct {
 	ID   int64 `sql:"primary key;auto increment"`
 	Name string
-	B    []B7 `sql:"referencing field:A1"`
+	B    []B7 `sql:"relation field:A1"`
 }
 
 type B7 struct {
 	ID     int64 `sql:"primary key;auto increment"`
 	Name   string
 	A1, A2 *A7
+}
+
+// A8,B8 test many to one relationship without a relation field in B
+type A8 struct {
+	ID   int64 `sql:"primary key;auto increment"`
+	Name string
+	B    []B8
+}
+
+type B8 struct {
+	ID   int64 `sql:"primary key;auto increment"`
+	Name string
+}
+
+// A9,B9 test many to many relationship with and without a relation name
+type A9 struct {
+	ID   int64 `sql:"primary key;auto increment"`
+	Name string
+	B1   []B9
+	AB   []B9 `sql:"relation name:ab_relation"`
+}
+
+type B9 struct {
+	ID   int64 `sql:"primary key;auto increment"`
+	Name string
+	A1   []A9
+	BA   []A9 `sql:"relation name:ab_relation"`
 }

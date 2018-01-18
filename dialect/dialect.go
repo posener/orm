@@ -85,14 +85,21 @@ type dialect struct {
 
 // Create returns the SQL CREATE statement and arguments according to the given parameters
 func (d *dialect) Create(conn orm.Conn, p *CreateParams) ([]string, error) {
+	if p.Relations {
+		return d.createRelationTables(conn, p)
+	}
+	return d.create(conn, p, p.Table, p.MarshaledTable)
+}
+
+func (d *dialect) create(conn orm.Conn, p *CreateParams, tableName, tableProperties string) ([]string, error) {
 	table := new(Table)
-	err := table.UnMarshal(p.MarshaledTable)
+	err := table.UnMarshal(tableProperties)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unmarshalling table properties: %s", err)
 	}
 
 	if p.AutoMigrate {
-		stmts, ok, err := d.autoMigrate(p.Ctx, conn, p.Table, table)
+		stmts, ok, err := d.autoMigrate(p.Ctx, conn, tableName, table)
 		if err != nil {
 			return nil, fmt.Errorf("automigration: %s", err)
 		}
@@ -105,11 +112,23 @@ func (d *dialect) Create(conn orm.Conn, p *CreateParams) ([]string, error) {
 	if p.IfNotExists {
 		b.Append("IF NOT EXISTS")
 	}
-	b.Append(d.Quote(p.Table))
+	b.Append(d.Quote(tableName))
 	b.Open()
 	b.tableProperties(table)
 	b.Close()
 	return []string{b.Statement()}, nil
+}
+
+func (d *dialect) createRelationTables(conn orm.Conn, p *CreateParams) ([]string, error) {
+	var stmts []string
+	for name, props := range p.MarshaledRelationTables {
+		stmt, err := d.create(conn, p, name, props)
+		if err != nil {
+			return nil, fmt.Errorf("creating table %s: %s", name, err)
+		}
+		stmts = append(stmts, stmt...)
+	}
+	return stmts, nil
 }
 
 func (d *dialect) autoMigrate(ctx context.Context, conn orm.Conn, tableName string, want *Table) ([]string, bool, error) {
@@ -289,48 +308,47 @@ func hasAutoIncrement(options []string) bool {
 
 // selectColumns returns the columns selected for an SQL SELECT query
 func (b *builder) selectColumns(p *SelectParams) {
-	noColumn := b.columnsColumnRec(p.Table, p, true)
+	first := true
+	b.columnsColumnRec(p.Table, p, &first)
 
 	if p.Count {
-		if !noColumn {
+		if !first {
 			b.Comma()
 		}
 		b.Append("COUNT(*)")
 	}
 }
 
-func (b *builder) columnsColumnRec(table string, p *SelectParams, first bool) bool {
+func (b *builder) columnsColumnRec(table string, p *SelectParams, first *bool) {
 	cols := p.SelectedColumns()
 	for _, col := range cols {
-		if !first {
+		if !*first {
 			b.Comma()
 		}
 		b.Append(fmt.Sprintf("%s.%s", b.Quote(table), b.Quote(col)))
-		first = false
+		*first = false
 	}
 	for _, join := range p.Joins {
-		if !b.columnsColumnRec(join.TableName(table), &join.SelectParams, first) {
-			first = false
-		}
+		b.columnsColumnRec(join.TableName(table), &join.SelectParams, first)
 	}
-	return first
 }
 
 // where returns a WHERE statement
 func (b *builder) where(table string, w Where, j []JoinParams) {
-	b.whereRec(table, w, j, true)
+	first := true
+	b.whereRec(table, w, j, &first)
 }
 
 // whereRec returns a WHERE statement for a recursive join statement
 // it concat all the conditions with an AND operator
-func (b *builder) whereRec(table string, w Where, joins []JoinParams, first bool) {
+func (b *builder) whereRec(table string, w Where, joins []JoinParams, first *bool) {
 	if w != nil {
-		if first {
+		if *first {
 			b.Append("WHERE")
 		} else {
 			b.Append("AND")
 		}
-		first = false
+		*first = false
 		w.Build(table, b)
 	}
 	for _, join := range joins {
@@ -340,17 +358,18 @@ func (b *builder) whereRec(table string, w Where, joins []JoinParams, first bool
 
 // groupBy formats an SQL GROUP BY statement
 func (b *builder) groupBy(table string, p *SelectParams) {
-	b.groupByRec(table, p, true)
+	first := true
+	b.groupByRec(table, p, &first)
 }
 
-func (b *builder) groupByRec(table string, p *SelectParams, first bool) {
+func (b *builder) groupByRec(table string, p *SelectParams, first *bool) {
 	for _, group := range p.Groups {
-		if first {
+		if *first {
 			b.Append("GROUP BY")
 		} else {
 			b.Comma()
 		}
-		first = false
+		*first = false
 		b.Append(fmt.Sprintf("%s.%s", b.Quote(table), b.Quote(group.Column)))
 	}
 	for _, join := range p.Joins {
@@ -360,17 +379,18 @@ func (b *builder) groupByRec(table string, p *SelectParams, first bool) {
 
 // orderBy formats an SQL ORDER BY statement
 func (b *builder) orderBy(table string, p *SelectParams) {
-	b.orderByRec(table, p, true)
+	first := true
+	b.orderByRec(table, p, &first)
 }
 
-func (b *builder) orderByRec(table string, p *SelectParams, first bool) {
+func (b *builder) orderByRec(table string, p *SelectParams, first *bool) {
 	for _, order := range p.Orders {
-		if first {
+		if *first {
 			b.Append("ORDER BY")
 		} else {
 			b.Comma()
 		}
-		first = false
+		*first = false
 		b.Append(fmt.Sprintf("%s.%s", b.Quote(table), b.Quote(order.Column)))
 		b.Append(string(order.Dir))
 	}
