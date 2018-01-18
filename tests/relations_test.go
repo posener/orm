@@ -642,6 +642,7 @@ func TestRelationManyToMany(t *testing.T) {
 
 		// query A to B direction
 		as, err := a.Select().
+			OrderBy(A9ColID, orm.Asc).
 			JoinB1(b.Select().OrderBy(B9ColID, orm.Asc).Joiner()).
 			JoinAB(b.Select().OrderBy(B9ColID, orm.Asc).Joiner()).
 			Query()
@@ -664,8 +665,8 @@ func TestRelationManyToMany(t *testing.T) {
 		// query B to A direction
 		bs, err := b.Select().
 			OrderBy(B9ColID, orm.Asc).
-			JoinA1(a.Select().Joiner()).
-			JoinBA(a.Select().Joiner()).
+			JoinA1(a.Select().OrderBy(A9ColID, orm.Asc).Joiner()).
+			JoinBA(a.Select().OrderBy(A9ColID, orm.Asc).Joiner()).
 			Query()
 		require.Nil(t, err)
 		assert.Equal(t,
@@ -707,6 +708,7 @@ func TestRelationManyToMany(t *testing.T) {
 
 		// query A to B direction
 		as, err = a.Select().
+			OrderBy(A9ColID, orm.Asc).
 			JoinB1(b.Select().OrderBy(B9ColID, orm.Asc).Joiner()).
 			JoinAB(b.Select().OrderBy(B9ColID, orm.Asc).Joiner()).
 			Query()
@@ -729,8 +731,8 @@ func TestRelationManyToMany(t *testing.T) {
 		// query B to A direction
 		bs, err = b.Select().
 			OrderBy(B9ColID, orm.Asc).
-			JoinA1(a.Select().Joiner()).
-			JoinBA(a.Select().Joiner()).
+			JoinA1(a.Select().OrderBy(A9ColID, orm.Asc).Joiner()).
+			JoinBA(a.Select().OrderBy(A9ColID, orm.Asc).Joiner()).
 			Query()
 		require.Nil(t, err)
 		assert.Equal(t,
