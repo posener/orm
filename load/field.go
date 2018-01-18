@@ -176,8 +176,7 @@ func (f *Field) RelationTable() string {
 	if f.CustomRelationName != "" {
 		return f.CustomRelationName
 	}
-	t1, t2 := f.RelationTypes()
-	return fmt.Sprintf("rel_%s_%s", t1.Table(), t2.Table())
+	return fmt.Sprintf("rel_%s_%s", f.ParentType.Table(), strings.ToLower(f.Name()))
 }
 
 func (f *Field) RelationName() string {

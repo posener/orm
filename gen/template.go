@@ -511,7 +511,7 @@ func (b *{{$.Public}}SelectBuilder) Query() ([]*{{$type}}, error) {
 		if err := b.params.Ctx.Err(); err != nil  {
 			return nil, err
 		}
-		item, _, err := b.scan(b.conn.dialect.Name(), dialect.Values(*rows), exists)
+		item, _, err := b.scan(b.conn.dialect.Name(), dialect.Values(*rows), exists, "")
 		if err != nil {
 			return nil, err
 		}
@@ -542,7 +542,7 @@ func (b *{{$.Public}}SelectBuilder) Count() ([]{{$countStruct}}, error) {
 		if err := b.params.Ctx.Err(); err != nil  {
 			return nil, err
 		}
-		item, _, err := b.scanCount(b.conn.dialect.Name(), dialect.Values(*rows), exists)
+		item, _, err := b.scanCount(b.conn.dialect.Name(), dialect.Values(*rows), exists, "")
 		if err != nil {
 			return nil, err
 		}
@@ -571,7 +571,7 @@ func (b *{{$.Public}}SelectBuilder) First() (*{{$type}}, error) {
 	if !found {
 		return nil, orm.ErrNotFound
 	}
-	item, _, err := b.scan(b.conn.dialect.Name(), dialect.Values(*rows), nil)
+	item, _, err := b.scan(b.conn.dialect.Name(), dialect.Values(*rows), nil, "")
 	if err != nil {
 		return nil, err
 	}
@@ -606,7 +606,7 @@ func (b *{{$.Public}}DropBuilder) Exec() error {
 // in another type
 type {{$name}}Joiner interface {
 	Params() dialect.SelectParams
-	Scan(dialect string, values []driver.Value, exists map[string]interface{}) (*{{$type}}, int, error)
+	Scan(dialect string, values []driver.Value, exists map[string]interface{}, prefix string) (*{{$type}}, int, error)
 }
 
 // {{$countStruct}} is a struct for counting rows of type {{$name}}
@@ -633,8 +633,8 @@ func (j *{{$.Private}}Joiner) Params() dialect.SelectParams {
 	return j.builder.params
 }
 
-func (j *{{$.Private}}Joiner) Scan(dialect string, values []driver.Value, exists map[string]interface{}) (*{{$type}}, int, error) {
-	return j.builder.scan(dialect, values, exists)
+func (j *{{$.Private}}Joiner) Scan(dialect string, values []driver.Value, exists map[string]interface{}, prefix string) (*{{$type}}, int, error) {
+	return j.builder.scan(dialect, values, exists, prefix)
 }
 
 // Joiner returns an object to be used in a join operation with {{$name}}
@@ -666,7 +666,7 @@ func (b *{{$.Public}}SelectBuilder) Page(offset, limit int64) *{{$.Public}}Selec
 // of an ORM object for type {{$refType.Name}}
 type {{$.Private}}{{$refType.Name}}Joiner interface {
 	Params() dialect.SelectParams
-	Scan(dialect string, values []driver.Value, exists map[string]interface{}) (*{{$refType.Ext $.Package}}, int, error)
+	Scan(dialect string, values []driver.Value, exists map[string]interface{}, prefix string) (*{{$refType.Ext $.Package}}, int, error)
 }
 {{ end -}}
 
@@ -773,8 +773,8 @@ func (b *{{$.Public}}SelectBuilder) Context(ctx context.Context) *{{$.Public}}Se
 // scan an SQL row to a {{$name}} struct
 // It returns the scanned {{$.Graph.Type.Ext $.Package}} and the number of scanned fields,
 // and an error in case of failure.
-func (b *{{$.Public}}SelectBuilder) scan(dialect string, vals []driver.Value, exists map[string]interface{}) (*{{$.Graph.Type.Ext $.Package}}, int, error) {
-	item, n, err := b.scanCount(dialect, vals, exists)
+func (b *{{$.Public}}SelectBuilder) scan(dialect string, vals []driver.Value, exists map[string]interface{}, prefix string) (*{{$.Graph.Type.Ext $.Package}}, int, error) {
+	item, n, err := b.scanCount(dialect, vals, exists, prefix)
 	if err != nil {
 		return nil, n, err
 	}
@@ -782,11 +782,11 @@ func (b *{{$.Public}}SelectBuilder) scan(dialect string, vals []driver.Value, ex
 }
 
 // ScanCount scans an SQL row to a {{$countStruct}} struct
-func (b *{{$.Public}}SelectBuilder) scanCount(dialect string, vals []driver.Value, exists map[string]interface{}) (*{{$countStruct}}, int, error) {
+func (b *{{$.Public}}SelectBuilder) scanCount(dialect string, vals []driver.Value, exists map[string]interface{}, prefix string) (*{{$countStruct}}, int, error) {
 	switch dialect {
 	{{ range $_, $dialect := $.Dialects -}}
 	case "{{$dialect.Name}}":
-		return b.scan{{$dialect.Name}}(vals, exists)
+		return b.scan{{$dialect.Name}}(vals, exists, prefix)
 	{{ end -}}
 	default:
 		return nil, 0, fmt.Errorf("unsupported dialect %s", dialect)
@@ -811,7 +811,7 @@ type {{$.Private}}Exists struct{
 
 {{ range $_, $dialect := $.Dialects }}
 // scan{{$dialect.Name}} scans {{$dialect.Name}} row to a {{$name}} struct
-func (b *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value, exists map[string]interface{}) (*{{$countStruct}}, int, error) {
+func (b *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value, exists map[string]interface{}, prefix string) (*{{$countStruct}}, int, error) {
 	var (
 		row = new({{$countStruct}})
 		i int
@@ -837,10 +837,10 @@ func (b *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value, 
 		{{/* Test if the field is the last primary key */}}
 		{{ if eq $f.Name (index $pks (dec (len $pks))).Name -}}
 		{{ if $hasOneToManyRelation -}}
-		hash := {{$.Private}}HashItem(row.{{$name}}) 
 		// check if we scanned this item in previous rows. If we did, set existingRow
 		// so other columns in this table won't be evaluated. And joined items could
 		// be joined to the already scanned item.
+		hash := prefix + {{$.Private}}HashItem(row.{{$name}}) 
 		if exists[hash] == nil {
 			exists[hash] = &{{$.Private}}Exists{self: row.{{$name}}, related: make(map[string]interface{})}
 		} else {
@@ -868,7 +868,7 @@ func (b *{{$.Public}}SelectBuilder) scan{{$dialect.Name}} (vals []driver.Value, 
 
 	{{ range $_, $f := $.Graph.Type.References -}}
 	if b := b.scan{{$f.Name}}; b != nil {
-		tmp, n, err := b.Scan("{{$dialect.Name}}", vals[i:], existingRow.related)
+		tmp, n, err := b.Scan("{{$dialect.Name}}", vals[i:], existingRow.related, "{{$f.Name}}")
 		if err != nil {
 			return nil, 0, fmt.Errorf("sub scanning {{$f.AccessName}}, cols [%d:%d]: %s", i, len(vals), err)
 		}

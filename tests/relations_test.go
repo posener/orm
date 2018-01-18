@@ -588,8 +588,11 @@ func TestRelationManyToMany(t *testing.T) {
 		require.Nil(t, a.Create().Exec())
 		require.Nil(t, b.Create().Exec())
 		require.Nil(t, a.Create().Relations().Exec())
+		require.Nil(t, b.Create().Relations().IfNotExists().Exec())
 
 		a1, err := a.Insert().SetName("a1").Exec()
+		require.Nil(t, err)
+		a2, err := a.Insert().SetName("a2").Exec()
 		require.Nil(t, err)
 
 		b1, err := b.Insert().SetName("b1").Exec()
@@ -608,39 +611,157 @@ func TestRelationManyToMany(t *testing.T) {
 
 		t.Log("Add different relations and test query")
 
+		// Set As and Bs with the following relationships
+		// a1 = {B1: [b1,b2,b3], ab:[b4,b5,b6]}
+		// a2 = {B1: [b2,b3], ab:[b5]}
+		// ab is mutual relationship so:
+		// b1 = {A1: [a1]}
+		// b2 = {A1: [a2]}
+		// b4 = {A1: [a1,a2], ab: [a1]}
+		// b5 = {A1: [a2], ab: [a1,a2]
+		// b6 = {ab: [a2]
+
 		require.Nil(t, a.RelationB1().Add(a1.ID, b1.ID))
 		require.Nil(t, a.RelationB1().Add(a1.ID, b2.ID))
 		require.Nil(t, a.RelationB1().Add(a1.ID, b3.ID))
+
+		require.Nil(t, a.RelationB1().Add(a2.ID, b2.ID))
+		require.Nil(t, a.RelationB1().Add(a2.ID, b3.ID))
 
 		require.Nil(t, a.Relationab_relation().Add(a1.ID, b4.ID))
 		require.Nil(t, a.Relationab_relation().Add(a1.ID, b5.ID))
 		require.Nil(t, b.Relationab_relation().Add(b6.ID, a1.ID))
 
-		a1.B1 = []B9{*b1, *b2, *b3}
-		a1.B2 = []B9{*b4, *b5, *b6}
+		require.Nil(t, a.Relationab_relation().Add(a2.ID, b5.ID))
+
+		require.Nil(t, b.RelationA1().Add(b1.ID, a1.ID))
+		require.Nil(t, b.RelationA1().Add(b2.ID, a2.ID))
+		require.Nil(t, b.RelationA1().Add(b4.ID, a1.ID))
+		require.Nil(t, b.RelationA1().Add(b4.ID, a2.ID))
+		require.Nil(t, b.RelationA1().Add(b5.ID, a2.ID))
+
+		// query A to B direction
 		as, err := a.Select().
 			JoinB1(b.Select().OrderBy(B9ColID, orm.Asc).Joiner()).
-			JoinB2(b.Select().OrderBy(B9ColID, orm.Asc).Joiner()).
+			JoinAB(b.Select().OrderBy(B9ColID, orm.Asc).Joiner()).
 			Query()
 		require.Nil(t, err)
-		if assert.Equal(t, 1, len(as)) {
-			assert.Equal(t, a1, as[0])
-		}
+		assert.Equal(t,
+			[]*A9{
+				{
+					ID: 1, Name: "a1",
+					B1: []B9{*b1, *b2, *b3},
+					AB: []B9{*b4, *b5, *b6},
+				},
+				{
+					ID: 2, Name: "a2",
+					B1: []B9{*b2, *b3},
+					AB: []B9{*b5},
+				},
+			},
+			as)
+
+		// query B to A direction
+		bs, err := b.Select().
+			OrderBy(B9ColID, orm.Asc).
+			JoinA1(a.Select().Joiner()).
+			JoinBA(a.Select().Joiner()).
+			Query()
+		require.Nil(t, err)
+		assert.Equal(t,
+			[]*B9{
+				{
+					ID: 1, Name: "b1",
+					A1: []A9{*a1},
+				},
+				{
+					ID: 2, Name: "b2",
+					A1: []A9{*a2},
+				},
+				{
+					ID: 3, Name: "b3",
+				},
+				{
+					ID: 4, Name: "b4",
+					A1: []A9{*a1, *a2},
+					BA: []A9{*a1},
+				},
+				{
+					ID: 5, Name: "b5",
+					A1: []A9{*a2},
+					BA: []A9{*a1, *a2},
+				},
+				{
+					ID: 6, Name: "b6",
+					BA: []A9{*a1},
+				},
+			},
+			bs)
 
 		t.Log("Remove one of the relations and test query")
 
 		require.Nil(t, a.RelationB1().Remove(a1.ID, b2.ID))
 		require.Nil(t, a.Relationab_relation().Remove(a1.ID, b5.ID))
-		a1.B1 = []B9{*b1, *b3}
-		a1.B2 = []B9{*b4, *b6}
+
+		require.Nil(t, b.RelationA1().Remove(b4.ID, a1.ID))
+
+		// query A to B direction
 		as, err = a.Select().
 			JoinB1(b.Select().OrderBy(B9ColID, orm.Asc).Joiner()).
-			JoinB2(b.Select().OrderBy(B9ColID, orm.Asc).Joiner()).
+			JoinAB(b.Select().OrderBy(B9ColID, orm.Asc).Joiner()).
 			Query()
 		require.Nil(t, err)
-		if assert.Equal(t, 1, len(as)) {
-			assert.Equal(t, a1, as[0])
-		}
+		assert.Equal(t,
+			[]*A9{
+				{
+					ID: 1, Name: "a1",
+					B1: []B9{*b1, *b3},
+					AB: []B9{*b4, *b6},
+				},
+				{
+					ID: 2, Name: "a2",
+					B1: []B9{*b2, *b3},
+					AB: []B9{*b5},
+				},
+			},
+			as)
+
+		// query B to A direction
+		bs, err = b.Select().
+			OrderBy(B9ColID, orm.Asc).
+			JoinA1(a.Select().Joiner()).
+			JoinBA(a.Select().Joiner()).
+			Query()
+		require.Nil(t, err)
+		assert.Equal(t,
+			[]*B9{
+				{
+					ID: 1, Name: "b1",
+					A1: []A9{*a1},
+				},
+				{
+					ID: 2, Name: "b2",
+					A1: []A9{*a2},
+				},
+				{
+					ID: 3, Name: "b3",
+				},
+				{
+					ID: 4, Name: "b4",
+					A1: []A9{*a2},
+					BA: []A9{*a1},
+				},
+				{
+					ID: 5, Name: "b5",
+					A1: []A9{*a2},
+					BA: []A9{*a2},
+				},
+				{
+					ID: 6, Name: "b6",
+					BA: []A9{*a1},
+				},
+			},
+			bs)
 	})
 }
 

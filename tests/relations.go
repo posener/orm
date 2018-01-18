@@ -129,12 +129,12 @@ type A9 struct {
 	ID   int64 `sql:"primary key;auto increment"`
 	Name string
 	B1   []B9
-	B2   []B9 `sql:"relation name:ab_relation"`
+	AB   []B9 `sql:"relation name:ab_relation"`
 }
 
 type B9 struct {
 	ID   int64 `sql:"primary key;auto increment"`
 	Name string
 	A1   []A9
-	B2   []A9 `sql:"relation name:ab_relation"`
+	BA   []A9 `sql:"relation name:ab_relation"`
 }
