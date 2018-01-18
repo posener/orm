@@ -80,6 +80,10 @@ func NewTable(gr *graph.Graph) Table {
 	return t
 }
 
+// RelationTables returns all the relation tables that belong to a type.
+//
+// Relation tables are tables that hold relations between one table and
+// another table, that could not be expressed as a column in one of the tables.
 func RelationTables(gr *graph.Graph) map[string]Table {
 	var tables = make(map[string]Table)
 	for _, e := range gr.RelTable {

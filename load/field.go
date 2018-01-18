@@ -172,6 +172,8 @@ func (f *Field) Columns() []SQLColumn {
 	return []SQLColumn{f.column()}
 }
 
+// RelationTable is the name of the table that is used to store relations according
+// to this field.
 func (f *Field) RelationTable() string {
 	if f.CustomRelationName != "" {
 		return f.CustomRelationName
@@ -179,6 +181,8 @@ func (f *Field) RelationTable() string {
 	return fmt.Sprintf("rel_%s_%s", f.ParentType.Table(), strings.ToLower(f.Name()))
 }
 
+// RelationName is a name for the relation
+// given from a field tag, or according to it's name
 func (f *Field) RelationName() string {
 	if f.CustomRelationName != "" {
 		return "Relation" + f.CustomRelationName
@@ -186,6 +190,8 @@ func (f *Field) RelationName() string {
 	return fmt.Sprintf("Relation%s", f.Name())
 }
 
+// RelationTypes return the two types that are participating in a relation
+// that is created by this field.
 func (f *Field) RelationTypes() (first, second *Naked) {
 	first, second = f.ParentType, f.Type.Naked
 	if strings.Compare(first.Table(), second.Table()) != -1 {

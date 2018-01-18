@@ -9,8 +9,15 @@ import (
 
 // CreateParams holds parameters for an SQL CREATE statement
 type CreateParams struct {
-	Table                   string
-	MarshaledTable          string
+	Table string
+	// MarshaledTable is a json string representing a table
+	// The representation is of type Table, and created by the function Marshal
+	// of that type.
+	// It is given from the auto generated code.
+	MarshaledTable string
+	// MarshaledRelationTables is a map between a relation table name and
+	// a json string representing a type Table, generated with the function Table.Marshal.
+	// It is given from the auto generated code.
 	MarshaledRelationTables map[string]string
 	// IfNotExists determines to create the table only if it does not exists
 	IfNotExists bool
