@@ -12,13 +12,14 @@ import (
 	"github.com/posener/orm/load"
 )
 
+// Constants that are names of the different supported dialects
 const (
 	Mysql    = "mysql"
 	Postgres = "postgres"
 	Sqlite3  = "sqlite3"
 )
 
-// dialect is an interface to represent an SQL dialect
+// API is an interface to represent an SQL dialect
 // Objects that implement this interface, can convert query params, such as SelectParams or
 // UpdateParams, and convert them to an SQL statement and a list of arguments, which can be used
 // to invoke SQL Exec or Query functions.
@@ -284,7 +285,7 @@ func (b *builder) createColumn(col Column) {
 	}
 }
 
-// foreignKey is teh FOREIGN KEY statement
+// foreignKey is the FOREIGN KEY statement
 func (b *builder) foreignKey(fk ForeignKey) {
 	b.Append("FOREIGN KEY")
 	b.Open()

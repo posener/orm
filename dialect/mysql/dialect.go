@@ -19,18 +19,22 @@ func (d *Dialect) Name() string {
 	return "mysql"
 }
 
+// Translate translates mysql name to mysql name
 func (d *Dialect) Translate(name string) string {
 	return name
 }
 
+// Quote returns quotes a variable
 func (d *Dialect) Quote(name string) string {
 	return fmt.Sprintf("`%s`", name)
 }
 
+// Var returns a variable phrase
 func (d *Dialect) Var(i int) string {
 	return "?"
 }
 
+// GoTypeToColumnType translate a name of a Go type to the equivalent SQL column type.
 func (Dialect) GoTypeToColumnType(goTypeName string, autoIncrement bool) *sqltypes.Type {
 	st := new(sqltypes.Type)
 	switch goTypeName {

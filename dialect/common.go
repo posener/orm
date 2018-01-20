@@ -15,6 +15,7 @@ import (
 
 const errConvert = "converting %s: column %d with value %v (type %T) to %s"
 
+// ErrConvert returns a conversion error when processing sql values
 func ErrConvert(field string, index int, value interface{}, to string) error {
 	return fmt.Errorf(errConvert, field, index, value, value, to)
 }
@@ -33,6 +34,7 @@ func Values(r sql.Rows) []driver.Value {
 	return rf.Interface().([]driver.Value)
 }
 
+// ParseInt parses a byte slice to int64
 func ParseInt(s []byte) int64 {
 	i, err := strconv.ParseInt(string(s), 10, 64)
 	if err != nil {
@@ -41,6 +43,7 @@ func ParseInt(s []byte) int64 {
 	return i
 }
 
+// ParseUInt parses a byte slice to uint64
 func ParseUInt(s []byte) uint64 {
 	i, err := strconv.ParseUint(string(s), 10, 64)
 	if err != nil {
@@ -49,6 +52,7 @@ func ParseUInt(s []byte) uint64 {
 	return i
 }
 
+// ParseFloat parses a byte slice to float64
 func ParseFloat(s []byte) float64 {
 	i, err := strconv.ParseFloat(string(s), 64)
 	if err != nil {
@@ -80,10 +84,13 @@ func ParseTime(b []byte, precision int) time.Time {
 	return t
 }
 
+// ParseFloat parses a byte slice to bool
 func ParseBool(s []byte) bool {
 	return s[0] != 0
 }
 
+// ContextOrBackground returns background context if the given context is nil,
+// otherwise it returns the context itself.
 func ContextOrBackground(ctx context.Context) context.Context {
 	if ctx == nil {
 		return context.Background()

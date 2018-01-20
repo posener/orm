@@ -82,7 +82,7 @@ func (t *Naked) ImportPath() string {
 	return t.pkg.Path()
 }
 
-// loadFields iterate over the type's data structure and load all it's fields
+// LoadFields iterate over the type's data structure and load all it's fields
 // this function might recursively call to the New function
 func (t *Naked) LoadFields(levels int) error {
 	if t.st == nil || levels == 0 {
@@ -164,6 +164,7 @@ func (t *Naked) Package() string {
 	return t.pkg.Name()
 }
 
+// IsBasic returns try if the type is a Go basic type
 func (t *Naked) IsBasic() bool {
 	return basicTypes[t.Ext("")]
 }
@@ -220,6 +221,7 @@ func (t *Naked) ReferencedTypes() []*Naked {
 	return l
 }
 
+// HasOneToManyRelation returns true if the type has a one-to-many relationship
 func (t *Naked) HasOneToManyRelation() bool {
 	for _, field := range t.Fields {
 		if field.Type.Slice {

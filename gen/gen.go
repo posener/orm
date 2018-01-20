@@ -113,7 +113,7 @@ func outDir(out string) (string, error) {
 		dir, err = packagePath(out)
 		if err != nil {
 			if len(goPaths) == 0 {
-				return "", fmt.Errorf("for out with package path, must define GOPATH environemnt variable")
+				return "", fmt.Errorf("for out with package path, must define GOPATH environment variable")
 			}
 			dir = filepath.Join(goPaths[0], out)
 		}
@@ -135,7 +135,7 @@ func outPkg(outDir string) (string, error) {
 		}
 	}
 	if pkgPath == "" {
-		return "", fmt.Errorf("output direcotry not in any GOPATH")
+		return "", fmt.Errorf("output directory not in any GOPATH")
 	}
 
 	outProgram, err := load.Program(pkgPath)

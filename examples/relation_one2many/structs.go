@@ -1,7 +1,8 @@
-package relation_one2many
+package relationone2many
 
 //go:generate ../../orm -type One,OtherMany
 
+// One is a struct with relation for example
 type One struct {
 	ID   int64 `sql:"primary key;auto increment"`
 	Name string
@@ -11,6 +12,7 @@ type One struct {
 	OtherMany []OtherMany
 }
 
+// OtherMany is another struct with relation for example
 type OtherMany struct {
 	ID   int64 `sql:"primary key;auto increment"`
 	Name string
