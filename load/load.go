@@ -26,6 +26,7 @@ var (
 	cacheLock   sync.Mutex
 )
 
+// Program loads a program into memory
 func Program(importPath string) (*loader.Program, error) {
 	cacheLock.Lock()
 	defer cacheLock.Unlock()

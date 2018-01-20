@@ -97,7 +97,7 @@ func newField(parent *Naked, i int) (*Field, error) {
 }
 
 // Name is the field name
-// If the field is embedded withing another type, for example StructA->StructB->Field, to
+// If the field is embedded within another type, for example StructA->StructB->Field, to
 // distinct between a field with name 'Field' in StructA, the name will be 'StructBField'
 func (f *Field) Name() string {
 	return strings.Replace(f.AccessName, ".", "", -1)

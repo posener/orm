@@ -19,6 +19,7 @@ func (d *Dialect) Name() string {
 	return "postgres"
 }
 
+// Translate translates mysql name to postgres name
 func (d *Dialect) Translate(name string) string {
 	if name == "AUTO_INCREMENT" {
 		return ""
@@ -26,14 +27,17 @@ func (d *Dialect) Translate(name string) string {
 	return name
 }
 
+// Quote returns quotes a variable
 func (d *Dialect) Quote(name string) string {
 	return fmt.Sprintf(`"%s"`, name)
 }
 
+// Var returns a variable phrase
 func (d *Dialect) Var(i int) string {
 	return fmt.Sprintf("$%d", i)
 }
 
+// GoTypeToColumnType translate a name of a Go type to the equivalent SQL column type.
 func (Dialect) GoTypeToColumnType(goTypeName string, autoIncrement bool) *sqltypes.Type {
 	st := new(sqltypes.Type)
 	if autoIncrement {

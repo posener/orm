@@ -15,6 +15,7 @@ type Type struct {
 	Size int
 }
 
+// New parses a string into an sql type
 func New(s string) (*Type, error) {
 	t := new(Type)
 	m := typeFormat.FindStringSubmatch(s)
@@ -31,6 +32,7 @@ func New(s string) (*Type, error) {
 	return t, nil
 }
 
+// String returns the type as a string
 func (t *Type) String() string {
 	if t == nil {
 		return ""
