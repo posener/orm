@@ -16,6 +16,8 @@ In addition to compile time checks, editor completion and minimizing coding conf
 code results in accelerated performance - no reflections are needed in run time, and database data
 decoding is faster when you know the target type.
 
+This tools gives all basic database operations, and  handling of complex relation between types.
+
 ## Example:
 
 Check out the [examples](./examples).
