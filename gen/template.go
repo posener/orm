@@ -571,7 +571,8 @@ func (b *{{$.Public}}SelectBuilder) First() (*{{$type}}, error) {
 	if !found {
 		return nil, orm.ErrNotFound
 	}
-	item, _, err := b.scan(b.conn.dialect.Name(), dialect.Values(*rows), nil, "")
+	var exists = make(map[string]interface{})
+	item, _, err := b.scan(b.conn.dialect.Name(), dialect.Values(*rows), exists, "")
 	if err != nil {
 		return nil, err
 	}
