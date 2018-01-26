@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/posener/orm"
+	"github.com/posener/orm/dialect/builder"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -458,13 +459,13 @@ func TestColumnsJoin(t *testing.T) {
 		t.Run(tt.wantCols, func(t *testing.T) {
 			d := Get("mysql").(*dialect)
 
-			cols := newBuilder(d, "")
-			cols.selectColumns(&tt.p)
-			assert.Equal(t, tt.wantCols, strings.Trim(cols.Statement(), " "))
+			b := builder.New(d, "")
+			buildSelectColumns(b, &tt.p)
+			assert.Equal(t, tt.wantCols, strings.Trim(b.Statement(), " "))
 
-			j := newBuilder(d, "")
-			j.join(&tt.p)
-			assert.Equal(t, tt.wantJoin, strings.Trim(j.Statement(), " "))
+			b = builder.New(d, "")
+			buildJoin(b, &tt.p)
+			assert.Equal(t, tt.wantJoin, strings.Trim(b.Statement(), " "))
 		})
 	}
 }

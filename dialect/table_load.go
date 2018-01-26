@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/posener/orm"
+	"github.com/posener/orm/dialect/builder"
 )
 
 // Load loads a table from an existing database
@@ -66,7 +67,7 @@ func (d *dialect) loadTable(ctx context.Context, conn orm.Conn, tableName string
 }
 
 func (d *dialect) tableExists(ctx context.Context, conn orm.Conn, tableName string) (bool, error) {
-	b := newBuilder(d, "SELECT COUNT(*) FROM information_schema.tables WHERE table_name =")
+	b := builder.New(d, "SELECT COUNT(*) FROM information_schema.tables WHERE table_name =")
 	b.Var(tableName)
 	var count int
 	err := conn.QueryRow(ctx, b.Statement(), b.Args()...).Scan(&count)
@@ -83,7 +84,7 @@ func (d *dialect) columns(ctx context.Context, conn orm.Conn, tableName string) 
 		stmt = "SELECT column_name, column_type, is_nullable, column_default, extra FROM information_schema.columns WHERE table_name ="
 	}
 
-	b := newBuilder(d, stmt)
+	b := builder.New(d, stmt)
 	b.Var(tableName)
 
 	rows, err := conn.Query(ctx, b.Statement(), b.Args()...)
@@ -110,7 +111,7 @@ func (d *dialect) indices(ctx context.Context, conn orm.Conn, tableName string) 
 	default:
 		stmt = "SELECT column_name, index_name FROM information_schema.statistics where table_name ="
 	}
-	b := newBuilder(d, stmt)
+	b := builder.New(d, stmt)
 	b.Var(tableName)
 	rows, err := conn.Query(ctx, b.Statement(), b.Args()...)
 	if err != nil {
