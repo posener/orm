@@ -84,7 +84,7 @@ func ParseTime(b []byte, precision int) time.Time {
 	return t
 }
 
-// ParseFloat parses a byte slice to bool
+// ParseBool parses a byte slice to bool
 func ParseBool(s []byte) bool {
 	return s[0] != 0
 }

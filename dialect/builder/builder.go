@@ -14,6 +14,7 @@ var pool = &sync.Pool{
 	},
 }
 
+// Dialect is dialect interface for a builder
 type Dialect interface {
 	Quote(string) string
 	Var(int) string
@@ -30,6 +31,7 @@ func New(d Dialect, word string) *Builder {
 	return b
 }
 
+// Builder is a builder for SQL statements
 type Builder struct {
 	dialect   Dialect
 	buf       *bytes.Buffer
@@ -53,6 +55,7 @@ func (b *Builder) Quote(word string) {
 	b.Append(b.dialect.Quote(word))
 }
 
+// QuoteFullName quotes two names with a dot between them
 func (b *Builder) QuoteFullName(surename, firstname string) {
 	b.Append(fmt.Sprintf("%s.%s", b.dialect.Quote(surename), b.dialect.Quote(firstname)))
 }
