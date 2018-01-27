@@ -56,12 +56,12 @@ func (f *ForeignKey) hash() string {
 // NewTable returns table structure to be used for generated code
 func NewTable(gr *graph.Graph) Table {
 	t := Table{}
-	for _, f := range gr.Fields {
+	for _, f := range gr.Type.Fields {
 		if !f.IsReference() {
 			sqlColumn := f.Columns()[0]
 			t.Columns = append(t.Columns, Column{
 				Name:    sqlColumn.Name,
-				GoType:  f.Type.Naked.Ext(""),
+				GoType:  f.Type.Type.Ext(""),
 				Options: options(f),
 				SQLType: f.CustomType.String(),
 			})
@@ -97,13 +97,13 @@ func relationTable(f *load.Field) Table {
 
 	table := Table{}
 
-	for _, t := range []*load.Naked{t1, t2} {
+	for _, t := range []*load.Type{t1, t2} {
 		var foreignColumns, columns []string
 		for _, pk := range t.PrimaryKeys {
 			columnName := fmt.Sprintf("%s_%s", t.Table(), pk.Column().Name)
 			table.Columns = append(table.Columns, Column{
 				Name:    columnName,
-				GoType:  pk.Type.Naked.Ext(""),
+				GoType:  pk.Type.Type.Ext(""),
 				SQLType: pk.CustomType.String(),
 			})
 			columns = append(columns, columnName)
@@ -145,7 +145,7 @@ func foreignKey(outEdge graph.Edge) (cols []Column, fk ForeignKey) {
 	for i, col := range outEdge.Field.Columns() {
 		cols = append(cols, Column{
 			Name:   col.Name,
-			GoType: dstFields[i].Type.Naked.Ext(""),
+			GoType: dstFields[i].Type.Type.Ext(""),
 		})
 		fk.Columns = append(fk.Columns, col.Name)
 		fk.ForeignColumns = append(fk.ForeignColumns, dstFields[i].Column().Name)

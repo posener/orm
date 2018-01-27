@@ -15,7 +15,7 @@ var tpl = template.Must(template.New("").
 		"uncapitalize": func(s string) string { return strings.ToLower(string(s[0])) + s[1:] },
 	}).Parse(`
 {{ $name := $.Graph.Type.Name -}}
-{{ $type := $.Graph.Type.Naked.Ext $.Package -}}
+{{ $type := $.Graph.Type.Ext $.Package -}}
 {{ $hasOneToManyRelation := $.Graph.Type.HasOneToManyRelation -}}
 {{ $apiName := (print $name "ORM") -}}
 {{ $conn := (print $.Private "Conn") -}}
@@ -603,7 +603,7 @@ func (b *{{$.Public}}DropBuilder) Exec() error {
 	return err
 }
 
-// {{$.Graph.Type.Naked.Name}}Joiner is an interface for joining a {{$name}} in a SELECT statement
+// {{$.Graph.Type.Name}}Joiner is an interface for joining a {{$name}} in a SELECT statement
 // in another type
 type {{$name}}Joiner interface {
 	Params() dialect.SelectParams
@@ -621,7 +621,7 @@ type {{$.Public}}SelectBuilder struct {
 	params dialect.SelectParams
 	conn *{{$conn}}
 	{{ range $_, $f := $.Graph.Type.References -}}
-	scan{{$f.Name}} {{$.Private}}{{$f.Type.Naked.Name}}Joiner
+	scan{{$f.Name}} {{$.Private}}{{$f.Type.Name}}Joiner
 	{{ end -}}
 }
 
@@ -990,10 +990,10 @@ func (r *{{$relName}}) Context(ctx context.Context) *{{$relName}} {
 
 func (r *{{$relName}}) Add(
 	{{- range $_, $pk := $localPks -}}
-	{{uncapitalize $edge.Field.ParentType.Name}}{{$pk.Name}} {{$pk.Type.Naked.Ext $.Package}},
+	{{uncapitalize $edge.Field.ParentType.Name}}{{$pk.Name}} {{$pk.Type.Ext $.Package}},
 	{{- end -}}
 	{{- range $_, $pk := $remotePks -}}
-	{{uncapitalize $edge.Field.Type.Name}}{{$pk.Name}} {{$pk.Type.Naked.Ext $.Package}},
+	{{uncapitalize $edge.Field.Type.Name}}{{$pk.Name}} {{$pk.Type.Ext $.Package}},
 	{{- end -}}
 	) error {
 	stmt, args := r.conn.dialect.Insert(&dialect.InsertParams{
@@ -1015,10 +1015,10 @@ func (r *{{$relName}}) Add(
 
 func (r *{{$relName}}) Remove(
 	{{- range $_, $pk := $edge.Field.ParentType.PrimaryKeys -}}
-	{{uncapitalize $edge.Field.ParentType.Name}}{{$pk.Name}} {{$pk.Type.Naked.Ext $.Package}},
+	{{uncapitalize $edge.Field.ParentType.Name}}{{$pk.Name}} {{$pk.Type.Ext $.Package}},
 	{{- end -}}
 	{{- range $_, $pk := $edge.Field.Type.PrimaryKeys -}}
-	{{uncapitalize $edge.Field.Type.Name}}{{$pk.Name}} {{$pk.Type.Naked.Ext $.Package}},
+	{{uncapitalize $edge.Field.Type.Name}}{{$pk.Name}} {{$pk.Type.Ext $.Package}},
 	{{- end -}}
 	) error {
 	stmt, args := r.conn.dialect.Delete(&dialect.DeleteParams{

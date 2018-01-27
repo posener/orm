@@ -1,4 +1,4 @@
-package relation_one2many
+package relationone2many
 
 import (
 	"fmt"

@@ -13,9 +13,9 @@ const tagSQLType = "sql"
 
 // Field is a struct that represents type's field
 type Field struct {
-	ParentType *Naked
+	ParentType *Type
 	// Type is the type of the field
-	Type Type
+	Type AnnotatedType
 	// AccessName is the name of the field from the root struct
 	// so if a field is embedded, StructA->StructB->Field, the field AccessName, from StructA
 	// will be StructB.Field
@@ -56,7 +56,7 @@ type ForeignKey struct {
 	Src, Dst *Field
 }
 
-func newField(parent *Naked, i int) (*Field, error) {
+func newField(parent *Type, i int) (*Field, error) {
 	stField := parent.st.Field(i)
 	if !stField.Exported() {
 		return nil, nil
@@ -192,8 +192,8 @@ func (f *Field) RelationName() string {
 
 // RelationTypes return the two types that are participating in a relation
 // that is created by this field.
-func (f *Field) RelationTypes() (first, second *Naked) {
-	first, second = f.ParentType, f.Type.Naked
+func (f *Field) RelationTypes() (first, second *Type) {
+	first, second = f.ParentType, f.Type.Type
 	if strings.Compare(first.Table(), second.Table()) != -1 {
 		first, second = second, first
 	}
@@ -220,7 +220,7 @@ type SQLColumn struct {
 	// Name is the column name
 	Name string
 	// SetTypes is the type that is used to set a field that reference this column
-	SetType *Type
+	SetType *AnnotatedType
 	// CustomType is a custom SQL type that can be defined by the user
 	CustomType *sqltypes.Type
 }
