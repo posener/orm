@@ -12,8 +12,8 @@ import (
 // It could have more than one edge, in any direction between the root
 // node and any other node.
 type Graph struct {
-	// Type is the root type
-	*load.Type
+	// AnnotatedType is the root type
+	Type *load.Type
 	// In are relations from other types to the root type
 	// Out are relations from the root type to other types
 	// RelTable are relations from a relation table to the root type
@@ -49,7 +49,7 @@ func New(tp *load.Type) (*Graph, error) {
 		case field.IsForwardReference():
 			edge := Edge{
 				Field:        field,
-				RelationType: &field.Type,
+				RelationType: field.Type.Type,
 			}
 			log.Printf("one to one relation: by field %s to type %s", edge.Field, edge.Field.Type.Ext(""))
 			root.Out = append(root.Out, edge)
@@ -92,7 +92,7 @@ func findReversedSrcField(reverseField *load.Field) (*load.Field, error) {
 		return nil, nil
 	}
 	for _, field := range reverseField.Type.References() {
-		if field.Type.Naked.String() != reverseField.ParentType.String() {
+		if field.Type.Type.String() != reverseField.ParentType.String() {
 			continue
 		}
 		if !field.IsForwardReference() {
@@ -105,7 +105,7 @@ func findReversedSrcField(reverseField *load.Field) (*load.Field, error) {
 		if srcField != nil {
 			return nil, fmt.Errorf(
 				"found more than one relation from %s to %s, please specify 'relation field' tag",
-				reverseField.Type.Naked, reverseField.ParentType)
+				reverseField.Type.Type, reverseField.ParentType)
 		}
 		srcField = field
 	}

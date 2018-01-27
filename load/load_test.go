@@ -27,8 +27,8 @@ func TestLoad(t *testing.T) {
 			wantFullName:  "tests.Person",
 			wantLocalName: "Person",
 			wantFields: []*Field{
-				{AccessName: "Name", Type: Type{Naked: &Naked{Name: "string"}}},
-				{AccessName: "Age", Type: Type{Naked: &Naked{Name: "int"}}},
+				{AccessName: "Name", Type: AnnotatedType{Type: &Type{Name: "string"}}},
+				{AccessName: "Age", Type: AnnotatedType{Type: &Type{Name: "int"}}},
 			},
 			wantImportPath: "github.com/posener/orm/tests",
 		},
@@ -38,8 +38,8 @@ func TestLoad(t *testing.T) {
 			wantFullName:  "tests.Person",
 			wantLocalName: "Person",
 			wantFields: []*Field{
-				{AccessName: "Name", Type: Type{Naked: &Naked{Name: "string"}}},
-				{AccessName: "Age", Type: Type{Naked: &Naked{Name: "int"}}},
+				{AccessName: "Name", Type: AnnotatedType{Type: &Type{Name: "string"}}},
+				{AccessName: "Age", Type: AnnotatedType{Type: &Type{Name: "int"}}},
 			},
 			wantImportPath: "github.com/posener/orm/tests",
 		},
@@ -49,9 +49,9 @@ func TestLoad(t *testing.T) {
 			wantFullName:  "tests.Employee",
 			wantLocalName: "Employee",
 			wantFields: []*Field{
-				{AccessName: "Person.Name", Type: Type{Naked: &Naked{Name: "string"}}},
-				{AccessName: "Person.Age", Type: Type{Naked: &Naked{Name: "int"}}},
-				{AccessName: "Salary", Type: Type{Naked: &Naked{Name: "int"}}},
+				{AccessName: "Person.Name", Type: AnnotatedType{Type: &Type{Name: "string"}}},
+				{AccessName: "Person.Age", Type: AnnotatedType{Type: &Type{Name: "int"}}},
+				{AccessName: "Salary", Type: AnnotatedType{Type: &Type{Name: "int"}}},
 			},
 			wantImportPath: "github.com/posener/orm/tests",
 		},
@@ -61,7 +61,7 @@ func TestLoad(t *testing.T) {
 			wantFullName:  "tests.Ignore",
 			wantLocalName: "Ignore",
 			wantFields: []*Field{
-				{AccessName: "ID", Type: Type{Naked: &Naked{Name: "int64"}}},
+				{AccessName: "ID", Type: AnnotatedType{Type: &Type{Name: "int64"}}},
 			},
 			wantImportPath: "github.com/posener/orm/tests",
 		},

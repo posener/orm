@@ -73,7 +73,7 @@ func (*Dialect) GoTypeToColumnType(goTypeName string, autoIncrement bool) *sqlty
 func (d *Dialect) ConvertValueCode(field *load.Field) string {
 	sqlType := field.CustomType
 	if sqlType == nil {
-		sqlType = d.GoTypeToColumnType(field.Type.Naked.Ext(""), false)
+		sqlType = d.GoTypeToColumnType(field.Type.Type.Ext(""), false)
 	}
 	s := tmpltType{
 		Field:       field,
@@ -98,7 +98,7 @@ var tmplt = template.Must(template.New("sqlite3").Parse(`
 				if !ok {
 					return nil, 0, dialect.ErrConvert("{{.Field.AccessName}}", i, vals[i], "{{$convertType}}")
 				}
-				tmp := {{.Field.Type.Naked.Ext .Field.ParentType.Package}}(val)
+				tmp := {{.Field.Type.Type.Ext .Field.ParentType.Package}}(val)
 				row.{{.Field.AccessName}} = {{if .Field.Type.Pointer -}}&{{end}}tmp
 `))
 
@@ -114,6 +114,6 @@ func (d *Dialect) convertType(f *load.Field, sqlType *sqltypes.Type) string {
 	case "boolean":
 		return "bool"
 	default:
-		return f.Type.Naked.Ext("")
+		return f.Type.Type.Ext("")
 	}
 }

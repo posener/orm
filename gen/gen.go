@@ -39,7 +39,7 @@ type TemplateData struct {
 // st is the type descriptor of the struct
 func Gen(g *graph.Graph, out string, dialects []dialect.API) error {
 	// get the package ormDir on disk
-	structPkgDir, err := packagePath(g.ImportPath())
+	structPkgDir, err := packagePath(g.Type.ImportPath())
 	if err != nil {
 		return fmt.Errorf("find struct package: %s", err)
 	}
@@ -59,14 +59,14 @@ func Gen(g *graph.Graph, out string, dialects []dialect.API) error {
 	data := TemplateData{
 		Graph:          g,
 		Dialects:       dialects,
-		Public:         g.Name,
-		Private:        strings.ToLower(g.Name),
+		Public:         g.Type.Name,
+		Private:        strings.ToLower(g.Type.Name),
 		Table:          dialect.NewTable(g),
 		RelationTables: dialect.RelationTables(g),
 		Package:        outPkg,
 	}
 
-	ormFileName := strings.ToLower(g.Name + "_orm.go")
+	ormFileName := strings.ToLower(g.Type.Name + "_orm.go")
 	ormFilePath := filepath.Join(outDir, ormFileName)
 
 	log.Printf("Output for type %s to %s", g.Type.Ext(""), ormFilePath)

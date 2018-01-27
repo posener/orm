@@ -77,7 +77,7 @@ func (Dialect) GoTypeToColumnType(goTypeName string, autoIncrement bool) *sqltyp
 func (d *Dialect) ConvertValueCode(field *load.Field) string {
 	sqlType := field.CustomType
 	if sqlType == nil {
-		sqlType = d.GoTypeToColumnType(field.Type.Naked.Ext(""), false)
+		sqlType = d.GoTypeToColumnType(field.Type.Type.Ext(""), false)
 	}
 	s := tmpltType{
 		Field:                  field,
@@ -103,7 +103,7 @@ type tmpltType struct {
 var tmplt = template.Must(template.New("postgres").Parse(`
 				switch val := vals[i].(type) {
 				case {{.ConvertType}}:
-					tmp := {{.Field.Type.Naked.Ext .Field.ParentType.Package}}(val)
+					tmp := {{.Field.Type.Type.Ext .Field.ParentType.Package}}(val)
 					row.{{.Field.AccessName}} = {{if .Field.Type.Pointer }}&{{end}}tmp
 				default:
 					return nil, 0, dialect.ErrConvert("{{.Field.AccessName}}", i, vals[i], "{{.ConvertType}}")
@@ -112,7 +112,7 @@ var tmplt = template.Must(template.New("postgres").Parse(`
 
 // convertFuncString is a function for converting the data from SQL to the right type
 func (d *Dialect) convertBytesFuncString(f *load.Field, sqlType *sqltypes.Type) string {
-	switch tp := f.Type.Naked.Ext(""); tp {
+	switch tp := f.Type.Type.Ext(""); tp {
 	case "string":
 		return "string(val)"
 	case "[]byte":
@@ -132,7 +132,7 @@ func (d *Dialect) convertBytesFuncString(f *load.Field, sqlType *sqltypes.Type) 
 
 // convertFuncString is a function for converting the data from SQL to the right type
 func (d *Dialect) convertIntFuncString(f *load.Field, sqlType *sqltypes.Type) string {
-	switch tp := f.Type.Naked.Ext(""); tp {
+	switch tp := f.Type.Type.Ext(""); tp {
 	case "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64":
 		return fmt.Sprintf("%s(val)", tp)
 	case "time.Time":
@@ -155,6 +155,6 @@ func (d *Dialect) convertType(f *load.Field, sqlType *sqltypes.Type) string {
 	case "boolean":
 		return "bool"
 	default:
-		return f.Type.Naked.Ext("")
+		return f.Type.Type.Ext("")
 	}
 }

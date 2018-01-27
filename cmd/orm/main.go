@@ -31,7 +31,7 @@ func (s *stringSlice) Set(val string) error {
 }
 
 func init() {
-	flag.Var(&options.types, "type", `Type name.
+	flag.Var(&options.types, "type", `AnnotatedType name.
         Might be of the form '<pkg>.<type>' or just '<type>'. Where:
         - <pkg> can be either package name (e.x 'github.com/repository/project/package')
           or relative path (e.x './' or '../package').
@@ -56,7 +56,7 @@ func main() {
 		}
 
 		log.Printf("Calculating relations graph")
-		g, err := graph.New(tp)
+		g, err := graph.New(tp.Type)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("[%s] setting relations: %s", typeName, err))
 			continue

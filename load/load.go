@@ -43,7 +43,7 @@ func Program(importPath string) (*loader.Program, error) {
 }
 
 // loadStruct loads struct information from go package
-func (t *Naked) loadStruct(importPath string) error {
+func (t *Type) loadStruct(importPath string) error {
 	structName := t.Name
 
 	// if import path is not define, try to import from local directory

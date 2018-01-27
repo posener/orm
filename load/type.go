@@ -25,15 +25,15 @@ var basicTypes = map[string]bool{
 	"time.Time": true,
 }
 
-// Type represents a go type attributes by it's name
-type Type struct {
-	*Naked
+// AnnotatedType is a go type with it's usage information in a context.
+type AnnotatedType struct {
+	*Type
 	Pointer bool
 	Slice   bool
 }
 
-// Naked is a type definition without it's specific usage information
-type Naked struct {
+// Type is a type definition without it's specific usage information
+type Type struct {
 	Name string
 	// Fields is the list of exported fields
 	Fields      []*Field
@@ -43,18 +43,18 @@ type Naked struct {
 	pkg *types.Package
 }
 
-// New loads a Type
-func New(fullName string) (*Type, error) {
+// New loads a AnnotatedType
+func New(fullName string) (*AnnotatedType, error) {
 	// []byte is different than any other type since it is allowed slice field
 	// which does not actually considered a slice
 	if fullName == "[]byte" || fullName == "*[]byte" {
-		return &Type{
-			Naked:   &Naked{Name: strings.TrimLeft(fullName, "*")},
+		return &AnnotatedType{
+			Type:    &Type{Name: strings.TrimLeft(fullName, "*")},
 			Pointer: pointer(fullName),
 		}, nil
 	}
-	t := &Type{
-		Naked: &Naked{
+	t := &AnnotatedType{
+		Type: &Type{
 			Name: typeName(fullName),
 		},
 		Pointer: pointer(fullName),
@@ -75,7 +75,7 @@ func New(fullName string) (*Type, error) {
 }
 
 // ImportPath is a path to add to the import section for this type
-func (t *Naked) ImportPath() string {
+func (t *Type) ImportPath() string {
 	if t.pkg == nil {
 		return ""
 	}
@@ -84,7 +84,7 @@ func (t *Naked) ImportPath() string {
 
 // LoadFields iterate over the type's data structure and load all it's fields
 // this function might recursively call to the New function
-func (t *Naked) LoadFields(levels int) error {
+func (t *Type) LoadFields(levels int) error {
 	if t.st == nil || levels == 0 {
 		return nil
 	}
@@ -121,33 +121,33 @@ func (t *Naked) LoadFields(levels int) error {
 	return nil
 }
 
-func (t *Naked) String() string {
+func (t *Type) String() string {
 	if t.ImportPath() != "" {
 		return t.ImportPath() + "." + t.Name
 	}
 	return t.Name
 }
 
-func (t *Type) String() string {
-	return t.sliceStr() + t.pointerStr() + t.Naked.String()
+func (t *AnnotatedType) String() string {
+	return t.sliceStr() + t.pointerStr() + t.Type.String()
 }
 
 // Table is SQL table name of a type
-func (t *Naked) Table() string {
+func (t *Type) Table() string {
 	return strings.ToLower(t.Name)
 }
 
 // Ext return the type representation depending on the given package,
 // if it is the same package as the type's, it will return only it's
 // name. Otherwise, it will return the full "package.Name" semantic
-func (t *Type) Ext(curPkg string) string {
-	return t.sliceStr() + t.pointerStr() + t.Naked.Ext(curPkg)
+func (t *AnnotatedType) Ext(curPkg string) string {
+	return t.sliceStr() + t.pointerStr() + t.Type.Ext(curPkg)
 }
 
 // Ext return the type representation depending on the given package,
 // if it is the same package as the type's, it will return only it's
 // name. Otherwise, it will return the full "package.Name" semantic.
-func (t *Naked) Ext(curPkg string) string {
+func (t *Type) Ext(curPkg string) string {
 	if t.Package() != "" && t.Package() != curPkg {
 		return t.Package() + "." + t.Name
 	}
@@ -157,7 +157,7 @@ func (t *Naked) Ext(curPkg string) string {
 // Package is the package name of the type
 // for tests, type in "github.com/posener/orm/tests" has the package
 // name: "tests"
-func (t *Naked) Package() string {
+func (t *Type) Package() string {
 	if t.pkg == nil {
 		return ""
 	}
@@ -165,12 +165,12 @@ func (t *Naked) Package() string {
 }
 
 // IsBasic returns try if the type is a Go basic type
-func (t *Naked) IsBasic() bool {
+func (t *Type) IsBasic() bool {
 	return basicTypes[t.Ext("")]
 }
 
 // Imports returns a list of all imports for this type's fields
-func (t *Naked) Imports() []string {
+func (t *Type) Imports() []string {
 	impsMap := map[string]bool{}
 	for _, f := range t.Fields {
 		if f.Type.ImportPath() != "" && f.Type.ImportPath() != t.ImportPath() {
@@ -185,7 +185,7 @@ func (t *Naked) Imports() []string {
 }
 
 // References returns all reference fields
-func (t *Naked) References() []*Field {
+func (t *Type) References() []*Field {
 	var refs []*Field
 	for _, field := range t.Fields {
 		if field.IsReference() {
@@ -196,7 +196,7 @@ func (t *Naked) References() []*Field {
 }
 
 // NonReferences returns all non-reference fields
-func (t *Naked) NonReferences() []*Field {
+func (t *Type) NonReferences() []*Field {
 	var refs []*Field
 	for _, field := range t.Fields {
 		if !field.IsReference() {
@@ -207,14 +207,14 @@ func (t *Naked) NonReferences() []*Field {
 }
 
 // ReferencedTypes returns a list of all referenced types from this type
-func (t *Naked) ReferencedTypes() []*Naked {
-	var m = map[string]*Naked{}
+func (t *Type) ReferencedTypes() []*Type {
+	var m = map[string]*Type{}
 	for _, field := range t.Fields {
 		if field.IsReference() {
-			m[field.Type.Naked.String()] = field.Type.Naked
+			m[field.Type.Type.String()] = field.Type.Type
 		}
 	}
-	l := make([]*Naked, 0, len(m))
+	l := make([]*Type, 0, len(m))
 	for _, t := range m {
 		l = append(l, t)
 	}
@@ -222,7 +222,7 @@ func (t *Naked) ReferencedTypes() []*Naked {
 }
 
 // HasOneToManyRelation returns true if the type has a one-to-many relationship
-func (t *Naked) HasOneToManyRelation() bool {
+func (t *Type) HasOneToManyRelation() bool {
 	for _, field := range t.Fields {
 		if field.Type.Slice {
 			return true
@@ -231,14 +231,14 @@ func (t *Naked) HasOneToManyRelation() bool {
 	return false
 }
 
-func (t *Type) pointerStr() string {
+func (t *AnnotatedType) pointerStr() string {
 	if t.Pointer {
 		return "*"
 	}
 	return ""
 }
 
-func (t *Type) sliceStr() string {
+func (t *AnnotatedType) sliceStr() string {
 	if t.Slice {
 		return "[]"
 	}
