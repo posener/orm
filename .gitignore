@@ -4,3 +4,4 @@ coverage.txt
 orm
 *.db
 *.db-journal
+*.out
