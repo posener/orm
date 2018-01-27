@@ -4,16 +4,16 @@ Units: [ns/op (ratio from ORM)]
 
 | Test | ORM | Raw | GORM |
 | --- | --- | --- | --- |
-| Insert | 21434 (100%) | 14893 (69%) | 61704 (287%) |
-| Query | 2956136 (100%) | 2538550 (85%) | 8550167 (289%) |
-| QueryLargeStruct | 17244725 (100%) | 18499591 (107%) | 77639139 (450%) |
+| Insert | 20804 (100%) | 14703 (70%) | 59277 (284%) |
+| Query | 2727120 (100%) | 2523774 (92%) | 8470510 (310%) |
+| QueryLargeStruct | 16939367 (100%) | 18189862 (107%) | 76929097 (454%) |
 
 
 ![graph](./benchmark.png)
 
 
 
-Benchmark time: 2017-12-22
+Benchmark time: 2018-01-27
 
 
 #### Compared packages:

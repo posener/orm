@@ -1,14 +1,13 @@
 package dialect
 
 import (
-	"fmt"
-
 	"github.com/posener/orm"
+	"github.com/posener/orm/dialect/builder"
 )
 
 // Where is an API for creating WHERE statements
 type Where interface {
-	Build(table string, b *builder)
+	Build(table string, b *builder.Builder)
 	// Or applies OR condition with another Where statement
 	Or(Where) Where
 	// And applies AND condition with another Where statement
@@ -17,8 +16,8 @@ type Where interface {
 
 // NewWhere returns a new WHERE statement
 func NewWhere(op orm.Op, variable string, value interface{}) Where {
-	return whereFunc(func(table string, b *builder) {
-		b.Append(fmt.Sprintf("%s.%s", b.Quote(table), b.Quote(variable)))
+	return whereFunc(func(table string, b *builder.Builder) {
+		b.QuoteFullName(table, variable)
 		b.Append(string(op))
 		b.Var(value)
 	})
@@ -26,8 +25,8 @@ func NewWhere(op orm.Op, variable string, value interface{}) Where {
 
 // NewWhereIn returns a new 'WHERE variable IN (...)' statement
 func NewWhereIn(variable string, values ...interface{}) Where {
-	return whereFunc(func(table string, b *builder) {
-		b.Append(fmt.Sprintf("%s.%s", b.Quote(table), b.Quote(variable)))
+	return whereFunc(func(table string, b *builder.Builder) {
+		b.QuoteFullName(table, variable)
 		b.Append("IN")
 		b.Open()
 		for i, value := range values {
@@ -42,8 +41,8 @@ func NewWhereIn(variable string, values ...interface{}) Where {
 
 // NewWhereBetween returns a new 'WHERE variable BETWEEN low AND high' statement
 func NewWhereBetween(variable string, low, high interface{}) Where {
-	return whereFunc(func(table string, b *builder) {
-		b.Append(fmt.Sprintf("%s.%s", b.Quote(table), b.Quote(variable)))
+	return whereFunc(func(table string, b *builder.Builder) {
+		b.QuoteFullName(table, variable)
 		b.Append("BETWEEN")
 		b.Var(low)
 		b.Append("AND")
@@ -62,9 +61,9 @@ func And(w ...Where) Where {
 }
 
 // Where are options for SQL WHERE statement
-type whereFunc func(table string, b *builder)
+type whereFunc func(table string, b *builder.Builder)
 
-func (w whereFunc) Build(table string, b *builder) {
+func (w whereFunc) Build(table string, b *builder.Builder) {
 	w(table, b)
 }
 
@@ -86,7 +85,7 @@ func (w whereFunc) And(right Where) Where {
 
 // concat concatenate Where statement with an operation
 func concat(op string, w ...Where) Where {
-	return whereFunc(func(table string, b *builder) {
+	return whereFunc(func(table string, b *builder.Builder) {
 		for i, wi := range w {
 			b.Open()
 			wi.Build(table, b)
