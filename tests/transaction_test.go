@@ -2,8 +2,6 @@ package tests
 
 import (
 	"context"
-	"runtime"
-	"strings"
 	"testing"
 
 	"github.com/posener/orm"
@@ -64,10 +62,6 @@ func TestTransactions(t *testing.T) {
 		ps, err = person.Select().Query()
 		require.Nil(t, err)
 		assert.Equal(t, 1, len(ps))
-
-		if strings.HasPrefix(runtime.Version(), "go1.9") {
-			t.Skip("Go 1.9 leaves a transaction connection open after cancel() is called")
-		}
 
 		t.Logf("Transaction context cancel")
 		ctx, cancel := context.WithCancel(ctx)
