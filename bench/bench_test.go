@@ -82,9 +82,8 @@ func BenchmarkORMQuery(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ps, err := porm.Select().Query()
+		_, err := porm.Select().Query()
 		require.Nil(b, err)
-		assert.Equal(b, datasetSize, len(ps))
 	}
 }
 
@@ -107,7 +106,6 @@ func BenchmarkGORMQuery(b *testing.B) {
 		var ps []tests.Person
 		err = db.Find(&ps).Error
 		require.Nil(b, err)
-		assert.Equal(b, datasetSize, len(ps))
 	}
 }
 
@@ -136,7 +134,6 @@ func BenchmarkRawQuery(b *testing.B) {
 			require.Nil(b, err)
 			ps = append(ps, p)
 		}
-		assert.Equal(b, datasetSize, len(ps))
 		rows.Close()
 	}
 }
@@ -160,9 +157,8 @@ func BenchmarkORMQueryLargeStruct(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		alls, err := aorm.Select().Query()
+		_, err := aorm.Select().Query()
 		require.Nil(b, err)
-		assert.Equal(b, datasetSize, len(alls))
 	}
 }
 
@@ -187,7 +183,6 @@ func BenchmarkGORMQueryLargeStruct(b *testing.B) {
 		var alls []tests.All
 		err = db.Find(&alls).Error
 		require.Nil(b, err)
-		assert.Equal(b, datasetSize, len(alls))
 	}
 }
 
@@ -227,7 +222,6 @@ func BenchmarkRawQueryLargeStruct(b *testing.B) {
 			require.Nil(b, err)
 			ps = append(ps, p1)
 		}
-		assert.Equal(b, datasetSize, len(ps))
 		rows.Close()
 	}
 }

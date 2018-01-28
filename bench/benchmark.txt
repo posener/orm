@@ -1,14 +1,14 @@
 goos: linux
 goarch: amd64
 pkg: github.com/posener/orm/bench
-BenchmarkORMInsert-4              	  100000	     20804 ns/op
-BenchmarkGORMInsert-4             	   30000	     59277 ns/op
-BenchmarkRawInsert-4              	  100000	     14703 ns/op
-BenchmarkORMQuery-4               	     500	   2727120 ns/op
-BenchmarkGORMQuery-4              	     200	   8470510 ns/op
-BenchmarkRawQuery-4               	     500	   2523774 ns/op
-BenchmarkORMQueryLargeStruct-4    	     100	  16939367 ns/op
-BenchmarkGORMQueryLargeStruct-4   	      20	  76929097 ns/op
-BenchmarkRawQueryLargeStruct-4    	     100	  18189862 ns/op
+BenchmarkORMInsert-4              	  100000	     20985 ns/op
+BenchmarkGORMInsert-4             	   30000	     59076 ns/op
+BenchmarkRawInsert-4              	  100000	     15152 ns/op
+BenchmarkORMQuery-4               	     500	   2860340 ns/op
+BenchmarkGORMQuery-4              	     200	   8488300 ns/op
+BenchmarkRawQuery-4               	     500	   2590434 ns/op
+BenchmarkORMQueryLargeStruct-4    	     100	  16167653 ns/op
+BenchmarkGORMQueryLargeStruct-4   	      20	  75073092 ns/op
+BenchmarkRawQueryLargeStruct-4    	     100	  17622053 ns/op
 PASS
-ok  	github.com/posener/orm/bench	18.076s
+ok  	github.com/posener/orm/bench	18.103s
